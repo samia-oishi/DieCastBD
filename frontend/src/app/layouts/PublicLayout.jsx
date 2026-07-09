@@ -2,11 +2,13 @@ import { Link, Outlet } from "react-router";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
+import { Footer } from "@/components/shared/Footer";
 import { ROUTES } from "@/constants/routes";
 import { useCurrentUser, useLogoutMutation } from "@/features/auth/api/useAuth";
+import logo from "@/assets/logo/logo.jpg";
 
-// Minimal auth-state header for Phase 2 verification — the full premium nav
-// (mega menu, search, cart) is built in Phase 4 (Homepage).
+// Auth-state header. The full premium nav (mega menu, search, cart) is added
+// in Phase 5/7 once the pages it would link to actually exist.
 function HeaderAuthState() {
   const { data: user, isLoading } = useCurrentUser();
   const logoutMutation = useLogoutMutation();
@@ -51,18 +53,16 @@ function HeaderAuthState() {
 export function PublicLayout() {
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
-      <header className="flex items-center justify-between border-b border-border px-6 py-4">
-        <Link to={ROUTES.HOME} className="font-heading text-lg tracking-wide">
-          DiecastBD
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/90 px-6 py-3 backdrop-blur-sm sm:px-10">
+        <Link to={ROUTES.HOME}>
+          <img src={logo} alt="DiecastBD" className="h-5 w-auto sm:h-6" />
         </Link>
         <HeaderAuthState />
       </header>
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t border-border px-6 py-8 text-sm text-muted-foreground">
-        © {new Date().getFullYear()} DiecastBD
-      </footer>
+      <Footer />
     </div>
   );
 }

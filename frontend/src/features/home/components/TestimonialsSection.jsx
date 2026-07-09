@@ -1,0 +1,29 @@
+import { Star } from "lucide-react";
+
+// Hidden entirely until real reviews exist — no fabricated testimonials.
+export function TestimonialsSection({ testimonials }) {
+  if (!testimonials?.length) return null;
+
+  return (
+    <section className="border-t border-border bg-card/40 px-6 py-16 sm:px-10">
+      <div className="mx-auto max-w-7xl">
+        <h2 className="mb-10 text-center font-heading text-2xl text-foreground sm:text-3xl">
+          What Collectors Say
+        </h2>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          {testimonials.map((t) => (
+            <div key={t.name} className="flex flex-col gap-3 rounded-xl border border-border p-6">
+              <div className="flex gap-0.5 text-primary">
+                {Array.from({ length: t.rating ?? 5 }).map((_, i) => (
+                  <Star key={i} className="size-4 fill-current" />
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">&ldquo;{t.quote}&rdquo;</p>
+              <span className="text-sm font-medium text-foreground">{t.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

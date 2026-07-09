@@ -14,7 +14,7 @@ const SORT_MAP = {
   "title-asc": { title: 1 },
 };
 
-async function buildPublicFilter({ brand, category, minPrice, maxPrice, inStock, q }) {
+async function buildPublicFilter({ brand, category, minPrice, maxPrice, inStock, featured, hero, newArrival, q }) {
   const filter = { status: "active", isDeleted: false };
 
   if (brand) {
@@ -31,14 +31,28 @@ async function buildPublicFilter({ brand, category, minPrice, maxPrice, inStock,
     if (maxPrice != null) filter.price.$lte = maxPrice;
   }
   if (inStock) filter.stock = { $gt: 0 };
+  if (featured) filter.isFeatured = true;
+  if (hero) filter.isHeroProduct = true;
+  if (newArrival) filter.isNewArrival = true;
   if (q) filter.$text = { $search: q };
 
   return filter;
 }
 
 export const listProducts = asyncHandler(async (req, res) => {
-  const { brand, category, minPrice, maxPrice, inStock, sort, q, page, limit } = req.query;
-  const filter = await buildPublicFilter({ brand, category, minPrice, maxPrice, inStock, q });
+  const { brand, category, minPrice, maxPrice, inStock, featured, hero, newArrival, sort, q, page, limit } =
+    req.query;
+  const filter = await buildPublicFilter({
+    brand,
+    category,
+    minPrice,
+    maxPrice,
+    inStock,
+    featured,
+    hero,
+    newArrival,
+    q,
+  });
 
   const skip = (page - 1) * limit;
   const [items, total] = await Promise.all([

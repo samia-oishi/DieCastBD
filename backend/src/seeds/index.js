@@ -3,7 +3,9 @@ import { slugify } from "../utils/slugify.js";
 import { Brand } from "../modules/brands/brand.model.js";
 import { Category } from "../modules/categories/category.model.js";
 import { Product } from "../modules/products/product.model.js";
+import { Settings } from "../modules/settings/settings.model.js";
 import { brands, categories, products } from "./data/catalog.data.js";
+import { settingsSeed } from "./data/settings.data.js";
 
 async function seedBrands() {
   const keyToId = {};
@@ -63,6 +65,17 @@ async function seedProducts(brandIds, categoryIds) {
   return { created, updated };
 }
 
+async function seedSettings() {
+  // $setOnInsert so re-running the seed never clobbers admin-edited settings —
+  // unlike the catalog above, this is CMS content, not a source-of-truth import.
+  const before = await Settings.findOneAndUpdate(
+    {},
+    { $setOnInsert: settingsSeed },
+    { upsert: true, setDefaultsOnInsert: true }
+  );
+  return before === null;
+}
+
 async function run() {
   await connectDB();
 
@@ -74,6 +87,9 @@ async function run() {
 
   const { created, updated } = await seedProducts(brandIds, categoryIds);
   console.log(`Products: ${created} created, ${updated} updated (${products.length} total)`);
+
+  const settingsCreated = await seedSettings();
+  console.log(settingsCreated ? "Settings: created with defaults" : "Settings: already exists, left untouched");
 
   await disconnectDB();
   console.log("Seed complete.");
