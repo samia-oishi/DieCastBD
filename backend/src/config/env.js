@@ -17,6 +17,19 @@ const envSchema = z.object({
   FIREBASE_CLIENT_EMAIL: z.string().min(1, "FIREBASE_CLIENT_EMAIL is required"),
   FIREBASE_PRIVATE_KEY: z.string().min(1, "FIREBASE_PRIVATE_KEY is required"),
 
+  // Comma-separated emails auto-promoted to role "admin" on first sign-in — bootstraps the first admin
+  // account without a manual DB edit. Existing users are not retroactively affected.
+  ADMIN_EMAILS: z
+    .string()
+    .optional()
+    .default("")
+    .transform((val) =>
+      val
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean)
+    ),
+
   // Cloudinary is not wired until Phase 3 (product images) — optional for now so earlier phases aren't blocked on it.
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
