@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router";
 import toast from "react-hot-toast";
 import { Heart } from "lucide-react";
@@ -7,10 +8,9 @@ import { Footer } from "@/components/shared/Footer";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { useCurrentUser, useLogoutMutation } from "@/features/auth/api/useAuth";
+import { CartDrawer } from "@/features/cart/components/CartDrawer";
 import logo from "@/assets/logo/logo.jpg";
 
-// Auth-state header. The mega menu / cart icon are added in Phase 7 once
-// there's a cart to link to.
 function HeaderAuthState() {
   const { data: user, isLoading } = useCurrentUser();
   const logoutMutation = useLogoutMutation();
@@ -58,6 +58,8 @@ function HeaderAuthState() {
 }
 
 export function PublicLayout() {
+  const [cartOpen, setCartOpen] = useState(false);
+
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/90 px-6 py-3 backdrop-blur-sm sm:px-10">
@@ -77,7 +79,11 @@ export function PublicLayout() {
             Shop
           </NavLink>
         </div>
-        <HeaderAuthState />
+        <div className="flex items-center gap-3">
+          {/* Cart works for guests too (localStorage-backed) — deliberately not gated behind auth. */}
+          <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
+          <HeaderAuthState />
+        </div>
       </header>
       <main className="flex-1">
         <Outlet />

@@ -7,6 +7,7 @@ import * as productRoutes from "../modules/products/product.routes.js";
 import * as settingsRoutes from "../modules/settings/settings.routes.js";
 import newsletterRoutes from "../modules/newsletter/newsletter.routes.js";
 import wishlistRoutes from "../modules/wishlists/wishlist.routes.js";
+import cartRoutes from "../modules/cart/cart.routes.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
 
@@ -22,12 +23,13 @@ router.use("/products", productRoutes.publicRouter);
 router.use("/settings", settingsRoutes.publicRouter);
 router.use("/newsletter", newsletterRoutes);
 router.use("/wishlist", wishlistRoutes);
+router.use("/cart", cartRoutes);
 
 router.use("/admin/brands", ...requireAdmin, brandRoutes.adminRouter);
 router.use("/admin/categories", ...requireAdmin, categoryRoutes.adminRouter);
 router.use("/admin/products", ...requireAdmin, productRoutes.adminRouter);
 router.use("/admin/settings", ...requireAdmin, settingsRoutes.adminRouter);
 
-// Further module routers mount here as each domain is built (Phase 7+).
+// Further module routers mount here as each domain is built (Phase 8+).
 
 export default router;

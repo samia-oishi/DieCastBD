@@ -7,6 +7,7 @@ import { HomePage } from "@/features/home/HomePage";
 import { ShopPage } from "@/features/products/ShopPage";
 import { ProductDetailPage } from "@/features/products/ProductDetailPage";
 import { WishlistPage } from "@/features/wishlist/WishlistPage";
+import { CartPage } from "@/features/cart/CartPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
       { path: "/", element: <HomePage /> },
       { path: "/shop", element: <ShopPage /> },
       { path: "/products/:slug", element: <ProductDetailPage /> },
+      { path: "/cart", element: <CartPage /> },
       {
         element: <ProtectedRoute />,
         children: [

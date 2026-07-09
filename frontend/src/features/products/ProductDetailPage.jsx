@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ROUTES } from "@/constants/routes";
 import { useProduct, useRelatedProducts } from "./api/useProducts";
 import { WishlistButton } from "@/features/wishlist/components/WishlistButton";
+import { AddToCartButton } from "@/features/cart/components/AddToCartButton";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { ProductGallery } from "./components/ProductGallery";
 import { ProductSpecs } from "./components/ProductSpecs";
@@ -112,15 +113,12 @@ export function ProductDetailPage() {
               {outOfStock ? "Currently out of stock." : `${product.availableStock} in stock.`}
             </p>
 
+            <AddToCartButton product={product} />
+
             <div className="flex items-center gap-2">
               <WishlistButton product={product} showLabel />
               <ShareButton title={product.title} />
             </div>
-
-            <p className="text-xs text-muted-foreground">
-              Add-to-cart and checkout land in the next phase — for now this page covers browsing,
-              specs, and your wishlist.
-            </p>
 
             {product.description && (
               <div>

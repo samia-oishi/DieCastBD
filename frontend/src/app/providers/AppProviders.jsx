@@ -4,11 +4,13 @@ import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "react-hot-toast";
 
 import { queryClient } from "@/lib/queryClient";
+import { CartMergeOnLogin } from "@/features/cart/components/CartMergeOnLogin";
 
 export function AppProviders({ children }) {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
+        <CartMergeOnLogin />
         {children}
         <Toaster
           position="top-center"
