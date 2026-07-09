@@ -2,11 +2,7 @@ import { Order } from "../orders/order.model.js";
 import { Product } from "../products/product.model.js";
 import { User } from "../users/user.model.js";
 import { AnalyticsDaily } from "./analytics.model.js";
-
-// Collector diecast inherently carries very low per-SKU quantities (most seeded
-// stock is 1-4 units) — "low stock" here means "about to sell out entirely",
-// not the >10-units threshold that would make sense for bulkier retail.
-const LOW_STOCK_THRESHOLD = 2;
+import { LOW_STOCK_THRESHOLD } from "../../config/constants.js";
 
 function toDateKey(date) {
   return date.toISOString().slice(0, 10);

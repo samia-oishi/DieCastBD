@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { Heart, Package } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { AnnouncementBar } from "@/components/shared/AnnouncementBar";
 import { Footer } from "@/components/shared/Footer";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
@@ -67,6 +68,7 @@ export function PublicLayout() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
+      <AnnouncementBar />
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/90 px-6 py-3 backdrop-blur-sm sm:px-10">
         <div className="flex items-center gap-8">
           <Link to={ROUTES.HOME}>

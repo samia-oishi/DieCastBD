@@ -3,6 +3,7 @@ import { z } from "zod";
 const heroSlide = z.object({
   title: z.string().min(1),
   subtitle: z.string().optional(),
+  image: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
   ctaText: z.string().optional(),
   ctaLink: z.string().optional(),
 });

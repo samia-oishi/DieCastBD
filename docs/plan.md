@@ -39,7 +39,7 @@ app/                    # router.jsx, providers/ (AppProviders), layouts/ (Publi
 features/                # one folder per domain — each owns api/, components/, schemas/, hooks/
   auth/ account/ home/ products/ categories/ brands/ cart/ checkout/ orders/
   wishlist/ addresses/ newsletter/ settings/
-  admin/{dashboard,products,brands,categories,catalog,orders,analytics}/
+  admin/{dashboard,products,brands,categories,catalog,orders,analytics,customers,coupons,inventory,settings,reports}/
 components/
   ui/                    # shadcn-generated primitives
   shared/                # cross-feature composed components (ProductCard, Container,
@@ -54,11 +54,12 @@ assets/logo/             # brand logo (logo.jpg)
 
 ### Backend (`backend/src/`)
 ```
-config/                  # env.js (Zod-validated, fail-fast), db.js, firebaseAdmin.js, cloudinary.js
+config/                  # env.js (Zod-validated, fail-fast), db.js, firebaseAdmin.js, cloudinary.js,
+                          #   constants.js (LOW_STOCK_THRESHOLD — shared by analytics + inventory)
 modules/                 # one folder per domain, each: *.model.js, *.controller.js, *.service.js,
                           #   *.routes.js, *.validation.js
   auth/ users/ brands/ categories/ products/ settings/ newsletter/ wishlists/ cart/
-  addresses/ coupons/ orders/ inventoryLogs/ auditLogs/ analytics/
+  addresses/ coupons/ orders/ inventoryLogs/ auditLogs/ analytics/ inventory/
 middlewares/             # authenticate, authorize(role), validate(schema), errorHandler,
                           #   rateLimiters, upload (Multer), auditLog, sanitize (custom)
 utils/                   # apiResponse, apiError, asyncHandler, slugify, cloudinaryUpload,
@@ -102,20 +103,21 @@ Base path `/api/v1`. Envelope: `{ success, data, meta? }` / `{ success: false, m
 | Domain | Endpoints |
 |---|---|
 | Auth | `POST /auth/session`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` |
-| Users (self) | `PATCH /users/me`, `DELETE /users/me` (soft-deactivate) |
+| Users (self) | `PATCH /users/me`, `DELETE /users/me` (soft-deactivate) · admin: `GET /admin/users` (search/filter by role/isActive), `GET /admin/users/:id`, `PATCH /admin/users/:id` (name/phone/isActive), `PATCH /admin/users/:id/role` (**admin-only**, not staff — guards: can't change own role, can't demote the last remaining admin) |
 | Brands | `GET /brands` · admin: `GET/POST /admin/brands`, `PATCH/DELETE /admin/brands/:id`, `POST /admin/brands/:id/logo` |
 | Categories | `GET /categories` · admin: same CRUD shape as Brands, `/admin/categories` |
 | Products | `GET /products` (brand/category/series/price/inStock/featured/hero/newArrival/sort/q/page/limit), `GET /products/filter-options`, `GET /products/:slug`, `GET /products/:slug/related` · admin: full CRUD + `POST /admin/products/:id/thumbnail`, `POST /admin/products/:id/gallery`, `DELETE /admin/products/:id/gallery/:index` |
-| Settings | `GET /settings` · admin: `PATCH /admin/settings` |
+| Inventory | admin only: `GET /admin/inventory` (stock/reserved/available per product, `lowStockOnly` filter, search), `GET /admin/inventory/:id/logs` (history), `POST /admin/inventory/:id/adjust` (restock/adjustment, blocked if it would drop stock below `reservedStock`) |
+| Coupons | `POST /coupons/validate` (authenticated) · admin: `GET/POST /admin/coupons`, `GET/PATCH/DELETE /admin/coupons/:id` (code immutable after creation; delete blocked once `usedCount > 0` — deactivate instead) |
+| Settings | `GET /settings` · admin: `PATCH /admin/settings`, `POST /admin/settings/upload-image` (standalone Cloudinary upload for hero-slide images — returns `{url, cloudinaryId}` for the client to attach and save with the next full PATCH) |
 | Newsletter | `POST /newsletter/subscribe` |
 | Wishlist | `GET /wishlist`, `POST/DELETE /wishlist/:productId` (all authenticated) |
 | Cart | `GET /cart`, `POST /cart/items`, `PATCH /cart/items/:productId`, `DELETE /cart/items/:productId`, `POST /cart/merge` (all authenticated — guest cart never touches the server until merge) |
 | Addresses | `GET/POST /addresses`, `PATCH/DELETE /addresses/:id` (all authenticated) |
-| Coupons | `POST /coupons/validate` (authenticated) |
 | Orders | `POST /orders`, `GET /orders` (mine), `GET /orders/:orderNumber` (mine) · admin: `GET /admin/orders` (paginated, filter by `status`, search by `q` on `orderNumber`), `GET /admin/orders/:id`, `PATCH /admin/orders/:id/status` (body: `status`, `note?`, `trackingNumber?`, `courierName?`) |
-| Analytics | admin only: `GET /admin/analytics/summary` (today live + last-7-days), `GET /admin/analytics/daily?days=30` (stored `AnalyticsDaily` history, max 90) |
+| Analytics | admin only: `GET /admin/analytics/summary` (today live + last-7-days), `GET /admin/analytics/daily?days=30` (stored `AnalyticsDaily` history, max 90 — also powers the Reports page's CSV export, no separate reporting backend) |
 
-**Admin UI status:** Products/Brands/Categories (Phase 3) and Orders + Dashboard/Analytics (Phase 9) have full admin dashboard UI. Settings and Coupons have working APIs but no admin dashboard UI yet — deferred to Phase 10 (Settings, Coupons, Customers/user-role-management).
+**Admin UI status:** every domain now has full admin dashboard UI — Products/Brands/Categories (Phase 3), Orders + Dashboard/Analytics (Phase 9), Customers/Coupons/Inventory/Settings/Reports (Phase 10).
 
 ---
 
@@ -152,6 +154,12 @@ Flagged explicitly as they were made, not silently — this section is the runni
 14. **Stale-reservation release job** (Phase 9): a `pending` order older than 48 hours (never confirmed — customer abandoned COD or admin never actioned it) is auto-cancelled hourly by `releaseReservedStock.cron.js`, which reuses the existing `transitionOrderStatus` release path (`actorId: null` marks it system-initiated) rather than a bespoke stock-release code path — one lifecycle implementation, not two.
 15. **`OrderStatusStepper` is one shared component** (`components/shared/`, built on the DaisyUI `steps` primitive reserved for this in Phase 0 §6) rendered on both the customer order-detail page and the admin order-detail page — the fulfillment flow (`pending → confirmed → packed → shipped → delivered`, or a terminal `cancelled`/`refunded` state) is one visual language, not two independently maintained progress indicators.
 16. **Admin dashboard revenue chart is hand-built SVG**, not a charting library — the prescribed stack has no chart dependency, and the dashboard needs exactly one chart (single-series daily revenue line/area), which doesn't justify pulling in a general-purpose charting library. Follows the project's dataviz conventions: one hue (brand primary, since it's a single series — no legend needed), thin 2px line, hover crosshair + tooltip, recessive gridlines.
+17. **Role changes are their own endpoint** (`PATCH /admin/users/:id/role`, admin-only — staff, who share every other `/admin/users` route, are explicitly excluded via a second `authorize("admin")` check on just this route), exactly as scoped in the Phase 0 addendum: guards against self-demotion and demoting the last remaining admin, both enforced server-side so the dashboard can never be locked out of.
+18. **Coupon codes are immutable after creation**; the update endpoint doesn't accept `code`. Changing a distributed code would silently break every customer who already has it — deactivating and issuing a new code is the correct fix, not an edit. Deletion is similarly blocked once `usedCount > 0` (delete would erase real usage history); deactivation is the only path for a used coupon.
+19. **`LOW_STOCK_THRESHOLD` extracted to `config/constants.js`**, shared by the analytics rollup (Phase 9) and the new inventory admin view (Phase 10) — two independent definitions of "low stock" would have been a real (if quiet) bug the moment one got tuned without the other.
+20. **Manual stock adjustments are blocked from dropping `stock` below `reservedStock`** — reducing total stock below what's already promised to pending orders would silently break the reservation invariant the whole checkout/fulfillment lifecycle (Phase 8) depends on. The admin sees a clear error naming the reserved quantity rather than a generic validation failure.
+21. **"Media" scoped into the Settings editor, not a standalone library.** The original Phase 0 folder sketch listed a separate `admin/media/`, but nothing in the spec needs a general asset browser beyond what per-product Cloudinary upload (Phase 3) and hero-banner images (Phase 10) already cover. `POST /admin/settings/upload-image` returns a Cloudinary `{url, cloudinaryId}` for the editor to attach to a hero slide and save with the next full settings PATCH, rather than a slide-index-addressed endpoint that would race against reordering.
+22. **Reports reuses the Phase 9 `AnalyticsDaily` history**, not a separate reporting backend — `GET /admin/analytics/daily` already has everything a daily report needs; the Reports page adds a date-range picker and a client-side CSV export over the same data the Dashboard chart already fetches.
 
 ---
 
@@ -169,7 +177,7 @@ Flagged explicitly as they were made, not silently — this section is the runni
 | 7 | Cart system: persistent, guest, merge, stock validation | ✅ Done |
 | 8 | Checkout, orders, emails, confirmation | ✅ Done (COD only; bKash deferred) |
 | 9 | Order management: admin, customer, tracking, analytics | ✅ Done |
-| 10 | Admin dashboard: complete CRUD, inventory, customers/roles, coupons, media, reports, settings editor | ⬜ Planned |
+| 10 | Admin dashboard: complete CRUD, inventory, customers/roles, coupons, media, reports, settings editor | ✅ Done |
 | 11 | About, Contact, FAQ, Newsletter (admin-facing pieces) | ⬜ Planned |
 | 12 | Testing, performance, accessibility, SEO polish, deployment, documentation | ⬜ Planned |
 

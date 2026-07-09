@@ -22,6 +22,12 @@ import { BrandsPage } from "@/features/admin/brands/BrandsPage";
 import { CategoriesPage } from "@/features/admin/categories/CategoriesPage";
 import { OrdersPage as AdminOrdersPage } from "@/features/admin/orders/OrdersPage";
 import { OrderDetailPage as AdminOrderDetailPage } from "@/features/admin/orders/OrderDetailPage";
+import { CustomersPage } from "@/features/admin/customers/CustomersPage";
+import { CustomerDetailPage } from "@/features/admin/customers/CustomerDetailPage";
+import { CouponsPage } from "@/features/admin/coupons/CouponsPage";
+import { InventoryPage } from "@/features/admin/inventory/InventoryPage";
+import { SettingsPage } from "@/features/admin/settings/SettingsPage";
+import { ReportsPage } from "@/features/admin/reports/ReportsPage";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
 import { UnauthorizedPage } from "@/components/shared/UnauthorizedPage";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
@@ -73,6 +79,12 @@ export const router = createBrowserRouter([
           { path: "categories", element: <CategoriesPage /> },
           { path: "orders", element: <AdminOrdersPage /> },
           { path: "orders/:id", element: <AdminOrderDetailPage /> },
+          { path: "customers", element: <CustomersPage /> },
+          { path: "customers/:id", element: <CustomerDetailPage /> },
+          { path: "coupons", element: <CouponsPage /> },
+          { path: "inventory", element: <InventoryPage /> },
+          { path: "settings", element: <SettingsPage /> },
+          { path: "reports", element: <ReportsPage /> },
         ],
       },
     ],

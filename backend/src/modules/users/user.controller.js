@@ -1,5 +1,5 @@
 import { User } from "./user.model.js";
-import { serializeUser } from "./user.service.js";
+import { serializeUser, serializeUserAdmin } from "./user.service.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -29,4 +29,68 @@ export const deactivateMe = asyncHandler(async (req, res) => {
   if (!user) throw ApiError.notFound("User not found");
   clearAuthCookies(res);
   sendSuccess(res, { message: "Account deactivated" });
+});
+
+export const listUsersAdmin = asyncHandler(async (req, res) => {
+  const { page, limit, q, role, isActive } = req.query;
+  const filter = {
+    ...(role ? { role } : {}),
+    ...(isActive !== undefined ? { isActive } : {}),
+    ...(q ? { $or: [{ name: { $regex: q.trim(), $options: "i" } }, { email: { $regex: q.trim(), $options: "i" } }] } : {}),
+  };
+
+  const skip = (page - 1) * limit;
+  const [items, total] = await Promise.all([
+    User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    User.countDocuments(filter),
+  ]);
+
+  sendSuccess(res, {
+    data: items.map(serializeUserAdmin),
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+  });
+});
+
+export const getUserAdmin = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) throw ApiError.notFound("User not found");
+  sendSuccess(res, { data: serializeUserAdmin(user) });
+});
+
+const ADMIN_EDITABLE_FIELDS = ["name", "phone", "isActive"];
+
+export const updateUserAdmin = asyncHandler(async (req, res) => {
+  const updates = Object.fromEntries(
+    ADMIN_EDITABLE_FIELDS.filter((field) => field in req.body).map((field) => [field, req.body[field]])
+  );
+
+  const user = await User.findByIdAndUpdate(req.params.id, updates, {
+    returnDocument: "after",
+    runValidators: true,
+  });
+  if (!user) throw ApiError.notFound("User not found");
+  sendSuccess(res, { data: serializeUserAdmin(user), message: "User updated" });
+});
+
+// Role changes get their own endpoint (not folded into updateUserAdmin) so these
+// guard clauses can't be bypassed by a general profile edit: an admin can't demote
+// their own account, and can't demote the last remaining admin — both would lock
+// everyone out of the dashboard.
+export const changeUserRole = asyncHandler(async (req, res) => {
+  const { role: newRole } = req.body;
+  const target = await User.findById(req.params.id);
+  if (!target) throw ApiError.notFound("User not found");
+
+  if (target._id.toString() === req.user.id) {
+    throw ApiError.forbidden("You cannot change your own role");
+  }
+
+  if (target.role === "admin" && newRole !== "admin") {
+    const adminCount = await User.countDocuments({ role: "admin" });
+    if (adminCount <= 1) throw ApiError.forbidden("Cannot demote the last remaining admin");
+  }
+
+  target.role = newRole;
+  await target.save();
+  sendSuccess(res, { data: serializeUserAdmin(target), message: "Role updated" });
 });
