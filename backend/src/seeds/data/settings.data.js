@@ -9,19 +9,19 @@ export const settingsSeed = {
       title: "Authenticity, Cast in Metal.",
       subtitle: "Premium 1:64 diecast from Hot Wheels Premium and MINI GT — verified authentic, delivered nationwide.",
       ctaText: "Explore the Collection",
-      ctaLink: "/",
+      ctaLink: "/shop",
     },
     {
       title: "Hot Wheels Premium, Now in Bangladesh.",
       subtitle: "Car Culture, Pop Culture, and F1 Gold Label — Mattel's flagship collector line.",
       ctaText: "Shop Hot Wheels",
-      ctaLink: "/",
+      ctaLink: "/shop?brand=hot-wheels-premium",
     },
     {
       title: "MINI GT: JDM Legends, 1:64 Scale.",
       subtitle: "Museum-grade detailing for the cars that defined a culture.",
       ctaText: "Shop MINI GT",
-      ctaLink: "/",
+      ctaLink: "/shop?brand=mini-gt",
     },
   ],
   announcementBar: {

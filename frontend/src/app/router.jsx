@@ -4,6 +4,7 @@ import { PublicLayout } from "./layouts/PublicLayout";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
 import { HomePage } from "@/features/home/HomePage";
+import { ShopPage } from "@/features/products/ShopPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { path: "/", element: <HomePage /> },
+      { path: "/shop", element: <ShopPage /> },
       {
         element: <ProtectedRoute />,
         children: [{ path: "/account", element: <AccountPage /> }],

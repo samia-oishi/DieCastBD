@@ -14,7 +14,18 @@ const SORT_MAP = {
   "title-asc": { title: 1 },
 };
 
-async function buildPublicFilter({ brand, category, minPrice, maxPrice, inStock, featured, hero, newArrival, q }) {
+async function buildPublicFilter({
+  brand,
+  category,
+  series,
+  minPrice,
+  maxPrice,
+  inStock,
+  featured,
+  hero,
+  newArrival,
+  q,
+}) {
   const filter = { status: "active", isDeleted: false };
 
   if (brand) {
@@ -25,6 +36,7 @@ async function buildPublicFilter({ brand, category, minPrice, maxPrice, inStock,
     const categoryDoc = await Category.findOne({ slug: category });
     filter.category = categoryDoc?._id ?? null;
   }
+  if (series) filter.series = series;
   if (minPrice != null || maxPrice != null) {
     filter.price = {};
     if (minPrice != null) filter.price.$gte = minPrice;
@@ -40,11 +52,25 @@ async function buildPublicFilter({ brand, category, minPrice, maxPrice, inStock,
 }
 
 export const listProducts = asyncHandler(async (req, res) => {
-  const { brand, category, minPrice, maxPrice, inStock, featured, hero, newArrival, sort, q, page, limit } =
-    req.query;
+  const {
+    brand,
+    category,
+    series,
+    minPrice,
+    maxPrice,
+    inStock,
+    featured,
+    hero,
+    newArrival,
+    sort,
+    q,
+    page,
+    limit,
+  } = req.query;
   const filter = await buildPublicFilter({
     brand,
     category,
+    series,
     minPrice,
     maxPrice,
     inStock,
@@ -68,6 +94,26 @@ export const listProducts = asyncHandler(async (req, res) => {
   sendSuccess(res, {
     data: items,
     meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+  });
+});
+
+export const getFilterOptions = asyncHandler(async (req, res) => {
+  const baseFilter = { status: "active", isDeleted: false };
+
+  const [series, priceRange] = await Promise.all([
+    Product.distinct("series", { ...baseFilter, series: { $nin: [null, ""] } }),
+    Product.aggregate([
+      { $match: baseFilter },
+      { $group: { _id: null, min: { $min: "$price" }, max: { $max: "$price" } } },
+    ]),
+  ]);
+
+  sendSuccess(res, {
+    data: {
+      series: series.sort(),
+      minPrice: priceRange[0]?.min ?? 0,
+      maxPrice: priceRange[0]?.max ?? 0,
+    },
   });
 });
 

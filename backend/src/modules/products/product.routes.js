@@ -12,6 +12,7 @@ import {
 } from "./product.validation.js";
 import {
   listProducts,
+  getFilterOptions,
   getProductBySlug,
   getRelatedProducts,
   listProductsAdmin,
@@ -27,6 +28,7 @@ import { Product } from "./product.model.js";
 
 export const publicRouter = Router();
 publicRouter.get("/", validate(listProductsQuerySchema), listProducts);
+publicRouter.get("/filter-options", getFilterOptions); // must precede /:slug or it'd be swallowed as a slug lookup
 publicRouter.get("/:slug", validate(slugParamSchema), getProductBySlug);
 publicRouter.get("/:slug/related", validate(slugParamSchema), getRelatedProducts);
 

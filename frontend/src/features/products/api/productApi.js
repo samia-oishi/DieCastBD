@@ -14,3 +14,8 @@ export async function getRelatedProducts(slug) {
   const { data } = await api.get(`/products/${slug}/related`);
   return data.data;
 }
+
+export async function getFilterOptions() {
+  const { data } = await api.get("/products/filter-options");
+  return data.data;
+}

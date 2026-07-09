@@ -4,6 +4,7 @@ export const listProductsQuerySchema = {
   query: z.object({
     brand: z.string().optional(),
     category: z.string().optional(),
+    series: z.string().optional(),
     minPrice: z.coerce.number().min(0).optional(),
     maxPrice: z.coerce.number().min(0).optional(),
     inStock: z.coerce.boolean().optional(),
