@@ -1,9 +1,17 @@
+import { Link } from "react-router";
 import { Mail, Phone } from "lucide-react";
 
 import { useSettings } from "@/features/settings/api/useSettings";
 import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "@/components/shared/SocialIcons";
 import { Container } from "@/components/shared/Container";
+import { ROUTES } from "@/constants/routes";
 import logo from "@/assets/logo/logo.jpg";
+
+const FOOTER_LINKS = [
+  { to: ROUTES.ABOUT, label: "About" },
+  { to: ROUTES.CONTACT, label: "Contact" },
+  { to: ROUTES.FAQ, label: "FAQ" },
+];
 
 export function Footer() {
   const { data: settings } = useSettings();
@@ -19,6 +27,14 @@ export function Footer() {
         <p className="max-w-sm text-sm text-muted-foreground">
           Premium diecast collectibles for serious collectors in Bangladesh.
         </p>
+
+        <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+          {FOOTER_LINKS.map(({ to, label }) => (
+            <Link key={to} to={to} className="hover:text-foreground">
+              {label}
+            </Link>
+          ))}
+        </nav>
 
         {(hasSocial || hasContact) && (
           <div className="flex items-center gap-4 text-muted-foreground">

@@ -84,12 +84,14 @@ export function SettingsPage() {
       shippingFee: 0,
       freeShippingThreshold: 0,
       seoDefaults: { title: "", description: "" },
+      faqs: [],
     },
   });
 
   const heroBanner = useFieldArray({ control, name: "heroBanner" });
   const whyChooseUs = useFieldArray({ control, name: "whyChooseUs" });
   const testimonials = useFieldArray({ control, name: "testimonials" });
+  const faqs = useFieldArray({ control, name: "faqs" });
 
   useEffect(() => {
     if (settings) reset(settings);
@@ -281,6 +283,39 @@ export function SettingsPage() {
             onClick={() => testimonials.append({ name: "", quote: "", rating: 5 })}
           >
             <Plus /> Add Testimonial
+          </Button>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="FAQ" description="Shown on the public FAQ page.">
+        <div className="flex flex-col gap-4">
+          {faqs.fields.map((field, index) => (
+            <div key={field.id} className="rounded-lg border border-border p-4">
+              <div className="mb-3 flex justify-end">
+                <Button type="button" variant="ghost" size="icon-sm" onClick={() => faqs.remove(index)}>
+                  <Trash2 />
+                </Button>
+              </div>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel>Question</FieldLabel>
+                  <Input {...register(`faqs.${index}.question`, { required: true })} />
+                </Field>
+                <Field>
+                  <FieldLabel>Answer</FieldLabel>
+                  <Textarea rows={2} {...register(`faqs.${index}.answer`, { required: true })} />
+                </Field>
+              </FieldGroup>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() => faqs.append({ question: "", answer: "" })}
+          >
+            <Plus /> Add Question
           </Button>
         </div>
       </SectionCard>

@@ -20,6 +20,11 @@ const testimonial = z.object({
   rating: z.coerce.number().min(1).max(5).optional(),
 });
 
+const faq = z.object({
+  question: z.string().min(1),
+  answer: z.string().min(1),
+});
+
 export const updateSettingsSchema = {
   body: z.object({
     heroBanner: z.array(heroSlide).optional(),
@@ -27,6 +32,7 @@ export const updateSettingsSchema = {
     whyChooseUs: z.array(whyChooseItem).optional(),
     collectorPromise: z.object({ title: z.string().optional(), description: z.string().optional() }).optional(),
     testimonials: z.array(testimonial).optional(),
+    faqs: z.array(faq).optional(),
     socialLinks: z
       .object({ facebook: z.string().optional(), instagram: z.string().optional(), whatsapp: z.string().optional() })
       .optional(),

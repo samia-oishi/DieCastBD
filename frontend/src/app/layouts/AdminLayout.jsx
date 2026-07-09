@@ -10,6 +10,7 @@ import {
   Warehouse,
   Settings,
   FileBarChart,
+  Mail,
   ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { to: "categories", label: "Categories", icon: Tags },
   { to: "customers", label: "Customers", icon: Users },
   { to: "coupons", label: "Coupons", icon: TicketPercent },
+  { to: "newsletter", label: "Newsletter", icon: Mail },
   { to: "reports", label: "Reports", icon: FileBarChart },
   { to: "settings", label: "Settings", icon: Settings },
 ];

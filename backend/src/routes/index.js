@@ -5,7 +5,8 @@ import * as brandRoutes from "../modules/brands/brand.routes.js";
 import * as categoryRoutes from "../modules/categories/category.routes.js";
 import * as productRoutes from "../modules/products/product.routes.js";
 import * as settingsRoutes from "../modules/settings/settings.routes.js";
-import newsletterRoutes from "../modules/newsletter/newsletter.routes.js";
+import * as newsletterRoutes from "../modules/newsletter/newsletter.routes.js";
+import contactRoutes from "../modules/contact/contact.routes.js";
 import wishlistRoutes from "../modules/wishlists/wishlist.routes.js";
 import cartRoutes from "../modules/cart/cart.routes.js";
 import addressRoutes from "../modules/addresses/address.routes.js";
@@ -26,7 +27,8 @@ router.use("/brands", brandRoutes.publicRouter);
 router.use("/categories", categoryRoutes.publicRouter);
 router.use("/products", productRoutes.publicRouter);
 router.use("/settings", settingsRoutes.publicRouter);
-router.use("/newsletter", newsletterRoutes);
+router.use("/newsletter", newsletterRoutes.publicRouter);
+router.use("/contact", contactRoutes);
 router.use("/wishlist", wishlistRoutes);
 router.use("/cart", cartRoutes);
 router.use("/addresses", addressRoutes);
@@ -42,7 +44,8 @@ router.use("/admin/analytics", ...requireAdmin, analyticsRoutes);
 router.use("/admin/users", ...requireAdmin, userRoutes.adminRouter);
 router.use("/admin/coupons", ...requireAdmin, couponRoutes.adminRouter);
 router.use("/admin/inventory", ...requireAdmin, inventoryRoutes);
+router.use("/admin/newsletter", ...requireAdmin, newsletterRoutes.adminRouter);
 
-// Further module routers mount here as each domain is built (Phase 10+).
+// Further module routers mount here as each domain is built (Phase 11+).
 
 export default router;

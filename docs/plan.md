@@ -39,12 +39,14 @@ app/                    # router.jsx, providers/ (AppProviders), layouts/ (Publi
 features/                # one folder per domain — each owns api/, components/, schemas/, hooks/
   auth/ account/ home/ products/ categories/ brands/ cart/ checkout/ orders/
   wishlist/ addresses/ newsletter/ settings/
-  admin/{dashboard,products,brands,categories,catalog,orders,analytics,customers,coupons,inventory,settings,reports}/
+  admin/{dashboard,products,brands,categories,catalog,orders,analytics,customers,coupons,inventory,settings,reports,newsletter}/
+  about-contact/          # AboutPage, ContactPage, FaqPage
 components/
-  ui/                    # shadcn-generated primitives
+  ui/                    # shadcn-generated primitives (Accordion added Phase 11 for the FAQ page)
   shared/                # cross-feature composed components (ProductCard, Container,
                           #   ProductCarouselSection, Breadcrumb, Footer, Pagination, SocialIcons,
-                          #   OrderStatusStepper (DaisyUI steps, shared customer+admin)...)
+                          #   OrderStatusStepper (DaisyUI steps, shared customer+admin),
+                          #   AnnouncementBar...)
 stores/                  # zustand: authStore, cartStore (guest, persisted), recentlyViewedStore (persisted)
 lib/                     # axios instance (+ refresh interceptor), queryClient, firebase.js, utils.js
 hooks/                   # useDebounce...
@@ -59,7 +61,7 @@ config/                  # env.js (Zod-validated, fail-fast), db.js, firebaseAdm
 modules/                 # one folder per domain, each: *.model.js, *.controller.js, *.service.js,
                           #   *.routes.js, *.validation.js
   auth/ users/ brands/ categories/ products/ settings/ newsletter/ wishlists/ cart/
-  addresses/ coupons/ orders/ inventoryLogs/ auditLogs/ analytics/ inventory/
+  addresses/ coupons/ orders/ inventoryLogs/ auditLogs/ analytics/ inventory/ contact/
 middlewares/             # authenticate, authorize(role), validate(schema), errorHandler,
                           #   rateLimiters, upload (Multer), auditLog, sanitize (custom)
 utils/                   # apiResponse, apiError, asyncHandler, slugify, cloudinaryUpload,
@@ -91,7 +93,7 @@ Naming: `camelCase` fields, `PascalCase` model names, plural collections.
 | **Coupon** | Discount codes | `code` (unique), `type` (percentage\|fixed), `value`, `minOrderValue`, `maxDiscount`, `usageLimit`, `usedCount`, `expiresAt`, `isActive` | Admin CRUD UI deferred to Phase 10; model + validate endpoint + 2 seeded test coupons exist now. |
 | **InventoryLog** | Stock movement audit trail | `product` (ref), `type` (restock\|sale\|reservation\|release\|adjustment), `quantityChange` (signed), `reason`, `referenceOrder`, `performedBy` | Written automatically at every reserve/commit/release transition (see §7 stock lifecycle). |
 | **AuditLog** | Admin mutation trail | `actor`, `action`, `entityType`, `entityId`, `before`, `after`, `ip` | Written by a middleware wrapping every admin mutation route — not hand-called per controller, so it can't be forgotten. |
-| **Settings** | Singleton CMS content | `heroBanner[]`, `announcementBar`, `whyChooseUs[]`, `collectorPromise`, `testimonials[]`, `socialLinks`, `contactInfo`, `shippingFee`, `freeShippingThreshold`, `seoDefaults` | Testimonials/social/contact deliberately seeded empty — no fabricated content. Admin editor UI deferred to Phase 10. |
+| **Settings** | Singleton CMS content | `heroBanner[]`, `announcementBar`, `whyChooseUs[]`, `collectorPromise`, `testimonials[]`, `faqs[]`, `socialLinks`, `contactInfo`, `shippingFee`, `freeShippingThreshold`, `seoDefaults` | Testimonials/social/contact/faqs deliberately seeded empty — no fabricated content. Full admin editor UI (Phase 10, `faqs[]` added Phase 11). |
 | **NewsletterSubscriber** | Email capture | `email` (unique), `subscribedAt`, `isActive` | |
 
 ---
@@ -110,7 +112,8 @@ Base path `/api/v1`. Envelope: `{ success, data, meta? }` / `{ success: false, m
 | Inventory | admin only: `GET /admin/inventory` (stock/reserved/available per product, `lowStockOnly` filter, search), `GET /admin/inventory/:id/logs` (history), `POST /admin/inventory/:id/adjust` (restock/adjustment, blocked if it would drop stock below `reservedStock`) |
 | Coupons | `POST /coupons/validate` (authenticated) · admin: `GET/POST /admin/coupons`, `GET/PATCH/DELETE /admin/coupons/:id` (code immutable after creation; delete blocked once `usedCount > 0` — deactivate instead) |
 | Settings | `GET /settings` · admin: `PATCH /admin/settings`, `POST /admin/settings/upload-image` (standalone Cloudinary upload for hero-slide images — returns `{url, cloudinaryId}` for the client to attach and save with the next full PATCH) |
-| Newsletter | `POST /newsletter/subscribe` |
+| Newsletter | `POST /newsletter/subscribe` · admin: `GET /admin/newsletter/subscribers` (search, paginated) |
+| Contact | `POST /contact` (name/email/message → emails the store's configured contact address via Resend; no message persistence — see §7) |
 | Wishlist | `GET /wishlist`, `POST/DELETE /wishlist/:productId` (all authenticated) |
 | Cart | `GET /cart`, `POST /cart/items`, `PATCH /cart/items/:productId`, `DELETE /cart/items/:productId`, `POST /cart/merge` (all authenticated — guest cart never touches the server until merge) |
 | Addresses | `GET/POST /addresses`, `PATCH/DELETE /addresses/:id` (all authenticated) |
@@ -160,6 +163,9 @@ Flagged explicitly as they were made, not silently — this section is the runni
 20. **Manual stock adjustments are blocked from dropping `stock` below `reservedStock`** — reducing total stock below what's already promised to pending orders would silently break the reservation invariant the whole checkout/fulfillment lifecycle (Phase 8) depends on. The admin sees a clear error naming the reserved quantity rather than a generic validation failure.
 21. **"Media" scoped into the Settings editor, not a standalone library.** The original Phase 0 folder sketch listed a separate `admin/media/`, but nothing in the spec needs a general asset browser beyond what per-product Cloudinary upload (Phase 3) and hero-banner images (Phase 10) already cover. `POST /admin/settings/upload-image` returns a Cloudinary `{url, cloudinaryId}` for the editor to attach to a hero slide and save with the next full settings PATCH, rather than a slide-index-addressed endpoint that would race against reordering.
 22. **Reports reuses the Phase 9 `AnalyticsDaily` history**, not a separate reporting backend — `GET /admin/analytics/daily` already has everything a daily report needs; the Reports page adds a date-range picker and a client-side CSV export over the same data the Dashboard chart already fetches.
+23. **Contact form is a stateless email relay, not a persisted collection.** The original DB schema list never included a `ContactMessage` model, and adding one (plus the admin inbox UI it would need) is real scope the spec never asked for. `POST /contact` sends straight to the store's configured contact email (`Settings.contactInfo.email`, falling back to the first `ADMIN_EMAILS` entry) via the existing Resend integration. Unlike order-confirmation email — a nice-to-have on top of an order that already succeeded — delivering the message *is* the entire point of this endpoint, so a missing recipient or a Resend failure throws and surfaces as a real error instead of silently reporting "Message sent."
+24. **FAQ content is admin-editable (`Settings.faqs[]`), not hardcoded.** Same pattern as testimonials/social links since Phase 4: no real FAQ copy existed to ship, so the page renders an empty state pointing to Contact until the admin adds real questions through the Settings editor — never fabricated placeholder policy text.
+25. **`components/ui/accordion.jsx` added in Phase 11** — reserved for exactly this (PDP specs/FAQ) back in the Phase 0 shadcn/DaisyUI split, but never actually generated until the FAQ page needed it. Hand-written against the project's `radix-ui` unified-package convention (matching `switch.jsx`/`separator.jsx`), not the shadcn CLI, since `tw-animate-css` (already imported project-wide) ships the `accordion-down`/`accordion-up` keyframes it needs.
 
 ---
 
@@ -178,7 +184,7 @@ Flagged explicitly as they were made, not silently — this section is the runni
 | 8 | Checkout, orders, emails, confirmation | ✅ Done (COD only; bKash deferred) |
 | 9 | Order management: admin, customer, tracking, analytics | ✅ Done |
 | 10 | Admin dashboard: complete CRUD, inventory, customers/roles, coupons, media, reports, settings editor | ✅ Done |
-| 11 | About, Contact, FAQ, Newsletter (admin-facing pieces) | ⬜ Planned |
+| 11 | About, Contact, FAQ, Newsletter (admin-facing pieces) | ✅ Done |
 | 12 | Testing, performance, accessibility, SEO polish, deployment, documentation | ⬜ Planned |
 
 Credentials wired in so far: MongoDB Atlas, Firebase (client + Admin SDK), Cloudinary, Resend (sending from `noreply@diecastbd.com`, domain verified — delivers to any recipient). bKash intentionally not requested yet.

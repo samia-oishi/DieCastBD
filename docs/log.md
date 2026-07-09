@@ -148,6 +148,20 @@ User reported the announcement bar "does not work" after reviewing the new Setti
 
 **Fix:** added `components/shared/AnnouncementBar.jsx` (renders nothing when `isActive` is false or `text` is empty) and mounted it at the top of `PublicLayout`, above the sticky header. While fixing this, also caught and removed a duplicate: the new admin Settings API had its own `getSettings`/`useSettings` that exactly re-implemented the existing public `features/settings/api/useSettings.js` hook (already used by the homepage) — the admin `SettingsPage` now imports the shared one instead of a second copy of the same query.
 
+## Phase 11 — About, Contact, FAQ, Newsletter (admin-facing pieces)
+
+Surveyed what already existed before building: newsletter customer signup (`NewsletterForm` on the homepage) was already live since Phase 4, but had no admin visibility into who'd subscribed; About, Contact, and FAQ had reserved routes (`ROUTES.ABOUT`/`CONTACT`) and an empty `features/about-contact/` folder from the Phase 0 scaffold, but no pages, no backend `/contact` endpoint, and no Footer links — genuinely nothing built yet, confirmed by grepping for any consumer of those routes.
+
+**Newsletter (admin side)**: added `GET /admin/newsletter/subscribers` (search, paginated) alongside the existing public subscribe endpoint. Frontend `NewsletterPage` (admin) — searchable table plus a client-side CSV export, same pattern as Reports.
+
+**Contact**: new stateless `contact` module — `POST /contact` validates name/email/message and emails it via the existing Resend integration to `Settings.contactInfo.email` (falling back to the first `ADMIN_EMAILS` entry). Deliberately not backed by a new `ContactMessage` collection — the original DB schema never specified one, and a persisted admin inbox would be real unrequested scope. Unlike the order-confirmation email (a nice-to-have layered on an order that already succeeded), the email delivery *is* the entire point of this endpoint, so a missing recipient or a Resend failure now throws and returns a real error rather than the silent-success pattern that caused the Phase 9 email bug — deliberately not repeating that mistake here. Verified live: a real test message sent successfully to the store's own admin inbox.
+
+**FAQ**: added `faqs[]` to the `Settings` model (question/answer pairs), following the same "seed empty, no fabricated content" pattern established for testimonials and social links back in Phase 4 — there was no real FAQ copy to ship, so invented policy text (return windows, specific couriers, etc.) would have been exactly the kind of fabrication the project has avoided everywhere else. The FAQ page renders an empty state pointing to Contact until the admin adds real questions through a new FAQ section in the Settings editor. Needed `components/ui/accordion.jsx`, which had been reserved for this exact use case (PDP specs/FAQ) back in the Phase 0 shadcn/DaisyUI split but never actually generated — hand-written against the project's `radix-ui` unified-package convention, confirmed `tw-animate-css` (already imported globally) ships the `accordion-down`/`accordion-up` keyframes it needs.
+
+**About**: built from real, already-approved content only — the business positioning from the original project brief (Hot Wheels Premium + MINI GT, Bangladesh, collector-focused) plus the existing `Settings.collectorPromise` copy and `whyChooseUs` grid (both real content seeded in Phase 4), reusing the homepage's `WhyChooseUsSection` component rather than duplicating its rendering logic.
+
+Wired `/about`, `/contact`, `/faq` into the router and added a Footer nav row linking all three (previously the Footer had social/contact icons but no page links at all). Added "Newsletter" to the admin sidebar.
+
 ---
 
 <!-- Append new entries below this line as work continues, following the same format:

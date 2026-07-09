@@ -15,6 +15,9 @@ import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
 import { AccountPage } from "@/features/account/AccountPage";
+import { AboutPage } from "@/features/about-contact/AboutPage";
+import { ContactPage } from "@/features/about-contact/ContactPage";
+import { FaqPage } from "@/features/about-contact/FaqPage";
 import { DashboardPage } from "@/features/admin/dashboard/DashboardPage";
 import { ProductsPage } from "@/features/admin/products/ProductsPage";
 import { ProductFormPage } from "@/features/admin/products/ProductFormPage";
@@ -28,6 +31,7 @@ import { CouponsPage } from "@/features/admin/coupons/CouponsPage";
 import { InventoryPage } from "@/features/admin/inventory/InventoryPage";
 import { SettingsPage } from "@/features/admin/settings/SettingsPage";
 import { ReportsPage } from "@/features/admin/reports/ReportsPage";
+import { NewsletterPage as AdminNewsletterPage } from "@/features/admin/newsletter/NewsletterPage";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
 import { UnauthorizedPage } from "@/components/shared/UnauthorizedPage";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
@@ -44,6 +48,9 @@ export const router = createBrowserRouter([
       { path: "/shop", element: <ShopPage /> },
       { path: "/products/:slug", element: <ProductDetailPage /> },
       { path: "/cart", element: <CartPage /> },
+      { path: "/about", element: <AboutPage /> },
+      { path: "/contact", element: <ContactPage /> },
+      { path: "/faq", element: <FaqPage /> },
       {
         element: <ProtectedRoute />,
         children: [
@@ -85,6 +92,7 @@ export const router = createBrowserRouter([
           { path: "inventory", element: <InventoryPage /> },
           { path: "settings", element: <SettingsPage /> },
           { path: "reports", element: <ReportsPage /> },
+          { path: "newsletter", element: <AdminNewsletterPage /> },
         ],
       },
     ],

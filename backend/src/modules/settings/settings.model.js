@@ -34,6 +34,14 @@ const testimonialSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const faqSchema = new mongoose.Schema(
+  {
+    question: { type: String, required: true },
+    answer: { type: String, required: true },
+  },
+  { _id: false }
+);
+
 const settingsSchema = new mongoose.Schema(
   {
     heroBanner: { type: [heroSlideSchema], default: [] },
@@ -47,6 +55,7 @@ const settingsSchema = new mongoose.Schema(
       description: String,
     },
     testimonials: { type: [testimonialSchema], default: [] },
+    faqs: { type: [faqSchema], default: [] },
     socialLinks: {
       facebook: String,
       instagram: String,
