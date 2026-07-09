@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Pagination } from "@/components/shared/Pagination";
+import { Container } from "@/components/shared/Container";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useProducts } from "./api/useProducts";
 import { useShopFilters } from "./hooks/useShopFilters";
@@ -40,7 +41,7 @@ export function ShopPage() {
         <title>Shop — DiecastBD</title>
       </Helmet>
 
-      <div className="mx-auto max-w-7xl px-6 py-10 sm:px-10">
+      <Container className="py-10">
         <h1 className="mb-6 font-heading text-3xl text-foreground">Shop</h1>
 
         <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -110,7 +111,7 @@ export function ShopPage() {
             )}
           </div>
         </div>
-      </div>
+      </Container>
     </>
   );
 }

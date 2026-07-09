@@ -2,6 +2,7 @@ import { Mail, Phone } from "lucide-react";
 
 import { useSettings } from "@/features/settings/api/useSettings";
 import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "@/components/shared/SocialIcons";
+import { Container } from "@/components/shared/Container";
 import logo from "@/assets/logo/logo.jpg";
 
 export function Footer() {
@@ -12,8 +13,8 @@ export function Footer() {
   const hasContact = contact.email || contact.phone;
 
   return (
-    <footer className="border-t border-border px-6 py-12 sm:px-10">
-      <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 text-center">
+    <footer className="border-t border-border py-12">
+      <Container className="flex flex-col items-center gap-6 text-center">
         <img src={logo} alt="DiecastBD" className="h-6 w-auto" />
         <p className="max-w-sm text-sm text-muted-foreground">
           Premium diecast collectibles for serious collectors in Bangladesh.
@@ -50,7 +51,7 @@ export function Footer() {
         )}
 
         <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} DiecastBD. All rights reserved.</p>
-      </div>
+      </Container>
     </footer>
   );
 }

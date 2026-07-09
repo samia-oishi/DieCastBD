@@ -1,10 +1,11 @@
 import { CarFront } from "lucide-react";
 import { InstagramIcon } from "@/components/shared/SocialIcons";
+import { Container } from "@/components/shared/Container";
 
 export function InstagramPlaceholder({ instagramUrl }) {
   return (
-    <section className="border-t border-border px-6 py-16 sm:px-10">
-      <div className="mx-auto max-w-7xl">
+    <section className="border-t border-border py-16">
+      <Container>
         <div className="mb-8 flex items-center justify-center gap-2">
           <InstagramIcon className="size-5 text-muted-foreground" />
           <h2 className="font-heading text-2xl text-foreground sm:text-3xl">@diecastbd</h2>
@@ -28,7 +29,7 @@ export function InstagramPlaceholder({ instagramUrl }) {
             </a>
           </div>
         )}
-      </div>
+      </Container>
     </section>
   );
 }

@@ -1,12 +1,13 @@
 import { Star } from "lucide-react";
+import { Container } from "@/components/shared/Container";
 
 // Hidden entirely until real reviews exist — no fabricated testimonials.
 export function TestimonialsSection({ testimonials }) {
   if (!testimonials?.length) return null;
 
   return (
-    <section className="border-t border-border bg-card/40 px-6 py-16 sm:px-10">
-      <div className="mx-auto max-w-7xl">
+    <section className="border-t border-border bg-card/40 py-16">
+      <Container>
         <h2 className="mb-10 text-center font-heading text-2xl text-foreground sm:text-3xl">
           What Collectors Say
         </h2>
@@ -23,7 +24,7 @@ export function TestimonialsSection({ testimonials }) {
             </div>
           ))}
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

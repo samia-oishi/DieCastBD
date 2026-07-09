@@ -1,4 +1,5 @@
 import { ShieldCheck, Package, Truck, Sparkles, Award, Clock, Heart, Star } from "lucide-react";
+import { Container } from "@/components/shared/Container";
 
 // Explicit map (not `import * as Icons`) so bundlers can tree-shake — the full
 // lucide-react set is 1000+ icons and importing all of it bloats the bundle for
@@ -9,8 +10,8 @@ export function WhyChooseUsSection({ items }) {
   if (!items?.length) return null;
 
   return (
-    <section className="border-t border-border bg-card/40 px-6 py-16 sm:px-10">
-      <div className="mx-auto max-w-7xl">
+    <section className="border-t border-border bg-card/40 py-16">
+      <Container>
         <h2 className="mb-10 text-center font-heading text-2xl text-foreground sm:text-3xl">Why Choose DiecastBD</h2>
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((item) => {
@@ -28,7 +29,7 @@ export function WhyChooseUsSection({ items }) {
             );
           })}
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

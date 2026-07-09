@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { CarFront } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { WishlistButton } from "@/features/wishlist/components/WishlistButton";
 
 function formatPrice(amount) {
   return `৳${Math.round(amount).toLocaleString("en-US")}`;
@@ -42,6 +43,8 @@ export function ProductCard({ product, className }) {
             <span className="text-sm font-medium text-foreground">Sold Out</span>
           </div>
         )}
+
+        <WishlistButton product={product} className="absolute right-2 top-2" />
       </div>
 
       <div className="flex flex-col gap-0.5">

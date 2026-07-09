@@ -5,6 +5,8 @@ import { AuthLayout } from "./layouts/AuthLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
 import { HomePage } from "@/features/home/HomePage";
 import { ShopPage } from "@/features/products/ShopPage";
+import { ProductDetailPage } from "@/features/products/ProductDetailPage";
+import { WishlistPage } from "@/features/wishlist/WishlistPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
@@ -20,17 +22,21 @@ import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { RequireRole } from "@/components/shared/RequireRole";
 import { ROLES } from "@/constants/routes";
 
-// The rest of the public routes (shop, PDP, cart, checkout...) and protected
-// customer routes (orders, wishlist...) wire in the same way as each phase builds them.
+// Remaining public routes (cart, checkout...) and protected customer routes
+// (orders...) wire in the same way as each phase builds them.
 export const router = createBrowserRouter([
   {
     element: <PublicLayout />,
     children: [
       { path: "/", element: <HomePage /> },
       { path: "/shop", element: <ShopPage /> },
+      { path: "/products/:slug", element: <ProductDetailPage /> },
       {
         element: <ProtectedRoute />,
-        children: [{ path: "/account", element: <AccountPage /> }],
+        children: [
+          { path: "/account", element: <AccountPage /> },
+          { path: "/wishlist", element: <WishlistPage /> },
+        ],
       },
     ],
   },

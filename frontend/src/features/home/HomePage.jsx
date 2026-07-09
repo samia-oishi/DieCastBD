@@ -4,7 +4,7 @@ import { useSettings } from "@/features/settings/api/useSettings";
 import { useProducts } from "@/features/products/api/useProducts";
 import { useBrands } from "@/features/brands/api/useBrands";
 import { HeroSection } from "./components/HeroSection";
-import { ProductCarouselSection } from "./components/ProductCarouselSection";
+import { ProductCarouselSection } from "@/components/shared/ProductCarouselSection";
 import { BrandsStrip } from "./components/BrandsStrip";
 import { WhyChooseUsSection } from "./components/WhyChooseUsSection";
 import { CollectorPromiseSection } from "./components/CollectorPromiseSection";

@@ -10,6 +10,7 @@ export const ROUTES = {
   REGISTER: "/register",
   FORGOT_PASSWORD: "/forgot-password",
   ACCOUNT: "/account",
+  WISHLIST: "/wishlist",
   ADMIN: "/admin",
   UNAUTHORIZED: "/unauthorized",
 };

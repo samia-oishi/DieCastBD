@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/shared/ProductCard";
+import { Container } from "@/components/shared/Container";
 
 function CarouselSkeleton() {
   return (
@@ -40,8 +41,8 @@ export function ProductCarouselSection({ title, subtitle, products, isLoading })
   if (!isLoading && (!products || products.length === 0)) return null;
 
   return (
-    <section className="px-6 py-16 sm:px-10">
-      <div className="mx-auto max-w-7xl">
+    <section className="py-16">
+      <Container>
         <div className="mb-6 flex items-end justify-between">
           <div>
             <h2 className="font-heading text-2xl text-foreground sm:text-3xl">{title}</h2>
@@ -78,7 +79,7 @@ export function ProductCarouselSection({ title, subtitle, products, isLoading })
             </div>
           </div>
         )}
-      </div>
+      </Container>
     </section>
   );
 }
