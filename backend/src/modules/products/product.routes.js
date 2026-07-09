@@ -1,0 +1,58 @@
+import { Router } from "express";
+import { validate } from "../../middlewares/validate.js";
+import { auditLog } from "../../middlewares/auditLog.js";
+import { upload } from "../../middlewares/upload.js";
+import {
+  listProductsQuerySchema,
+  slugParamSchema,
+  idParamSchema,
+  createProductSchema,
+  updateProductSchema,
+  galleryIndexParamSchema,
+} from "./product.validation.js";
+import {
+  listProducts,
+  getProductBySlug,
+  getRelatedProducts,
+  listProductsAdmin,
+  getProductAdmin,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  uploadThumbnail,
+  addGalleryImages,
+  deleteGalleryImage,
+} from "./product.controller.js";
+import { Product } from "./product.model.js";
+
+export const publicRouter = Router();
+publicRouter.get("/", validate(listProductsQuerySchema), listProducts);
+publicRouter.get("/:slug", validate(slugParamSchema), getProductBySlug);
+publicRouter.get("/:slug/related", validate(slugParamSchema), getRelatedProducts);
+
+export const adminRouter = Router();
+adminRouter.get("/", validate(listProductsQuerySchema), listProductsAdmin);
+adminRouter.get("/:id", validate(idParamSchema), getProductAdmin);
+adminRouter.post("/", validate(createProductSchema), auditLog("Product"), createProduct);
+adminRouter.patch("/:id", validate(updateProductSchema), auditLog("Product", Product), updateProduct);
+adminRouter.delete("/:id", validate(idParamSchema), auditLog("Product", Product), deleteProduct);
+adminRouter.post(
+  "/:id/thumbnail",
+  validate(idParamSchema),
+  upload.single("image"),
+  auditLog("Product", Product),
+  uploadThumbnail
+);
+adminRouter.post(
+  "/:id/gallery",
+  validate(idParamSchema),
+  upload.array("images", 10),
+  auditLog("Product", Product),
+  addGalleryImages
+);
+adminRouter.delete(
+  "/:id/gallery/:index",
+  validate(galleryIndexParamSchema),
+  auditLog("Product", Product),
+  deleteGalleryImage
+);

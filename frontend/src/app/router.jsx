@@ -9,6 +9,10 @@ import { RegisterPage } from "@/features/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
 import { AccountPage } from "@/features/account/AccountPage";
 import { DashboardPage } from "@/features/admin/dashboard/DashboardPage";
+import { ProductsPage } from "@/features/admin/products/ProductsPage";
+import { ProductFormPage } from "@/features/admin/products/ProductFormPage";
+import { BrandsPage } from "@/features/admin/brands/BrandsPage";
+import { CategoriesPage } from "@/features/admin/categories/CategoriesPage";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
 import { UnauthorizedPage } from "@/components/shared/UnauthorizedPage";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
@@ -42,7 +46,14 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AdminLayout />,
-        children: [{ index: true, element: <DashboardPage /> }],
+        children: [
+          { index: true, element: <DashboardPage /> },
+          { path: "products", element: <ProductsPage /> },
+          { path: "products/new", element: <ProductFormPage /> },
+          { path: "products/:id", element: <ProductFormPage /> },
+          { path: "brands", element: <BrandsPage /> },
+          { path: "categories", element: <CategoriesPage /> },
+        ],
       },
     ],
   },

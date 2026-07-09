@@ -1,0 +1,23 @@
+import { z } from "zod";
+
+export const productSchema = z.object({
+  sku: z.string().min(1, "SKU is required"),
+  title: z.string().min(1, "Title is required"),
+  brand: z.string().min(1, "Brand is required"),
+  category: z.array(z.string()).optional().default([]),
+  manufacturer: z.string().optional().or(z.literal("")),
+  series: z.string().optional().or(z.literal("")),
+  modelNumber: z.string().optional().or(z.literal("")),
+  scale: z.string().optional().or(z.literal("")),
+  material: z.string().optional().or(z.literal("")),
+  color: z.string().optional().or(z.literal("")),
+  description: z.string().optional().or(z.literal("")),
+  price: z.coerce.number().min(0, "Price must be positive"),
+  salePrice: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
+  costPrice: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
+  stock: z.coerce.number().int().min(0),
+  status: z.enum(["draft", "active", "archived"]),
+  isFeatured: z.boolean().optional(),
+  isHeroProduct: z.boolean().optional(),
+  isNewArrival: z.boolean().optional(),
+});
