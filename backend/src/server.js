@@ -1,9 +1,11 @@
 import { env } from "./config/env.js";
 import { connectDB } from "./config/db.js";
 import { app } from "./app.js";
+import { startScheduledJobs } from "./jobs/scheduler.js";
 
 async function start() {
   await connectDB();
+  startScheduledJobs();
 
   const server = app.listen(env.PORT, () => {
     console.log(`DiecastBD API listening on port ${env.PORT} [${env.NODE_ENV}]`);

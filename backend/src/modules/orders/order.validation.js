@@ -21,6 +21,7 @@ export const listOrdersQuerySchema = {
     status: z
       .enum(["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"])
       .optional(),
+    q: z.string().optional(), // matches orderNumber
   }),
 };
 
@@ -29,5 +30,11 @@ export const updateStatusSchema = {
   body: z.object({
     status: z.enum(["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"]),
     note: z.string().optional(),
+    trackingNumber: z.string().optional(),
+    courierName: z.string().optional(),
   }),
+};
+
+export const idParamSchema = {
+  params: z.object({ id: z.string().min(1) }),
 };

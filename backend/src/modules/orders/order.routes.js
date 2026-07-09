@@ -7,12 +7,14 @@ import {
   orderNumberParamSchema,
   listOrdersQuerySchema,
   updateStatusSchema,
+  idParamSchema,
 } from "./order.validation.js";
 import {
   createOrder,
   getMyOrders,
   getMyOrderByNumber,
   listOrdersAdmin,
+  getOrderAdmin,
   updateOrderStatusAdmin,
 } from "./order.controller.js";
 import { Order } from "./order.model.js";
@@ -25,6 +27,7 @@ customerRouter.get("/:orderNumber", validate(orderNumberParamSchema), getMyOrder
 
 export const adminRouter = Router();
 adminRouter.get("/", validate(listOrdersQuerySchema), listOrdersAdmin);
+adminRouter.get("/:id", validate(idParamSchema), getOrderAdmin);
 adminRouter.patch(
   "/:id/status",
   validate(updateStatusSchema),

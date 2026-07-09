@@ -129,7 +129,14 @@ export async function createOrderFromCart({ userId, shippingAddress, phone, deli
   return order;
 }
 
-export async function transitionOrderStatus({ orderId, newStatus, note, actorId }) {
+export async function transitionOrderStatus({
+  orderId,
+  newStatus,
+  note,
+  actorId,
+  trackingNumber,
+  courierName,
+}) {
   const order = await Order.findById(orderId);
   if (!order) throw ApiError.notFound("Order not found");
 
@@ -206,6 +213,8 @@ export async function transitionOrderStatus({ orderId, newStatus, note, actorId 
 
       order.status = newStatus;
       order.statusHistory.push({ status: newStatus, note, changedBy: actorId, at: new Date() });
+      if (trackingNumber) order.trackingNumber = trackingNumber;
+      if (courierName) order.courierName = courierName;
       await order.save({ session });
     });
   } finally {

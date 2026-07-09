@@ -64,6 +64,8 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
     statusHistory: { type: [statusHistoryEntrySchema], default: [] },
+    trackingNumber: { type: String, default: null },
+    courierName: { type: String, default: null },
   },
   { timestamps: true }
 );

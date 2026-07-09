@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/shared/Container";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
+import { OrderStatusStepper } from "@/components/shared/OrderStatusStepper";
 import { ROUTES } from "@/constants/routes";
 import { useOrder } from "./api/useOrders";
 import { OrderStatusBadge } from "./components/OrderStatusBadge";
@@ -46,6 +47,18 @@ export function OrderDetailPage() {
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
+
+      <div className="mb-8 overflow-x-auto rounded-lg border border-border p-4">
+        <OrderStatusStepper status={order.status} />
+      </div>
+
+      {order.trackingNumber && (
+        <div className="mb-8 rounded-lg border border-border p-4 text-sm">
+          <span className="text-muted-foreground">Tracking number:</span>{" "}
+          <span className="font-medium text-foreground">{order.trackingNumber}</span>
+          {order.courierName && <span className="text-muted-foreground"> via {order.courierName}</span>}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
         <div className="flex flex-col gap-4 lg:col-span-2">

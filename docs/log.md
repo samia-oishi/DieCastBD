@@ -102,6 +102,32 @@ User already owned `diecastbd.com` and verified it with Resend (added the SPF/DK
 
 ---
 
+## Phase 9 — Order Management: Admin, Customer Tracking, Analytics
+
+Triggered by the user noticing their own real checkout ("order flow is incomplete i dont see a confirmed order in admin dashboard") — confirmed this was expected Phase 9 scope, not a Phase 8 gap, and proceeded.
+
+**Backend:** `Order` gained `statusHistory[]` (status/note/changedBy/at — already existed structurally but is now populated on every transition), plus `trackingNumber`/`courierName`, settable when an admin transitions an order to `shipped`. `transitionOrderStatus` (the existing stock-reservation-aware service from Phase 8) extended to accept and persist them rather than adding a second write path. New admin endpoints: `GET /admin/orders/:id` (populates customer name/email/phone) and search-by-`orderNumber` (`?q=`) on the existing list endpoint.
+
+New `analytics` module: `AnalyticsDaily` model + `computeDailyRollup()`/`upsertDailyRollup()`/`getSummary()`/`getDailyHistory()`. `LOW_STOCK_THRESHOLD` set to 2 units, not a generic "10 units" default — collector diecast is seeded with naturally thin per-SKU stock (1-4 units typical), so a bulkier-retail threshold would flag almost the entire catalog as low-stock and make the signal useless. `GET /admin/analytics/summary` computes today live (the stored table won't have today's row until the nightly job runs) plus a live last-7-days total; `GET /admin/analytics/daily` serves the stored history.
+
+Two `node-cron` jobs wired in via a new `jobs/scheduler.js`, started from `server.js` right after the DB connects: a nightly rollup (`5 0 * * *` UTC) that computes *yesterday's* rollup (today isn't finished yet) and upserts it into `AnalyticsDaily`, and an hourly stale-reservation release (`0 * * * *`) that finds `pending` orders older than 48 hours (abandoned COD orders nobody ever confirmed) and auto-cancels them by calling the existing `transitionOrderStatus` release path with `actorId: null` — reusing the Phase 8 stock-release logic rather than writing a second one.
+
+**Frontend:** new admin `orders` and `analytics` features. `OrderStatusStepper` (new shared component, built on the DaisyUI `steps` primitive reserved for exactly this in Phase 0) renders the fulfillment flow (`pending → confirmed → packed → shipped → delivered`, or a terminal cancelled/refunded banner) and is used on *both* the customer-facing order-detail page and the new admin order-detail page — one shared visual language for order status, not two maintained separately. Admin `OrdersPage` (debounced search, status filter, paginated table) and `OrderDetailPage` (items/totals/address/status-history, plus an inline status-transition form that reveals tracking-number/courier inputs only when the selected next status is `shipped`). Customer `OrderDetailPage` (from Phase 8) updated to render the same stepper and a tracking-number display block when present.
+
+Admin Dashboard (previously a Phase 1 placeholder) rebuilt with real data: stat cards (today's revenue/orders, last-7-days revenue/orders, new customers today, low-stock count) and a hand-built SVG revenue line/area chart (no charting library in the stack, and a single-series daily-revenue chart doesn't justify adding one) with hover crosshair + tooltip, following the project's dataviz conventions — one hue since it's a single series (brand primary lime, no legend needed), thin 2px line, recessive gridlines. A top-products-today list rounds out the dashboard, linking each product through to its admin edit page.
+
+Wired `/admin/orders` and `/admin/orders/:id` into the router (aliased imports since the customer-facing `OrdersPage`/`OrderDetailPage` names were already taken) and added an "Orders" entry to the admin sidebar nav.
+
+**Verification:** full lifecycle tested via curl end-to-end against a disposable test order (created, transitioned through `confirmed` → `shipped` with tracking info, confirmed `statusHistory`/tracking fields persisted correctly) — deliberately kept separate from the user's real pending order `DBD-20260709-B4519B` so it was never touched by testing. Also verified the analytics rollup computation directly against real order data, `releaseStaleReservations()` running cleanly with zero eligible orders (nothing old enough yet), and admin order search matching partial order numbers. No bugs found this phase — all backend paths passed on first verification.
+
+## Phase 9 bugfix — order confirmation email never sent (real bug, user-reported)
+
+User placed a real order from a logged-in customer account and got no confirmation email. Backend log showed the actual failure: `Order confirmation email failed: Resend: Missing \`to\` field.` Root cause: `authenticate` middleware deliberately keeps the JWT payload minimal — `req.user = { id, role} }` only, no name/email, to keep the token small and avoid baking in stale profile data. `createOrder` was passing `req.user` straight into `sendOrderConfirmationEmail`, which needs `.name`/`.email` for the `to` field and greeting — both were always `undefined` on that path. This bug existed since Phase 8 but was never caught because Phase 8's email verification called `sendOrderConfirmationEmail` directly with a hand-built fake user object (real name/email), never through the actual authenticated order-creation controller.
+
+**Fix:** `createOrder` now fetches the real `User` document (`User.findById(req.user.id).select("name email")`) before sending, and passes that to the email function instead of the minimal JWT-derived `req.user`. Verified by fetching the real customer's account this way and sending an actual order-confirmation email end-to-end — delivered successfully, confirming the fix.
+
+---
+
 <!-- Append new entries below this line as work continues, following the same format:
 one heading per phase or per notable change, prose paragraphs (not just bullet diffs),
 call out bugs found/fixed explicitly, and note any credentials obtained. -->

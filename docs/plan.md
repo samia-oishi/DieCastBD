@@ -18,7 +18,7 @@ Living architecture document for DiecastBD v1.0 — a premium, collector-focused
 
 **Frontend:** React 19, Vite, `react-router` v8 (no `react-router-dom`), Tailwind CSS v4, shadcn/ui (primary component layer, Radix-based) + DaisyUI (scoped to Rating/Steps/Loading only), Framer Motion, Embla Carousel (+ autoplay plugin), React Hook Form, Zod, Zustand (+ persist middleware for guest cart / recently-viewed), TanStack Query, Axios, React Hot Toast, React Helmet Async, Lucide React.
 
-**Backend:** Node.js (ESM), Express 5, MongoDB Atlas, Mongoose 9, Firebase Admin SDK, `jsonwebtoken`, Multer, Cloudinary SDK, Zod, Helmet, `express-rate-limit`, Morgan, CORS, Compression, Dotenv, `cookie-parser`, Resend, `node-cron` (planned, not yet wired), `bcrypt` (unused — Firebase owns credentials, no passwords stored locally).
+**Backend:** Node.js (ESM), Express 5, MongoDB Atlas, Mongoose 9, Firebase Admin SDK, `jsonwebtoken`, Multer, Cloudinary SDK, Zod, Helmet, `express-rate-limit`, Morgan, CORS, Compression, Dotenv, `cookie-parser`, Resend, `node-cron` (nightly analytics rollup + hourly stale-reservation release), `bcrypt` (unused — Firebase owns credentials, no passwords stored locally).
 
 **Notable version-driven deviations from the original plan** (see §7 for details): custom NoSQL-sanitize middleware (Express 5 breaks `express-mongo-sanitize`), custom `req.query` handling in validation middleware (Express 5's `req.query` is an uncached getter), `returnDocument: "after"` instead of deprecated Mongoose `new: true`.
 
@@ -39,11 +39,12 @@ app/                    # router.jsx, providers/ (AppProviders), layouts/ (Publi
 features/                # one folder per domain — each owns api/, components/, schemas/, hooks/
   auth/ account/ home/ products/ categories/ brands/ cart/ checkout/ orders/
   wishlist/ addresses/ newsletter/ settings/
-  admin/{dashboard,products,brands,categories,catalog}/
+  admin/{dashboard,products,brands,categories,catalog,orders,analytics}/
 components/
   ui/                    # shadcn-generated primitives
   shared/                # cross-feature composed components (ProductCard, Container,
-                          #   ProductCarouselSection, Breadcrumb, Footer, Pagination, SocialIcons...)
+                          #   ProductCarouselSection, Breadcrumb, Footer, Pagination, SocialIcons,
+                          #   OrderStatusStepper (DaisyUI steps, shared customer+admin)...)
 stores/                  # zustand: authStore, cartStore (guest, persisted), recentlyViewedStore (persisted)
 lib/                     # axios instance (+ refresh interceptor), queryClient, firebase.js, utils.js
 hooks/                   # useDebounce...
@@ -57,12 +58,14 @@ config/                  # env.js (Zod-validated, fail-fast), db.js, firebaseAdm
 modules/                 # one folder per domain, each: *.model.js, *.controller.js, *.service.js,
                           #   *.routes.js, *.validation.js
   auth/ users/ brands/ categories/ products/ settings/ newsletter/ wishlists/ cart/
-  addresses/ coupons/ orders/ inventoryLogs/ auditLogs/
+  addresses/ coupons/ orders/ inventoryLogs/ auditLogs/ analytics/
 middlewares/             # authenticate, authorize(role), validate(schema), errorHandler,
                           #   rateLimiters, upload (Multer), auditLog, sanitize (custom)
 utils/                   # apiResponse, apiError, asyncHandler, slugify, cloudinaryUpload,
                           #   jwt, cookies, parseDuration, generateOrderNumber
 emails/                  # resendClient.js, orderConfirmation.js (HTML template + send)
+jobs/                    # analyticsRollup.cron.js (nightly), releaseReservedStock.cron.js (hourly),
+                          #   scheduler.js (registers both via node-cron, started from server.js)
 seeds/                   # index.js (idempotent) + data/ (catalog, settings, coupons)
 routes/index.js          # mounts every module router under /api/v1
 ```
@@ -82,7 +85,8 @@ Naming: `camelCase` fields, `PascalCase` model names, plural collections.
 | **Cart** | One per logged-in user | `user` (unique ref), `items[]` {product, qty, priceSnapshot} | *Not in the original spec's collection list — added because guest carts are client-only (Zustand/localStorage) and logged-in carts need a server home independent of the User doc (avoids write contention on auth-critical data).* Totals computed from **live** product price at read time, not the snapshot (snapshot is a "price changed" hint only). |
 | **Wishlist** | Saved products | `user` (ref), `product` (ref) — compound unique | |
 | **Address** | Saved shipping addresses | `user` (ref), `label`, `recipientName`, `phone`, `addressLine1/2`, `city`, `district`, `postalCode`, `isDefault` | First address auto-defaults; deleting the default promotes the next most recent. |
-| **Order** | Placed order | `orderNumber` (unique, `DBD-YYYYMMDD-XXXXXX`), `user`, `items[]` (**embedded snapshot** — title/sku/price/thumbnail/qty at purchase time, immune to later product edits), `shippingAddress` (embedded snapshot), `phone`, `deliveryNote`, `coupon` (ref, nullable) + `couponCode` (snapshotted), `subtotal`, `discount`, `shippingFee`, `total`, `paymentMethod` (cod\|bkash), `paymentStatus`, `bkashTransactionId`, `status` (pending\|confirmed\|packed\|shipped\|delivered\|cancelled\|refunded), `statusHistory[]` | *`OrderItems` deliberately not a separate collection — see §7.* |
+| **Order** | Placed order | `orderNumber` (unique, `DBD-YYYYMMDD-XXXXXX`), `user`, `items[]` (**embedded snapshot** — title/sku/price/thumbnail/qty at purchase time, immune to later product edits), `shippingAddress` (embedded snapshot), `phone`, `deliveryNote`, `coupon` (ref, nullable) + `couponCode` (snapshotted), `subtotal`, `discount`, `shippingFee`, `total`, `paymentMethod` (cod\|bkash), `paymentStatus`, `bkashTransactionId`, `status` (pending\|confirmed\|packed\|shipped\|delivered\|cancelled\|refunded), `statusHistory[]` {status, note, changedBy, at}, `trackingNumber`, `courierName` | *`OrderItems` deliberately not a separate collection — see §7.* Tracking fields set when status transitions to `shipped`; both customer and admin order-detail pages render a shared `OrderStatusStepper`. |
+| **AnalyticsDaily** | Nightly business rollup | `date` (unique, `YYYY-MM-DD`), `revenue`, `ordersCount`, `newCustomers`, `topProducts[]` {product, title, unitsSold} (top 5), `lowStockCount` | Computed by `computeDailyRollup()` from live `Orders`/`Users`/`Products`; upserted nightly at 00:05 UTC for the *previous* day (today is still in progress). `GET /admin/analytics/summary` computes today's rollup live (not from the stored table, which won't have today's row yet) plus a live last-7-days total. `LOW_STOCK_THRESHOLD = 2` — deliberately low because collector diecast is seeded with naturally thin per-SKU stock (1-4 units), so a >10-unit threshold would flag nearly the whole catalog. |
 | **Coupon** | Discount codes | `code` (unique), `type` (percentage\|fixed), `value`, `minOrderValue`, `maxDiscount`, `usageLimit`, `usedCount`, `expiresAt`, `isActive` | Admin CRUD UI deferred to Phase 10; model + validate endpoint + 2 seeded test coupons exist now. |
 | **InventoryLog** | Stock movement audit trail | `product` (ref), `type` (restock\|sale\|reservation\|release\|adjustment), `quantityChange` (signed), `reason`, `referenceOrder`, `performedBy` | Written automatically at every reserve/commit/release transition (see §7 stock lifecycle). |
 | **AuditLog** | Admin mutation trail | `actor`, `action`, `entityType`, `entityId`, `before`, `after`, `ip` | Written by a middleware wrapping every admin mutation route — not hand-called per controller, so it can't be forgotten. |
@@ -108,9 +112,10 @@ Base path `/api/v1`. Envelope: `{ success, data, meta? }` / `{ success: false, m
 | Cart | `GET /cart`, `POST /cart/items`, `PATCH /cart/items/:productId`, `DELETE /cart/items/:productId`, `POST /cart/merge` (all authenticated — guest cart never touches the server until merge) |
 | Addresses | `GET/POST /addresses`, `PATCH/DELETE /addresses/:id` (all authenticated) |
 | Coupons | `POST /coupons/validate` (authenticated) |
-| Orders | `POST /orders`, `GET /orders` (mine), `GET /orders/:orderNumber` (mine) · admin: `GET /admin/orders`, `PATCH /admin/orders/:id/status` |
+| Orders | `POST /orders`, `GET /orders` (mine), `GET /orders/:orderNumber` (mine) · admin: `GET /admin/orders` (paginated, filter by `status`, search by `q` on `orderNumber`), `GET /admin/orders/:id`, `PATCH /admin/orders/:id/status` (body: `status`, `note?`, `trackingNumber?`, `courierName?`) |
+| Analytics | admin only: `GET /admin/analytics/summary` (today live + last-7-days), `GET /admin/analytics/daily?days=30` (stored `AnalyticsDaily` history, max 90) |
 
-**Admin UI status:** Products/Brands/Categories have full admin dashboard UI (Phase 3). Settings, Coupons, and Orders have working APIs but no admin dashboard UI yet — that's Phase 9 (Orders) and Phase 10 (Settings, Coupons, Customers/user-role-management).
+**Admin UI status:** Products/Brands/Categories (Phase 3) and Orders + Dashboard/Analytics (Phase 9) have full admin dashboard UI. Settings and Coupons have working APIs but no admin dashboard UI yet — deferred to Phase 10 (Settings, Coupons, Customers/user-role-management).
 
 ---
 
@@ -130,7 +135,7 @@ Flagged explicitly as they were made, not silently — this section is the runni
 
 1. **`OrderItems` embedded, not a separate collection.** Order line items are always read with their order, never queried independently, and must snapshot product state at purchase time so later edits/deletion never corrupt order history.
 2. **`Cart` collection added** (not in the original spec list) — guest carts are client-only; logged-in carts need a server home independent of the `User` document to avoid write contention on auth-critical data.
-3. **`Analytics` scoped to business rollups, not raw event tracking** (not yet built — planned for Phase 9/10 as `AnalyticsDaily`, computed nightly from Orders/Products). Traffic/behavior analytics is intentionally out of scope — that's what GA4/Plausible are for.
+3. **`Analytics` scoped to business rollups, not raw event tracking** — built in Phase 9 as `AnalyticsDaily`, computed nightly from Orders/Products/Users. Traffic/behavior analytics is intentionally out of scope — that's what GA4/Plausible are for.
 4. **shadcn/ui + DaisyUI split**, not either/or — see §6.
 5. **Express 5 compatibility fixes:**
    - `express-mongo-sanitize` reassigns `req.query` wholesale, which throws under Express 5 (`req.query` has no setter). Replaced with a custom middleware that mutates objects in place.
@@ -144,6 +149,9 @@ Flagged explicitly as they were made, not silently — this section is the runni
 11. **No fabricated content, ever.** Testimonials seed empty (frontend hides the section until real ones exist) rather than shipping fake customer quotes; social links/contact info stay blank rather than guessing at a real phone number or handle.
 12. **`Container` component** (Phase 6): nine sections had independently hand-rolled "centered max-width content with padding," split between two subtly different nesting patterns that only diverge once the viewport exceeds the max-width. Consolidated onto one component so the bug class can't recur.
 13. **bKash deferred**, COD-only for v1.0 checkout — real bKash sandbox merchant credentials require a business account the user doesn't have yet. The `Order` schema already carries `paymentMethod`/`paymentStatus`/`bkashTransactionId`, so wiring it up later is additive, not a rework.
+14. **Stale-reservation release job** (Phase 9): a `pending` order older than 48 hours (never confirmed — customer abandoned COD or admin never actioned it) is auto-cancelled hourly by `releaseReservedStock.cron.js`, which reuses the existing `transitionOrderStatus` release path (`actorId: null` marks it system-initiated) rather than a bespoke stock-release code path — one lifecycle implementation, not two.
+15. **`OrderStatusStepper` is one shared component** (`components/shared/`, built on the DaisyUI `steps` primitive reserved for this in Phase 0 §6) rendered on both the customer order-detail page and the admin order-detail page — the fulfillment flow (`pending → confirmed → packed → shipped → delivered`, or a terminal `cancelled`/`refunded` state) is one visual language, not two independently maintained progress indicators.
+16. **Admin dashboard revenue chart is hand-built SVG**, not a charting library — the prescribed stack has no chart dependency, and the dashboard needs exactly one chart (single-series daily revenue line/area), which doesn't justify pulling in a general-purpose charting library. Follows the project's dataviz conventions: one hue (brand primary, since it's a single series — no legend needed), thin 2px line, hover crosshair + tooltip, recessive gridlines.
 
 ---
 
@@ -160,7 +168,7 @@ Flagged explicitly as they were made, not silently — this section is the runni
 | 6 | Product details: gallery, related, wishlist, SEO | ✅ Done |
 | 7 | Cart system: persistent, guest, merge, stock validation | ✅ Done |
 | 8 | Checkout, orders, emails, confirmation | ✅ Done (COD only; bKash deferred) |
-| 9 | Order management: admin, customer, tracking, analytics | ⬜ Next |
+| 9 | Order management: admin, customer, tracking, analytics | ✅ Done |
 | 10 | Admin dashboard: complete CRUD, inventory, customers/roles, coupons, media, reports, settings editor | ⬜ Planned |
 | 11 | About, Contact, FAQ, Newsletter (admin-facing pieces) | ⬜ Planned |
 | 12 | Testing, performance, accessibility, SEO polish, deployment, documentation | ⬜ Planned |

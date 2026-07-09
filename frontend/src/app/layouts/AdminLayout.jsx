@@ -1,10 +1,11 @@
 import { NavLink, Outlet, Link } from "react-router";
-import { LayoutDashboard, Package, Tags, Boxes, ExternalLink } from "lucide-react";
+import { LayoutDashboard, Package, Tags, Boxes, ClipboardList, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 
 const NAV_ITEMS = [
   { to: "", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "orders", label: "Orders", icon: ClipboardList },
   { to: "products", label: "Products", icon: Package },
   { to: "brands", label: "Brands", icon: Boxes },
   { to: "categories", label: "Categories", icon: Tags },

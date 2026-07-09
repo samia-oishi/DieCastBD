@@ -11,6 +11,7 @@ import cartRoutes from "../modules/cart/cart.routes.js";
 import addressRoutes from "../modules/addresses/address.routes.js";
 import couponRoutes from "../modules/coupons/coupon.routes.js";
 import * as orderRoutes from "../modules/orders/order.routes.js";
+import analyticsRoutes from "../modules/analytics/analytics.routes.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
 
@@ -36,7 +37,8 @@ router.use("/admin/categories", ...requireAdmin, categoryRoutes.adminRouter);
 router.use("/admin/products", ...requireAdmin, productRoutes.adminRouter);
 router.use("/admin/settings", ...requireAdmin, settingsRoutes.adminRouter);
 router.use("/admin/orders", ...requireAdmin, orderRoutes.adminRouter);
+router.use("/admin/analytics", ...requireAdmin, analyticsRoutes);
 
-// Further module routers mount here as each domain is built (Phase 9+).
+// Further module routers mount here as each domain is built (Phase 10+).
 
 export default router;

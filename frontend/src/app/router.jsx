@@ -20,6 +20,8 @@ import { ProductsPage } from "@/features/admin/products/ProductsPage";
 import { ProductFormPage } from "@/features/admin/products/ProductFormPage";
 import { BrandsPage } from "@/features/admin/brands/BrandsPage";
 import { CategoriesPage } from "@/features/admin/categories/CategoriesPage";
+import { OrdersPage as AdminOrdersPage } from "@/features/admin/orders/OrdersPage";
+import { OrderDetailPage as AdminOrderDetailPage } from "@/features/admin/orders/OrderDetailPage";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
 import { UnauthorizedPage } from "@/components/shared/UnauthorizedPage";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
@@ -69,6 +71,8 @@ export const router = createBrowserRouter([
           { path: "products/:id", element: <ProductFormPage /> },
           { path: "brands", element: <BrandsPage /> },
           { path: "categories", element: <CategoriesPage /> },
+          { path: "orders", element: <AdminOrdersPage /> },
+          { path: "orders/:id", element: <AdminOrderDetailPage /> },
         ],
       },
     ],
