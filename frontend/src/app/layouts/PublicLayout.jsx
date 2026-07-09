@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router";
 import toast from "react-hot-toast";
-import { Heart } from "lucide-react";
+import { Heart, Package } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/shared/Footer";
@@ -32,6 +32,11 @@ function HeaderAuthState() {
 
   return (
     <div className="flex items-center gap-3">
+      <Button asChild variant="ghost" size="icon-sm" aria-label="Orders">
+        <Link to={ROUTES.ORDERS}>
+          <Package />
+        </Link>
+      </Button>
       <Button asChild variant="ghost" size="icon-sm" aria-label="Wishlist">
         <Link to={ROUTES.WISHLIST}>
           <Heart />

@@ -8,6 +8,9 @@ import * as settingsRoutes from "../modules/settings/settings.routes.js";
 import newsletterRoutes from "../modules/newsletter/newsletter.routes.js";
 import wishlistRoutes from "../modules/wishlists/wishlist.routes.js";
 import cartRoutes from "../modules/cart/cart.routes.js";
+import addressRoutes from "../modules/addresses/address.routes.js";
+import couponRoutes from "../modules/coupons/coupon.routes.js";
+import * as orderRoutes from "../modules/orders/order.routes.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
 
@@ -24,12 +27,16 @@ router.use("/settings", settingsRoutes.publicRouter);
 router.use("/newsletter", newsletterRoutes);
 router.use("/wishlist", wishlistRoutes);
 router.use("/cart", cartRoutes);
+router.use("/addresses", addressRoutes);
+router.use("/coupons", couponRoutes);
+router.use("/orders", orderRoutes.customerRouter);
 
 router.use("/admin/brands", ...requireAdmin, brandRoutes.adminRouter);
 router.use("/admin/categories", ...requireAdmin, categoryRoutes.adminRouter);
 router.use("/admin/products", ...requireAdmin, productRoutes.adminRouter);
 router.use("/admin/settings", ...requireAdmin, settingsRoutes.adminRouter);
+router.use("/admin/orders", ...requireAdmin, orderRoutes.adminRouter);
 
-// Further module routers mount here as each domain is built (Phase 8+).
+// Further module routers mount here as each domain is built (Phase 9+).
 
 export default router;

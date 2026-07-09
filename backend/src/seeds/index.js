@@ -4,8 +4,10 @@ import { Brand } from "../modules/brands/brand.model.js";
 import { Category } from "../modules/categories/category.model.js";
 import { Product } from "../modules/products/product.model.js";
 import { Settings } from "../modules/settings/settings.model.js";
+import { Coupon } from "../modules/coupons/coupon.model.js";
 import { brands, categories, products } from "./data/catalog.data.js";
 import { settingsSeed } from "./data/settings.data.js";
+import { couponsSeed } from "./data/coupons.data.js";
 
 async function seedBrands() {
   const keyToId = {};
@@ -76,6 +78,20 @@ async function seedSettings() {
   return before === null;
 }
 
+async function seedCoupons() {
+  let created = 0;
+  for (const coupon of couponsSeed) {
+    // $setOnInsert so a coupon's usedCount is never reset by re-running the seed.
+    const before = await Coupon.findOneAndUpdate(
+      { code: coupon.code },
+      { $setOnInsert: coupon },
+      { upsert: true, setDefaultsOnInsert: true }
+    );
+    if (before === null) created++;
+  }
+  return created;
+}
+
 async function run() {
   await connectDB();
 
@@ -90,6 +106,9 @@ async function run() {
 
   const settingsCreated = await seedSettings();
   console.log(settingsCreated ? "Settings: created with defaults" : "Settings: already exists, left untouched");
+
+  const couponsCreated = await seedCoupons();
+  console.log(`Coupons: ${couponsCreated} created (${couponsSeed.length - couponsCreated} already existed)`);
 
   await disconnectDB();
   console.log("Seed complete.");

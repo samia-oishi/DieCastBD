@@ -11,6 +11,7 @@ export const ROUTES = {
   FORGOT_PASSWORD: "/forgot-password",
   ACCOUNT: "/account",
   WISHLIST: "/wishlist",
+  ORDERS: "/orders",
   ADMIN: "/admin",
   UNAUTHORIZED: "/unauthorized",
 };
