@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { NavLink, Outlet, Link } from "react-router";
 import {
   LayoutDashboard,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
+import { FullPageLoader } from "@/components/shared/FullPageLoader";
 
 const NAV_ITEMS = [
   { to: "", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -66,7 +68,9 @@ export function AdminLayout() {
         </Link>
       </aside>
       <main className="flex-1 overflow-x-auto p-6">
-        <Outlet />
+        <Suspense fallback={<FullPageLoader />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

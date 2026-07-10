@@ -1,45 +1,53 @@
+import { lazy } from "react";
 import { createBrowserRouter } from "react-router";
 
 import { PublicLayout } from "./layouts/PublicLayout";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
-import { HomePage } from "@/features/home/HomePage";
-import { ShopPage } from "@/features/products/ShopPage";
-import { ProductDetailPage } from "@/features/products/ProductDetailPage";
-import { WishlistPage } from "@/features/wishlist/WishlistPage";
-import { CartPage } from "@/features/cart/CartPage";
-import { CheckoutPage } from "@/features/checkout/CheckoutPage";
-import { OrdersPage } from "@/features/orders/OrdersPage";
-import { OrderDetailPage } from "@/features/orders/OrderDetailPage";
-import { LoginPage } from "@/features/auth/LoginPage";
-import { RegisterPage } from "@/features/auth/RegisterPage";
-import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
-import { AccountPage } from "@/features/account/AccountPage";
-import { AboutPage } from "@/features/about-contact/AboutPage";
-import { ContactPage } from "@/features/about-contact/ContactPage";
-import { FaqPage } from "@/features/about-contact/FaqPage";
-import { DashboardPage } from "@/features/admin/dashboard/DashboardPage";
-import { ProductsPage } from "@/features/admin/products/ProductsPage";
-import { ProductFormPage } from "@/features/admin/products/ProductFormPage";
-import { BrandsPage } from "@/features/admin/brands/BrandsPage";
-import { CategoriesPage } from "@/features/admin/categories/CategoriesPage";
-import { OrdersPage as AdminOrdersPage } from "@/features/admin/orders/OrdersPage";
-import { OrderDetailPage as AdminOrderDetailPage } from "@/features/admin/orders/OrderDetailPage";
-import { CustomersPage } from "@/features/admin/customers/CustomersPage";
-import { CustomerDetailPage } from "@/features/admin/customers/CustomerDetailPage";
-import { CouponsPage } from "@/features/admin/coupons/CouponsPage";
-import { InventoryPage } from "@/features/admin/inventory/InventoryPage";
-import { SettingsPage } from "@/features/admin/settings/SettingsPage";
-import { ReportsPage } from "@/features/admin/reports/ReportsPage";
-import { NewsletterPage as AdminNewsletterPage } from "@/features/admin/newsletter/NewsletterPage";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
 import { UnauthorizedPage } from "@/components/shared/UnauthorizedPage";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { RequireRole } from "@/components/shared/RequireRole";
 import { ROLES } from "@/constants/routes";
 
-// Remaining public routes (cart, checkout...) and protected customer routes
-// (orders...) wire in the same way as each phase builds them.
+// Every page is code-split so a storefront visitor never downloads the admin
+// dashboard (or vice versa). The layout shell + route guards stay eager since
+// they're on the critical path for the first paint. React.lazy needs a default
+// export; our pages are named, so this helper maps the named export across.
+// The import() paths stay string literals so Rollup can still statically split them.
+const page = (loader, name) => lazy(() => loader().then((m) => ({ default: m[name] })));
+
+const HomePage = page(() => import("@/features/home/HomePage"), "HomePage");
+const ShopPage = page(() => import("@/features/products/ShopPage"), "ShopPage");
+const ProductDetailPage = page(() => import("@/features/products/ProductDetailPage"), "ProductDetailPage");
+const WishlistPage = page(() => import("@/features/wishlist/WishlistPage"), "WishlistPage");
+const CartPage = page(() => import("@/features/cart/CartPage"), "CartPage");
+const CheckoutPage = page(() => import("@/features/checkout/CheckoutPage"), "CheckoutPage");
+const OrdersPage = page(() => import("@/features/orders/OrdersPage"), "OrdersPage");
+const OrderDetailPage = page(() => import("@/features/orders/OrderDetailPage"), "OrderDetailPage");
+const LoginPage = page(() => import("@/features/auth/LoginPage"), "LoginPage");
+const RegisterPage = page(() => import("@/features/auth/RegisterPage"), "RegisterPage");
+const ForgotPasswordPage = page(() => import("@/features/auth/ForgotPasswordPage"), "ForgotPasswordPage");
+const AccountPage = page(() => import("@/features/account/AccountPage"), "AccountPage");
+const AboutPage = page(() => import("@/features/about-contact/AboutPage"), "AboutPage");
+const ContactPage = page(() => import("@/features/about-contact/ContactPage"), "ContactPage");
+const FaqPage = page(() => import("@/features/about-contact/FaqPage"), "FaqPage");
+
+const DashboardPage = page(() => import("@/features/admin/dashboard/DashboardPage"), "DashboardPage");
+const ProductsPage = page(() => import("@/features/admin/products/ProductsPage"), "ProductsPage");
+const ProductFormPage = page(() => import("@/features/admin/products/ProductFormPage"), "ProductFormPage");
+const BrandsPage = page(() => import("@/features/admin/brands/BrandsPage"), "BrandsPage");
+const CategoriesPage = page(() => import("@/features/admin/categories/CategoriesPage"), "CategoriesPage");
+const AdminOrdersPage = page(() => import("@/features/admin/orders/OrdersPage"), "OrdersPage");
+const AdminOrderDetailPage = page(() => import("@/features/admin/orders/OrderDetailPage"), "OrderDetailPage");
+const CustomersPage = page(() => import("@/features/admin/customers/CustomersPage"), "CustomersPage");
+const CustomerDetailPage = page(() => import("@/features/admin/customers/CustomerDetailPage"), "CustomerDetailPage");
+const CouponsPage = page(() => import("@/features/admin/coupons/CouponsPage"), "CouponsPage");
+const InventoryPage = page(() => import("@/features/admin/inventory/InventoryPage"), "InventoryPage");
+const SettingsPage = page(() => import("@/features/admin/settings/SettingsPage"), "SettingsPage");
+const ReportsPage = page(() => import("@/features/admin/reports/ReportsPage"), "ReportsPage");
+const AdminNewsletterPage = page(() => import("@/features/admin/newsletter/NewsletterPage"), "NewsletterPage");
+
 export const router = createBrowserRouter([
   {
     element: <PublicLayout />,

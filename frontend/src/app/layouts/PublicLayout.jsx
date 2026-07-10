@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router";
 import toast from "react-hot-toast";
 import { Heart, Package } from "lucide-react";
@@ -6,6 +6,7 @@ import { Heart, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnnouncementBar } from "@/components/shared/AnnouncementBar";
 import { Footer } from "@/components/shared/Footer";
+import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { useCurrentUser, useLogoutMutation } from "@/features/auth/api/useAuth";
@@ -93,7 +94,9 @@ export function PublicLayout() {
         </div>
       </header>
       <main className="flex-1">
-        <Outlet />
+        <Suspense fallback={<FullPageLoader />}>
+          <Outlet />
+        </Suspense>
       </main>
       <Footer />
     </div>

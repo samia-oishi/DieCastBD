@@ -8,6 +8,14 @@ export const api = axios.create({
 // Refreshes the short-lived access token once on a 401 and replays the original request.
 // Concurrent 401s share a single in-flight refresh instead of each firing their own.
 let refreshPromise = null;
+// After a refresh fails (e.g. the session was revoked or expired), stop attempting
+// refresh for a short cooldown. Without this, every subsequent 401 — one per component
+// or route that reads the current user on load — fires its own refresh, storming the
+// endpoint (and its rate limit) instead of letting the app settle into a logged-out
+// state. A successful refresh never sets the cooldown, so normal token renewal is
+// unaffected.
+let refreshBlockedUntil = 0;
+const REFRESH_COOLDOWN_MS = 10_000;
 
 api.interceptors.response.use(
   (response) => response,
@@ -20,6 +28,10 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    if (Date.now() < refreshBlockedUntil) {
+      return Promise.reject(error);
+    }
+
     config._retried = true;
 
     try {
@@ -29,6 +41,7 @@ api.interceptors.response.use(
       await refreshPromise;
       return api(config);
     } catch (refreshError) {
+      refreshBlockedUntil = Date.now() + REFRESH_COOLDOWN_MS;
       return Promise.reject(refreshError);
     }
   }
