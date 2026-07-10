@@ -17,6 +17,7 @@ import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { ProductGallery } from "./components/ProductGallery";
 import { ProductSpecs } from "./components/ProductSpecs";
 import { ShareButton } from "./components/ShareButton";
+import { BuyNowButton } from "./components/BuyNowButton";
 
 function formatPrice(amount) {
   return `৳${Math.round(amount).toLocaleString("en-US")}`;
@@ -131,6 +132,7 @@ export function ProductDetailPage() {
             </p>
 
             <AddToCartButton product={product} />
+            <BuyNowButton product={product} />
 
             <div className="flex items-center gap-2">
               <WishlistButton product={product} showLabel />

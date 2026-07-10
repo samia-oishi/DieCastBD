@@ -269,3 +269,19 @@ Both production builds clean, all 36 existing tests still green, manually verifi
 **Verified via curl, real transaction, disposable data:** placed a guest order with `shippingZone: "Outside Dhaka"`, confirmed the order's snapshotted `shippingFee` matched that zone's configured fee (৳120) rather than a hardcoded flat value; confirmed `GET /settings` no longer returns a `shippingFee` field and does return the new `shippingZones` array. Test order, its inventory-log rows, and its guest `User` deleted afterward; product `stock`/`reservedStock` confirmed restored to their exact pre-test values.
 
 Both production builds clean, all 36 existing tests still green.
+
+---
+
+## System 3 — Buy Now Flow
+
+Per the user's explicit correction during the architecture review, Buy Now opens checkout with *only* the clicked product — it never adds to or merges with the persistent cart.
+
+**Zero backend changes.** `order.controller.js`'s `createOrder` already routed any request carrying a non-empty `items[]` onto `createOrderFromItems` regardless of auth state (built in System 1 for guests) — a logged-in Buy Now just needed the frontend to start sending `items` too, which previously only guests did. No new endpoint, no schema change.
+
+**Frontend.** New `BuyNowButton` (`features/products/components/`), rendered right after `AddToCartButton` on the PDP, sharing its `outOfStock`-disabled state. Deliberately never calls `useCart()`/`addItem()` — on click it navigates to `/checkout` carrying `{product, qty: 1}` via router `state` only, so it can never touch or merge with the real cart.
+
+`CheckoutPage.jsx` reads `location.state?.buyNowItem`; when present, a new `toBuyNowLineItem()` helper normalizes it into the same `{product, qty, lineTotal, stockIssue}` shape the cart API already returns, and `items`/`subtotal`/`cartLoading` are sourced from that single-item array instead of `useCart()` — so `OrderSummary`, `CouponInput`, and the stock-issue guard all work unmodified against either source, no special-casing needed inside them. The submit handler now sends `items` in the payload whenever `isBuyNow` is true, even for a logged-in customer (previously only the guest branch ever included `items`) — this is the one behavioral change needed to route a logged-in Buy Now onto the already-built items-array order path instead of the cart-based one. Losing router state on a mid-flow refresh degrades to the existing empty-cart redirect (or the customer's real cart, if non-empty) — an accepted tradeoff per the architecture review, not a bug.
+
+**Verified via curl, real transaction, disposable data:** created a disposable logged-in test user with a saved address and a server `Cart` already containing one unrelated product, then placed a Buy Now order (`addressId` + `items` together, a combination System 1's tests never exercised) for a *different* product. Confirmed the order contained only the Buy Now product, and — the critical check — the customer's server cart still held only its original, untouched item afterward. Test order, cart, address, and user deleted afterward; both products' `stock`/`reservedStock` confirmed restored to their exact pre-test values.
+
+Both production builds clean, all 36 existing tests still green.

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Navigate, useNavigate } from "react-router";
+import { Navigate, useLocation, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,20 @@ import { checkoutSchema } from "./schemas/checkoutSchema";
 import { AddressSelector } from "./components/AddressSelector";
 import { CouponInput } from "./components/CouponInput";
 import { OrderSummary } from "./components/OrderSummary";
+
+// Buy Now sends a single {product, qty} via router state instead of the cart —
+// normalize it into the same {product, qty, lineTotal, stockIssue} shape the
+// cart API returns, so OrderSummary/CouponInput/the stock guard don't need to
+// know which source they're rendering.
+function toBuyNowLineItem({ product, qty }) {
+  const price = product.salePrice ?? product.price;
+  return {
+    product,
+    qty,
+    lineTotal: price * qty,
+    stockIssue: qty > product.availableStock ? { availableStock: product.availableStock } : null,
+  };
+}
 
 function GuestAddressSection({ address, onSave, email, onEmailChange }) {
   const [editing, setEditing] = useState(!address);
@@ -64,10 +78,21 @@ function GuestAddressSection({ address, onSave, email, onEmailChange }) {
 
 export function CheckoutPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: user } = useCurrentUser();
-  const { items, subtotal, isLoading: cartLoading } = useCart();
+  const cart = useCart();
   const { data: settings } = useSettings();
   const createOrderMutation = useCreateOrderMutation();
+
+  // Buy Now deliberately never calls addItem()/useCart() — it must not touch
+  // the persistent cart at all, so a non-empty real cart is left completely
+  // untouched by placing a Buy Now order alongside it.
+  const buyNowItem = location.state?.buyNowItem;
+  const isBuyNow = Boolean(buyNowItem);
+
+  const items = isBuyNow ? [toBuyNowLineItem(buyNowItem)] : cart.items;
+  const subtotal = isBuyNow ? items[0].lineTotal : cart.subtotal;
+  const cartLoading = isBuyNow ? false : cart.isLoading;
 
   const [addressId, setAddressId] = useState(null);
   const [guestAddress, setGuestAddress] = useState(null);
@@ -117,13 +142,17 @@ export function CheckoutPage() {
       return;
     }
 
-    // Guests (and, later, Buy Now) send cart items directly since there's no
-    // server-side Cart to read for a guest — the backend branches on presence
-    // of `items` to pick the items-array order path over the cart-based one.
+    // Guests always send cart items directly since there's no server-side Cart
+    // to read for a guest. Buy Now (logged in or guest) sends its single item
+    // the same way, bypassing whatever's in the real cart — the backend
+    // branches on presence of `items` to pick the items-array order path over
+    // the cart-based one.
+    const itemsPayload = items.map((i) => ({ productId: i.product._id, qty: i.qty }));
+
     const payload = user
-      ? { addressId, couponCode: coupon?.code, ...values }
+      ? { addressId, couponCode: coupon?.code, ...(isBuyNow ? { items: itemsPayload } : {}), ...values }
       : {
-          items: items.map((i) => ({ productId: i.product._id, qty: i.qty })),
+          items: itemsPayload,
           guestInfo: { name: guestAddress.recipientName, phone: guestAddress.phone, email: guestEmail || undefined },
           shippingAddress: guestAddress,
           couponCode: coupon?.code,
@@ -226,7 +255,9 @@ export function CheckoutPage() {
           />
           {hasStockIssue && (
             <p className="text-xs text-destructive">
-              Some items in your cart have limited stock — adjust quantities before placing your order.
+              {isBuyNow
+                ? "This item no longer has enough stock available — go back and adjust the quantity."
+                : "Some items in your cart have limited stock — adjust quantities before placing your order."}
             </p>
           )}
           <Button type="submit" size="lg" disabled={createOrderMutation.isPending || hasStockIssue}>
