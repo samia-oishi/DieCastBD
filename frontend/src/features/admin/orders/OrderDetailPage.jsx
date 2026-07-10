@@ -57,8 +57,6 @@ export function OrderDetailPage() {
     );
   };
 
-  const isTerminal = order.status === "cancelled" || order.status === "refunded";
-
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6 pb-16">
       <Button asChild variant="ghost" size="sm" className="w-fit">
@@ -159,51 +157,49 @@ export function OrderDetailPage() {
         </div>
       </div>
 
-      {!isTerminal && (
-        <div className="rounded-lg border border-border p-6">
-          <h2 className="mb-3 font-heading text-lg">Update Status</h2>
-          <FieldGroup>
+      <div className="rounded-lg border border-border p-6">
+        <h2 className="mb-3 font-heading text-lg">Update Status</h2>
+        <FieldGroup>
+          <div className="grid grid-cols-2 gap-3">
+            <Field>
+              <FieldLabel>New status</FieldLabel>
+              <Select value={nextStatus} onValueChange={setNextStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.filter((s) => s !== order.status).map((s) => (
+                    <SelectItem key={s} value={s} className="capitalize">
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel>Note (optional)</FieldLabel>
+              <Input value={note} onChange={(e) => setNote(e.target.value)} />
+            </Field>
+          </div>
+
+          {nextStatus === "shipped" && (
             <div className="grid grid-cols-2 gap-3">
               <Field>
-                <FieldLabel>New status</FieldLabel>
-                <Select value={nextStatus} onValueChange={setNextStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.filter((s) => s !== order.status).map((s) => (
-                      <SelectItem key={s} value={s} className="capitalize">
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FieldLabel>Tracking number</FieldLabel>
+                <Input value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} />
               </Field>
               <Field>
-                <FieldLabel>Note (optional)</FieldLabel>
-                <Input value={note} onChange={(e) => setNote(e.target.value)} />
+                <FieldLabel>Courier</FieldLabel>
+                <Input value={courierName} onChange={(e) => setCourierName(e.target.value)} placeholder="Pathao, Sundarban..." />
               </Field>
             </div>
+          )}
 
-            {nextStatus === "shipped" && (
-              <div className="grid grid-cols-2 gap-3">
-                <Field>
-                  <FieldLabel>Tracking number</FieldLabel>
-                  <Input value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} />
-                </Field>
-                <Field>
-                  <FieldLabel>Courier</FieldLabel>
-                  <Input value={courierName} onChange={(e) => setCourierName(e.target.value)} placeholder="Pathao, Sundarban..." />
-                </Field>
-              </div>
-            )}
-
-            <Button onClick={onUpdateStatus} disabled={!nextStatus || updateMutation.isPending} className="w-fit">
-              {updateMutation.isPending ? "Updating..." : "Update Status"}
-            </Button>
-          </FieldGroup>
-        </div>
-      )}
+          <Button onClick={onUpdateStatus} disabled={!nextStatus || updateMutation.isPending} className="w-fit">
+            {updateMutation.isPending ? "Updating..." : "Update Status"}
+          </Button>
+        </FieldGroup>
+      </div>
     </div>
   );
 }

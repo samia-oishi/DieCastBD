@@ -9,10 +9,20 @@ import { findValidCoupon, calculateDiscount } from "../coupons/coupon.service.js
 import { generateOrderNumber } from "../../utils/generateOrderNumber.js";
 import { ApiError } from "../../utils/apiError.js";
 
-// Statuses at/after which stock has been permanently committed (decremented),
-// as opposed to merely held via reservedStock.
-const STOCK_COMMITTED_STATUSES = ["confirmed", "packed", "shipped", "delivered"];
-const TERMINAL_STATUSES = ["cancelled", "refunded"];
+// Every order status maps to exactly one of three stock states:
+//   reserved  ("pending")                          — stock held via reservedStock, nothing decremented yet
+//   committed (confirmed/packed/shipped/delivered)  — stock permanently decremented, no reservedStock hold
+//   released  (cancelled/refunded)                  — no claim on stock at all (fully back in the public pool)
+// transitionOrderStatus below is a small state machine over these three buckets —
+// see the six cross-bucket branches for the exact stock delta each direction needs.
+const COMMITTED_STATUSES = ["confirmed", "packed", "shipped", "delivered"];
+const RELEASED_STATUSES = ["cancelled", "refunded"];
+
+export function stockBucket(status) {
+  if (COMMITTED_STATUSES.includes(status)) return "committed";
+  if (RELEASED_STATUSES.includes(status)) return "released";
+  return "reserved";
+}
 
 // Atomic compare-and-reserve over a normalized `{product: <doc>, qty}` list —
 // shared by every order-creation path (cart checkout, guest checkout, Buy Now)
@@ -253,67 +263,121 @@ export async function transitionOrderStatus({
   const order = await Order.findById(orderId);
   if (!order) throw ApiError.notFound("Order not found");
 
-  if (TERMINAL_STATUSES.includes(order.status)) {
-    throw ApiError.conflict(`Order is already ${order.status} and cannot be changed further`);
-  }
+  // Admin can move an order to any status, including reverting out of
+  // cancelled/refunded — there is no terminal lock. Each of the six possible
+  // cross-bucket moves below needs its own exact stock delta; same-bucket
+  // moves (e.g. confirmed -> packed, or cancelled -> refunded) are pure
+  // status-label changes with no stock effect.
   if (order.status === newStatus) {
     throw ApiError.badRequest(`Order is already ${newStatus}`);
   }
 
-  const wasCommitted = STOCK_COMMITTED_STATUSES.includes(order.status);
-  const willBeCommitted = STOCK_COMMITTED_STATUSES.includes(newStatus);
+  const fromBucket = stockBucket(order.status);
+  const toBucket = stockBucket(newStatus);
 
   const session = await mongoose.startSession();
   try {
     await session.withTransaction(async () => {
-      if (newStatus === "cancelled") {
-        for (const item of order.items) {
-          if (wasCommitted) {
-            // Stock was already permanently decremented at confirm-time — restore it.
-            await Product.updateOne({ _id: item.product }, { $inc: { stock: item.qty } }, { session });
-            await InventoryLog.create(
-              [
-                {
-                  product: item.product,
-                  type: "adjustment",
-                  quantityChange: item.qty,
-                  reason: "Order cancelled after confirmation",
-                  referenceOrder: order._id,
-                  performedBy: actorId,
-                },
-              ],
-              { session }
-            );
-          } else {
-            await Product.updateOne({ _id: item.product }, { $inc: { reservedStock: -item.qty } }, { session });
-            await InventoryLog.create(
-              [
-                {
-                  product: item.product,
-                  type: "release",
-                  quantityChange: item.qty,
-                  referenceOrder: order._id,
-                  performedBy: actorId,
-                },
-              ],
-              { session }
-            );
-          }
-        }
-      } else if (!wasCommitted && willBeCommitted) {
-        // First crossing into a committed status (pending -> confirmed) — convert the hold into a real sale.
-        for (const item of order.items) {
+      for (const item of order.items) {
+        if (fromBucket === "reserved" && toBucket === "committed") {
+          // pending -> confirmed/packed/shipped/delivered: convert the hold into a permanent sale.
           await Product.updateOne(
             { _id: item.product },
             { $inc: { stock: -item.qty, reservedStock: -item.qty } },
             { session }
           );
           await InventoryLog.create(
+            [{ product: item.product, type: "sale", quantityChange: -item.qty, referenceOrder: order._id, performedBy: actorId }],
+            { session }
+          );
+        } else if (fromBucket === "committed" && toBucket === "reserved") {
+          // confirmed/.../delivered -> pending: undo the sale AND restore the hold — the
+          // order is still live, so its stock stays unavailable to other customers either way.
+          await Product.updateOne(
+            { _id: item.product },
+            { $inc: { stock: item.qty, reservedStock: item.qty } },
+            { session }
+          );
+          await InventoryLog.create(
             [
               {
                 product: item.product,
-                type: "sale",
+                type: "adjustment",
+                quantityChange: item.qty,
+                reason: `Status reverted from ${order.status} to ${newStatus}`,
+                referenceOrder: order._id,
+                performedBy: actorId,
+              },
+            ],
+            { session }
+          );
+        } else if (fromBucket === "reserved" && toBucket === "released") {
+          // pending -> cancelled/refunded: release the hold, nothing was ever decremented.
+          await Product.updateOne({ _id: item.product }, { $inc: { reservedStock: -item.qty } }, { session });
+          await InventoryLog.create(
+            [{ product: item.product, type: "release", quantityChange: item.qty, referenceOrder: order._id, performedBy: actorId }],
+            { session }
+          );
+        } else if (fromBucket === "committed" && toBucket === "released") {
+          // confirmed/.../delivered -> cancelled/refunded: restore the permanently-decremented stock.
+          await Product.updateOne({ _id: item.product }, { $inc: { stock: item.qty } }, { session });
+          await InventoryLog.create(
+            [
+              {
+                product: item.product,
+                type: "adjustment",
+                quantityChange: item.qty,
+                reason: `Order ${newStatus} after ${order.status}`,
+                referenceOrder: order._id,
+                performedBy: actorId,
+              },
+            ],
+            { session }
+          );
+        } else if (fromBucket === "released" && toBucket === "reserved") {
+          // cancelled/refunded -> pending: re-hold the stock. Unlike every other branch here,
+          // this genuinely re-checks availability — other sales may have consumed the
+          // inventory while this order sat cancelled, so it's not safe to assume the hold
+          // can just be re-established blindly.
+          const reserved = await Product.findOneAndUpdate(
+            { _id: item.product, $expr: { $gte: [{ $subtract: ["$stock", "$reservedStock"] }, item.qty] } },
+            { $inc: { reservedStock: item.qty } },
+            { session, returnDocument: "after" }
+          );
+          if (!reserved) {
+            throw ApiError.conflict(`Cannot restore order — "${item.title}" no longer has enough stock`);
+          }
+          await InventoryLog.create(
+            [
+              {
+                product: item.product,
+                type: "adjustment",
                 quantityChange: -item.qty,
+                reason: `Order restored from ${order.status} to ${newStatus}`,
+                referenceOrder: order._id,
+                performedBy: actorId,
+              },
+            ],
+            { session }
+          );
+        } else if (fromBucket === "released" && toBucket === "committed") {
+          // cancelled/refunded -> confirmed/packed/shipped/delivered: re-commit directly,
+          // skipping the reserved bucket entirely. Same fresh availability check as above.
+          const committed = await Product.findOneAndUpdate(
+            { _id: item.product, $expr: { $gte: [{ $subtract: ["$stock", "$reservedStock"] }, item.qty] } },
+            { $inc: { stock: -item.qty } },
+            { session, returnDocument: "after" }
+          );
+          if (!committed) {
+            throw ApiError.conflict(`Cannot restore order — "${item.title}" no longer has enough stock`);
+          }
+          await InventoryLog.create(
+            [
+              {
+                product: item.product,
+                type: "adjustment",
+                quantityChange: -item.qty,
+                reason: `Order restored from ${order.status} to ${newStatus}`,
                 referenceOrder: order._id,
                 performedBy: actorId,
               },
@@ -321,8 +385,8 @@ export async function transitionOrderStatus({
             { session }
           );
         }
+        // Same-bucket transitions fall through with no stock effect.
       }
-      // Otherwise a pure status label change (confirmed -> packed -> shipped -> delivered) — no stock effect.
 
       order.status = newStatus;
       order.statusHistory.push({ status: newStatus, note, changedBy: actorId, at: new Date() });
