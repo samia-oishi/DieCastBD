@@ -36,6 +36,7 @@ const AccountPage = page(() => import("@/features/account/AccountPage"), "Accoun
 const AboutPage = page(() => import("@/features/about-contact/AboutPage"), "AboutPage");
 const ContactPage = page(() => import("@/features/about-contact/ContactPage"), "ContactPage");
 const FaqPage = page(() => import("@/features/about-contact/FaqPage"), "FaqPage");
+const PageView = page(() => import("@/features/pages/PageView"), "PageView");
 
 const DashboardPage = page(() => import("@/features/admin/dashboard/DashboardPage"), "DashboardPage");
 const ProductsPage = page(() => import("@/features/admin/products/ProductsPage"), "ProductsPage");
@@ -51,6 +52,8 @@ const InventoryPage = page(() => import("@/features/admin/inventory/InventoryPag
 const SettingsPage = page(() => import("@/features/admin/settings/SettingsPage"), "SettingsPage");
 const ReportsPage = page(() => import("@/features/admin/reports/ReportsPage"), "ReportsPage");
 const AdminNewsletterPage = page(() => import("@/features/admin/newsletter/NewsletterPage"), "NewsletterPage");
+const AdminPagesPage = page(() => import("@/features/admin/pages/PagesPage"), "PagesPage");
+const AdminPageFormPage = page(() => import("@/features/admin/pages/PageFormPage"), "PageFormPage");
 
 export const router = createBrowserRouter([
   {
@@ -63,6 +66,10 @@ export const router = createBrowserRouter([
       { path: "/about", element: <AboutPage /> },
       { path: "/contact", element: <ContactPage /> },
       { path: "/faq", element: <FaqPage /> },
+      { path: "/terms-conditions", element: <PageView slug="terms-conditions" /> },
+      { path: "/privacy-policy", element: <PageView slug="privacy-policy" /> },
+      { path: "/refund-policy", element: <PageView slug="refund-policy" /> },
+      { path: "/shipping-policy", element: <PageView slug="shipping-policy" /> },
       // Public: checkout and its confirmation must serve guests (System 1),
       // so they moved out of ProtectedRoute. CheckoutPage itself branches on
       // useCurrentUser() to show the saved-address book vs. a guest address
@@ -111,6 +118,9 @@ export const router = createBrowserRouter([
           { path: "settings", element: <SettingsPage /> },
           { path: "reports", element: <ReportsPage /> },
           { path: "newsletter", element: <AdminNewsletterPage /> },
+          { path: "pages", element: <AdminPagesPage /> },
+          { path: "pages/new", element: <AdminPageFormPage /> },
+          { path: "pages/:id", element: <AdminPageFormPage /> },
         ],
       },
     ],

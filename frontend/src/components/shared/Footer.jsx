@@ -11,6 +11,10 @@ const FOOTER_LINKS = [
   { to: ROUTES.ABOUT, label: "About" },
   { to: ROUTES.CONTACT, label: "Contact" },
   { to: ROUTES.FAQ, label: "FAQ" },
+  { to: ROUTES.SHIPPING_POLICY, label: "Shipping Policy" },
+  { to: ROUTES.REFUND_POLICY, label: "Refund Policy" },
+  { to: ROUTES.PRIVACY, label: "Privacy Policy" },
+  { to: ROUTES.TERMS, label: "Terms & Conditions" },
 ];
 
 export function Footer() {

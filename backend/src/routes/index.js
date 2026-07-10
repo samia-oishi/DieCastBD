@@ -14,6 +14,7 @@ import * as couponRoutes from "../modules/coupons/coupon.routes.js";
 import * as orderRoutes from "../modules/orders/order.routes.js";
 import analyticsRoutes from "../modules/analytics/analytics.routes.js";
 import inventoryRoutes from "../modules/inventory/inventory.routes.js";
+import * as pageRoutes from "../modules/pages/page.routes.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
 
@@ -34,6 +35,7 @@ router.use("/cart", cartRoutes);
 router.use("/addresses", addressRoutes);
 router.use("/coupons", couponRoutes.publicRouter);
 router.use("/orders", orderRoutes.customerRouter);
+router.use("/pages", pageRoutes.publicRouter);
 
 router.use("/admin/brands", ...requireAdmin, brandRoutes.adminRouter);
 router.use("/admin/categories", ...requireAdmin, categoryRoutes.adminRouter);
@@ -45,6 +47,7 @@ router.use("/admin/users", ...requireAdmin, userRoutes.adminRouter);
 router.use("/admin/coupons", ...requireAdmin, couponRoutes.adminRouter);
 router.use("/admin/inventory", ...requireAdmin, inventoryRoutes);
 router.use("/admin/newsletter", ...requireAdmin, newsletterRoutes.adminRouter);
+router.use("/admin/pages", ...requireAdmin, pageRoutes.adminRouter);
 
 // Further module routers mount here as each domain is built (Phase 11+).
 

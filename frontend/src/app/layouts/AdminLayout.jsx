@@ -12,6 +12,7 @@ import {
   Settings,
   FileBarChart,
   Mail,
+  FileText,
   ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { to: "coupons", label: "Coupons", icon: TicketPercent },
   { to: "newsletter", label: "Newsletter", icon: Mail },
   { to: "reports", label: "Reports", icon: FileBarChart },
+  { to: "pages", label: "Pages", icon: FileText },
   { to: "settings", label: "Settings", icon: Settings },
 ];
 

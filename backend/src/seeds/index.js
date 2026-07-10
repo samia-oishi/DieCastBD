@@ -5,9 +5,11 @@ import { Category } from "../modules/categories/category.model.js";
 import { Product } from "../modules/products/product.model.js";
 import { Settings } from "../modules/settings/settings.model.js";
 import { Coupon } from "../modules/coupons/coupon.model.js";
+import { Page } from "../modules/pages/page.model.js";
 import { brands, categories, products } from "./data/catalog.data.js";
 import { settingsSeed } from "./data/settings.data.js";
 import { couponsSeed } from "./data/coupons.data.js";
+import { pagesSeed } from "./data/pages.data.js";
 
 async function seedBrands() {
   const keyToId = {};
@@ -92,6 +94,22 @@ async function seedCoupons() {
   return created;
 }
 
+async function seedPages() {
+  let created = 0;
+  for (const page of pagesSeed) {
+    const slug = slugify(page.title);
+    // $setOnInsert so re-running the seed never clobbers an admin's real
+    // published content — same reasoning as seedSettings/seedCoupons above.
+    const before = await Page.findOneAndUpdate(
+      { slug },
+      { $setOnInsert: { ...page, slug } },
+      { upsert: true, setDefaultsOnInsert: true }
+    );
+    if (before === null) created++;
+  }
+  return created;
+}
+
 async function run() {
   await connectDB();
 
@@ -109,6 +127,9 @@ async function run() {
 
   const couponsCreated = await seedCoupons();
   console.log(`Coupons: ${couponsCreated} created (${couponsSeed.length - couponsCreated} already existed)`);
+
+  const pagesCreated = await seedPages();
+  console.log(`Pages: ${pagesCreated} created (${pagesSeed.length - pagesCreated} already existed)`);
 
   await disconnectDB();
   console.log("Seed complete.");
