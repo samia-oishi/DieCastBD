@@ -14,10 +14,52 @@ import { useCart } from "@/features/cart/api/useCart";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { useCurrentUser } from "@/features/auth/api/useAuth";
 import { useCreateOrderMutation } from "@/features/orders/api/useOrders";
+import { AddressForm } from "@/features/addresses/components/AddressForm";
 import { checkoutSchema } from "./schemas/checkoutSchema";
 import { AddressSelector } from "./components/AddressSelector";
 import { CouponInput } from "./components/CouponInput";
 import { OrderSummary } from "./components/OrderSummary";
+
+function GuestAddressSection({ address, onSave, email, onEmailChange }) {
+  const [editing, setEditing] = useState(!address);
+
+  if (!editing && address) {
+    return (
+      <div className="flex items-start justify-between gap-3 rounded-lg border border-primary bg-primary/5 p-4 text-sm">
+        <div>
+          <p className="font-medium text-foreground">
+            {address.recipientName} · {address.phone}
+          </p>
+          <p className="text-muted-foreground">
+            {address.addressLine1}
+            {address.addressLine2 && `, ${address.addressLine2}`}, {address.city}
+            {address.district && `, ${address.district}`}
+            {address.postalCode && ` ${address.postalCode}`}
+          </p>
+        </div>
+        <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
+          Edit
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <AddressForm
+        onSubmit={(values) => {
+          onSave(values);
+          setEditing(false);
+        }}
+        isSubmitting={false}
+      />
+      <Field>
+        <FieldLabel htmlFor="guestEmail">Email (optional — for your order confirmation)</FieldLabel>
+        <Input id="guestEmail" type="email" value={email} onChange={(e) => onEmailChange(e.target.value)} />
+      </Field>
+    </div>
+  );
+}
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -27,6 +69,8 @@ export function CheckoutPage() {
   const createOrderMutation = useCreateOrderMutation();
 
   const [addressId, setAddressId] = useState(null);
+  const [guestAddress, setGuestAddress] = useState(null);
+  const [guestEmail, setGuestEmail] = useState("");
   const [coupon, setCoupon] = useState(null);
 
   const {
@@ -49,18 +93,32 @@ export function CheckoutPage() {
   }
 
   const onSubmit = (values) => {
-    if (!addressId) {
+    if (user && !addressId) {
       toast.error("Please select or add a shipping address");
       return;
     }
+    if (!user && !guestAddress) {
+      toast.error("Please enter your shipping address");
+      return;
+    }
 
-    createOrderMutation.mutate(
-      { addressId, couponCode: coupon?.code, ...values },
-      {
-        onSuccess: (order) => navigate(`/orders/${order.orderNumber}`),
-        onError: (err) => toast.error(err.response?.data?.message ?? "Could not place order"),
-      }
-    );
+    // Guests (and, later, Buy Now) send cart items directly since there's no
+    // server-side Cart to read for a guest — the backend branches on presence
+    // of `items` to pick the items-array order path over the cart-based one.
+    const payload = user
+      ? { addressId, couponCode: coupon?.code, ...values }
+      : {
+          items: items.map((i) => ({ productId: i.product._id, qty: i.qty })),
+          guestInfo: { name: guestAddress.recipientName, phone: guestAddress.phone, email: guestEmail || undefined },
+          shippingAddress: guestAddress,
+          couponCode: coupon?.code,
+          ...values,
+        };
+
+    createOrderMutation.mutate(payload, {
+      onSuccess: (order) => navigate(ROUTES.ORDER_CONFIRMATION, { state: { order } }),
+      onError: (err) => toast.error(err.response?.data?.message ?? "Could not place order"),
+    });
   };
 
   return (
@@ -71,7 +129,16 @@ export function CheckoutPage() {
         <div className="flex flex-col gap-8 lg:col-span-2">
           <div>
             <h2 className="mb-3 font-heading text-lg text-foreground">Shipping Address</h2>
-            <AddressSelector selectedId={addressId} onSelect={setAddressId} />
+            {user ? (
+              <AddressSelector selectedId={addressId} onSelect={setAddressId} />
+            ) : (
+              <GuestAddressSection
+                address={guestAddress}
+                onSave={setGuestAddress}
+                email={guestEmail}
+                onEmailChange={setGuestEmail}
+              />
+            )}
           </div>
 
           <FieldGroup>

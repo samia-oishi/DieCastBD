@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate } from "../../middlewares/authenticate.js";
+import { optionalAuthenticate } from "../../middlewares/optionalAuthenticate.js";
 import { validate } from "../../middlewares/validate.js";
 import { auditLog } from "../../middlewares/auditLog.js";
 import {
@@ -20,7 +20,9 @@ import {
 import { Coupon } from "./coupon.model.js";
 
 export const publicRouter = Router();
-publicRouter.post("/validate", authenticate, validate(validateCouponSchema), validateCoupon);
+// Guests can apply coupons at checkout too — the controller doesn't read
+// req.user at all, so this is purely about not blocking unauthenticated callers.
+publicRouter.post("/validate", optionalAuthenticate, validate(validateCouponSchema), validateCoupon);
 
 export const adminRouter = Router();
 adminRouter.get("/", validate(listCouponsQuerySchema), listCouponsAdmin);

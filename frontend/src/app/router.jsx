@@ -25,6 +25,10 @@ const CartPage = page(() => import("@/features/cart/CartPage"), "CartPage");
 const CheckoutPage = page(() => import("@/features/checkout/CheckoutPage"), "CheckoutPage");
 const OrdersPage = page(() => import("@/features/orders/OrdersPage"), "OrdersPage");
 const OrderDetailPage = page(() => import("@/features/orders/OrderDetailPage"), "OrderDetailPage");
+const OrderConfirmationPage = page(
+  () => import("@/features/orders/OrderConfirmationPage"),
+  "OrderConfirmationPage"
+);
 const LoginPage = page(() => import("@/features/auth/LoginPage"), "LoginPage");
 const RegisterPage = page(() => import("@/features/auth/RegisterPage"), "RegisterPage");
 const ForgotPasswordPage = page(() => import("@/features/auth/ForgotPasswordPage"), "ForgotPasswordPage");
@@ -59,12 +63,18 @@ export const router = createBrowserRouter([
       { path: "/about", element: <AboutPage /> },
       { path: "/contact", element: <ContactPage /> },
       { path: "/faq", element: <FaqPage /> },
+      // Public: checkout and its confirmation must serve guests (System 1),
+      // so they moved out of ProtectedRoute. CheckoutPage itself branches on
+      // useCurrentUser() to show the saved-address book vs. a guest address
+      // form; OrderConfirmationPage renders straight from router state and
+      // never needs a session at all.
+      { path: "/checkout", element: <CheckoutPage /> },
+      { path: "/order-confirmation", element: <OrderConfirmationPage /> },
       {
         element: <ProtectedRoute />,
         children: [
           { path: "/account", element: <AccountPage /> },
           { path: "/wishlist", element: <WishlistPage /> },
-          { path: "/checkout", element: <CheckoutPage /> },
           { path: "/orders", element: <OrdersPage /> },
           { path: "/orders/:orderNumber", element: <OrderDetailPage /> },
         ],

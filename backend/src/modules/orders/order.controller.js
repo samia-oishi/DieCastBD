@@ -1,41 +1,75 @@
 import { Order } from "./order.model.js";
 import { Address } from "../addresses/address.model.js";
 import { User } from "../users/user.model.js";
-import { createOrderFromCart, transitionOrderStatus } from "./order.service.js";
+import { findOrCreateGuestUser } from "../users/user.service.js";
+import { createOrderFromCart, createOrderFromItems, transitionOrderStatus } from "./order.service.js";
 import { sendOrderConfirmationEmail } from "../../emails/orderConfirmation.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
 export const createOrder = asyncHandler(async (req, res) => {
-  const { addressId, phone, deliveryNote, couponCode, paymentMethod } = req.body;
+  const { addressId, items, guestInfo, shippingAddress: rawShippingAddress, phone, deliveryNote, couponCode, paymentMethod } =
+    req.body;
 
-  const address = await Address.findOne({ _id: addressId, user: req.user.id });
-  if (!address) throw ApiError.notFound("Shipping address not found");
+  let userId;
+  let shippingAddress;
+  let emailTarget; // {name, email} — resolved once here so the send-path below doesn't care whether this was a guest or a real account
 
-  const order = await createOrderFromCart({
-    userId: req.user.id,
-    shippingAddress: {
-      recipientName: address.recipientName,
-      phone: address.phone,
-      addressLine1: address.addressLine1,
-      addressLine2: address.addressLine2,
-      city: address.city,
-      district: address.district,
-      postalCode: address.postalCode,
-    },
-    phone,
-    deliveryNote,
-    couponCode,
-    paymentMethod,
-  });
+  if (req.user) {
+    userId = req.user.id;
 
-  // req.user is the minimal JWT payload ({id, role}) — the email needs name/email,
-  // which the token deliberately doesn't carry, so fetch the real record here.
-  User.findById(req.user.id)
-    .select("name email")
-    .then((user) => sendOrderConfirmationEmail(order, user))
-    .catch((err) => console.error("Order confirmation email failed:", err.message));
+    if (addressId) {
+      const address = await Address.findOne({ _id: addressId, user: userId });
+      if (!address) throw ApiError.notFound("Shipping address not found");
+      shippingAddress = {
+        recipientName: address.recipientName,
+        phone: address.phone,
+        addressLine1: address.addressLine1,
+        addressLine2: address.addressLine2,
+        city: address.city,
+        district: address.district,
+        postalCode: address.postalCode,
+      };
+    } else if (rawShippingAddress) {
+      // Buy Now (logged in) — no saved address selected, ship straight from
+      // whatever address the checkout form collected inline.
+      shippingAddress = rawShippingAddress;
+    } else {
+      throw ApiError.badRequest("A shipping address is required");
+    }
+
+    // req.user is the minimal JWT payload ({id, role}) — the email needs name/email,
+    // which the token deliberately doesn't carry, so fetch the real record here.
+    emailTarget = await User.findById(userId).select("name email");
+  } else {
+    // Guest checkout — no session, no saved Address book. Order.shippingAddress
+    // is already a self-contained embedded snapshot, so guests never need an
+    // Address document; the customer record is resolved/created by phone or email.
+    if (!guestInfo?.name || !guestInfo?.phone) {
+      throw ApiError.badRequest("Name and phone are required to check out as a guest");
+    }
+    if (!rawShippingAddress) {
+      throw ApiError.badRequest("A shipping address is required");
+    }
+
+    const guestUser = await findOrCreateGuestUser(guestInfo);
+    userId = guestUser._id;
+    shippingAddress = rawShippingAddress;
+    emailTarget = guestInfo.email ? { name: guestInfo.name, email: guestInfo.email } : null;
+  }
+
+  const orderArgs = { userId, shippingAddress, phone, deliveryNote, couponCode, paymentMethod };
+  const order =
+    items && items.length > 0
+      ? await createOrderFromItems({ ...orderArgs, items })
+      : await createOrderFromCart(orderArgs);
+
+  if (emailTarget?.email) {
+    sendOrderConfirmationEmail(order, emailTarget).catch((err) =>
+      console.error("Order confirmation email failed:", err.message)
+    );
+  }
 
   sendSuccess(res, { data: order, status: 201, message: "Order placed" });
 });

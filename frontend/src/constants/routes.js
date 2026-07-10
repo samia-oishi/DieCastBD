@@ -4,6 +4,7 @@ export const ROUTES = {
   PRODUCT: "/products/:slug",
   CART: "/cart",
   CHECKOUT: "/checkout",
+  ORDER_CONFIRMATION: "/order-confirmation",
   ABOUT: "/about",
   CONTACT: "/contact",
   FAQ: "/faq",

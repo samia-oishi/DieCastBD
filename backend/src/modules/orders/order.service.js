@@ -14,6 +14,120 @@ import { ApiError } from "../../utils/apiError.js";
 const STOCK_COMMITTED_STATUSES = ["confirmed", "packed", "shipped", "delivered"];
 const TERMINAL_STATUSES = ["cancelled", "refunded"];
 
+// Atomic compare-and-reserve over a normalized `{product: <doc>, qty}` list —
+// shared by every order-creation path (cart checkout, guest checkout, Buy Now)
+// so the stock/money math can never drift between them. Must run inside the
+// caller's transaction session.
+async function reserveStockForItems(normalizedItems, session) {
+  const orderItems = [];
+  const reservations = [];
+  let subtotal = 0;
+
+  for (const { product, qty } of normalizedItems) {
+    const price = product.salePrice ?? product.price;
+
+    // Atomic compare-and-reserve — if stock dropped since the item was last viewed,
+    // this condition fails and the whole transaction rolls back automatically.
+    const reserved = await Product.findOneAndUpdate(
+      { _id: product._id, $expr: { $gte: [{ $subtract: ["$stock", "$reservedStock"] }, qty] } },
+      { $inc: { reservedStock: qty } },
+      { session, returnDocument: "after" }
+    );
+    if (!reserved) {
+      throw ApiError.conflict(`"${product.title}" no longer has enough stock (requested ${qty})`);
+    }
+
+    reservations.push({ productId: product._id, qty });
+    orderItems.push({
+      product: product._id,
+      sku: product.sku,
+      title: product.title,
+      thumbnail: product.thumbnail,
+      price,
+      qty,
+    });
+    subtotal += price * qty;
+  }
+
+  return { orderItems, reservations, subtotal };
+}
+
+// Builds and persists the Order document from an already-resolved item list —
+// the part of order creation that's identical regardless of where the items
+// came from (server cart, guest request body, Buy Now). Must run inside the
+// caller's transaction session.
+async function buildAndSaveOrder({
+  userId,
+  normalizedItems,
+  shippingAddress,
+  phone,
+  deliveryNote,
+  couponCode,
+  paymentMethod,
+  session,
+}) {
+  const { orderItems, reservations, subtotal } = await reserveStockForItems(normalizedItems, session);
+
+  let discount = 0;
+  let couponDoc = null;
+  if (couponCode) {
+    couponDoc = await findValidCoupon(couponCode);
+    discount = calculateDiscount(couponDoc, subtotal);
+  }
+
+  const settings = await Settings.findOne().session(session);
+  const freeShippingThreshold = settings?.freeShippingThreshold ?? 0;
+  const shippingFee =
+    freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : settings?.shippingFee ?? 0;
+
+  const total = subtotal - discount + shippingFee;
+
+  let orderNumber = generateOrderNumber();
+  if (await Order.exists({ orderNumber }).session(session)) {
+    orderNumber = generateOrderNumber(); // vanishingly unlikely to collide twice
+  }
+
+  const [createdOrder] = await Order.create(
+    [
+      {
+        orderNumber,
+        user: userId,
+        items: orderItems,
+        shippingAddress,
+        phone,
+        deliveryNote,
+        coupon: couponDoc?._id ?? null,
+        couponCode: couponDoc?.code ?? null,
+        subtotal,
+        discount,
+        shippingFee,
+        total,
+        paymentMethod,
+        status: "pending",
+        statusHistory: [{ status: "pending", changedBy: userId, at: new Date() }],
+      },
+    ],
+    { session }
+  );
+
+  await InventoryLog.insertMany(
+    reservations.map((r) => ({
+      product: r.productId,
+      type: "reservation",
+      quantityChange: -r.qty,
+      referenceOrder: createdOrder._id,
+      performedBy: userId,
+    })),
+    { session }
+  );
+
+  if (couponDoc) {
+    await Coupon.updateOne({ _id: couponDoc._id }, { $inc: { usedCount: 1 } }, { session });
+  }
+
+  return createdOrder;
+}
+
 export async function createOrderFromCart({ userId, shippingAddress, phone, deliveryNote, couponCode, paymentMethod }) {
   const cart = await Cart.findOne({ user: userId }).populate("items.product");
   if (!cart || cart.items.length === 0) throw ApiError.badRequest("Your cart is empty");
@@ -23,104 +137,79 @@ export async function createOrderFromCart({ userId, shippingAddress, phone, deli
   );
   if (activeItems.length === 0) throw ApiError.badRequest("Your cart items are no longer available");
 
+  const normalizedItems = activeItems.map((i) => ({ product: i.product, qty: i.qty }));
+
   const session = await mongoose.startSession();
   let order;
 
   try {
     await session.withTransaction(async () => {
-      const orderItems = [];
-      const reservations = [];
-      let subtotal = 0;
-
-      for (const cartItem of activeItems) {
-        const product = cartItem.product;
-        const qty = cartItem.qty;
-        const price = product.salePrice ?? product.price;
-
-        // Atomic compare-and-reserve — if stock dropped since the cart was last viewed,
-        // this condition fails and the whole transaction rolls back automatically.
-        const reserved = await Product.findOneAndUpdate(
-          { _id: product._id, $expr: { $gte: [{ $subtract: ["$stock", "$reservedStock"] }, qty] } },
-          { $inc: { reservedStock: qty } },
-          { session, returnDocument: "after" }
-        );
-        if (!reserved) {
-          throw ApiError.conflict(`"${product.title}" no longer has enough stock (requested ${qty})`);
-        }
-
-        reservations.push({ productId: product._id, qty });
-        orderItems.push({
-          product: product._id,
-          sku: product.sku,
-          title: product.title,
-          thumbnail: product.thumbnail,
-          price,
-          qty,
-        });
-        subtotal += price * qty;
-      }
-
-      let discount = 0;
-      let couponDoc = null;
-      if (couponCode) {
-        couponDoc = await findValidCoupon(couponCode);
-        discount = calculateDiscount(couponDoc, subtotal);
-      }
-
-      const settings = await Settings.findOne().session(session);
-      const freeShippingThreshold = settings?.freeShippingThreshold ?? 0;
-      const shippingFee =
-        freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : settings?.shippingFee ?? 0;
-
-      const total = subtotal - discount + shippingFee;
-
-      let orderNumber = generateOrderNumber();
-      if (await Order.exists({ orderNumber }).session(session)) {
-        orderNumber = generateOrderNumber(); // vanishingly unlikely to collide twice
-      }
-
-      const [createdOrder] = await Order.create(
-        [
-          {
-            orderNumber,
-            user: userId,
-            items: orderItems,
-            shippingAddress,
-            phone,
-            deliveryNote,
-            coupon: couponDoc?._id ?? null,
-            couponCode: couponDoc?.code ?? null,
-            subtotal,
-            discount,
-            shippingFee,
-            total,
-            paymentMethod,
-            status: "pending",
-            statusHistory: [{ status: "pending", changedBy: userId, at: new Date() }],
-          },
-        ],
-        { session }
-      );
-
-      await InventoryLog.insertMany(
-        reservations.map((r) => ({
-          product: r.productId,
-          type: "reservation",
-          quantityChange: -r.qty,
-          referenceOrder: createdOrder._id,
-          performedBy: userId,
-        })),
-        { session }
-      );
-
-      if (couponDoc) {
-        await Coupon.updateOne({ _id: couponDoc._id }, { $inc: { usedCount: 1 } }, { session });
-      }
+      order = await buildAndSaveOrder({
+        userId,
+        normalizedItems,
+        shippingAddress,
+        phone,
+        deliveryNote,
+        couponCode,
+        paymentMethod,
+        session,
+      });
 
       cart.items = [];
       await cart.save({ session });
+    });
+  } finally {
+    session.endSession();
+  }
 
-      order = createdOrder;
+  return order;
+}
+
+// Guest checkout and Buy Now both send cart items directly in the request body
+// instead of relying on a server-side Cart document — guest carts never touch
+// the server (they're Zustand/localStorage-only), and Buy Now deliberately
+// bypasses whatever's already in the cart rather than merging with it. Shares
+// buildAndSaveOrder with createOrderFromCart so the money/inventory math can
+// never drift between the two entry points. Deliberately takes an already-
+// resolved userId, not guest-identity fields — identity resolution (existing
+// Firebase user vs. find-or-create guest) happens in the controller before
+// this is called, so this function doesn't need to know which kind of user it is.
+export async function createOrderFromItems({
+  userId,
+  items,
+  shippingAddress,
+  phone,
+  deliveryNote,
+  couponCode,
+  paymentMethod,
+}) {
+  if (!items || items.length === 0) throw ApiError.badRequest("No items to order");
+
+  const productIds = items.map((i) => i.productId);
+  const products = await Product.find({ _id: { $in: productIds }, status: "active", isDeleted: false });
+  const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+
+  const normalizedItems = items
+    .filter((i) => productMap.has(i.productId))
+    .map((i) => ({ product: productMap.get(i.productId), qty: i.qty }));
+
+  if (normalizedItems.length === 0) throw ApiError.badRequest("Your order items are no longer available");
+
+  const session = await mongoose.startSession();
+  let order;
+
+  try {
+    await session.withTransaction(async () => {
+      order = await buildAndSaveOrder({
+        userId,
+        normalizedItems,
+        shippingAddress,
+        phone,
+        deliveryNote,
+        couponCode,
+        paymentMethod,
+        session,
+      });
     });
   } finally {
     session.endSession();

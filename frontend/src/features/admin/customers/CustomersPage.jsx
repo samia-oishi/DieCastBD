@@ -103,8 +103,13 @@ export function CustomersPage() {
                 <Link to={user.id} className="font-medium hover:text-primary">
                   {user.name}
                 </Link>
+                {user.isGuest && (
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    Guest
+                  </Badge>
+                )}
               </TableCell>
-              <TableCell className="text-muted-foreground">{user.email}</TableCell>
+              <TableCell className="text-muted-foreground">{user.email || "—"}</TableCell>
               <TableCell className="text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
               <TableCell>
                 <Badge variant={roleBadgeVariant(user.role)} className="capitalize">

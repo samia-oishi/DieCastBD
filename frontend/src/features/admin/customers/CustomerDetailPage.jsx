@@ -105,13 +105,16 @@ export function CustomerDetailPage() {
         <div>
           <h1 className="font-heading text-2xl">{user.name}</h1>
           <p className="text-sm text-muted-foreground">
-            {user.email} · Joined {formatDateTime(user.createdAt)}
+            {[user.email, user.phone].filter(Boolean).join(" · ")} · Joined {formatDateTime(user.createdAt)}
             {user.lastLoginAt && ` · Last login ${formatDateTime(user.lastLoginAt)}`}
           </p>
         </div>
-        <Badge variant={user.role === "admin" ? "default" : user.role === "staff" ? "secondary" : "outline"} className="capitalize">
-          {user.role}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {user.isGuest && <Badge variant="outline">Guest</Badge>}
+          <Badge variant={user.role === "admin" ? "default" : user.role === "staff" ? "secondary" : "outline"} className="capitalize">
+            {user.role}
+          </Badge>
+        </div>
       </div>
 
       <div className="rounded-lg border border-border p-6">

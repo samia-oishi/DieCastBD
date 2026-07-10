@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/authenticate.js";
+import { optionalAuthenticate } from "../../middlewares/optionalAuthenticate.js";
 import { validate } from "../../middlewares/validate.js";
 import { auditLog } from "../../middlewares/auditLog.js";
 import {
@@ -20,10 +21,14 @@ import {
 import { Order } from "./order.model.js";
 
 export const customerRouter = Router();
-customerRouter.use(authenticate);
-customerRouter.post("/", validate(createOrderSchema), createOrder);
-customerRouter.get("/", getMyOrders);
-customerRouter.get("/:orderNumber", validate(orderNumberParamSchema), getMyOrderByNumber);
+// Order creation must serve guests too, so it gets the optional variant instead
+// of the router-wide authenticate() every other route here still requires —
+// "my orders" history/detail stay authenticated-only (a guest has no session to
+// list orders against; they get their receipt via the order-confirmation
+// response/email instead, not an authenticated order-history page).
+customerRouter.post("/", optionalAuthenticate, validate(createOrderSchema), createOrder);
+customerRouter.get("/", authenticate, getMyOrders);
+customerRouter.get("/:orderNumber", authenticate, validate(orderNumberParamSchema), getMyOrderByNumber);
 
 export const adminRouter = Router();
 adminRouter.get("/", validate(listOrdersQuerySchema), listOrdersAdmin);
