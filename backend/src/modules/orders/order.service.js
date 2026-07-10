@@ -64,6 +64,7 @@ async function buildAndSaveOrder({
   deliveryNote,
   couponCode,
   paymentMethod,
+  shippingZone,
   session,
 }) {
   const { orderItems, reservations, subtotal } = await reserveStockForItems(normalizedItems, session);
@@ -76,9 +77,12 @@ async function buildAndSaveOrder({
   }
 
   const settings = await Settings.findOne().session(session);
+  // Falls back to 0 (not a throw) if the zone doesn't match any configured
+  // zone — e.g. stale admin config — so a checkout never hard-fails over a
+  // shipping-fee lookup miss; it just ships free rather than blocking the order.
+  const zoneFee = settings?.shippingZones?.find((z) => z.name === shippingZone)?.fee ?? 0;
   const freeShippingThreshold = settings?.freeShippingThreshold ?? 0;
-  const shippingFee =
-    freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : settings?.shippingFee ?? 0;
+  const shippingFee = freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : zoneFee;
 
   const total = subtotal - discount + shippingFee;
 
@@ -128,7 +132,15 @@ async function buildAndSaveOrder({
   return createdOrder;
 }
 
-export async function createOrderFromCart({ userId, shippingAddress, phone, deliveryNote, couponCode, paymentMethod }) {
+export async function createOrderFromCart({
+  userId,
+  shippingAddress,
+  phone,
+  deliveryNote,
+  couponCode,
+  paymentMethod,
+  shippingZone,
+}) {
   const cart = await Cart.findOne({ user: userId }).populate("items.product");
   if (!cart || cart.items.length === 0) throw ApiError.badRequest("Your cart is empty");
 
@@ -152,6 +164,7 @@ export async function createOrderFromCart({ userId, shippingAddress, phone, deli
         deliveryNote,
         couponCode,
         paymentMethod,
+        shippingZone,
         session,
       });
 
@@ -182,6 +195,7 @@ export async function createOrderFromItems({
   deliveryNote,
   couponCode,
   paymentMethod,
+  shippingZone,
 }) {
   if (!items || items.length === 0) throw ApiError.badRequest("No items to order");
 
@@ -208,6 +222,7 @@ export async function createOrderFromItems({
         deliveryNote,
         couponCode,
         paymentMethod,
+        shippingZone,
         session,
       });
     });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Navigate, useNavigate } from "react-router";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel, FieldError, FieldGroup, FieldSeparator } from "@/components/ui/field";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Container } from "@/components/shared/Container";
 import { ROUTES } from "@/constants/routes";
 import { useCart } from "@/features/cart/api/useCart";
@@ -77,16 +78,30 @@ export function CheckoutPage() {
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { paymentMethod: "cod" },
+    defaultValues: { paymentMethod: "cod", shippingZone: "" },
   });
+
+  const shippingZones = settings?.shippingZones ?? [];
+  const selectedZone = watch("shippingZone");
+
+  // Settings load asynchronously, after the form's initial defaultValues are
+  // set — default to the first configured zone once zones arrive, but only if
+  // the customer hasn't already picked one.
+  useEffect(() => {
+    if (!selectedZone && shippingZones.length > 0) {
+      setValue("shippingZone", shippingZones[0].name);
+    }
+  }, [shippingZones, selectedZone, setValue]);
 
   const hasStockIssue = items.some((item) => item.stockIssue);
   const freeShippingThreshold = settings?.freeShippingThreshold ?? 0;
-  const shippingFee =
-    freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : settings?.shippingFee ?? 0;
+  const zoneFee = shippingZones.find((z) => z.name === selectedZone)?.fee ?? 0;
+  const shippingFee = freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : zoneFee;
 
   if (!cartLoading && items.length === 0 && !createOrderMutation.isSuccess) {
     return <Navigate to={ROUTES.CART} replace />;
@@ -147,6 +162,28 @@ export function CheckoutPage() {
               <FieldLabel htmlFor="phone">Phone for delivery</FieldLabel>
               <Input id="phone" type="tel" defaultValue={user?.phone ?? ""} {...register("phone")} />
               <FieldError errors={errors.phone ? [errors.phone] : undefined} />
+            </Field>
+            <Field data-invalid={!!errors.shippingZone}>
+              <FieldLabel htmlFor="shippingZone">Shipping zone</FieldLabel>
+              <Controller
+                control={control}
+                name="shippingZone"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="shippingZone" className="w-full">
+                      <SelectValue placeholder="Select a shipping zone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {shippingZones.map((zone) => (
+                        <SelectItem key={zone.name} value={zone.name}>
+                          {zone.name} — ৳{zone.fee}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError errors={errors.shippingZone ? [errors.shippingZone] : undefined} />
             </Field>
             <Field>
               <FieldLabel htmlFor="deliveryNote">Delivery note (optional)</FieldLabel>

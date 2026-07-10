@@ -66,7 +66,13 @@ export const settingsSeed = {
     phone: "",
     address: "",
   },
-  shippingFee: 120,
+  // Both zones seeded at the same ৳120 the site already charged flat, so this
+  // migration doesn't silently change real prices — adjust the real per-zone
+  // rates via Admin → Settings once known (not fabricated here).
+  shippingZones: [
+    { name: "Inside Dhaka", fee: 120 },
+    { name: "Outside Dhaka", fee: 120 },
+  ],
   freeShippingThreshold: 5000,
   seoDefaults: {
     title: "Hot Wheels, MINI GT & Diecast Cars in Bangladesh | DiecastBD",

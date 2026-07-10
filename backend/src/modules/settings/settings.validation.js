@@ -25,6 +25,11 @@ const faq = z.object({
   answer: z.string().min(1),
 });
 
+const shippingZone = z.object({
+  name: z.string().min(1),
+  fee: z.coerce.number().min(0),
+});
+
 export const updateSettingsSchema = {
   body: z.object({
     heroBanner: z.array(heroSlide).optional(),
@@ -39,7 +44,7 @@ export const updateSettingsSchema = {
     contactInfo: z
       .object({ email: z.string().optional(), phone: z.string().optional(), address: z.string().optional() })
       .optional(),
-    shippingFee: z.coerce.number().min(0).optional(),
+    shippingZones: z.array(shippingZone).optional(),
     freeShippingThreshold: z.coerce.number().min(0).optional(),
     seoDefaults: z.object({ title: z.string().optional(), description: z.string().optional() }).optional(),
   }),

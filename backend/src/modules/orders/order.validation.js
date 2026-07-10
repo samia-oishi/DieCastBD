@@ -34,6 +34,7 @@ export const createOrderSchema = {
     deliveryNote: z.string().optional(),
     couponCode: z.string().optional(),
     paymentMethod: z.enum(["cod", "bkash"]),
+    shippingZone: z.string().min(1, "Shipping zone is required"),
   }),
 };
 

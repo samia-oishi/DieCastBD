@@ -251,3 +251,21 @@ New `middlewares/optionalAuthenticate.js` — reads the JWT cookie if present, s
 Admin `CustomersPage`/`CustomerDetailPage` gained a small "Guest" badge and null-safe email/phone display (a guest may have no email).
 
 Both production builds clean, all 36 existing tests still green, manually verified end-to-end by the user (guest checkout with no session, phone-based dedup showing as one Customers row, existing logged-in checkout unaffected).
+
+---
+
+## System 2 — Shipping Configuration (zones)
+
+**Backend.** `Settings.shippingFee` (flat `Number`) replaced with `shippingZones: [{name, fee}]`. `settings.validation.js` gained a matching `shippingZone` Zod object; `settings.data.js` (the seed source) now seeds `[{name: "Inside Dhaka", fee: 120}, {name: "Outside Dhaka", fee: 120}]` — both zones at the same ৳120 the site already charged flat, so the migration doesn't silently invent a real price split; real per-zone rates are an admin edit away, not fabricated here.
+
+`buildAndSaveOrder` (`order.service.js`, shared by both `createOrderFromCart` and `createOrderFromItems` since System 1's refactor) now takes a `shippingZone` name, looks up its fee via `settings.shippingZones.find(z => z.name === shippingZone)?.fee ?? 0`, then applies the existing free-shipping-threshold override on top exactly as before. A zone-name miss (stale/renamed zone) falls back to a `0` fee instead of throwing, so a shipping-config edit can never hard-block checkout. `createOrderSchema` (Zod) now requires `shippingZone` as a non-empty string; `order.controller.js` destructures and forwards it through unchanged.
+
+**Live migration required and run:** the existing `Settings` document had a real `shippingFee: 120` value — `Settings.updateOne({}, {$unset:{shippingFee:""}})` was tried first and **silently no-op'd** (Mongoose's strict mode drops `$unset` on fields no longer in the current schema), so the native MongoDB driver was used directly (`mongoose.connection.collection("settings").updateOne(...)`) to actually remove the orphaned field, verified via a direct `"shippingFee" in doc` check before/after.
+
+**Real bug found and fixed while verifying (pre-existing, from System 1, not introduced here):** creating a second distinct guest user threw `E11000 duplicate key error ... firebaseUid_1 dup key: { firebaseUid: null }`. The `user.model.js` schema already declared `sparse: true` correctly, but a schema-level index option change doesn't retroactively alter an already-existing MongoDB index — the live `firebaseUid_1`/`email_1` indexes were still plain `unique: true` from Phase 2. Fixed by running `User.syncIndexes()`, which dropped and rebuilt both indexes with `sparse: true`; verified via `collection.indexes()` before/after and by re-running the previously-failing request successfully afterward.
+
+**Frontend.** Admin `SettingsPage.jsx`'s "Shipping" section replaced its two flat fee/threshold inputs with a `shippingZones` `useFieldArray` (name + fee per row, add/remove), following the exact same pattern already used for `faqs[]` in the same file — `freeShippingThreshold` stays as a single global field beneath the zone list. `CheckoutPage.jsx` gained a `shippingZone` `Select` (Controller-driven, defaults to the first configured zone once Settings loads) in the Contact & Delivery section; live fee/total recompute now reads `settings.shippingZones` keyed by the selected zone name instead of the old flat field, and `shippingZone` flows through `checkoutSchema`/`onSubmit`'s spread `...values` into both the logged-in and guest payload branches unchanged.
+
+**Verified via curl, real transaction, disposable data:** placed a guest order with `shippingZone: "Outside Dhaka"`, confirmed the order's snapshotted `shippingFee` matched that zone's configured fee (৳120) rather than a hardcoded flat value; confirmed `GET /settings` no longer returns a `shippingFee` field and does return the new `shippingZones` array. Test order, its inventory-log rows, and its guest `User` deleted afterward; product `stock`/`reservedStock` confirmed restored to their exact pre-test values.
+
+Both production builds clean, all 36 existing tests still green.

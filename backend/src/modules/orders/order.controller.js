@@ -9,8 +9,17 @@ import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
 export const createOrder = asyncHandler(async (req, res) => {
-  const { addressId, items, guestInfo, shippingAddress: rawShippingAddress, phone, deliveryNote, couponCode, paymentMethod } =
-    req.body;
+  const {
+    addressId,
+    items,
+    guestInfo,
+    shippingAddress: rawShippingAddress,
+    phone,
+    deliveryNote,
+    couponCode,
+    paymentMethod,
+    shippingZone,
+  } = req.body;
 
   let userId;
   let shippingAddress;
@@ -59,7 +68,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     emailTarget = guestInfo.email ? { name: guestInfo.name, email: guestInfo.email } : null;
   }
 
-  const orderArgs = { userId, shippingAddress, phone, deliveryNote, couponCode, paymentMethod };
+  const orderArgs = { userId, shippingAddress, phone, deliveryNote, couponCode, paymentMethod, shippingZone };
   const order =
     items && items.length > 0
       ? await createOrderFromItems({ ...orderArgs, items })

@@ -81,7 +81,7 @@ export function SettingsPage() {
       testimonials: [],
       socialLinks: { facebook: "", instagram: "", whatsapp: "" },
       contactInfo: { email: "", phone: "", address: "" },
-      shippingFee: 0,
+      shippingZones: [],
       freeShippingThreshold: 0,
       seoDefaults: { title: "", description: "" },
       faqs: [],
@@ -92,6 +92,7 @@ export function SettingsPage() {
   const whyChooseUs = useFieldArray({ control, name: "whyChooseUs" });
   const testimonials = useFieldArray({ control, name: "testimonials" });
   const faqs = useFieldArray({ control, name: "faqs" });
+  const shippingZones = useFieldArray({ control, name: "shippingZones" });
 
   useEffect(() => {
     if (settings) reset(settings);
@@ -358,20 +359,42 @@ export function SettingsPage() {
         </FieldGroup>
       </SectionCard>
 
-      <SectionCard title="Shipping">
-        <FieldGroup>
-          <div className="grid grid-cols-2 gap-3">
-            <Field>
-              <FieldLabel>Shipping fee (৳)</FieldLabel>
-              <Input type="number" {...register("shippingFee")} />
-            </Field>
-            <Field>
-              <FieldLabel>Free shipping threshold (৳)</FieldLabel>
-              <Input type="number" {...register("freeShippingThreshold")} />
-              <p className="text-xs text-muted-foreground">Set to 0 to disable free shipping.</p>
-            </Field>
-          </div>
-        </FieldGroup>
+      <SectionCard title="Shipping" description="Delivery zones and their flat fees, e.g. Inside Dhaka vs. Outside Dhaka.">
+        <div className="flex flex-col gap-4">
+          {shippingZones.fields.map((field, index) => (
+            <div key={field.id} className="rounded-lg border border-border p-4">
+              <div className="mb-3 flex justify-end">
+                <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove zone" onClick={() => shippingZones.remove(index)}>
+                  <Trash2 />
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field>
+                  <FieldLabel>Zone name</FieldLabel>
+                  <Input {...register(`shippingZones.${index}.name`, { required: true })} />
+                </Field>
+                <Field>
+                  <FieldLabel>Fee (৳)</FieldLabel>
+                  <Input type="number" {...register(`shippingZones.${index}.fee`, { required: true })} />
+                </Field>
+              </div>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() => shippingZones.append({ name: "", fee: 0 })}
+          >
+            <Plus /> Add Zone
+          </Button>
+          <Field>
+            <FieldLabel>Free shipping threshold (৳)</FieldLabel>
+            <Input type="number" className="max-w-xs" {...register("freeShippingThreshold")} />
+            <p className="text-xs text-muted-foreground">Set to 0 to disable free shipping.</p>
+          </Field>
+        </div>
       </SectionCard>
 
       <SectionCard title="SEO Defaults">

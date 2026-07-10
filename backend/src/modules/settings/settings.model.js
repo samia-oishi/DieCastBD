@@ -42,6 +42,14 @@ const faqSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const shippingZoneSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    fee: { type: Number, required: true, min: 0 },
+  },
+  { _id: false }
+);
+
 const settingsSchema = new mongoose.Schema(
   {
     heroBanner: { type: [heroSlideSchema], default: [] },
@@ -66,7 +74,10 @@ const settingsSchema = new mongoose.Schema(
       phone: String,
       address: String,
     },
-    shippingFee: { type: Number, default: 0 },
+    // Replaces the old flat shippingFee with per-zone pricing (System 2, post-launch
+    // requirements). freeShippingThreshold stays a single global override — nothing
+    // in the requirement asks for a per-zone threshold.
+    shippingZones: { type: [shippingZoneSchema], default: [] },
     freeShippingThreshold: { type: Number, default: 0 },
     seoDefaults: {
       title: String,
