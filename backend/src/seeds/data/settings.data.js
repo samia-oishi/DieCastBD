@@ -81,6 +81,20 @@ export const settingsSeed = {
     merchantNumber: "",
     qrImage: null,
   },
+  // Every section enabled, matching the homepage exactly as it renders today —
+  // this seed/migration must not make anything disappear on deploy.
+  homepageSections: {
+    hero: { enabled: true, autoplay: true, autoplayInterval: 6 },
+    collectorPicks: { enabled: true },
+    featuredProducts: { enabled: true },
+    brandsStrip: { enabled: true },
+    newArrivals: { enabled: true },
+    whyChooseUs: { enabled: true },
+    collectorPromise: { enabled: true },
+    testimonials: { enabled: true },
+    instagramFeed: { enabled: true },
+    newsletter: { enabled: true },
+  },
   seoDefaults: {
     title: "Hot Wheels, MINI GT & Diecast Cars in Bangladesh | DiecastBD",
     description:

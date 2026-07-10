@@ -21,6 +21,11 @@ export function HomePage() {
   const newArrivals = useProducts({ newArrival: true, limit: 8, sort: "newest" });
   const collectorPicks = useProducts({ hero: true, limit: 8 });
 
+  // Defaults to enabled — a document that predates this field (or hasn't been
+  // re-seeded) must not make every section disappear.
+  const sections = settings?.homepageSections;
+  const isEnabled = (key) => sections?.[key]?.enabled ?? true;
+
   const social = settings?.socialLinks ?? {};
   const contact = settings?.contactInfo ?? {};
   const sameAs = [social.facebook, social.instagram, social.whatsapp].filter(Boolean);
@@ -82,38 +87,54 @@ export function HomePage() {
         <script type="application/ld+json">{JSON.stringify(websiteJsonLd)}</script>
       </Helmet>
 
-      <HeroSection slides={settings?.heroBanner} />
+      {isEnabled("hero") && (
+        <HeroSection
+          slides={settings?.heroBanner}
+          autoplay={sections?.hero?.autoplay ?? true}
+          autoplayInterval={sections?.hero?.autoplayInterval ?? 6}
+        />
+      )}
 
-      <ProductCarouselSection
-        title="Collector Picks"
-        subtitle="The pieces we'd add to our own shelf first."
-        products={collectorPicks.data?.data}
-        isLoading={collectorPicks.isLoading}
-      />
+      {isEnabled("collectorPicks") && (
+        <ProductCarouselSection
+          title="Collector Picks"
+          subtitle="The pieces we'd add to our own shelf first."
+          products={collectorPicks.data?.data}
+          isLoading={collectorPicks.isLoading}
+        />
+      )}
 
-      <ProductCarouselSection
-        title="Featured Products"
-        products={featured.data?.data}
-        isLoading={featured.isLoading}
-      />
+      {isEnabled("featuredProducts") && (
+        <ProductCarouselSection
+          title="Featured Products"
+          products={featured.data?.data}
+          isLoading={featured.isLoading}
+        />
+      )}
 
-      <BrandsStrip brands={brands} />
+      {isEnabled("brandsStrip") && <BrandsStrip brands={brands} />}
 
-      <ProductCarouselSection
-        title="New Arrivals"
-        subtitle="Just landed from the latest import batch."
-        products={newArrivals.data?.data}
-        isLoading={newArrivals.isLoading}
-      />
+      {isEnabled("newArrivals") && (
+        <ProductCarouselSection
+          title="New Arrivals"
+          subtitle="Just landed from the latest import batch."
+          products={newArrivals.data?.data}
+          isLoading={newArrivals.isLoading}
+        />
+      )}
 
-      <WhyChooseUsSection items={settings?.whyChooseUs} />
-      <CollectorPromiseSection
-        title={settings?.collectorPromise?.title}
-        description={settings?.collectorPromise?.description}
-      />
-      <TestimonialsSection testimonials={settings?.testimonials} />
-      <InstagramPlaceholder instagramUrl={settings?.socialLinks?.instagram} />
-      <NewsletterSection />
+      {isEnabled("whyChooseUs") && <WhyChooseUsSection items={settings?.whyChooseUs} />}
+      {isEnabled("collectorPromise") && (
+        <CollectorPromiseSection
+          title={settings?.collectorPromise?.title}
+          description={settings?.collectorPromise?.description}
+        />
+      )}
+      {isEnabled("testimonials") && <TestimonialsSection testimonials={settings?.testimonials} />}
+      {isEnabled("instagramFeed") && (
+        <InstagramPlaceholder instagramUrl={settings?.socialLinks?.instagram} />
+      )}
+      {isEnabled("newsletter") && <NewsletterSection />}
     </>
   );
 }

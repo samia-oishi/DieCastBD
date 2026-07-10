@@ -68,6 +68,33 @@ function HeroSlideImage({ control, index }) {
   );
 }
 
+const HOMEPAGE_SECTIONS = [
+  { key: "collectorPicks", label: "Collector Picks" },
+  { key: "featuredProducts", label: "Featured Products" },
+  { key: "brandsStrip", label: "Brands Strip" },
+  { key: "newArrivals", label: "New Arrivals" },
+  { key: "whyChooseUs", label: "Why Choose Us" },
+  { key: "collectorPromise", label: "Collector Promise" },
+  { key: "testimonials", label: "Testimonials" },
+  { key: "instagramFeed", label: "Instagram" },
+  { key: "newsletter", label: "Newsletter Signup" },
+];
+
+function SectionToggleRow({ control, name, label }) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <label className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3 text-sm">
+          {label}
+          <Switch checked={field.value} onCheckedChange={field.onChange} />
+        </label>
+      )}
+    />
+  );
+}
+
 function BkashQrImage({ control }) {
   const uploadMutation = useUploadSettingsImageMutation();
 
@@ -126,6 +153,18 @@ export function SettingsPage() {
       shippingZones: [],
       freeShippingThreshold: 0,
       bkashConfig: { merchantNumber: "", qrImage: null },
+      homepageSections: {
+        hero: { enabled: true, autoplay: true, autoplayInterval: 6 },
+        collectorPicks: { enabled: true },
+        featuredProducts: { enabled: true },
+        brandsStrip: { enabled: true },
+        newArrivals: { enabled: true },
+        whyChooseUs: { enabled: true },
+        collectorPromise: { enabled: true },
+        testimonials: { enabled: true },
+        instagramFeed: { enabled: true },
+        newsletter: { enabled: true },
+      },
       seoDefaults: { title: "", description: "" },
       faqs: [],
     },
@@ -221,6 +260,44 @@ export function SettingsPage() {
             )}
           />
         </FieldGroup>
+      </SectionCard>
+
+      <SectionCard title="Homepage Sections" description="Show or hide sections on the homepage, and control the hero carousel's autoplay.">
+        <div className="flex flex-col gap-4">
+          <div className="rounded-lg border border-border p-4">
+            <p className="mb-3 text-sm font-medium">Hero Banner</p>
+            <div className="flex flex-col gap-3">
+              <Controller
+                control={control}
+                name="homepageSections.hero.enabled"
+                render={({ field }) => (
+                  <label className="flex items-center justify-between gap-3 text-sm">
+                    Show hero banner
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </label>
+                )}
+              />
+              <Controller
+                control={control}
+                name="homepageSections.hero.autoplay"
+                render={({ field }) => (
+                  <label className="flex items-center justify-between gap-3 text-sm">
+                    Autoplay
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </label>
+                )}
+              />
+              <Field>
+                <FieldLabel>Autoplay interval (seconds)</FieldLabel>
+                <Input type="number" min={1} max={60} className="max-w-xs" {...register("homepageSections.hero.autoplayInterval")} />
+              </Field>
+            </div>
+          </div>
+
+          {HOMEPAGE_SECTIONS.map(({ key, label }) => (
+            <SectionToggleRow key={key} control={control} name={`homepageSections.${key}.enabled`} label={label} />
+          ))}
+        </div>
       </SectionCard>
 
       <SectionCard title="Why Choose Us" description="Homepage trust-signal grid.">

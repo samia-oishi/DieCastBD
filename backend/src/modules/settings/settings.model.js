@@ -86,6 +86,27 @@ const settingsSchema = new mongoose.Schema(
       merchantNumber: String,
       qrImage: imageSchema,
     },
+    // Per-section show/hide for the homepage (System 6, post-launch requirements) —
+    // one toggle per section actually rendered on HomePage.jsx today. hero also
+    // carries its own autoplay controls since Embla's autoplay delay is otherwise
+    // hardcoded. Every section defaults to enabled so a fresh/un-migrated document
+    // preserves today's homepage exactly (nothing disappears on deploy).
+    homepageSections: {
+      hero: {
+        enabled: { type: Boolean, default: true },
+        autoplay: { type: Boolean, default: true },
+        autoplayInterval: { type: Number, default: 6, min: 1, max: 60 },
+      },
+      collectorPicks: { enabled: { type: Boolean, default: true } },
+      featuredProducts: { enabled: { type: Boolean, default: true } },
+      brandsStrip: { enabled: { type: Boolean, default: true } },
+      newArrivals: { enabled: { type: Boolean, default: true } },
+      whyChooseUs: { enabled: { type: Boolean, default: true } },
+      collectorPromise: { enabled: { type: Boolean, default: true } },
+      testimonials: { enabled: { type: Boolean, default: true } },
+      instagramFeed: { enabled: { type: Boolean, default: true } },
+      newsletter: { enabled: { type: Boolean, default: true } },
+    },
     seoDefaults: {
       title: String,
       description: String,

@@ -35,6 +35,27 @@ const bkashConfig = z.object({
   qrImage: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
 });
 
+const sectionToggle = z.object({ enabled: z.coerce.boolean().optional() });
+
+const homepageSections = z.object({
+  hero: z
+    .object({
+      enabled: z.coerce.boolean().optional(),
+      autoplay: z.coerce.boolean().optional(),
+      autoplayInterval: z.coerce.number().min(1).max(60).optional(),
+    })
+    .optional(),
+  collectorPicks: sectionToggle.optional(),
+  featuredProducts: sectionToggle.optional(),
+  brandsStrip: sectionToggle.optional(),
+  newArrivals: sectionToggle.optional(),
+  whyChooseUs: sectionToggle.optional(),
+  collectorPromise: sectionToggle.optional(),
+  testimonials: sectionToggle.optional(),
+  instagramFeed: sectionToggle.optional(),
+  newsletter: sectionToggle.optional(),
+});
+
 export const updateSettingsSchema = {
   body: z.object({
     heroBanner: z.array(heroSlide).optional(),
@@ -52,6 +73,7 @@ export const updateSettingsSchema = {
     shippingZones: z.array(shippingZone).optional(),
     freeShippingThreshold: z.coerce.number().min(0).optional(),
     bkashConfig: bkashConfig.optional(),
+    homepageSections: homepageSections.optional(),
     seoDefaults: z.object({ title: z.string().optional(), description: z.string().optional() }).optional(),
   }),
 };

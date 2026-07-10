@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo/logo.jpg";
 
-export function HeroSection({ slides }) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 6000, stopOnInteraction: true })]);
+export function HeroSection({ slides, autoplay = true, autoplayInterval = 6 }) {
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true },
+    autoplay ? [Autoplay({ delay: autoplayInterval * 1000, stopOnInteraction: true })] : []
+  );
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const onSelect = useCallback((api) => setSelectedIndex(api.selectedScrollSnap()), []);
