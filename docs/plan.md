@@ -187,6 +187,6 @@ Flagged explicitly as they were made, not silently — this section is the runni
 | 9 | Order management: admin, customer, tracking, analytics | ✅ Done |
 | 10 | Admin dashboard: complete CRUD, inventory, customers/roles, coupons, media, reports, settings editor | ✅ Done |
 | 11 | About, Contact, FAQ, Newsletter (admin-facing pieces) | ✅ Done |
-| 12 | Testing, performance, accessibility, SEO polish, deployment, documentation | ⬜ Planned |
+| 12 | Testing, performance, accessibility, SEO polish, deployment, documentation | 🔄 In progress — testing, perf (code-splitting), security hardening, SEO (sitemap/robots), a11y, and docs done; **production deploy** is the only remaining step (needs Vercel/Render accounts — see `docs/DEPLOYMENT.md`) |
 
 Credentials wired in so far: MongoDB Atlas, Firebase (client + Admin SDK), Cloudinary, Resend (sending from `noreply@diecastbd.com`, domain verified — delivers to any recipient). bKash intentionally not requested yet.

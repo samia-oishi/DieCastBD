@@ -23,11 +23,18 @@ npm run dev
 ## Design system
 
 - Dark theme is fixed brand identity, not a toggle — all tokens live in `src/index.css` (`:root`), no light-mode variant
-- Primary color (lime) is a placeholder until the real logo lands in `src/assets/logo/` — swap `--primary` in `src/index.css` at that point
+- Primary color is the brand lime (`--primary` in `src/index.css`); the logo lives in `src/assets/logo/`
 - shadcn/ui is the primary component layer; DaisyUI is scoped to Rating/Steps/Loading only (see Phase 0 architecture doc)
+- Routes are code-split (`React.lazy`) so storefront visitors never download admin code
 
 ## Scripts
 
 - `npm run dev` — start dev server
 - `npm run build` — production build
 - `npm run preview` — preview the production build
+- `npm test` — run the Vitest suite (jsdom + React Testing Library); `npm run test:watch` for watch mode
+
+## Deployment
+
+See [`../docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md) for the full runbook (Vercel setup, env
+vars, and the committed `vercel.json` for SPA fallback / sitemap proxy / COOP header).

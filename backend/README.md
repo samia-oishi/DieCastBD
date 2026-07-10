@@ -19,9 +19,17 @@ npm run dev
 - `src/jobs/` — scheduled tasks (stock reservation release, analytics rollup)
 - `src/emails/` — Resend templates and senders
 - `src/seeds/` — imports `docs/Inventory.md` data into MongoDB
+- `src/modules/sitemap/` — dynamic `GET /sitemap.xml` (served at app root, product URLs from the DB)
+- `test/` — Vitest unit tests (discount math, JWT, sanitize, utils)
 
 ## Scripts
 
 - `npm run dev` — start with file watching
 - `npm start` — start (production)
 - `npm run seed` — run the database seed script
+- `npm test` — run the Vitest suite (`npm run test:watch` for watch mode)
+
+## Deployment
+
+See [`../docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md) for the full runbook (Render setup, env
+vars, health check, proxy/cookie notes).
