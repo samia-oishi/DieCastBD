@@ -15,12 +15,17 @@ export async function verifyFirebaseIdToken(idToken) {
 }
 
 export async function findOrCreateUser(decodedToken) {
-  const { uid, email, name, picture } = decodedToken;
+  const { uid, email, name, picture, email_verified: emailVerified } = decodedToken;
 
   let user = await User.findOne({ firebaseUid: uid });
 
   if (!user) {
-    const role = email && env.ADMIN_EMAILS.includes(email.toLowerCase()) ? "admin" : "customer";
+    // Only auto-promote to admin when Firebase confirms the email is verified —
+    // otherwise a fresh email/password sign-up using an admin address (which Firebase
+    // does NOT require verifying by default) could self-escalate. Google sign-ins are
+    // always verified, so this doesn't affect the normal admin sign-in path.
+    const isAdminEmail = email && emailVerified && env.ADMIN_EMAILS.includes(email.toLowerCase());
+    const role = isAdminEmail ? "admin" : "customer";
     user = await User.create({
       firebaseUid: uid,
       email,
@@ -41,7 +46,7 @@ export async function findOrCreateUser(decodedToken) {
 }
 
 export function issueTokens(user) {
-  const payload = { sub: user._id.toString(), role: user.role };
+  const payload = { sub: user._id.toString(), role: user.role, tv: user.tokenVersion };
   return {
     accessToken: signAccessToken(payload),
     refreshToken: signRefreshToken(payload),

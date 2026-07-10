@@ -14,6 +14,16 @@ import router from "./routes/index.js";
 
 export const app = express();
 
+// Render/Railway put a single reverse proxy in front of the app. Trust exactly
+// one hop so (a) `secure` cookies are actually set (Express otherwise sees the
+// internal HTTP hop and refuses them, breaking login), and (b) express-rate-limit
+// keys off the real client IP via X-Forwarded-For instead of the proxy's IP.
+// Deliberately `1`, not `true`: trusting all hops would let a client spoof
+// X-Forwarded-For to dodge IP rate limiting.
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
+
 app.disable("x-powered-by");
 app.use(helmet());
 app.use(

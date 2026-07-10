@@ -1,5 +1,5 @@
-import { verifyRefreshToken, signAccessToken } from "../../utils/jwt.js";
-import { setAuthCookies, setAccessTokenCookie, clearAuthCookies } from "../../utils/cookies.js";
+import { verifyRefreshToken } from "../../utils/jwt.js";
+import { setAuthCookies, clearAuthCookies } from "../../utils/cookies.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -31,8 +31,18 @@ export const refreshSession = asyncHandler(async (req, res) => {
   const user = await User.findById(payload.sub);
   if (!user || !user.isActive) throw ApiError.unauthorized("Account no longer available");
 
-  const accessToken = signAccessToken({ sub: user._id.toString(), role: user.role });
-  setAccessTokenCookie(res, accessToken);
+  // Reject any refresh token whose version no longer matches the account's — this is
+  // how deactivation, role changes, and "log out everywhere" kill sessions immediately
+  // instead of waiting for the 30-day refresh token to expire on its own.
+  if (payload.tv !== user.tokenVersion) {
+    throw ApiError.unauthorized("Session expired, please sign in again");
+  }
+
+  // Rotate both tokens, not just the access token, so the long-lived refresh
+  // credential keeps sliding forward on a fresh value rather than sitting unchanged
+  // in the cookie for its full 30-day life.
+  const tokens = issueTokens(user);
+  setAuthCookies(res, tokens);
   sendSuccess(res, { data: serializeUser(user) });
 });
 

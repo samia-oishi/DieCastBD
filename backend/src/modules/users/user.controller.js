@@ -25,7 +25,9 @@ export const updateMe = asyncHandler(async (req, res) => {
 });
 
 export const deactivateMe = asyncHandler(async (req, res) => {
-  const user = await User.findByIdAndUpdate(req.user.id, { isActive: false });
+  // Bump tokenVersion so any other outstanding sessions (another device) are killed
+  // too, not just the cookies we clear on this one.
+  const user = await User.findByIdAndUpdate(req.user.id, { isActive: false, $inc: { tokenVersion: 1 } });
   if (!user) throw ApiError.notFound("User not found");
   clearAuthCookies(res);
   sendSuccess(res, { message: "Account deactivated" });
@@ -64,6 +66,10 @@ export const updateUserAdmin = asyncHandler(async (req, res) => {
     ADMIN_EDITABLE_FIELDS.filter((field) => field in req.body).map((field) => [field, req.body[field]])
   );
 
+  // Deactivating an account from the admin panel should end its sessions immediately,
+  // same as self-deactivation — otherwise a banned user keeps their refresh token.
+  if (updates.isActive === false) updates.$inc = { tokenVersion: 1 };
+
   const user = await User.findByIdAndUpdate(req.params.id, updates, {
     returnDocument: "after",
     runValidators: true,
@@ -90,7 +96,11 @@ export const changeUserRole = asyncHandler(async (req, res) => {
     if (adminCount <= 1) throw ApiError.forbidden("Cannot demote the last remaining admin");
   }
 
+  // Bump tokenVersion so the affected user re-authenticates under their new role
+  // right away — a demotion shouldn't leave stale admin/staff access alive on their
+  // existing tokens until they happen to expire.
   target.role = newRole;
+  target.tokenVersion += 1;
   await target.save();
   sendSuccess(res, { data: serializeUserAdmin(target), message: "Role updated" });
 });

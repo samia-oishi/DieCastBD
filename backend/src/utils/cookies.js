@@ -21,13 +21,6 @@ export function setAuthCookies(res, { accessToken, refreshToken }) {
   });
 }
 
-export function setAccessTokenCookie(res, accessToken) {
-  res.cookie("accessToken", accessToken, {
-    ...baseCookieOptions,
-    maxAge: parseDurationMs(env.JWT_ACCESS_EXPIRES_IN),
-  });
-}
-
 export function clearAuthCookies(res) {
   res.clearCookie("accessToken", baseCookieOptions);
   res.clearCookie("refreshToken", { ...baseCookieOptions, path: "/api/v1/auth/refresh" });
