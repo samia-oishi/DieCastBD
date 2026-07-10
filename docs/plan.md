@@ -16,9 +16,9 @@ Living architecture document for DiecastBD v1.0 — a premium, collector-focused
 
 ## 2. Tech Stack (as implemented)
 
-**Frontend:** React 19, Vite, `react-router` v8 (no `react-router-dom`), Tailwind CSS v4, shadcn/ui (primary component layer, Radix-based) + DaisyUI (scoped to Rating/Steps/Loading only), Framer Motion, Embla Carousel (+ autoplay plugin), React Hook Form, Zod, Zustand (+ persist middleware for guest cart / recently-viewed), TanStack Query, Axios, React Hot Toast, React Helmet Async, Lucide React.
+**Frontend:** React 19, Vite, `react-router` v8 (no `react-router-dom`), Tailwind CSS v4, shadcn/ui (primary component layer, Radix-based) + DaisyUI (scoped to Rating/Steps/Loading only), Framer Motion, Embla Carousel (+ autoplay plugin), React Hook Form, Zod, Zustand (+ persist middleware for guest cart / recently-viewed), TanStack Query, Axios, React Hot Toast, React Helmet Async, Lucide React. Testing: Vitest + React Testing Library + jsdom (Phase 12).
 
-**Backend:** Node.js (ESM), Express 5, MongoDB Atlas, Mongoose 9, Firebase Admin SDK, `jsonwebtoken`, Multer, Cloudinary SDK, Zod, Helmet, `express-rate-limit`, Morgan, CORS, Compression, Dotenv, `cookie-parser`, Resend, `node-cron` (nightly analytics rollup + hourly stale-reservation release), `bcrypt` (unused — Firebase owns credentials, no passwords stored locally).
+**Backend:** Node.js (ESM), Express 5, MongoDB Atlas, Mongoose 9, Firebase Admin SDK, `jsonwebtoken`, Multer, Cloudinary SDK, Zod, Helmet, `express-rate-limit`, Morgan, CORS, Compression, Dotenv, `cookie-parser`, Resend, `node-cron` (nightly analytics rollup + hourly stale-reservation release), `bcrypt` (unused — Firebase owns credentials, no passwords stored locally). Testing: Vitest (Phase 12).
 
 **Notable version-driven deviations from the original plan** (see §7 for details): custom NoSQL-sanitize middleware (Express 5 breaks `express-mongo-sanitize`), custom `req.query` handling in validation middleware (Express 5's `req.query` is an uncached getter), `returnDocument: "after"` instead of deprecated Mongoose `new: true`.
 
