@@ -73,6 +73,7 @@ MongoDB Atlas, Firebase, Cloudinary, Resend → already provisioned (dev + prod 
    | Var | Value |
    |---|---|
    | `VITE_API_BASE_URL` | `https://api.diecastbd.com/api/v1` |
+   | `VITE_SITE_URL` | `https://diecastbd.com` (used for canonical URLs, `og:url`, and JSON-LD — must be the real public origin for SEO) |
    | `VITE_FIREBASE_API_KEY` … `VITE_FIREBASE_APP_ID` | the Firebase **client** config values |
 
 3. **`frontend/vercel.json` is already committed** and does three things — **before deploying, edit one line in it:** replace `REPLACE_WITH_BACKEND_URL` in the `/sitemap.xml` rewrite with your real backend host (e.g. `api.diecastbd.com`). The file provides:

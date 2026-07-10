@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 
+import { SITE_URL, canonical } from "@/lib/siteUrl";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { useProducts } from "@/features/products/api/useProducts";
 import { useBrands } from "@/features/brands/api/useBrands";
@@ -20,17 +21,65 @@ export function HomePage() {
   const newArrivals = useProducts({ newArrival: true, limit: 8, sort: "newest" });
   const collectorPicks = useProducts({ hero: true, limit: 8 });
 
+  const social = settings?.socialLinks ?? {};
+  const contact = settings?.contactInfo ?? {};
+  const sameAs = [social.facebook, social.instagram, social.whatsapp].filter(Boolean);
+
+  // Identifies DiecastBD as a Bangladesh online store to search engines (areaServed BD)
+  // and declares the on-site product search so Google can offer a sitelinks search box.
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "OnlineStore",
+    name: "DiecastBD",
+    url: SITE_URL,
+    logo: `${SITE_URL}/favicon.svg`,
+    description:
+      "Premium 1:64 diecast collectibles in Bangladesh — authentic Hot Wheels Premium and MINI GT.",
+    areaServed: { "@type": "Country", name: "Bangladesh" },
+    ...(sameAs.length ? { sameAs } : {}),
+    ...(contact.email || contact.phone
+      ? {
+          contactPoint: {
+            "@type": "ContactPoint",
+            contactType: "customer service",
+            ...(contact.email ? { email: contact.email } : {}),
+            ...(contact.phone ? { telephone: contact.phone } : {}),
+            areaServed: "BD",
+          },
+        }
+      : {}),
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "DiecastBD",
+    url: SITE_URL,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/shop?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <>
       <Helmet>
-        <title>{settings?.seoDefaults?.title ?? "DiecastBD — Premium Diecast Collectibles"}</title>
+        <title>
+          {settings?.seoDefaults?.title ?? "Hot Wheels, MINI GT & Diecast Cars in Bangladesh | DiecastBD"}
+        </title>
         <meta
           name="description"
           content={
             settings?.seoDefaults?.description ??
-            "Authentic Hot Wheels Premium and MINI GT diecast, curated for collectors in Bangladesh."
+            "Buy authentic Hot Wheels Premium and MINI GT diecast cars in Bangladesh. Verified 1:64 collectibles, collector-grade packaging, and nationwide delivery."
           }
         />
+        <link rel="canonical" href={canonical("/")} />
+        <meta property="og:url" content={canonical("/")} />
+        <meta property="og:locale" content="en_US" />
+        <script type="application/ld+json">{JSON.stringify(orgJsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(websiteJsonLd)}</script>
       </Helmet>
 
       <HeroSection slides={settings?.heroBanner} />

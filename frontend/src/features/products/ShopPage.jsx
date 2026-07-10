@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { SlidersHorizontal, Search, X } from "lucide-react";
 
+import { canonical } from "@/lib/siteUrl";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -38,7 +40,14 @@ export function ShopPage() {
   return (
     <>
       <Helmet>
-        <title>Shop — DiecastBD</title>
+        <title>Shop Hot Wheels &amp; MINI GT Diecast Cars in Bangladesh | DiecastBD</title>
+        <meta
+          name="description"
+          content="Browse authentic Hot Wheels Premium and MINI GT diecast cars in Bangladesh — Car Culture, F1, JDM and more. 1:64 scale, nationwide delivery, cash on delivery."
+        />
+        {/* Canonical points at the clean /shop URL so filtered/paginated views don't
+            fragment ranking signals across many near-duplicate query-string URLs. */}
+        <link rel="canonical" href={canonical("/shop")} />
       </Helmet>
 
       <Container className="py-10">

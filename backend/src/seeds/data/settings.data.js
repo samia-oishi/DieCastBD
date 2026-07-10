@@ -69,8 +69,8 @@ export const settingsSeed = {
   shippingFee: 120,
   freeShippingThreshold: 5000,
   seoDefaults: {
-    title: "DiecastBD — Premium Diecast Collectibles in Bangladesh",
+    title: "Hot Wheels, MINI GT & Diecast Cars in Bangladesh | DiecastBD",
     description:
-      "Authentic Hot Wheels Premium and MINI GT diecast, curated for collectors. Verified authenticity, nationwide delivery across Bangladesh.",
+      "Buy authentic Hot Wheels Premium and MINI GT diecast cars in Bangladesh. Verified 1:64 collectibles, collector-grade packaging, and nationwide delivery.",
   },
 };

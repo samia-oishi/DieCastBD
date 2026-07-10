@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router";
 import { Helmet } from "react-helmet-async";
 
+import { SITE_URL, canonical } from "@/lib/siteUrl";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
@@ -39,32 +40,48 @@ export function ProductDetailPage() {
   const outOfStock = product.availableStock <= 0;
   const otherRecentlyViewed = recentlyViewed.filter((p) => p._id !== product._id);
 
+  const productUrl = canonical(`/products/${product.slug}`);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
     sku: product.sku,
+    ...(product.modelNumber ? { mpn: product.modelNumber } : {}),
     brand: product.brand?.name ? { "@type": "Brand", name: product.brand.name } : undefined,
     image: [product.thumbnail?.url, ...(product.gallery ?? []).map((g) => g.url)].filter(Boolean),
     description: product.description,
     offers: {
       "@type": "Offer",
+      url: productUrl,
       priceCurrency: "BDT",
       price: onSale ? product.salePrice : product.price,
+      itemCondition: "https://schema.org/NewCondition",
       availability: outOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+      seller: { "@type": "Organization", name: "DiecastBD" },
     },
   };
 
   return (
     <>
       <Helmet>
-        <title>{product.seo?.title || `${product.title} — DiecastBD`}</title>
-        <meta name="description" content={product.seo?.description || product.description?.slice(0, 160)} />
+        <title>{product.seo?.title || `${product.title} — Buy in Bangladesh | DiecastBD`}</title>
+        <meta
+          name="description"
+          content={
+            product.seo?.description ||
+            `Buy the ${product.title} in Bangladesh at DiecastBD${
+              product.brand?.name ? ` — authentic ${product.brand.name}` : ""
+            }, 1:64 scale. ${product.description?.slice(0, 90) ?? ""}`.slice(0, 160)
+          }
+        />
+        <link rel="canonical" href={product.seo?.canonicalUrl || productUrl} />
         <meta property="og:title" content={product.title} />
         <meta property="og:description" content={product.description} />
         {product.thumbnail?.url && <meta property="og:image" content={product.thumbnail.url} />}
         <meta property="og:type" content="product" />
-        {product.seo?.canonicalUrl && <link rel="canonical" href={product.seo.canonicalUrl} />}
+        <meta property="og:url" content={productUrl} />
+        <meta property="product:price:amount" content={onSale ? product.salePrice : product.price} />
+        <meta property="product:price:currency" content="BDT" />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
