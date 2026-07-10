@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Navigate, useLocation, useNavigate } from "react-router";
+import { Copy, Check } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,28 @@ function toBuyNowLineItem({ product, qty }) {
     lineTotal: price * qty,
     stockIssue: qty > product.availableStock ? { availableStock: product.availableStock } : null,
   };
+}
+
+function CopyButton({ value }) {
+  const [copied, setCopied] = useState(false);
+
+  const onCopy = async () => {
+    await navigator.clipboard.writeText(value);
+    setCopied(true);
+    toast.success("Copied");
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onCopy}
+      aria-label="Copy bKash number"
+      className="text-muted-foreground hover:text-foreground"
+    >
+      {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+    </button>
+  );
 }
 
 function GuestAddressSection({ address, onSave, email, onEmailChange }) {
@@ -260,8 +283,9 @@ export function CheckoutPage() {
                     <img src={bkashConfig.qrImage.url} alt="bKash payment QR" className="size-24 rounded" />
                   )}
                   {bkashConfig?.merchantNumber && (
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                       Send Money to: <span className="text-primary">{bkashConfig.merchantNumber}</span>
+                      <CopyButton value={bkashConfig.merchantNumber} />
                     </p>
                   )}
                 </div>
