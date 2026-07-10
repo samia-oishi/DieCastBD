@@ -165,6 +165,7 @@ export function SettingsPage() {
         instagramFeed: { enabled: true },
         newsletter: { enabled: true },
       },
+      navigation: { headerLinks: [], footerLinks: [], footerText: "" },
       seoDefaults: { title: "", description: "" },
       faqs: [],
     },
@@ -175,6 +176,8 @@ export function SettingsPage() {
   const testimonials = useFieldArray({ control, name: "testimonials" });
   const faqs = useFieldArray({ control, name: "faqs" });
   const shippingZones = useFieldArray({ control, name: "shippingZones" });
+  const headerLinks = useFieldArray({ control, name: "navigation.headerLinks" });
+  const footerLinks = useFieldArray({ control, name: "navigation.footerLinks" });
 
   useEffect(() => {
     if (settings) reset(settings);
@@ -531,6 +534,71 @@ export function SettingsPage() {
             <BkashQrImage control={control} />
           </Field>
         </FieldGroup>
+      </SectionCard>
+
+      <SectionCard title="Navigation" description="Header and footer links, and the footer tagline.">
+        <div className="flex flex-col gap-6">
+          <div>
+            <p className="mb-3 text-sm font-medium">Header links</p>
+            <div className="flex flex-col gap-4">
+              {headerLinks.fields.map((field, index) => (
+                <div key={field.id} className="rounded-lg border border-border p-4">
+                  <div className="mb-3 flex justify-end">
+                    <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove link" onClick={() => headerLinks.remove(index)}>
+                      <Trash2 />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field>
+                      <FieldLabel>Label</FieldLabel>
+                      <Input {...register(`navigation.headerLinks.${index}.label`, { required: true })} />
+                    </Field>
+                    <Field>
+                      <FieldLabel>URL</FieldLabel>
+                      <Input {...register(`navigation.headerLinks.${index}.url`, { required: true })} placeholder="/shop" />
+                    </Field>
+                  </div>
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => headerLinks.append({ label: "", url: "" })}>
+                <Plus /> Add Header Link
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-3 text-sm font-medium">Footer links</p>
+            <div className="flex flex-col gap-4">
+              {footerLinks.fields.map((field, index) => (
+                <div key={field.id} className="rounded-lg border border-border p-4">
+                  <div className="mb-3 flex justify-end">
+                    <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove link" onClick={() => footerLinks.remove(index)}>
+                      <Trash2 />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field>
+                      <FieldLabel>Label</FieldLabel>
+                      <Input {...register(`navigation.footerLinks.${index}.label`, { required: true })} />
+                    </Field>
+                    <Field>
+                      <FieldLabel>URL</FieldLabel>
+                      <Input {...register(`navigation.footerLinks.${index}.url`, { required: true })} placeholder="/about" />
+                    </Field>
+                  </div>
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => footerLinks.append({ label: "", url: "" })}>
+                <Plus /> Add Footer Link
+              </Button>
+            </div>
+          </div>
+
+          <Field>
+            <FieldLabel>Footer tagline</FieldLabel>
+            <Textarea rows={2} {...register("navigation.footerText")} />
+          </Field>
+        </div>
       </SectionCard>
 
       <SectionCard title="SEO Defaults">

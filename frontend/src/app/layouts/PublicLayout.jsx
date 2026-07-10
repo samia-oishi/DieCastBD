@@ -10,8 +10,27 @@ import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { useCurrentUser, useLogoutMutation } from "@/features/auth/api/useAuth";
+import { useSettings } from "@/features/settings/api/useSettings";
 import { CartDrawer } from "@/features/cart/components/CartDrawer";
 import logo from "@/assets/logo/logo.jpg";
+
+const NAV_LINK_CLASS = ({ isActive }) =>
+  cn("text-sm transition-colors", isActive ? "text-primary" : "text-muted-foreground hover:text-foreground");
+
+function HeaderNavLink({ label, url }) {
+  if (/^https?:\/\//.test(url)) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className={NAV_LINK_CLASS({ isActive: false })}>
+        {label}
+      </a>
+    );
+  }
+  return (
+    <NavLink to={url} className={NAV_LINK_CLASS}>
+      {label}
+    </NavLink>
+  );
+}
 
 function HeaderAuthState() {
   const { data: user, isLoading } = useCurrentUser();
@@ -66,6 +85,13 @@ function HeaderAuthState() {
 
 export function PublicLayout() {
   const [cartOpen, setCartOpen] = useState(false);
+  const { data: settings } = useSettings();
+  // Falls back to the original hardcoded "Shop" link if the admin-managed list
+  // is empty (e.g. a live document that predates this field) — the header nav
+  // must never end up completely blank.
+  const headerLinks = settings?.navigation?.headerLinks?.length
+    ? settings.navigation.headerLinks
+    : [{ label: "Shop", url: ROUTES.SHOP }];
 
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
@@ -75,17 +101,11 @@ export function PublicLayout() {
           <Link to={ROUTES.HOME}>
             <img src={logo} alt="DiecastBD" className="h-5 w-auto sm:h-6" />
           </Link>
-          <NavLink
-            to={ROUTES.SHOP}
-            className={({ isActive }) =>
-              cn(
-                "text-sm transition-colors",
-                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              )
-            }
-          >
-            Shop
-          </NavLink>
+          <nav className="flex items-center gap-6">
+            {headerLinks.map((link) => (
+              <HeaderNavLink key={link.url} label={link.label} url={link.url} />
+            ))}
+          </nav>
         </div>
         <div className="flex items-center gap-3">
           {/* Cart works for guests too (localStorage-backed) — deliberately not gated behind auth. */}

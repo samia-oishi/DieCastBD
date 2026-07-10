@@ -50,6 +50,14 @@ const shippingZoneSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const navLinkSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true },
+    url: { type: String, required: true },
+  },
+  { _id: false }
+);
+
 const settingsSchema = new mongoose.Schema(
   {
     heroBanner: { type: [heroSlideSchema], default: [] },
@@ -106,6 +114,16 @@ const settingsSchema = new mongoose.Schema(
       testimonials: { enabled: { type: Boolean, default: true } },
       instagramFeed: { enabled: { type: Boolean, default: true } },
       newsletter: { enabled: { type: Boolean, default: true } },
+    },
+    // Header/footer link management (System 10, post-launch requirements) —
+    // deliberately just the plain link lists, not the cart/auth-state icons or
+    // the announcement bar, per the requirement's own "keep the interface
+    // simple" scoping. No separate `order` field — array position is the
+    // order, same as every other list field on this document.
+    navigation: {
+      headerLinks: { type: [navLinkSchema], default: [] },
+      footerLinks: { type: [navLinkSchema], default: [] },
+      footerText: String,
     },
     seoDefaults: {
       title: String,

@@ -95,6 +95,22 @@ export const settingsSeed = {
     instagramFeed: { enabled: true },
     newsletter: { enabled: true },
   },
+  // Matches the site's current hardcoded nav/footer exactly (PublicLayout.jsx's
+  // single "Shop" link, Footer.jsx's FOOTER_LINKS + tagline) — this
+  // migration must not change what's currently live, only make it editable.
+  navigation: {
+    headerLinks: [{ label: "Shop", url: "/shop" }],
+    footerLinks: [
+      { label: "About", url: "/about" },
+      { label: "Contact", url: "/contact" },
+      { label: "FAQ", url: "/faq" },
+      { label: "Shipping Policy", url: "/shipping-policy" },
+      { label: "Refund Policy", url: "/refund-policy" },
+      { label: "Privacy Policy", url: "/privacy-policy" },
+      { label: "Terms & Conditions", url: "/terms-conditions" },
+    ],
+    footerText: "Premium diecast collectibles for serious collectors in Bangladesh.",
+  },
   seoDefaults: {
     title: "Hot Wheels, MINI GT & Diecast Cars in Bangladesh | DiecastBD",
     description:

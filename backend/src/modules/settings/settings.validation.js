@@ -37,6 +37,17 @@ const bkashConfig = z.object({
 
 const sectionToggle = z.object({ enabled: z.coerce.boolean().optional() });
 
+const navLink = z.object({
+  label: z.string().min(1),
+  url: z.string().min(1),
+});
+
+const navigation = z.object({
+  headerLinks: z.array(navLink).optional(),
+  footerLinks: z.array(navLink).optional(),
+  footerText: z.string().optional(),
+});
+
 const homepageSections = z.object({
   hero: z
     .object({
@@ -74,6 +85,7 @@ export const updateSettingsSchema = {
     freeShippingThreshold: z.coerce.number().min(0).optional(),
     bkashConfig: bkashConfig.optional(),
     homepageSections: homepageSections.optional(),
+    navigation: navigation.optional(),
     seoDefaults: z.object({ title: z.string().optional(), description: z.string().optional() }).optional(),
   }),
 };
