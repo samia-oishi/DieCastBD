@@ -357,3 +357,17 @@ The highest-risk system in this whole batch — it rewrites the transaction-prot
 Also added a Vitest unit test for `stockBucket()` (now exported), the pure classification function every transition branch dispatches on — the `$inc`/atomic-guard mutation logic itself stays curl-verified rather than introducing new integration-test infrastructure (e.g. `mongodb-memory-server`), consistent with how every other transaction-heavy path in this project has been verified.
 
 Both production builds clean, all 35 backend tests (32 existing + 3 new) and 11 frontend tests still green.
+
+---
+
+## System 8 — Dashboard Analytics
+
+Re-presented the architecture review's own recommendation before starting: "Total Visitors" needs real traffic-tracking infrastructure (event-ingestion endpoint, bot filtering, session dedup) this project deliberately scoped out in favor of GA4/Plausible — user confirmed skipping it. Built only the straightforward part: Orders/Revenue with date-range filters.
+
+**Backend.** `GET /admin/analytics/daily` gained an optional `startDate`/`endDate` query pair, taking priority over the existing `days` param when both are present — `days` and every current caller (`ReportsPage.jsx`'s 7/30/90 presets) are completely unchanged. New `getDailyHistoryRange(startDate, endDate)` in `analytics.service.js` queries `AnalyticsDaily.find({date: {$gte, $lte}})` — `date` is a `YYYY-MM-DD` string, so lexicographic comparison ranges correctly with zero Date conversion.
+
+**Frontend.** `DashboardPage.jsx` gained a range picker (Today / Last 7 days / Last 30 days / Custom range), reusing the exact `Select` pattern already proven in `ReportsPage.jsx`. Custom range shows two native `<Input type="date">` fields, matching the existing pattern already used for coupon expiry dates. The revenue chart and a new "revenue · orders over this period" summary line now both read from whichever data source matches the selected range. **"Today" deliberately never calls the new range endpoint** — the nightly rollup hasn't computed `AnalyticsDaily` for the current day yet (same reason `GET /admin/analytics/summary` already computes today live rather than reading the stored table), so a `startDate=endDate=today` query would come back empty despite real sales existing today. Instead "Today" reuses the already-fetched `summary.today` object directly, which has the identical row shape (`{date, revenue, ordersCount, ...}`) every other range option returns, so it needs no special-casing in the chart or the sum logic below it.
+
+**Verified via curl** with a fresh admin token against the real dev database: confirmed the existing `?days=7` call still returns identically to before; confirmed a `startDate`/`endDate` range that includes the one real `AnalyticsDaily` row returns it, a range that excludes it returns empty, and a range matching its date exactly returns exactly that row — proving the range filter is genuinely filtering, not just ignoring the params.
+
+Both production builds clean, all 35 backend tests and 11 frontend tests still green.

@@ -62,3 +62,11 @@ export async function getSummary() {
 export async function getDailyHistory(days = 30) {
   return AnalyticsDaily.find().sort({ date: -1 }).limit(days).then((rows) => rows.reverse());
 }
+
+// `date` is a YYYY-MM-DD string, so lexicographic comparison sorts/ranges
+// correctly — no Date conversion needed. Powers the Dashboard's custom-range
+// filter (System 8, post-launch); `days`-based history above is unaffected
+// and keeps backing the Reports page's 7/30/90 presets unchanged.
+export async function getDailyHistoryRange(startDate, endDate) {
+  return AnalyticsDaily.find({ date: { $gte: startDate, $lte: endDate } }).sort({ date: 1 });
+}

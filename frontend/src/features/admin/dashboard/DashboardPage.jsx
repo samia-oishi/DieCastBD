@@ -1,9 +1,19 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import { Wallet, ShoppingCart, TriangleAlert, Users } from "lucide-react";
 
+import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
-import { useAnalyticsSummary, useAnalyticsDaily } from "@/features/admin/analytics/api/useAnalytics";
+import { useAnalyticsSummary, useAnalyticsDaily, useAnalyticsDailyRange } from "@/features/admin/analytics/api/useAnalytics";
 import { RevenueChart } from "@/features/admin/analytics/components/RevenueChart";
+
+const RANGE_OPTIONS = [
+  { value: "today", label: "Today" },
+  { value: "7", label: "Last 7 days" },
+  { value: "30", label: "Last 30 days" },
+  { value: "custom", label: "Custom range" },
+];
 
 function formatPrice(amount) {
   return `৳${Math.round(amount).toLocaleString("en-US")}`;
@@ -24,12 +34,31 @@ function StatCard({ icon: Icon, label, value, sublabel }) {
 
 export function DashboardPage() {
   const { data: summary, isLoading: summaryLoading } = useAnalyticsSummary();
-  const { data: daily, isLoading: dailyLoading } = useAnalyticsDaily(30);
 
-  if (summaryLoading || dailyLoading) return <FullPageLoader />;
+  const [range, setRange] = useState("30");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+
+  // "Today" reuses the already-live-computed summary.today instead of the daily-
+  // rollup endpoint — the nightly rollup hasn't run for today yet, so a range
+  // query for today's date would come back empty even with real sales today.
+  const { data: presetRows, isLoading: presetLoading } = useAnalyticsDaily(range === "7" ? 7 : 30);
+  const { data: rangeRows, isLoading: rangeLoading } = useAnalyticsDailyRange(
+    range === "custom" ? customStart : undefined,
+    range === "custom" ? customEnd : undefined
+  );
+
+  if (summaryLoading) return <FullPageLoader />;
 
   const today = summary?.today;
   const week = summary?.last7Days;
+
+  const chartRows =
+    range === "today" ? (today ? [today] : []) : range === "custom" ? (rangeRows ?? []) : presetRows ?? [];
+  const chartLoading = range === "today" ? false : range === "custom" ? rangeLoading : presetLoading;
+  const chartRevenue = chartRows.reduce((sum, r) => sum + r.revenue, 0);
+  const chartOrders = chartRows.reduce((sum, r) => sum + r.ordersCount, 0);
+  const rangeLabel = RANGE_OPTIONS.find((o) => o.value === range)?.label ?? "";
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,8 +77,39 @@ export function DashboardPage() {
       </div>
 
       <div className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-4 font-heading text-lg">Revenue — last 30 days</h2>
-        <RevenueChart data={daily ?? []} />
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-heading text-lg">Revenue &amp; Orders — {rangeLabel}</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={range} onValueChange={setRange}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RANGE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {range === "custom" && (
+              <>
+                <Input type="date" className="w-[150px]" value={customStart} onChange={(e) => setCustomStart(e.target.value)} />
+                <Input type="date" className="w-[150px]" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} />
+              </>
+            )}
+          </div>
+        </div>
+
+        <p className="mb-4 text-sm text-muted-foreground">
+          {formatPrice(chartRevenue)} revenue · {chartOrders} orders over this period
+        </p>
+
+        {chartLoading ? (
+          <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">Loading...</div>
+        ) : (
+          <RevenueChart data={chartRows} />
+        )}
       </div>
 
       <div className="rounded-xl border border-border bg-card p-6">
