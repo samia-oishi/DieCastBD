@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
   AlertDialog,
@@ -96,7 +97,10 @@ export function ProductsPage() {
               </TableCell>
             </TableRow>
           )}
-          {products.map((product) => (
+          {products.map((product) => {
+            const onSale = product.salePrice != null && product.salePrice < product.price;
+            const effectivePrice = onSale ? product.salePrice : product.price;
+            return (
             <TableRow key={product._id}>
               <TableCell>
                 {product.thumbnail?.url ? (
@@ -106,14 +110,26 @@ export function ProductsPage() {
                 )}
               </TableCell>
               <TableCell className="font-mono text-xs">{product.sku}</TableCell>
-              <TableCell className="font-medium">{product.title}</TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  {product.title}
+                  {onSale && <Badge className="bg-amber-400 text-background">Sale</Badge>}
+                </div>
+              </TableCell>
               <TableCell className="text-muted-foreground">{product.brand?.name}</TableCell>
-              <TableCell>৳{product.price.toLocaleString()}</TableCell>
+              <TableCell>
+                ৳{effectivePrice.toLocaleString()}
+                {onSale && (
+                  <span className="ml-1.5 text-xs text-muted-foreground line-through">
+                    ৳{product.price.toLocaleString()}
+                  </span>
+                )}
+              </TableCell>
               <TableCell className="text-muted-foreground">
                 {product.costPrice != null ? `৳${product.costPrice.toLocaleString()}` : "—"}
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {product.costPrice != null ? `৳${(product.price - product.costPrice).toLocaleString()}` : "—"}
+                {product.costPrice != null ? `৳${(effectivePrice - product.costPrice).toLocaleString()}` : "—"}
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {product.profitMargin != null ? `${product.profitMargin}%` : "—"}
@@ -133,7 +149,8 @@ export function ProductsPage() {
                 </div>
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
 

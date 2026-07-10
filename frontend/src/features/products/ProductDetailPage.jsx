@@ -112,7 +112,7 @@ export function ProductDetailPage() {
 
             <div className="flex flex-wrap items-center gap-2">
               {product.isNewArrival && <Badge className="bg-primary text-primary-foreground">New</Badge>}
-              {onSale && <Badge variant="destructive">Sale</Badge>}
+              {onSale && <Badge className="bg-amber-400 text-background">Sale</Badge>}
               {product.isHeroProduct && <Badge variant="outline">Collector Pick</Badge>}
               {outOfStock && <Badge variant="destructive">Sold Out</Badge>}
             </div>

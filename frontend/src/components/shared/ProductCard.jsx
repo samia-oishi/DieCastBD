@@ -35,7 +35,7 @@ export function ProductCard({ product, className }) {
           {isNewArrival && (
             <Badge className="bg-primary text-primary-foreground">New</Badge>
           )}
-          {onSale && <Badge variant="destructive">Sale</Badge>}
+          {onSale && <Badge className="bg-amber-400 text-background">Sale</Badge>}
         </div>
 
         {outOfStock && (

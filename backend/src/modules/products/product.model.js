@@ -64,14 +64,19 @@ productSchema.virtual("availableStock").get(function () {
   return this.stock - this.reservedStock;
 });
 
-// Margin off list price (not salePrice) — a catalog-level profitability metric,
-// not a live "what am I earning on this sale right now" figure. null (not 0)
-// when costPrice isn't set/selected, since 0% margin and "unknown" are different
-// things an admin needs to tell apart. costPrice is select:false by default, so
-// this only resolves on admin queries that explicitly .select("+costPrice").
+// Margin off the *effective* selling price — salePrice when one is active,
+// otherwise list price — so a discounted item's margin reflects what it's
+// actually selling for, not its pre-discount list price. Same "is this item
+// on sale" check used everywhere else (ProductCard, PDP, order.service.js).
+// null (not 0) when costPrice isn't set/selected, since 0% margin and
+// "unknown" are different things an admin needs to tell apart. costPrice is
+// select:false by default, so this only resolves on admin queries that
+// explicitly .select("+costPrice").
 productSchema.virtual("profitMargin").get(function () {
   if (this.costPrice == null || !this.price) return null;
-  return Math.round(((this.price - this.costPrice) / this.price) * 100);
+  const effectivePrice = this.salePrice != null && this.salePrice < this.price ? this.salePrice : this.price;
+  if (!effectivePrice) return null;
+  return Math.round(((effectivePrice - this.costPrice) / effectivePrice) * 100);
 });
 
 productSchema.set("toJSON", { virtuals: true });
