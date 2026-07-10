@@ -64,6 +64,16 @@ productSchema.virtual("availableStock").get(function () {
   return this.stock - this.reservedStock;
 });
 
+// Margin off list price (not salePrice) — a catalog-level profitability metric,
+// not a live "what am I earning on this sale right now" figure. null (not 0)
+// when costPrice isn't set/selected, since 0% margin and "unknown" are different
+// things an admin needs to tell apart. costPrice is select:false by default, so
+// this only resolves on admin queries that explicitly .select("+costPrice").
+productSchema.virtual("profitMargin").get(function () {
+  if (this.costPrice == null || !this.price) return null;
+  return Math.round(((this.price - this.costPrice) / this.price) * 100);
+});
+
 productSchema.set("toJSON", { virtuals: true });
 productSchema.set("toObject", { virtuals: true });
 

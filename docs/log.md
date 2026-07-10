@@ -301,3 +301,17 @@ No live bKash merchant API/gateway — matches the requirement literally: the cu
 Both production builds clean, all 36 existing tests still green.
 
 **Follow-up (same day, user request):** added a one-click copy button next to the merchant number shown at checkout, so customers don't have to select/retype it manually before sending payment in their bKash app. New local `CopyButton` (`CheckoutPage.jsx`, `navigator.clipboard.writeText` + toast, matching the existing `ShareButton` clipboard pattern) — icon toggles to a checkmark for 1.5s after copying.
+
+---
+
+## System 5 — Sale Badge + Cost/Profit
+
+Both requirements turned out to be mostly already built, per the architecture review's audit finding — this system closed the two real gaps rather than building either from scratch.
+
+**Backend.** Added `Product.profitMargin`, a virtual mirroring the existing `availableStock` virtual's exact pattern: `round((price - costPrice) / price * 100)`, `null` when `costPrice` is unset/unselected (an admin needs to tell "0% margin" apart from "cost unknown," and the public storefront — which never selects `costPrice` — gets a harmless `null` instead of a fabricated or leaked number). Deliberately computed off list `price`, not `salePrice` — a catalog-level profitability metric, not a live per-sale figure. Zero schema change, zero new endpoint: `listProductsAdmin`/`getProductAdmin` already `.select("+costPrice")`, so the virtual just serializes automatically. Added 5 Vitest unit tests (`product.profitMargin.test.js`) covering rounding, the null/unset case, division-by-zero-on-price safety, and the negative-margin case (cost exceeding price).
+
+**Frontend.** PDP was missing the Sale badge `ProductCard` already had — one line added, reusing the `onSale` boolean already computed on that page (no new logic). Admin `ProductsPage.jsx` table gained Cost/Profit/Margin columns (all reading directly from already-fetched product data — `costPrice`, `price - costPrice`, and the new `profitMargin` virtual respectively), each rendering `—` when `costPrice` isn't set rather than a misleading `৳0`/`0%`.
+
+**Verified:** all 30 backend tests (25 existing + 5 new) and 11 frontend tests pass; confirmed via a direct query mirroring the admin controller's exact `.select("+costPrice")` pattern that `profitMargin` resolves correctly against real seeded product data (e.g. ৳3200 price / ৳2023 cost → 37%); confirmed the public product-list endpoint never exposes `costPrice` and serializes `profitMargin` as `null` rather than leaking or fabricating a number.
+
+Both production builds clean.

@@ -73,6 +73,9 @@ export function ProductsPage() {
             <TableHead>Title</TableHead>
             <TableHead>Brand</TableHead>
             <TableHead>Price</TableHead>
+            <TableHead>Cost</TableHead>
+            <TableHead>Profit</TableHead>
+            <TableHead>Margin</TableHead>
             <TableHead>Stock</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -81,14 +84,14 @@ export function ProductsPage() {
         <TableBody>
           {isLoading && (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground">
+              <TableCell colSpan={11} className="text-center text-muted-foreground">
                 Loading...
               </TableCell>
             </TableRow>
           )}
           {!isLoading && products.length === 0 && (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground">
+              <TableCell colSpan={11} className="text-center text-muted-foreground">
                 No products found.
               </TableCell>
             </TableRow>
@@ -106,6 +109,15 @@ export function ProductsPage() {
               <TableCell className="font-medium">{product.title}</TableCell>
               <TableCell className="text-muted-foreground">{product.brand?.name}</TableCell>
               <TableCell>৳{product.price.toLocaleString()}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {product.costPrice != null ? `৳${product.costPrice.toLocaleString()}` : "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {product.costPrice != null ? `৳${(product.price - product.costPrice).toLocaleString()}` : "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {product.profitMargin != null ? `${product.profitMargin}%` : "—"}
+              </TableCell>
               <TableCell>{product.availableStock}</TableCell>
               <TableCell className="capitalize text-muted-foreground">{product.status}</TableCell>
               <TableCell className="text-right">
