@@ -16,26 +16,34 @@ const shippingAddressBodySchema = z.object({
 // auth-aware branching happens in the controller, not here, since validate()
 // has no access to req.user.
 export const createOrderSchema = {
-  body: z.object({
-    addressId: z.string().optional(),
-    items: z
-      .array(z.object({ productId: z.string().min(1), qty: z.coerce.number().int().min(1) }))
-      .optional(),
-    guestInfo: z
-      .object({
-        name: z.string().min(1, "Name is required"),
-        phone: z.string().min(1, "Phone is required"),
-        email: z.string().email("Enter a valid email").optional().or(z.literal("")),
-      })
-      .optional(),
-    shippingAddress: shippingAddressBodySchema.optional(),
+  body: z
+    .object({
+      addressId: z.string().optional(),
+      items: z
+        .array(z.object({ productId: z.string().min(1), qty: z.coerce.number().int().min(1) }))
+        .optional(),
+      guestInfo: z
+        .object({
+          name: z.string().min(1, "Name is required"),
+          phone: z.string().min(1, "Phone is required"),
+          email: z.string().email("Enter a valid email").optional().or(z.literal("")),
+        })
+        .optional(),
+      shippingAddress: shippingAddressBodySchema.optional(),
 
-    phone: z.string().min(1, "Phone is required"),
-    deliveryNote: z.string().optional(),
-    couponCode: z.string().optional(),
-    paymentMethod: z.enum(["cod", "bkash"]),
-    shippingZone: z.string().min(1, "Shipping zone is required"),
-  }),
+      phone: z.string().min(1, "Phone is required"),
+      deliveryNote: z.string().optional(),
+      couponCode: z.string().optional(),
+      paymentMethod: z.enum(["cod", "bkash"]),
+      bkashTransactionId: z.string().optional(),
+      shippingZone: z.string().min(1, "Shipping zone is required"),
+    })
+    // Manual bKash flow — customer sends payment outside the app and types the
+    // resulting Transaction ID here; only required when they actually chose bKash.
+    .refine((data) => data.paymentMethod !== "bkash" || !!data.bkashTransactionId?.trim(), {
+      message: "bKash Transaction ID is required",
+      path: ["bkashTransactionId"],
+    }),
 };
 
 export const orderNumberParamSchema = {

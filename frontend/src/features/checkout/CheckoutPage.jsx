@@ -108,11 +108,13 @@ export function CheckoutPage() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { paymentMethod: "cod", shippingZone: "" },
+    defaultValues: { paymentMethod: "cod", shippingZone: "", bkashTransactionId: "" },
   });
 
   const shippingZones = settings?.shippingZones ?? [];
   const selectedZone = watch("shippingZone");
+  const selectedPaymentMethod = watch("paymentMethod");
+  const bkashConfig = settings?.bkashConfig;
 
   // Settings load asynchronously, after the form's initial defaultValues are
   // set — default to the first configured zone once zones arrive, but only if
@@ -235,13 +237,41 @@ export function CheckoutPage() {
                     />
                     Cash on Delivery
                   </label>
-                  <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm opacity-50">
-                    <input type="radio" disabled />
-                    bKash (coming soon)
+                  <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm has-checked:border-primary has-checked:bg-primary/5">
+                    <input
+                      type="radio"
+                      checked={field.value === "bkash"}
+                      onChange={() => field.onChange("bkash")}
+                    />
+                    bKash
                   </label>
                 </div>
               )}
             />
+
+            {selectedPaymentMethod === "bkash" && (
+              <div className="mt-3 flex flex-col gap-4 rounded-lg border border-border p-4">
+                <p className="text-sm text-muted-foreground">
+                  Send the total amount to the bKash number below, then enter the Transaction ID
+                  you receive.
+                </p>
+                <div className="flex items-center gap-4">
+                  {bkashConfig?.qrImage?.url && (
+                    <img src={bkashConfig.qrImage.url} alt="bKash payment QR" className="size-24 rounded" />
+                  )}
+                  {bkashConfig?.merchantNumber && (
+                    <p className="text-sm font-medium text-foreground">
+                      Send Money to: <span className="text-primary">{bkashConfig.merchantNumber}</span>
+                    </p>
+                  )}
+                </div>
+                <Field data-invalid={!!errors.bkashTransactionId}>
+                  <FieldLabel htmlFor="bkashTransactionId">bKash Transaction ID</FieldLabel>
+                  <Input id="bkashTransactionId" {...register("bkashTransactionId")} />
+                  <FieldError errors={errors.bkashTransactionId ? [errors.bkashTransactionId] : undefined} />
+                </Field>
+              </div>
+            )}
           </div>
         </div>
 

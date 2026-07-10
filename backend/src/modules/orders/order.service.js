@@ -64,6 +64,7 @@ async function buildAndSaveOrder({
   deliveryNote,
   couponCode,
   paymentMethod,
+  bkashTransactionId,
   shippingZone,
   session,
 }) {
@@ -107,6 +108,10 @@ async function buildAndSaveOrder({
         shippingFee,
         total,
         paymentMethod,
+        // Manual bKash — no live gateway, so paymentStatus stays the default
+        // "pending" until an admin manually verifies the Transaction ID and
+        // marks it paid; only the ID itself is captured at order time.
+        bkashTransactionId: paymentMethod === "bkash" ? bkashTransactionId : null,
         status: "pending",
         statusHistory: [{ status: "pending", changedBy: userId, at: new Date() }],
       },
@@ -139,6 +144,7 @@ export async function createOrderFromCart({
   deliveryNote,
   couponCode,
   paymentMethod,
+  bkashTransactionId,
   shippingZone,
 }) {
   const cart = await Cart.findOne({ user: userId }).populate("items.product");
@@ -164,6 +170,7 @@ export async function createOrderFromCart({
         deliveryNote,
         couponCode,
         paymentMethod,
+        bkashTransactionId,
         shippingZone,
         session,
       });
@@ -195,6 +202,7 @@ export async function createOrderFromItems({
   deliveryNote,
   couponCode,
   paymentMethod,
+  bkashTransactionId,
   shippingZone,
 }) {
   if (!items || items.length === 0) throw ApiError.badRequest("No items to order");
@@ -222,6 +230,7 @@ export async function createOrderFromItems({
         deliveryNote,
         couponCode,
         paymentMethod,
+        bkashTransactionId,
         shippingZone,
         session,
       });

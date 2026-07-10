@@ -68,6 +68,48 @@ function HeroSlideImage({ control, index }) {
   );
 }
 
+function BkashQrImage({ control }) {
+  const uploadMutation = useUploadSettingsImageMutation();
+
+  return (
+    <Controller
+      control={control}
+      name="bkashConfig.qrImage"
+      render={({ field }) => (
+        <div className="flex items-center gap-3">
+          {field.value?.url ? (
+            <img src={field.value.url} alt="" className="size-20 rounded object-cover" />
+          ) : (
+            <div className="flex size-20 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
+              No QR
+            </div>
+          )}
+          <Button variant="outline" size="sm" asChild disabled={uploadMutation.isPending}>
+            <label className="cursor-pointer">
+              <ImageUp /> {uploadMutation.isPending ? "Uploading..." : "Upload QR"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/avif"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const uploaded = await uploadMutation.mutateAsync(file);
+                    field.onChange(uploaded);
+                  } catch {
+                    toast.error("Upload failed");
+                  }
+                }}
+              />
+            </label>
+          </Button>
+        </div>
+      )}
+    />
+  );
+}
+
 export function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const updateMutation = useUpdateSettingsMutation();
@@ -83,6 +125,7 @@ export function SettingsPage() {
       contactInfo: { email: "", phone: "", address: "" },
       shippingZones: [],
       freeShippingThreshold: 0,
+      bkashConfig: { merchantNumber: "", qrImage: null },
       seoDefaults: { title: "", description: "" },
       faqs: [],
     },
@@ -395,6 +438,22 @@ export function SettingsPage() {
             <p className="text-xs text-muted-foreground">Set to 0 to disable free shipping.</p>
           </Field>
         </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Payment — bKash"
+        description="Customers send payment manually to this number and enter the resulting Transaction ID at checkout."
+      >
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Merchant bKash number</FieldLabel>
+            <Input className="max-w-xs" {...register("bkashConfig.merchantNumber")} />
+          </Field>
+          <Field>
+            <FieldLabel>Payment QR code</FieldLabel>
+            <BkashQrImage control={control} />
+          </Field>
+        </FieldGroup>
       </SectionCard>
 
       <SectionCard title="SEO Defaults">

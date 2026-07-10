@@ -79,6 +79,13 @@ const settingsSchema = new mongoose.Schema(
     // in the requirement asks for a per-zone threshold.
     shippingZones: { type: [shippingZoneSchema], default: [] },
     freeShippingThreshold: { type: Number, default: 0 },
+    // Manual bKash "Send Money" flow (System 4) — customer sends payment to this
+    // number outside the app and types the resulting Transaction ID at checkout;
+    // there's no live payment gateway integration, admin verifies manually.
+    bkashConfig: {
+      merchantNumber: String,
+      qrImage: imageSchema,
+    },
     seoDefaults: {
       title: String,
       description: String,

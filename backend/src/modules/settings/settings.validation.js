@@ -30,6 +30,11 @@ const shippingZone = z.object({
   fee: z.coerce.number().min(0),
 });
 
+const bkashConfig = z.object({
+  merchantNumber: z.string().optional(),
+  qrImage: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
+});
+
 export const updateSettingsSchema = {
   body: z.object({
     heroBanner: z.array(heroSlide).optional(),
@@ -46,6 +51,7 @@ export const updateSettingsSchema = {
       .optional(),
     shippingZones: z.array(shippingZone).optional(),
     freeShippingThreshold: z.coerce.number().min(0).optional(),
+    bkashConfig: bkashConfig.optional(),
     seoDefaults: z.object({ title: z.string().optional(), description: z.string().optional() }).optional(),
   }),
 };

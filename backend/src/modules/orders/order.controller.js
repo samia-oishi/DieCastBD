@@ -18,6 +18,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     deliveryNote,
     couponCode,
     paymentMethod,
+    bkashTransactionId,
     shippingZone,
   } = req.body;
 
@@ -68,7 +69,16 @@ export const createOrder = asyncHandler(async (req, res) => {
     emailTarget = guestInfo.email ? { name: guestInfo.name, email: guestInfo.email } : null;
   }
 
-  const orderArgs = { userId, shippingAddress, phone, deliveryNote, couponCode, paymentMethod, shippingZone };
+  const orderArgs = {
+    userId,
+    shippingAddress,
+    phone,
+    deliveryNote,
+    couponCode,
+    paymentMethod,
+    bkashTransactionId,
+    shippingZone,
+  };
   const order =
     items && items.length > 0
       ? await createOrderFromItems({ ...orderArgs, items })

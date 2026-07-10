@@ -89,6 +89,9 @@ export function OrderReceipt({ order }) {
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
             {order.paymentMethod === "cod" ? "Cash on Delivery" : "bKash"}
+            {order.paymentMethod === "bkash" && order.bkashTransactionId && (
+              <> — Transaction ID: <span className="font-medium text-foreground">{order.bkashTransactionId}</span></>
+            )}
           </p>
 
           <Button asChild variant="outline" size="sm" className="mt-4">

@@ -121,6 +121,9 @@ export function OrderDetailPage() {
           </div>
           <p className="text-xs text-muted-foreground">
             {order.paymentMethod === "cod" ? "Cash on Delivery" : "bKash"}
+            {order.paymentMethod === "bkash" && order.bkashTransactionId && (
+              <> — Transaction ID: <span className="font-medium text-foreground">{order.bkashTransactionId}</span></>
+            )}
           </p>
         </div>
 

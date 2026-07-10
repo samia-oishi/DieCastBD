@@ -74,6 +74,13 @@ export const settingsSeed = {
     { name: "Outside Dhaka", fee: 120 },
   ],
   freeShippingThreshold: 5000,
+  // Deliberately empty — no real bKash merchant number/QR to seed with; fill in
+  // via Admin → Settings once known (same "seed empty, wait for real content"
+  // precedent as testimonials/social links above).
+  bkashConfig: {
+    merchantNumber: "",
+    qrImage: null,
+  },
   seoDefaults: {
     title: "Hot Wheels, MINI GT & Diecast Cars in Bangladesh | DiecastBD",
     description:
