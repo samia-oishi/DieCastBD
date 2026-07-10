@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Private / transactional routes — no SEO value, keep them out of the index.
+Disallow: /admin
+Disallow: /checkout
+Disallow: /cart
+Disallow: /account
+Disallow: /orders
+Disallow: /wishlist
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+
+Sitemap: https://diecastbd.com/sitemap.xml

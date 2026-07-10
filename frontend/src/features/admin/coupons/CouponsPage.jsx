@@ -183,10 +183,10 @@ export function CouponsPage() {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(coupon)}>
+                  <Button variant="ghost" size="icon-sm" aria-label="Edit coupon" onClick={() => openEdit(coupon)}>
                     <Pencil />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => setDeletingCoupon(coupon)}>
+                  <Button variant="ghost" size="icon-sm" aria-label="Delete coupon" onClick={() => setDeletingCoupon(coupon)}>
                     <Trash2 />
                   </Button>
                 </div>

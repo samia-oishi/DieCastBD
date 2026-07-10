@@ -149,7 +149,7 @@ export function SimpleCatalogManager({ title, resource, imageField = "logo" }) {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon-sm" asChild>
+                  <Button variant="ghost" size="icon-sm" aria-label="Upload image" asChild>
                     <label>
                       <ImageUp />
                       <input
@@ -160,10 +160,10 @@ export function SimpleCatalogManager({ title, resource, imageField = "logo" }) {
                       />
                     </label>
                   </Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(item)}>
+                  <Button variant="ghost" size="icon-sm" aria-label="Edit" onClick={() => openEdit(item)}>
                     <Pencil />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => setDeletingItem(item)}>
+                  <Button variant="ghost" size="icon-sm" aria-label="Delete" onClick={() => setDeletingItem(item)}>
                     <Trash2 />
                   </Button>
                 </div>

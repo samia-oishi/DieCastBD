@@ -230,10 +230,10 @@ export function InventoryPage() {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon-sm" onClick={() => setHistoryProduct(product)}>
+                  <Button variant="ghost" size="icon-sm" aria-label="Stock history" onClick={() => setHistoryProduct(product)}>
                     <History />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => setAdjustingProduct(product)}>
+                  <Button variant="ghost" size="icon-sm" aria-label="Adjust stock" onClick={() => setAdjustingProduct(product)}>
                     <PackagePlus />
                   </Button>
                 </div>

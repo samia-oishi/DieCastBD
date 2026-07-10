@@ -12,8 +12,8 @@ export function Pagination({ page, totalPages, onPageChange }) {
   const pageNumbers = getPageNumbers(page, totalPages);
 
   return (
-    <nav className="flex items-center justify-center gap-1">
-      <Button variant="outline" size="icon-sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+    <nav aria-label="Pagination" className="flex items-center justify-center gap-1">
+      <Button variant="outline" size="icon-sm" aria-label="Previous page" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
         <ChevronLeft />
       </Button>
 
@@ -37,6 +37,7 @@ export function Pagination({ page, totalPages, onPageChange }) {
       <Button
         variant="outline"
         size="icon-sm"
+        aria-label="Next page"
         disabled={page >= totalPages}
         onClick={() => onPageChange(page + 1)}
       >

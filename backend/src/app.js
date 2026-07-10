@@ -10,6 +10,7 @@ import { sanitizeInput } from "./middlewares/sanitize.js";
 import { apiLimiter } from "./middlewares/rateLimiters.js";
 import { notFoundHandler, errorHandler } from "./middlewares/errorHandler.js";
 import { sendSuccess } from "./utils/apiResponse.js";
+import { getSitemap } from "./modules/sitemap/sitemap.controller.js";
 import router from "./routes/index.js";
 
 export const app = express();
@@ -41,6 +42,10 @@ app.use(sanitizeInput);
 app.use("/api", apiLimiter);
 
 app.get("/health", (req, res) => sendSuccess(res, { data: { uptime: process.uptime() } }));
+
+// Served at the root (not under /api/v1) so it can sit at diecastbd.com/sitemap.xml
+// via a Vercel rewrite — search engines expect the sitemap at the site root.
+app.get("/sitemap.xml", getSitemap);
 
 app.use("/api/v1", router);
 

@@ -110,12 +110,12 @@ export function ProductsPage() {
               <TableCell className="capitalize text-muted-foreground">{product.status}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon-sm" asChild>
+                  <Button variant="ghost" size="icon-sm" aria-label="Edit product" asChild>
                     <Link to={product._id}>
                       <Pencil />
                     </Link>
                   </Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => setDeletingProduct(product)}>
+                  <Button variant="ghost" size="icon-sm" aria-label="Delete product" onClick={() => setDeletingProduct(product)}>
                     <Trash2 />
                   </Button>
                 </div>

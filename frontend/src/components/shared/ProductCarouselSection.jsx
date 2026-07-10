@@ -52,6 +52,7 @@ export function ProductCarouselSection({ title, subtitle, products, isLoading })
             <Button
               variant="outline"
               size="icon-sm"
+              aria-label="Previous products"
               disabled={!canScrollPrev}
               onClick={() => emblaApi?.scrollPrev()}
             >
@@ -60,6 +61,7 @@ export function ProductCarouselSection({ title, subtitle, products, isLoading })
             <Button
               variant="outline"
               size="icon-sm"
+              aria-label="Next products"
               disabled={!canScrollNext}
               onClick={() => emblaApi?.scrollNext()}
             >

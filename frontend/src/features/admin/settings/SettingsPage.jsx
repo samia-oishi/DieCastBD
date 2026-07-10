@@ -122,7 +122,7 @@ export function SettingsPage() {
             <div key={field.id} className="rounded-lg border border-border p-4">
               <div className="mb-3 flex items-center justify-between">
                 <HeroSlideImage control={control} index={index} />
-                <Button type="button" variant="ghost" size="icon-sm" onClick={() => heroBanner.remove(index)}>
+                <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove slide" onClick={() => heroBanner.remove(index)}>
                   <Trash2 />
                 </Button>
               </div>
@@ -184,7 +184,7 @@ export function SettingsPage() {
           {whyChooseUs.fields.map((field, index) => (
             <div key={field.id} className="rounded-lg border border-border p-4">
               <div className="mb-3 flex justify-end">
-                <Button type="button" variant="ghost" size="icon-sm" onClick={() => whyChooseUs.remove(index)}>
+                <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove item" onClick={() => whyChooseUs.remove(index)}>
                   <Trash2 />
                 </Button>
               </div>
@@ -253,7 +253,7 @@ export function SettingsPage() {
           {testimonials.fields.map((field, index) => (
             <div key={field.id} className="rounded-lg border border-border p-4">
               <div className="mb-3 flex justify-end">
-                <Button type="button" variant="ghost" size="icon-sm" onClick={() => testimonials.remove(index)}>
+                <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove testimonial" onClick={() => testimonials.remove(index)}>
                   <Trash2 />
                 </Button>
               </div>
@@ -292,7 +292,7 @@ export function SettingsPage() {
           {faqs.fields.map((field, index) => (
             <div key={field.id} className="rounded-lg border border-border p-4">
               <div className="mb-3 flex justify-end">
-                <Button type="button" variant="ghost" size="icon-sm" onClick={() => faqs.remove(index)}>
+                <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove question" onClick={() => faqs.remove(index)}>
                   <Trash2 />
                 </Button>
               </div>
