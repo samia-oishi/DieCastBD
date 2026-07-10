@@ -32,12 +32,24 @@ export function HeroSection({ slides, autoplay = true, autoplayInterval = 6 }) {
           {slides.map((slide, index) => (
             <div key={index} className="relative min-w-0 shrink-0 grow-0 basis-full">
               <div className="relative flex min-h-[70svh] items-center justify-center overflow-hidden bg-background px-6 py-24 sm:min-h-[80svh]">
-                <img
-                  src={logo}
-                  alt=""
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-1/2 top-1/2 w-[140%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-[0.05]"
-                />
+                {slide.image?.url ? (
+                  <>
+                    <img
+                      src={slide.image.url}
+                      alt=""
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 size-full object-cover"
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
+                  </>
+                ) : (
+                  <img
+                    src={logo}
+                    alt=""
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-1/2 top-1/2 w-[140%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-[0.05]"
+                  />
+                )}
                 <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
                   <motion.h1
                     initial={{ opacity: 0, y: 16 }}
