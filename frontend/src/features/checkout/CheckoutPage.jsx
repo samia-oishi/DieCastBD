@@ -1,31 +1,26 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Navigate, useLocation, useNavigate } from "react-router";
-import { Copy, Check } from "lucide-react";
+import { Navigate, Link, useLocation, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Field, FieldLabel, FieldError, FieldGroup, FieldSeparator } from "@/components/ui/field";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Container } from "@/components/shared/Container";
+import { Seo } from "@/components/shared/Seo";
 import { ROUTES } from "@/constants/routes";
+import { formatTaka } from "@/lib/currency";
 import { useCart } from "@/features/cart/api/useCart";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { useCurrentUser } from "@/features/auth/api/useAuth";
 import { useCreateOrderMutation } from "@/features/orders/api/useOrders";
-import { AddressForm } from "@/features/addresses/components/AddressForm";
+import { useCartStore } from "@/stores/cartStore";
 import { checkoutSchema } from "./schemas/checkoutSchema";
+import { CheckoutSteps } from "./components/CheckoutSteps";
+import { NumberedCard, FieldBox, inputCls } from "./components/parts";
 import { AddressSelector } from "./components/AddressSelector";
-import { CouponInput } from "./components/CouponInput";
-import { OrderSummary } from "./components/OrderSummary";
+import { GuestAddressForm } from "./components/GuestAddressForm";
+import { DeliveryOptions } from "./components/DeliveryOptions";
+import { PaymentMethods } from "./components/PaymentMethods";
+import { CheckoutSummary } from "./components/CheckoutSummary";
 
-// Buy Now sends a single {product, qty} via router state instead of the cart —
-// normalize it into the same {product, qty, lineTotal, stockIssue} shape the
-// cart API returns, so OrderSummary/CouponInput/the stock guard don't need to
-// know which source they're rendering.
 function toBuyNowLineItem({ product, qty }) {
   const price = product.salePrice ?? product.price;
   return {
@@ -36,67 +31,10 @@ function toBuyNowLineItem({ product, qty }) {
   };
 }
 
-function CopyButton({ value }) {
-  const [copied, setCopied] = useState(false);
-
-  const onCopy = async () => {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
-    toast.success("Copied");
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={onCopy}
-      aria-label="Copy bKash number"
-      className="text-muted-foreground hover:text-foreground"
-    >
-      {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-    </button>
-  );
-}
-
-function GuestAddressSection({ address, onSave, email, onEmailChange }) {
-  const [editing, setEditing] = useState(!address);
-
-  if (!editing && address) {
-    return (
-      <div className="flex items-start justify-between gap-3 rounded-lg border border-primary bg-primary/5 p-4 text-sm">
-        <div>
-          <p className="font-medium text-foreground">
-            {address.recipientName} · {address.phone}
-          </p>
-          <p className="text-muted-foreground">
-            {address.addressLine1}
-            {address.addressLine2 && `, ${address.addressLine2}`}, {address.city}
-            {address.district && `, ${address.district}`}
-            {address.postalCode && ` ${address.postalCode}`}
-          </p>
-        </div>
-        <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
-          Edit
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      <AddressForm
-        onSubmit={(values) => {
-          onSave(values);
-          setEditing(false);
-        }}
-        isSubmitting={false}
-      />
-      <Field>
-        <FieldLabel htmlFor="guestEmail">Email (optional — for your order confirmation)</FieldLabel>
-        <Input id="guestEmail" type="email" value={email} onChange={(e) => onEmailChange(e.target.value)} />
-      </Field>
-    </div>
-  );
+function couponDiscount(coupon, subtotal) {
+  if (!coupon) return 0;
+  const raw = coupon.type === "percentage" ? Math.round((subtotal * coupon.value) / 100) : coupon.value;
+  return Math.min(raw, subtotal);
 }
 
 export function CheckoutPage() {
@@ -106,219 +44,160 @@ export function CheckoutPage() {
   const cart = useCart();
   const { data: settings } = useSettings();
   const createOrderMutation = useCreateOrderMutation();
+  const coupon = useCartStore((s) => s.coupon);
+  const setCoupon = useCartStore((s) => s.setCoupon);
+  const clearCoupon = useCartStore((s) => s.clearCoupon);
 
-  // Buy Now deliberately never calls addItem()/useCart() — it must not touch
-  // the persistent cart at all, so a non-empty real cart is left completely
-  // untouched by placing a Buy Now order alongside it.
+  // Buy Now: single item via router state, never touches the cart.
   const buyNowItem = location.state?.buyNowItem;
   const isBuyNow = Boolean(buyNowItem);
-
   const items = isBuyNow ? [toBuyNowLineItem(buyNowItem)] : cart.items;
   const subtotal = isBuyNow ? items[0].lineTotal : cart.subtotal;
   const cartLoading = isBuyNow ? false : cart.isLoading;
 
-  const [addressId, setAddressId] = useState(null);
-  const [guestAddress, setGuestAddress] = useState(null);
-  const [guestEmail, setGuestEmail] = useState("");
-  const [coupon, setCoupon] = useState(null);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [guestData, setGuestData] = useState(null);
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm({
+  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { paymentMethod: "cod", shippingZone: "", bkashTransactionId: "" },
+    defaultValues: { paymentMethod: "cod", shippingZone: "", bkashTransactionId: "", banglaQrReference: "", deliveryNote: "" },
   });
 
   const shippingZones = settings?.shippingZones ?? [];
   const selectedZone = watch("shippingZone");
-  const selectedPaymentMethod = watch("paymentMethod");
-  const bkashConfig = settings?.bkashConfig;
 
-  // Settings load asynchronously, after the form's initial defaultValues are
-  // set — default to the first configured zone once zones arrive, but only if
-  // the customer hasn't already picked one.
   useEffect(() => {
-    if (!selectedZone && shippingZones.length > 0) {
-      setValue("shippingZone", shippingZones[0].name);
-    }
+    if (!selectedZone && shippingZones.length > 0) setValue("shippingZone", shippingZones[0].name);
   }, [shippingZones, selectedZone, setValue]);
 
   const hasStockIssue = items.some((item) => item.stockIssue);
-  const freeShippingThreshold = settings?.freeShippingThreshold ?? 0;
+  const freeThreshold = settings?.freeShippingThreshold ?? 0;
   const zoneFee = shippingZones.find((z) => z.name === selectedZone)?.fee ?? 0;
-  const shippingFee = freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : zoneFee;
+  const freeShipping = freeThreshold > 0 && subtotal >= freeThreshold;
+  const shippingFee = freeShipping ? 0 : zoneFee;
+  const discount = couponDiscount(coupon, subtotal);
+  const total = Math.max(0, subtotal - discount) + shippingFee;
+  const shipping = { name: selectedZone || (shippingZones[0]?.name ?? "Standard"), fee: zoneFee, free: freeShipping };
 
   if (!cartLoading && items.length === 0 && !createOrderMutation.isSuccess) {
     return <Navigate to={ROUTES.CART} replace />;
   }
 
   const onSubmit = (values) => {
-    if (user && !addressId) {
-      toast.error("Please select or add a shipping address");
-      return;
-    }
-    if (!user && !guestAddress) {
-      toast.error("Please enter your shipping address");
-      return;
-    }
+    if (user && !selectedAddress) return toast.error("Please select or add a shipping address");
+    if (!user && !guestData) return toast.error("Please complete your shipping address");
+    if (hasStockIssue) return toast.error("Adjust the quantities that exceed available stock first");
 
-    // Guests always send cart items directly since there's no server-side Cart
-    // to read for a guest. Buy Now (logged in or guest) sends its single item
-    // the same way, bypassing whatever's in the real cart — the backend
-    // branches on presence of `items` to pick the items-array order path over
-    // the cart-based one.
+    const phone = user ? selectedAddress.phone : guestData.phone;
     const itemsPayload = items.map((i) => ({ productId: i.product._id, qty: i.qty }));
 
     const payload = user
-      ? { addressId, couponCode: coupon?.code, ...(isBuyNow ? { items: itemsPayload } : {}), ...values }
+      ? { addressId: selectedAddress._id, phone, couponCode: coupon?.code, ...(isBuyNow ? { items: itemsPayload } : {}), ...values }
       : {
           items: itemsPayload,
-          guestInfo: { name: guestAddress.recipientName, phone: guestAddress.phone, email: guestEmail || undefined },
-          shippingAddress: guestAddress,
+          phone,
+          guestInfo: { name: guestData.recipientName, phone: guestData.phone, email: guestData.email || undefined },
+          shippingAddress: {
+            recipientName: guestData.recipientName,
+            phone: guestData.phone,
+            addressLine1: guestData.addressLine1,
+            city: guestData.city,
+            district: guestData.district || undefined,
+            postalCode: guestData.postalCode || undefined,
+          },
           couponCode: coupon?.code,
           ...values,
         };
 
     createOrderMutation.mutate(payload, {
-      onSuccess: (order) => navigate(ROUTES.ORDER_CONFIRMATION, { state: { order } }),
+      onSuccess: (order) => { clearCoupon(); navigate(ROUTES.ORDER_CONFIRMATION, { state: { order } }); },
       onError: (err) => toast.error(err.response?.data?.message ?? "Could not place order"),
     });
   };
 
+  const summaryProps = {
+    items, subtotal, shipping, discount, total, coupon,
+    onApplyCoupon: setCoupon, onRemoveCoupon: clearCoupon,
+    isPending: createOrderMutation.isPending, disabled: hasStockIssue,
+  };
+
   return (
-    <Container className="py-10">
-      <h1 className="mb-6 font-heading text-3xl text-foreground">Checkout</h1>
+    <>
+      <Seo title="Checkout" />
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid grid-cols-1 gap-10 lg:grid-cols-3">
-        <div className="flex flex-col gap-8 lg:col-span-2">
-          <div>
-            <h2 className="mb-3 font-heading text-lg text-foreground">Shipping Address</h2>
-            {user ? (
-              <AddressSelector selectedId={addressId} onSelect={setAddressId} />
-            ) : (
-              <GuestAddressSection
-                address={guestAddress}
-                onSave={setGuestAddress}
-                email={guestEmail}
-                onEmailChange={setGuestEmail}
-              />
-            )}
-          </div>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mx-auto w-full max-w-[1160px] px-4 pb-28 pt-5 md:px-10 md:pb-10 md:pt-10">
+        <CheckoutSteps className="mb-5 md:mb-6" />
+        <h1 className="font-display text-[26px] font-extrabold tracking-[-0.02em] text-ink md:text-[34px]">Checkout</h1>
+        <p className="mt-2 text-[13.5px] text-muted-foreground md:text-[14.5px]">Almost there — delivery details, then pick how you pay.</p>
 
-          <FieldGroup>
-            <FieldSeparator>Contact &amp; delivery</FieldSeparator>
-            <Field data-invalid={!!errors.phone}>
-              <FieldLabel htmlFor="phone">Phone for delivery</FieldLabel>
-              <Input id="phone" type="tel" defaultValue={user?.phone ?? ""} {...register("phone")} />
-              <FieldError errors={errors.phone ? [errors.phone] : undefined} />
-            </Field>
-            <Field data-invalid={!!errors.shippingZone}>
-              <FieldLabel htmlFor="shippingZone">Shipping zone</FieldLabel>
-              <Controller
-                control={control}
-                name="shippingZone"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="shippingZone" className="w-full">
-                      <SelectValue placeholder="Select a shipping zone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {shippingZones.map((zone) => (
-                        <SelectItem key={zone.name} value={zone.name}>
-                          {zone.name} — ৳{zone.fee}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <FieldError errors={errors.shippingZone ? [errors.shippingZone] : undefined} />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="deliveryNote">Delivery note (optional)</FieldLabel>
-              <Textarea id="deliveryNote" rows={2} {...register("deliveryNote")} />
-            </Field>
-          </FieldGroup>
+        {/* Mobile: order summary on top */}
+        <div className="mt-5 md:hidden">
+          <CheckoutSummary variant="mobile" {...summaryProps} />
+        </div>
 
-          <div>
-            <h2 className="mb-3 font-heading text-lg text-foreground">Payment Method</h2>
-            <Controller
-              control={control}
-              name="paymentMethod"
-              render={({ field }) => (
-                <div className="flex flex-col gap-2">
-                  <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm has-checked:border-primary has-checked:bg-primary/5">
-                    <input
-                      type="radio"
-                      checked={field.value === "cod"}
-                      onChange={() => field.onChange("cod")}
-                    />
-                    Cash on Delivery
-                  </label>
-                  <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm has-checked:border-primary has-checked:bg-primary/5">
-                    <input
-                      type="radio"
-                      checked={field.value === "bkash"}
-                      onChange={() => field.onChange("bkash")}
-                    />
-                    bKash
-                  </label>
-                </div>
-              )}
-            />
-
-            {selectedPaymentMethod === "bkash" && (
-              <div className="mt-3 flex flex-col gap-4 rounded-lg border border-border p-4">
-                <p className="text-sm text-muted-foreground">
-                  Send the total amount to the bKash number below, then enter the Transaction ID
-                  you receive.
-                </p>
-                <div className="flex items-center gap-4">
-                  {bkashConfig?.qrImage?.url && (
-                    <img src={bkashConfig.qrImage.url} alt="bKash payment QR" className="size-24 rounded" />
-                  )}
-                  {bkashConfig?.merchantNumber && (
-                    <p className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      Send Money to: <span className="text-primary">{bkashConfig.merchantNumber}</span>
-                      <CopyButton value={bkashConfig.merchantNumber} />
-                    </p>
-                  )}
-                </div>
-                <Field data-invalid={!!errors.bkashTransactionId}>
-                  <FieldLabel htmlFor="bkashTransactionId">bKash Transaction ID</FieldLabel>
-                  <Input id="bkashTransactionId" {...register("bkashTransactionId")} />
-                  <FieldError errors={errors.bkashTransactionId ? [errors.bkashTransactionId] : undefined} />
-                </Field>
+        <div className="mt-5 grid items-start gap-8 md:mt-7 md:grid-cols-[1.55fr_1fr]">
+          <div className="flex flex-col gap-[18px]">
+            {!user && (
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-brand-soft-border bg-brand-soft px-[18px] py-3.5">
+                <div className="text-[13.5px] text-ink-soft"><span className="font-bold text-ink">Have an account?</span> Sign in for saved addresses and order history.</div>
+                <Link to={`${ROUTES.LOGIN}?redirect=/checkout`} className="shrink-0 rounded-full bg-ink px-[18px] py-2.5 text-[13px] font-semibold text-white">Sign in</Link>
               </div>
             )}
+
+            <NumberedCard n="1" title="Shipping address">
+              {user ? (
+                <AddressSelector
+                  selectedId={selectedAddress?._id}
+                  onSelect={(address) => setSelectedAddress(address)}
+                />
+              ) : (
+                <GuestAddressForm onChange={setGuestData} />
+              )}
+            </NumberedCard>
+
+            <NumberedCard n="2" title="Delivery">
+              <DeliveryOptions zones={shippingZones} value={selectedZone} onChange={(z) => setValue("shippingZone", z)} />
+              <FieldBox label="Delivery note" hint="(optional)" className="mt-4">
+                <textarea {...register("deliveryNote")} rows={2} placeholder="Landmark, preferred time…" className={inputCls} />
+              </FieldBox>
+            </NumberedCard>
+
+            <NumberedCard n="3" title="Payment">
+              <Controller
+                control={control}
+                name="paymentMethod"
+                render={({ field }) => (
+                  <PaymentMethods
+                    value={field.value}
+                    onChange={field.onChange}
+                    bkashConfig={settings?.bkashConfig}
+                    banglaQrConfig={settings?.banglaQrConfig}
+                    register={register}
+                    errors={errors}
+                    total={total}
+                  />
+                )}
+              />
+            </NumberedCard>
+          </div>
+
+          {/* Desktop summary */}
+          <div className="hidden md:block">
+            <CheckoutSummary variant="desktop" {...summaryProps} />
           </div>
         </div>
 
-        <div className="flex h-fit flex-col gap-4 rounded-xl border border-border p-6">
-          <OrderSummary items={items} subtotal={subtotal} discount={coupon?.discount ?? 0} shippingFee={shippingFee} />
-          <CouponInput
-            subtotal={subtotal}
-            appliedCoupon={coupon}
-            onApply={setCoupon}
-            onRemove={() => setCoupon(null)}
-          />
-          {hasStockIssue && (
-            <p className="text-xs text-destructive">
-              {isBuyNow
-                ? "This item no longer has enough stock available — go back and adjust the quantity."
-                : "Some items in your cart have limited stock — adjust quantities before placing your order."}
-            </p>
-          )}
-          <Button type="submit" size="lg" disabled={createOrderMutation.isPending || hasStockIssue}>
-            {createOrderMutation.isPending ? "Placing order..." : "Place Order"}
-          </Button>
+        {/* Mobile sticky place-order bar */}
+        <div className="fixed inset-x-3 bottom-3 z-40 flex items-center gap-3 rounded-[22px] border border-white/16 bg-[rgba(13,15,7,0.92)] py-[10px] pl-5 pr-3 shadow-[0_10px_30px_rgba(16,18,8,0.45)] [backdrop-filter:blur(22px)_saturate(160%)] [-webkit-backdrop-filter:blur(22px)_saturate(160%)] md:hidden">
+          <div>
+            <div className="text-[10px] font-semibold tracking-[0.06em] text-faint">TOTAL</div>
+            <div className="font-display text-[18px] font-extrabold text-white">{formatTaka(total)}</div>
+          </div>
+          <button type="submit" disabled={createOrderMutation.isPending || hasStockIssue} className="flex h-12 flex-1 items-center justify-center rounded-full bg-brand text-sm font-extrabold text-ink disabled:opacity-60">
+            {createOrderMutation.isPending ? "Placing…" : "Place order"}
+          </button>
         </div>
       </form>
-    </Container>
+    </>
   );
 }

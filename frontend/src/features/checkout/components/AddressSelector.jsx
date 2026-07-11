@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Plus, MapPin } from "lucide-react";
+import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAddresses, useCreateAddressMutation } from "@/features/addresses/api/useAddresses";
 import { AddressForm } from "@/features/addresses/components/AddressForm";
+import { RadioDot } from "./parts";
 
+/** Saved-address radio cards + a dashed "Add new address" card. Calls
+ * onSelect(address) with the full address so the page can use its phone. */
 export function AddressSelector({ selectedId, onSelect }) {
   const { data: addresses, isLoading } = useAddresses();
   const createMutation = useCreateAddressMutation();
@@ -14,51 +16,60 @@ export function AddressSelector({ selectedId, onSelect }) {
 
   const onCreate = (values) => {
     createMutation.mutate(values, {
-      onSuccess: (address) => {
-        setAddingNew(false);
-        onSelect(address._id);
-      },
+      onSuccess: (address) => { setAddingNew(false); onSelect(address); },
       onError: () => toast.error("Could not save address"),
     });
   };
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Loading addresses...</p>;
+  if (isLoading) return <p className="mt-5 text-sm text-muted-foreground">Loading addresses…</p>;
 
   return (
-    <div className="flex flex-col gap-3">
-      {addresses?.map((address) => (
-        <button
-          key={address._id}
-          type="button"
-          onClick={() => onSelect(address._id)}
-          className={cn(
-            "flex items-start gap-3 rounded-lg border p-4 text-left transition-colors",
-            selectedId === address._id ? "border-primary bg-primary/5" : "border-border hover:border-foreground/40"
-          )}
-        >
-          <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-          <div className="flex flex-col gap-0.5 text-sm">
-            <span className="font-medium text-foreground">
-              {address.recipientName} · {address.phone}
-            </span>
-            <span className="text-muted-foreground">
-              {address.addressLine1}
-              {address.addressLine2 && `, ${address.addressLine2}`}, {address.city}
-              {address.district && `, ${address.district}`}
-              {address.postalCode && ` ${address.postalCode}`}
-            </span>
-          </div>
-        </button>
-      ))}
+    <div className="mt-[18px] flex flex-col gap-3.5">
+      <div className="flex flex-wrap gap-3.5">
+        {addresses?.map((address) => {
+          const selected = selectedId === address._id;
+          return (
+            <div
+              key={address._id}
+              onClick={() => onSelect(address)}
+              role="radio"
+              aria-checked={selected}
+              tabIndex={0}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onSelect(address))}
+              className={cn(
+                "flex min-w-[260px] flex-1 cursor-pointer gap-3 rounded-2xl p-4 md:p-[16px_18px]",
+                selected ? "border-[1.5px] border-brand bg-[#FBFDF3]" : "border border-line bg-white hover:border-ink"
+              )}
+            >
+              <RadioDot selected={selected} />
+              <div>
+                <div className="text-sm font-bold text-ink">{address.recipientName} · {address.phone}</div>
+                <div className="mt-1 text-[13px] leading-[1.5] text-muted-foreground">
+                  {address.addressLine1}
+                  {address.addressLine2 && `, ${address.addressLine2}`}, {address.city}
+                  {address.district && `, ${address.district}`}
+                  {address.postalCode && ` ${address.postalCode}`}
+                </div>
+              </div>
+            </div>
+          );
+        })}
 
-      {addingNew ? (
-        <div className="rounded-lg border border-border p-4">
+        {!addingNew && (
+          <button
+            type="button"
+            onClick={() => setAddingNew(true)}
+            className="flex min-w-[220px] flex-1 items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed border-[#DDDFD2] p-4 text-[13.5px] font-semibold text-muted-foreground transition-colors hover:border-ink hover:text-ink"
+          >
+            <Plus size={15} strokeWidth={2.2} /> Add new address
+          </button>
+        )}
+      </div>
+
+      {addingNew && (
+        <div className="rounded-2xl border border-line bg-paper p-4">
           <AddressForm onSubmit={onCreate} isSubmitting={createMutation.isPending} onCancel={() => setAddingNew(false)} />
         </div>
-      ) : (
-        <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => setAddingNew(true)}>
-          <Plus /> Add new address
-        </Button>
       )}
     </div>
   );

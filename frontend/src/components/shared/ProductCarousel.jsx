@@ -2,7 +2,6 @@ import { Container } from "@/components/shared/Container";
 import { SectionHeader } from "@/components/shared/SectionHeader";
 import { ProductCard } from "@/components/shared/ProductCard";
 import { useDragScroll } from "@/hooks/useDragScroll";
-import { cn } from "@/lib/utils";
 
 function SkeletonSlide() {
   return <div className="h-[172px] w-52.5 shrink-0 animate-pulse rounded-[18px] bg-line-soft md:h-[240px] md:w-[316px] md:rounded-[20px]" />;
