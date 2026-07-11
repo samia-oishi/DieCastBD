@@ -1,6 +1,7 @@
 import { Product } from "../products/product.model.js";
 import { InventoryLog } from "../inventoryLogs/inventoryLog.model.js";
 import { RestockAlert } from "../restockAlerts/restockAlert.model.js";
+import { notifyRestockSubscribers } from "../restockAlerts/restockAlert.service.js";
 import { LOW_STOCK_THRESHOLD } from "../../config/constants.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
@@ -66,6 +67,8 @@ export const adjustStock = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (!product) throw ApiError.notFound("Product not found");
 
+  const wasOutOfStock = product.availableStock <= 0;
+
   const newStock = product.stock + quantityChange;
   if (newStock < 0) throw ApiError.badRequest("Stock cannot go below 0");
   if (newStock < product.reservedStock) {
@@ -84,6 +87,17 @@ export const adjustStock = asyncHandler(async (req, res) => {
     reason,
     performedBy: req.user.id,
   });
+
+  // Deliberately scoped to this one action (an admin explicitly restocking) —
+  // not to every path that can incidentally restore stock from 0, like an
+  // order being cancelled/refunded after commit. Fire-and-forget, same as
+  // sendOrderConfirmationEmail: a failed/unconfigured email must never fail
+  // the stock update itself.
+  if (type === "restock" && wasOutOfStock && product.availableStock > 0) {
+    notifyRestockSubscribers(product).catch((err) =>
+      console.error(`Restock notification batch failed for product ${product._id}:`, err.message)
+    );
+  }
 
   sendSuccess(res, {
     data: {

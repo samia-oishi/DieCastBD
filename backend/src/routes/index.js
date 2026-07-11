@@ -48,6 +48,7 @@ router.use("/admin/analytics", ...requireAdmin, analyticsRoutes);
 router.use("/admin/users", ...requireAdmin, userRoutes.adminRouter);
 router.use("/admin/coupons", ...requireAdmin, couponRoutes.adminRouter);
 router.use("/admin/inventory", ...requireAdmin, inventoryRoutes);
+router.use("/admin/inventory", ...requireAdmin, restockAlertRoutes.adminRouter);
 router.use("/admin/newsletter", ...requireAdmin, newsletterRoutes.adminRouter);
 router.use("/admin/pages", ...requireAdmin, pageRoutes.adminRouter);
 
