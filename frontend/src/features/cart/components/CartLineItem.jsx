@@ -35,16 +35,21 @@ function QtyPill({ qty, max, onChange, size = "md" }) {
   );
 }
 
-// Unit price (sale + original strikethrough + Save chip) followed by the stock
-// status. Shows both prices so a discount is always clear in the cart.
-function PriceStatus({ product, stockIssue }) {
+// Per-unit price (sale + original struck through) shown with a "×qty" hint when
+// more than one, plus the total line saving so the discount is clear. `qty`
+// makes the Save reflect the whole line, not a single unit.
+function PriceStatus({ product, qty, stockIssue }) {
   const onSale = product.salePrice != null && product.salePrice < product.price;
   const effective = onSale ? product.salePrice : product.price;
+  const totalSave = (product.price - effective) * qty;
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-      <span className="text-[13.5px] font-bold text-ink">{formatTaka(effective)}</span>
+      <span className="text-[13.5px] font-bold text-ink">
+        {formatTaka(effective)}
+        {qty > 1 && <span className="ml-1 text-[11.5px] font-medium text-faint">× {qty}</span>}
+      </span>
       {onSale && <span className="text-[12px] text-[#A2A597] line-through">{formatTaka(product.price)}</span>}
-      {onSale && <span className="rounded-full bg-brand-tint px-2 py-[3px] text-[10px] font-bold text-brand-deep">Save {formatTaka(product.price - effective)}</span>}
+      {onSale && <span className="rounded-full bg-brand-tint px-2 py-[3px] text-[10px] font-bold text-brand-deep">Save {formatTaka(totalSave)}</span>}
       {stockIssue ? (
         <span className="flex items-center gap-1 text-xs font-semibold text-danger"><TriangleAlert className="size-3" /> Only {stockIssue.availableStock} left</span>
       ) : (
@@ -54,14 +59,18 @@ function PriceStatus({ product, stockIssue }) {
   );
 }
 
-function MobilePrice({ product }) {
+function MobilePrice({ product, qty }) {
   const onSale = product.salePrice != null && product.salePrice < product.price;
   const effective = onSale ? product.salePrice : product.price;
+  const totalSave = (product.price - effective) * qty;
   return (
-    <div className="mb-2 flex items-center gap-1.5">
-      <span className="text-[13px] font-bold text-ink">{formatTaka(effective)}</span>
+    <div className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+      <span className="text-[13px] font-bold text-ink">
+        {formatTaka(effective)}
+        {qty > 1 && <span className="ml-1 text-[11px] font-medium text-faint">× {qty}</span>}
+      </span>
       {onSale && <span className="text-[11px] text-[#A2A597] line-through">{formatTaka(product.price)}</span>}
-      {onSale && <span className="text-[10px] font-bold text-brand-deep">Save {formatTaka(product.price - effective)}</span>}
+      {onSale && <span className="text-[10px] font-bold text-brand-deep">Save {formatTaka(totalSave)}</span>}
     </div>
   );
 }
@@ -82,7 +91,7 @@ export function CartLineItem({ item, compact = false }) {
           </button>
         </div>
         <Link to={`/products/${product.slug}`} className="mt-[3px] line-clamp-2 block text-[13px] font-semibold leading-[1.3] text-ink hover:text-ink">{product.title}</Link>
-        <MobilePrice product={product} />
+        <MobilePrice product={product} qty={qty} />
         {stockIssue && (
           <div className="mb-2 flex items-center gap-1 text-[11px] font-semibold text-danger"><TriangleAlert className="size-3" /> Only {stockIssue.availableStock} left</div>
         )}
@@ -104,7 +113,7 @@ export function CartLineItem({ item, compact = false }) {
         <div className="min-w-0 flex-1">
           <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-faint">{product.brand?.name}</div>
           <Link to={`/products/${product.slug}`} className="my-1 block text-[15px] font-semibold leading-[1.35] text-ink hover:text-ink">{product.title}</Link>
-          <PriceStatus product={product} stockIssue={stockIssue} />
+          <PriceStatus product={product} qty={qty} stockIssue={stockIssue} />
         </div>
         <QtyPill qty={qty} max={product.availableStock} onChange={(q) => updateQty(product._id, q)} />
         <div className="w-[88px] text-right text-base font-bold text-ink">{formatTaka(lineTotal)}</div>
