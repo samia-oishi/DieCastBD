@@ -16,6 +16,7 @@ import analyticsRoutes from "../modules/analytics/analytics.routes.js";
 import inventoryRoutes from "../modules/inventory/inventory.routes.js";
 import * as pageRoutes from "../modules/pages/page.routes.js";
 import * as restockAlertRoutes from "../modules/restockAlerts/restockAlert.routes.js";
+import cronRoutes from "../modules/cron/cron.routes.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
 
@@ -38,6 +39,11 @@ router.use("/addresses", addressRoutes);
 router.use("/coupons", couponRoutes.publicRouter);
 router.use("/orders", orderRoutes.customerRouter);
 router.use("/pages", pageRoutes.publicRouter);
+
+// Invoked by Vercel Cron over HTTP (self-guarded by CRON_SECRET) since node-cron
+// has no persistent process on serverless. See src/jobs/scheduler.js for the
+// equivalent in-process schedule used when self-hosting.
+router.use("/cron", cronRoutes);
 
 router.use("/admin/brands", ...requireAdmin, brandRoutes.adminRouter);
 router.use("/admin/categories", ...requireAdmin, categoryRoutes.adminRouter);

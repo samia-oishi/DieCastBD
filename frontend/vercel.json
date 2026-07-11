@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "https://REPLACE_WITH_BACKEND_URL/sitemap.xml" },
+    { "source": "/sitemap.xml", "destination": "https://api.diecastbd.com/sitemap.xml" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

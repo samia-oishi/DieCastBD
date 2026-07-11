@@ -13,6 +13,12 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default("30d"),
   COOKIE_SECRET: z.string().min(32, "COOKIE_SECRET must be at least 32 characters"),
 
+  // Shared secret for the Vercel Cron HTTP endpoints (/api/v1/cron/*). Vercel sends
+  // it as `Authorization: Bearer <CRON_SECRET>`. Optional so local/self-hosted runs
+  // (which use node-cron instead) aren't forced to set it; required in production
+  // for the cron endpoints to be reachable.
+  CRON_SECRET: z.string().optional(),
+
   FIREBASE_PROJECT_ID: z.string().min(1, "FIREBASE_PROJECT_ID is required"),
   FIREBASE_CLIENT_EMAIL: z.string().min(1, "FIREBASE_CLIENT_EMAIL is required"),
   FIREBASE_PRIVATE_KEY: z.string().min(1, "FIREBASE_PRIVATE_KEY is required"),

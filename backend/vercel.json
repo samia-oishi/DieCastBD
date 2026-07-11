@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.js": { "maxDuration": 30 }
+  },
+  "crons": [
+    { "path": "/api/v1/cron/release-stale-reservations", "schedule": "30 0 * * *" },
+    { "path": "/api/v1/cron/analytics-rollup", "schedule": "5 0 * * *" }
+  ]
+}
