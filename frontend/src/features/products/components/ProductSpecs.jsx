@@ -1,3 +1,5 @@
+import { Check } from "lucide-react";
+
 const FIELD_LABELS = {
   manufacturer: "Manufacturer",
   series: "Series",
@@ -7,40 +9,54 @@ const FIELD_LABELS = {
   color: "Color",
 };
 
-export function ProductSpecs({ product }) {
-  const baseSpecs = Object.entries(FIELD_LABELS).filter(([key]) => product[key]);
-  const extraSpecs = Object.entries(product.specifications ?? {});
-  const allSpecs = [...baseSpecs, ...extraSpecs];
+function SectionTitle({ children }) {
+  return <div className="font-display text-lg font-bold text-ink">{children}</div>;
+}
 
-  if (allSpecs.length === 0 && !product.features?.length) return null;
+/** Specifications rows + Features checklist, matching the PDP design. */
+export function ProductSpecs({ product, className }) {
+  const rows = [
+    product.brand?.name && ["Brand", product.brand.name],
+    ...Object.entries(FIELD_LABELS)
+      .filter(([key]) => product[key])
+      .map(([key]) => [FIELD_LABELS[key], product[key]]),
+    ...Object.entries(product.specifications ?? {}),
+  ].filter(Boolean);
+
+  const hasSpecs = rows.length > 0;
+  const hasFeatures = product.features?.length > 0;
+  if (!hasSpecs && !hasFeatures) return null;
 
   return (
-    <div className="flex flex-col gap-6">
-      {allSpecs.length > 0 && (
+    <div className={className}>
+      {hasSpecs && (
         <div>
-          <h2 className="mb-3 font-heading text-lg text-foreground">Specifications</h2>
-          <dl className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
-            {allSpecs.map(([key, value]) => (
-              <div key={key} className="flex justify-between border-b border-border py-2 text-sm">
-                <dt className="text-muted-foreground">{FIELD_LABELS[key] ?? key}</dt>
-                <dd className="font-medium text-foreground">{value}</dd>
+          <SectionTitle>Specifications</SectionTitle>
+          <div className="mt-1.5">
+            {rows.map(([label, value], i) => (
+              <div
+                key={label}
+                className={`flex justify-between gap-5 py-3 text-[13.5px] ${i < rows.length - 1 ? "border-b border-line-soft" : ""}`}
+              >
+                <span className="text-muted-foreground">{label}</span>
+                <span className="text-right font-semibold text-ink">{value}</span>
               </div>
             ))}
-          </dl>
+          </div>
         </div>
       )}
 
-      {product.features?.length > 0 && (
-        <div>
-          <h2 className="mb-3 font-heading text-lg text-foreground">Features</h2>
-          <ul className="flex flex-col gap-1.5">
+      {hasFeatures && (
+        <div className="mt-[26px]">
+          <SectionTitle>Features</SectionTitle>
+          <div className="mt-3 flex flex-col gap-2.5">
             {product.features.map((feature) => (
-              <li key={feature} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-primary" />
+              <div key={feature} className="flex items-center gap-2.5 text-[14px] text-ink-soft">
+                <Check size={15} strokeWidth={2.4} className="shrink-0 text-brand-deep" />
                 {feature}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </div>

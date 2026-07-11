@@ -1,5 +1,5 @@
-import { Link } from "react-router";
-import { Heart, ShoppingBag } from "lucide-react";
+import { Link, useLocation, useNavigate, matchPath } from "react-router";
+import { Heart, ShoppingBag, ArrowLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
@@ -95,13 +95,40 @@ function NavItem({ label, url }) {
   );
 }
 
+const APPBAR_CIRCLE = "flex size-[38px] items-center justify-center rounded-full border border-line bg-white text-ink";
+
 function MobileAppBar({ cartCount, onCartClick }) {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  // Product-detail routes get a back-button app bar (back · logo · wishlist · cart)
+  // per the design; every other route gets the plain logo · cart bar.
+  const isDetail = !!matchPath({ path: ROUTES.PRODUCT, end: true }, pathname);
+
   return (
-    <header className={cn("sticky top-0 z-50 flex items-center justify-between border-b border-[rgba(231,232,224,0.6)] px-[18px] pb-3 pt-3.5 md:hidden", FROST)}>
-      <Link to={ROUTES.HOME}>
-        <img src={logo} alt="DiecastBD" className="block h-5 w-auto" />
-      </Link>
-      <CartButton count={cartCount} onClick={onCartClick} className="size-[38px]" iconSize={16} />
+    <header className={cn("sticky top-0 z-50 flex items-center justify-between border-b border-[rgba(231,232,224,0.6)] px-4 pb-3 pt-3 md:hidden", FROST)}>
+      {isDetail ? (
+        <>
+          <button type="button" onClick={() => navigate(-1)} aria-label="Back" className={APPBAR_CIRCLE}>
+            <ArrowLeft size={16} strokeWidth={2} />
+          </button>
+          <Link to={ROUTES.HOME}>
+            <img src={logo} alt="DiecastBD" className="block h-[18px] w-auto" />
+          </Link>
+          <div className="flex gap-2">
+            <Link to={ROUTES.WISHLIST} aria-label="Wishlist" className={APPBAR_CIRCLE}>
+              <Heart size={15} strokeWidth={1.8} />
+            </Link>
+            <CartButton count={cartCount} onClick={onCartClick} className="size-[38px]" iconSize={15} />
+          </div>
+        </>
+      ) : (
+        <>
+          <Link to={ROUTES.HOME}>
+            <img src={logo} alt="DiecastBD" className="block h-5 w-auto" />
+          </Link>
+          <CartButton count={cartCount} onClick={onCartClick} className="size-[38px]" iconSize={16} />
+        </>
+      )}
     </header>
   );
 }

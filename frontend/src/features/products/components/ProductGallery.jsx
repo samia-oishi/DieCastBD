@@ -1,80 +1,65 @@
-import { useCallback, useEffect, useState } from "react";
-import useEmblaCarousel from "embla-carousel-react";
-import { CarFront, ZoomIn } from "lucide-react";
+import { useState } from "react";
+import { CarFront } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { cloudinaryCard } from "@/lib/cloudinary";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
-export function ProductGallery({ thumbnail, gallery, title }) {
+/** Sticky gallery: main square image (click to zoom full-res) + thumbnail strip,
+ * matching DiecastBD Product Details.dc.html. */
+export function ProductGallery({ thumbnail, gallery, title, isNew }) {
   const images = [thumbnail, ...(gallery ?? [])].filter(Boolean);
-  const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start" });
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selected, setSelected] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
-
-  const onSelect = useCallback((api) => setSelectedIndex(api.selectedScrollSnap()), []);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    onSelect(emblaApi);
-    emblaApi.on("select", onSelect);
-  }, [emblaApi, onSelect]);
 
   if (images.length === 0) {
     return (
-      <div className="flex aspect-square items-center justify-center rounded-xl bg-gradient-to-br from-secondary to-card">
-        <CarFront className="size-16 text-muted-foreground/30" strokeWidth={1} />
+      <div className="flex h-[300px] items-center justify-center rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-3xl">
+        <CarFront className="size-16 text-faint/30" strokeWidth={1} />
       </div>
     );
   }
 
+  const active = images[Math.min(selected, images.length - 1)];
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="group relative aspect-square overflow-hidden rounded-xl bg-card">
-        <div className="h-full overflow-hidden" ref={emblaRef}>
-          <div className="flex h-full">
-            {images.map((image, index) => (
-              <button
-                key={image.cloudinaryId ?? index}
-                type="button"
-                onClick={() => setZoomOpen(true)}
-                className="relative h-full min-w-0 shrink-0 grow-0 basis-full cursor-zoom-in"
-              >
-                <img src={image.url} alt={`${title} — view ${index + 1}`} className="size-full object-cover" />
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="pointer-events-none absolute bottom-3 right-3 flex size-8 items-center justify-center rounded-full bg-background/80 opacity-0 transition-opacity group-hover:opacity-100">
-          <ZoomIn className="size-4" />
-        </div>
-      </div>
+    <div className="md:sticky md:top-[98px]">
+      <button
+        type="button"
+        onClick={() => setZoomOpen(true)}
+        className="relative block h-[300px] w-full cursor-zoom-in overflow-hidden rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-3xl"
+      >
+        <img src={cloudinaryCard(active.url)} alt={title} className="size-full object-contain p-[4%]" />
+        {isNew && (
+          <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-ink px-2.5 py-[5px] text-[9.5px] font-bold uppercase tracking-[0.06em] text-white md:left-4 md:top-4 md:px-3 md:py-1.5 md:text-[10.5px] md:tracking-[0.07em]">
+            New
+          </span>
+        )}
+      </button>
 
       {images.length > 1 && (
-        <div className="flex gap-2">
-          {images.map((image, index) => (
+        <div className="mt-2.5 flex gap-2.5 md:mt-3.5 md:gap-3">
+          {images.map((image, i) => (
             <button
-              key={image.cloudinaryId ?? index}
+              key={image.cloudinaryId ?? i}
               type="button"
-              onClick={() => emblaApi?.scrollTo(index)}
+              onClick={() => setSelected(i)}
+              aria-label={`View ${i + 1}`}
               className={cn(
-                "size-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors",
-                index === selectedIndex ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
+                "relative h-[62px] w-[70px] shrink-0 overflow-hidden rounded-xl bg-tile transition-colors md:h-20 md:w-[88px] md:rounded-[14px]",
+                i === selected ? "border-2 border-brand" : "border border-line"
               )}
             >
-              <img src={image.url} alt="" className="size-full object-cover" />
+              <img src={cloudinaryCard(image.url)} alt="" className="size-full object-contain p-1.5" />
             </button>
           ))}
         </div>
       )}
 
       <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
-        <DialogContent className="max-w-3xl border-none bg-transparent p-0 shadow-none">
+        <DialogContent className="max-w-3xl border-none bg-transparent p-0 shadow-none" showCloseButton={false}>
           <DialogTitle className="sr-only">{title}</DialogTitle>
-          <img
-            src={images[selectedIndex].url}
-            alt={title}
-            className="h-auto max-h-[85vh] w-full rounded-lg object-contain"
-          />
+          <img src={active.url} alt={title} className="h-auto max-h-[85vh] w-full rounded-2xl bg-white object-contain" />
         </DialogContent>
       </Dialog>
     </div>
