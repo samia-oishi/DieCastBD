@@ -73,23 +73,19 @@ if (!only || only === "/shop") {
   }
 }
 
-// --- Carousel advances via Embla API (Home) ---
+// --- Carousel is a horizontal native-scroll container (Home) ---
 if (!only || only === "/") {
   try {
     await go("/");
-    const arrow = page.locator('[data-embla-next]').first();
-    if (await arrow.isVisible().catch(() => false)) {
-      const track = page.locator('[data-embla-track]').first();
-      const before = await track.evaluate((el) => el.style.transform).catch(() => "");
-      await arrow.click();
-      await page.waitForTimeout(500);
-      const after = await track.evaluate((el) => el.style.transform).catch(() => "");
-      record("carousel advances", before !== after, `${before} -> ${after}`);
+    const track = page.locator("[data-carousel]").first();
+    if (await track.count()) {
+      const scrollable = await track.evaluate((el) => el.scrollWidth > el.clientWidth + 8);
+      record("carousel is horizontally scrollable", scrollable);
     } else {
-      record("carousel advances", false, "embla arrows not found (build pending)");
+      record("carousel present", false, "[data-carousel] not found (build pending)");
     }
   } catch (e) {
-    record("carousel advances", false, e.message.split("\n")[0]);
+    record("carousel present", false, e.message.split("\n")[0]);
   }
 }
 

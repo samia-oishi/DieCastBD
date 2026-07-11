@@ -22,7 +22,9 @@ export function MobileBottomNav() {
     <nav
       data-testid="mobile-bottom-nav"
       aria-label="Primary"
-      className="fixed inset-x-3 bottom-3 z-[60] flex h-[66px] items-center justify-around rounded-[22px] border border-white/16 bg-[rgba(13,15,7,0.92)] px-2 shadow-[0_10px_30px_rgba(16,18,8,0.45)] [backdrop-filter:blur(22px)_saturate(160%)] [-webkit-backdrop-filter:blur(22px)_saturate(160%)] md:hidden"
+      // z-40: above page content but below shadcn modals/sheets (z-50) so
+      // dialogs and bottom sheets cover the nav instead of poking through it.
+      className="fixed inset-x-3 bottom-3 z-40 flex h-[66px] items-center justify-around rounded-[22px] border border-white/16 bg-[rgba(13,15,7,0.92)] px-2 shadow-[0_10px_30px_rgba(16,18,8,0.45)] [backdrop-filter:blur(22px)_saturate(160%)] [-webkit-backdrop-filter:blur(22px)_saturate(160%)] md:hidden"
     >
       {TABS.map(({ to, label, icon: Icon, end, cart }) => (
         <NavLink
