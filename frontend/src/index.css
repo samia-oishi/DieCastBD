@@ -1,17 +1,49 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+
+/* Storefront fonts (redesign): Archivo = display/headings/prices/wordmark (700/800
+   + italic accents), Instrument Sans = body. Admin keeps Geist via the admin theme
+   scope below, so Geist stays imported. */
+@import "@fontsource-variable/archivo";
+@import "@fontsource-variable/archivo/wght-italic.css";
+@import "@fontsource-variable/instrument-sans";
 @import "@fontsource-variable/geist";
 
+/* Two DaisyUI themes so the DaisyUI-only components (Rating/Steps/Loading) match
+   whichever scope renders them: `diecastbd` is the light storefront default;
+   `diecastbd-admin` restores the original dark values for the admin dashboard,
+   activated by AdminLayout's `data-theme="diecastbd-admin"`. */
 @plugin "daisyui" {
-  themes: diecastbd --default;
+  themes: diecastbd --default, diecastbd-admin;
 }
 
-/* DaisyUI is intentionally scoped to a handful of components shadcn doesn't ship
-   (Rating, Steps, Loading) — see Phase 0 architecture doc §6. Values mirror the
-   brand tokens below so those components don't visually clash with the rest of the UI. */
 @plugin "daisyui/theme" {
   name: "diecastbd";
+  color-scheme: light;
+  --color-base-100: #FAFAF7;
+  --color-base-200: #F1F2EA;
+  --color-base-300: #E7E8E0;
+  --color-base-content: #101208;
+  --color-primary: #A8CD2F;
+  --color-primary-content: #101208;
+  --color-secondary: #EFF5DC;
+  --color-secondary-content: #4F6B0B;
+  --color-accent: #A8CD2F;
+  --color-accent-content: #101208;
+  --color-neutral: #101208;
+  --color-neutral-content: #FAFAF7;
+  --color-info: #38bdf8;
+  --color-success: #4F6B0B;
+  --color-warning: #B45309;
+  --color-error: #B3261E;
+  --radius-selector: 9999px;
+  --radius-field: 0.75rem;
+  --radius-box: 1.125rem;
+}
+
+@plugin "daisyui/theme" {
+  name: "diecastbd-admin";
   color-scheme: dark;
   --color-base-100: #0a0a0a;
   --color-base-200: #141414;
@@ -37,8 +69,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    /* Fonts resolve to runtime vars so the admin scope can swap them back to Geist. */
+    --font-sans: var(--body-font);
+    --font-heading: var(--display-font);
+    --font-display: var(--display-font);
+
+    /* shadcn semantic tokens (theme-dependent, defined in :root / admin scope) */
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -70,6 +106,30 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
+
+    /* Brand palette (redesign, constant identity — additive, no admin override
+       needed since admin components never reference these). From README §Design Tokens. */
+    --color-brand: #A8CD2F;
+    --color-brand-bright: #B9DC4B;
+    --color-brand-deep: #4F6B0B;
+    --color-brand-tint: #EFF5DC;
+    --color-brand-glow: #C9E469;
+    --color-brand-soft: #F1F7DE;
+    --color-brand-soft-border: #DCE9B4;
+    --color-ink: #101208;
+    --color-ink-soft: #3A3D33;
+    --color-faint: #8A8D80;
+    --color-paper: #FAFAF7;
+    --color-tile: #F1F2EA;
+    --color-line: #E7E8E0;
+    --color-line-soft: #EFEFE9;
+    --color-warn: #B45309;
+    --color-warn-soft: #F7EAD6;
+    --color-danger: #B3261E;
+    --color-danger-soft: #F9E3E1;
+    --color-ok: #4F6B0B;
+    --color-ok-soft: #EFF5DC;
+
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -80,16 +140,68 @@
 }
 
 /*
- * DiecastBD is permanently dark — "dark theme" is a fixed brand identity choice,
- * not a user-togglable preference, so there is deliberately no light `:root` /
- * `.dark` split here (that would be dead code nobody can reach). If a light mode
- * is ever required, reintroduce the split at that point.
- *
- * Swap --primary and the logo-derived tokens here once the real logo asset lands
- * in src/assets/logo/ — everything else in the app reads from these variables.
+ * Storefront = light "paper" theme at :root (the default, brand identity for the
+ * public storefront). The admin dashboard re-declares every shadcn token back to
+ * the original dark values under [data-theme="diecastbd-admin"] (set by
+ * AdminLayout) so admin stays pixel-identical — see docs/plan.md.
  */
 :root {
+    color-scheme: light;
+
+    --body-font: 'Instrument Sans Variable', sans-serif;
+    --display-font: 'Archivo Variable', sans-serif;
+
+    --background: #FAFAF7;   /* paper */
+    --foreground: #101208;   /* ink */
+    --card: #FFFFFF;
+    --card-foreground: #101208;
+    --popover: #FFFFFF;
+    --popover-foreground: #101208;
+
+    --primary: #A8CD2F;              /* brand lime */
+    --primary-foreground: #101208;   /* ink on lime (AA) */
+    --secondary: #EFF5DC;            /* brand tint surface */
+    --secondary-foreground: #4F6B0B; /* brand deep */
+    --muted: #F1F2EA;                /* tile surface */
+    --muted-foreground: #6B6E60;     /* secondary text */
+    --accent: #EFF5DC;
+    --accent-foreground: #4F6B0B;
+
+    --destructive: #B3261E;          /* danger */
+
+    --border: #E7E8E0;               /* line */
+    --input: #E7E8E0;
+    --ring: #A8CD2F;
+
+    --chart-1: #A8CD2F;
+    --chart-2: #8DB423;
+    --chart-3: #6E9019;
+    --chart-4: #4F6B0B;
+    --chart-5: #34480A;
+
+    --radius: 0.75rem;
+
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #101208;
+    --sidebar-primary: #A8CD2F;
+    --sidebar-primary-foreground: #101208;
+    --sidebar-accent: #EFF5DC;
+    --sidebar-accent-foreground: #4F6B0B;
+    --sidebar-border: #E7E8E0;
+    --sidebar-ring: #A8CD2F;
+}
+
+/*
+ * Admin dashboard scope — restores the original pre-redesign dark theme byte-for-byte.
+ * AdminLayout sets this attribute on its root element; every shadcn/DaisyUI component
+ * under it re-points to these dark values, so the admin UI is untouched by the
+ * storefront redesign.
+ */
+[data-theme="diecastbd-admin"] {
     color-scheme: dark;
+
+    --body-font: 'Geist Variable', sans-serif;
+    --display-font: 'Geist Variable', sans-serif;
 
     --background: #0a0a0a;
     --foreground: #fafafa;
@@ -107,7 +219,6 @@
     --accent: #1f1f1f;
     --accent-foreground: #fafafa;
 
-    /* Functional/semantic, not brand — a lime error state would be unreadable as "danger". */
     --destructive: #ef4444;
 
     --border: oklch(1 0 0 / 10%);
@@ -135,11 +246,22 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
   body {
-    @apply bg-background text-foreground;
-    }
+    @apply bg-background text-foreground antialiased;
+  }
   html {
     @apply font-sans;
-    }
+  }
+  /* Storefront link defaults (ink, lime-deep hover) per README; scoped away from
+     admin, which styles its own links. */
+  :root a:not([class]):hover {
+    color: #5F7A10;
+  }
+  /* Design shows hover states only — add a visible focus ring for keyboard users. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 }

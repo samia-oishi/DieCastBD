@@ -34,15 +34,21 @@ export const createOrderSchema = {
       phone: z.string().min(1, "Phone is required"),
       deliveryNote: z.string().optional(),
       couponCode: z.string().optional(),
-      paymentMethod: z.enum(["cod", "bkash"]),
+      paymentMethod: z.enum(["cod", "bkash", "banglaqr"]),
       bkashTransactionId: z.string().optional(),
+      banglaQrReference: z.string().optional(),
       shippingZone: z.string().min(1, "Shipping zone is required"),
     })
-    // Manual bKash flow — customer sends payment outside the app and types the
-    // resulting Transaction ID here; only required when they actually chose bKash.
+    // Manual bKash/BanglaQR flows — customer sends payment outside the app and
+    // types the resulting reference here; only required when they actually
+    // chose that method.
     .refine((data) => data.paymentMethod !== "bkash" || !!data.bkashTransactionId?.trim(), {
       message: "bKash Transaction ID is required",
       path: ["bkashTransactionId"],
+    })
+    .refine((data) => data.paymentMethod !== "banglaqr" || !!data.banglaQrReference?.trim(), {
+      message: "BanglaQR payment reference is required",
+      path: ["banglaQrReference"],
     }),
 };
 

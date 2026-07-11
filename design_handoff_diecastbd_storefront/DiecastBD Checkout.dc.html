@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="image-slot.js"></script>
+<style>
+body{margin:0;background:#FAFAF7;font-family:'Instrument Sans',system-ui,sans-serif;color:#101208;-webkit-font-smoothing:antialiased}
+a{color:#101208}a:hover{color:#5F7A10}
+</style>
+</helmet>
+
+<!-- ================================================== DESKTOP -->
+<sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+<div style="background:#FAFAF7;min-height:100vh;display:flex;flex-direction:column" data-screen-label="Checkout Desktop">
+
+  <div style="position:sticky;top:0;z-index:50;background:rgba(250,250,247,.6);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid #E7E8E0">
+    <div style="max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:32px;padding:0 40px;height:74px">
+      <a href="DiecastBD%20Landing%20Final.dc.html" style="display:block"><img src="assets/diecastbd-logo.png" alt="DiecastBD" style="height:24px;display:block"></a>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600">
+        <a href="DiecastBD%20Cart.dc.html" style="display:flex;align-items:center;gap:7px;text-decoration:none;color:#4F6B0B"><span style="width:20px;height:20px;border-radius:999px;background:#A8CD2F;color:#101208;display:inline-flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.3 4.3L19 7.5"></path></svg></span>Cart</a>
+        <span style="width:28px;height:1.5px;background:#DDDFD2"></span>
+        <span style="display:flex;align-items:center;gap:7px;color:#101208"><span style="width:20px;height:20px;border-radius:999px;background:#101208;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700">2</span>Checkout</span>
+        <span style="width:28px;height:1.5px;background:#DDDFD2"></span>
+        <span style="display:flex;align-items:center;gap:7px;color:#8A8D80"><span style="width:20px;height:20px;border-radius:999px;border:1.5px solid #DDDFD2;color:#8A8D80;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700">3</span>Done</span>
+      </div>
+      <sc-if value="{{ isGuest }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="font-size:14px;font-weight:600;cursor:pointer">Sign in</span>
+          <div style="background:#A8CD2F;color:#101208;font-size:14px;font-weight:700;padding:11px 22px;border-radius:999px;cursor:pointer">Create account</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isUser }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="font-size:14px;font-weight:600">Samia Alam Oishi</span>
+          <div style="border:1px solid #E7E8E0;background:#fff;color:#101208;font-size:13.5px;font-weight:600;padding:10px 20px;border-radius:999px;cursor:pointer">Sign out</div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="max-width:1160px;margin:0 auto;padding:40px 40px 0;width:100%;box-sizing:border-box;flex:1">
+    <h1 style="font-family:'Archivo',sans-serif;font-size:34px;font-weight:800;letter-spacing:-0.02em;margin:0">Checkout</h1>
+    <p style="font-size:14.5px;color:#6B6E60;margin:8px 0 0">Almost there — delivery details, then pick how you pay.</p>
+
+    <div style="display:grid;grid-template-columns:1.55fr 1fr;gap:32px;margin-top:28px;align-items:start">
+
+      <!-- left -->
+      <div>
+
+        <sc-if value="{{ isGuest }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;background:#F1F7DE;border:1px solid #DCE9B4;border-radius:16px;padding:14px 18px;margin-bottom:22px">
+            <div style="font-size:13.5px;color:#3A3D33"><span style="font-weight:700;color:#101208">Have an account?</span> Sign in for saved addresses and order history.</div>
+            <div style="flex:none;background:#101208;color:#fff;font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px;cursor:pointer">Sign in</div>
+          </div>
+        </sc-if>
+
+        <!-- address -->
+        <div style="background:#fff;border:1px solid #E7E8E0;border-radius:24px;padding:26px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:26px;height:26px;border-radius:999px;background:#101208;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700">1</span>
+            <span style="font-family:'Archivo',sans-serif;font-size:18px;font-weight:700">Shipping address</span>
+          </div>
+
+          <sc-if value="{{ isUser }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:14px;margin-top:18px;flex-wrap:wrap">
+              <div style="flex:1;min-width:260px;border:1.5px solid #A8CD2F;background:#FBFDF3;border-radius:16px;padding:16px 18px;display:flex;gap:12px;cursor:pointer">
+                <span style="flex:none;width:18px;height:18px;border-radius:999px;border:5px solid #A8CD2F;background:#101208;margin-top:2px"></span>
+                <div>
+                  <div style="font-size:14px;font-weight:700">Samia Alam Oishi · 01533434824</div>
+                  <div style="font-size:13px;color:#6B6E60;margin-top:4px;line-height:1.5">123 West Dhanmondi, Chattogram 1207</div>
+                  <div style="font-size:12.5px;font-weight:600;color:#4F6B0B;margin-top:8px;cursor:pointer">Edit</div>
+                </div>
+              </div>
+              <div style="flex:1;min-width:220px;border:1.5px dashed #DDDFD2;border-radius:16px;padding:16px 18px;display:flex;align-items:center;justify-content:center;gap:8px;color:#6B6E60;font-size:13.5px;font-weight:600;cursor:pointer;transition:border-color .15s ease,color .15s ease" style-hover="border-color:#101208;color:#101208"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg>Add new address</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isGuest }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
+              <div><div style="font-size:12.5px;font-weight:600;margin-bottom:7px">Full name</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 16px;font-size:13.5px;color:#8A8D80">e.g. Samia Alam</div></div>
+              <div><div style="font-size:12.5px;font-weight:600;margin-bottom:7px">Phone</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 16px;font-size:13.5px;color:#8A8D80">01XXXXXXXXX</div></div>
+            </div>
+            <div style="margin-top:16px"><div style="font-size:12.5px;font-weight:600;margin-bottom:7px">Address</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 16px;font-size:13.5px;color:#8A8D80">House, road, area</div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px">
+              <div><div style="font-size:12.5px;font-weight:600;margin-bottom:7px">City</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 16px;font-size:13.5px;color:#8A8D80">Dhaka</div></div>
+              <div><div style="font-size:12.5px;font-weight:600;margin-bottom:7px">District</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 16px;font-size:13.5px;color:#8A8D80">Dhaka</div></div>
+              <div><div style="font-size:12.5px;font-weight:600;margin-bottom:7px">Postal code</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 16px;font-size:13.5px;color:#8A8D80">1207</div></div>
+            </div>
+            <div style="margin-top:16px"><div style="font-size:12.5px;font-weight:600;margin-bottom:7px">Email <span style="color:#8A8D80;font-weight:500">(optional — for your order confirmation)</span></div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 16px;font-size:13.5px;color:#8A8D80">you@email.com</div></div>
+          </sc-if>
+        </div>
+
+        <!-- delivery -->
+        <div style="background:#fff;border:1px solid #E7E8E0;border-radius:24px;padding:26px;margin-top:18px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:26px;height:26px;border-radius:999px;background:#101208;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700">2</span>
+            <span style="font-family:'Archivo',sans-serif;font-size:18px;font-weight:700">Delivery</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px">
+            <div style="border:1.5px solid #A8CD2F;background:#FBFDF3;border-radius:16px;padding:16px 18px;display:flex;gap:12px;align-items:center;cursor:pointer">
+              <span style="flex:none;width:18px;height:18px;border-radius:999px;border:5px solid #A8CD2F;background:#101208"></span>
+              <div style="flex:1"><div style="font-size:14px;font-weight:700">Inside Dhaka</div><div style="font-size:12.5px;color:#6B6E60;margin-top:2px">24–48 hours</div></div>
+              <span style="font-size:14px;font-weight:700">৳60</span>
+            </div>
+            <div style="border:1px solid #E7E8E0;background:#fff;border-radius:16px;padding:16px 18px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208">
+              <span style="flex:none;width:18px;height:18px;border-radius:999px;border:1.5px solid #DDDFD2"></span>
+              <div style="flex:1"><div style="font-size:14px;font-weight:700">Nationwide</div><div style="font-size:12.5px;color:#6B6E60;margin-top:2px">2–4 days, tracked</div></div>
+              <span style="font-size:14px;font-weight:700">৳120</span>
+            </div>
+          </div>
+          <div style="margin-top:16px"><div style="font-size:12.5px;font-weight:600;margin-bottom:7px">Delivery note <span style="color:#8A8D80;font-weight:500">(optional)</span></div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 16px;font-size:13.5px;color:#8A8D80;min-height:48px">Landmark, preferred time…</div></div>
+        </div>
+
+        <!-- payment -->
+        <div style="background:#fff;border:1px solid #E7E8E0;border-radius:24px;padding:26px;margin-top:18px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:26px;height:26px;border-radius:999px;background:#101208;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700">3</span>
+            <span style="font-family:'Archivo',sans-serif;font-size:18px;font-weight:700">Payment</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:20px">
+            <sc-if value="{{ codSel }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1.5px solid #A8CD2F;background:#FBFDF3;border-radius:16px;padding:16px 18px;display:flex;gap:12px;align-items:center;cursor:pointer">
+                <span style="flex:none;width:18px;height:18px;border-radius:999px;border:5px solid #A8CD2F;background:#101208"></span>
+                <div style="flex:1"><div style="font-size:14px;font-weight:700">Cash on Delivery</div><div style="font-size:12.5px;color:#6B6E60;margin-top:2px">Pay when it arrives — nothing now</div></div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ codUnsel }}" hint-placeholder-val="{{ true }}">
+              <div onClick="{{ payCod }}" style="border:1px solid #E7E8E0;border-radius:16px;padding:16px 18px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208">
+                <span style="flex:none;width:18px;height:18px;border-radius:999px;border:1.5px solid #DDDFD2"></span>
+                <div style="flex:1"><div style="font-size:14px;font-weight:700">Cash on Delivery</div><div style="font-size:12.5px;color:#6B6E60;margin-top:2px">Pay when it arrives — nothing now</div></div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ bkashSel }}" hint-placeholder-val="{{ true }}">
+              <div style="border:1.5px solid #A8CD2F;background:#FBFDF3;border-radius:16px;padding:16px 18px">
+                <div style="display:flex;gap:12px;align-items:center">
+                  <span style="flex:none;width:18px;height:18px;border-radius:999px;border:5px solid #A8CD2F;background:#101208"></span>
+                  <span style="flex:none;width:54px;height:28px;border-radius:7px;background:#E2136E;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-style:italic">bKash</span>
+                  <div style="flex:1"><div style="font-size:14px;font-weight:700">bKash</div><div style="font-size:12.5px;color:#6B6E60;margin-top:2px">Scan the QR or Send Money, then enter your Transaction ID</div></div>
+                </div>
+                <div style="border-top:1px solid #E4EDC8;margin-top:14px;padding-top:14px;display:flex;gap:18px;flex-wrap:wrap">
+                  <div style="flex:none">
+                    <div style="position:relative;width:148px;height:148px;background:#fff;border:1px solid #E7E8E0;border-radius:14px;overflow:hidden"><image-slot style="position:absolute;left:10px;top:10px;width:128px;height:128px" fit="contain" id="qr-bkash" shape="rect" placeholder="bKash QR"></image-slot></div>
+                    <div style="font-size:11px;color:#6B6E60;text-align:center;margin-top:6px;max-width:148px">Scan with the bKash app</div>
+                  </div>
+                  <div style="flex:1;min-width:240px">
+                    <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E7E8E0;border-radius:12px;padding:12px 16px">
+                      <span style="font-size:13px;color:#6B6E60">or Send Money to</span>
+                      <span style="font-size:14.5px;font-weight:800;letter-spacing:.03em">01764250814</span>
+                      <span style="display:inline-flex;align-items:center;gap:6px;border:1px solid #E7E8E0;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;color:#101208;cursor:pointer;margin-left:auto"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path></svg>Copy</span>
+                    </div>
+                    <div style="margin-top:12px"><div style="font-size:12.5px;font-weight:600;margin-bottom:7px">bKash Transaction ID</div><div style="background:#fff;border:1px solid #E7E8E0;border-radius:12px;padding:12px 16px;font-size:13.5px;color:#8A8D80">e.g. 9HK2XXXXXX</div></div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ bkashUnsel }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ payBkash }}" style="border:1px solid #E7E8E0;border-radius:16px;padding:16px 18px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208">
+                <span style="flex:none;width:18px;height:18px;border-radius:999px;border:1.5px solid #DDDFD2"></span>
+                <span style="flex:none;width:54px;height:28px;border-radius:7px;background:#E2136E;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-style:italic">bKash</span>
+                <div style="flex:1"><div style="font-size:14px;font-weight:700">bKash</div><div style="font-size:12.5px;color:#6B6E60;margin-top:2px">Scan the QR or Send Money</div></div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ bqrSel }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1.5px solid #A8CD2F;background:#FBFDF3;border-radius:16px;padding:16px 18px">
+                <div style="display:flex;gap:12px;align-items:center">
+                  <span style="flex:none;width:18px;height:18px;border-radius:999px;border:5px solid #A8CD2F;background:#101208"></span>
+                  <span style="flex:none;width:54px;height:28px;border-radius:7px;background:#fff;border:1px solid #E7E8E0;color:#101208;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"></rect><rect x="14" y="4" width="6" height="6"></rect><rect x="4" y="14" width="6" height="6"></rect><path d="M14 14h3v3h-3z"></path><path d="M20 17v3h-3"></path></svg></span>
+                  <div style="flex:1"><div style="font-size:14px;font-weight:700">BanglaQR</div><div style="font-size:12.5px;color:#6B6E60;margin-top:2px">Scan &amp; pay from any bank or MFS app</div></div>
+                </div>
+                <div style="border-top:1px solid #E4EDC8;margin-top:14px;padding-top:14px;display:flex;gap:18px;flex-wrap:wrap">
+                  <div style="flex:none">
+                    <div style="position:relative;width:148px;height:148px;background:#fff;border:1px solid #E7E8E0;border-radius:14px;overflow:hidden"><image-slot style="position:absolute;left:10px;top:10px;width:128px;height:128px" fit="contain" id="qr-banglaqr" shape="rect" placeholder="BanglaQR code"></image-slot></div>
+                    <div style="font-size:11px;color:#6B6E60;text-align:center;margin-top:6px;max-width:148px">Scan from any bank or MFS app</div>
+                  </div>
+                  <div style="flex:1;min-width:240px">
+                    <div style="font-size:12.5px;color:#3A3D33;line-height:1.6;background:#fff;border:1px solid #E7E8E0;border-radius:12px;padding:12px 16px">Pay the exact total <b>৳3,960</b>, then enter the payment reference below so we can match it instantly.</div>
+                    <div style="margin-top:12px"><div style="font-size:12.5px;font-weight:600;margin-bottom:7px">Payment reference</div><div style="background:#fff;border:1px solid #E7E8E0;border-radius:12px;padding:12px 16px;font-size:13.5px;color:#8A8D80">e.g. TXN-XXXXXXXX</div></div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ bqrUnsel }}" hint-placeholder-val="{{ true }}">
+              <div onClick="{{ payBqr }}" style="border:1px solid #E7E8E0;border-radius:16px;padding:16px 18px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208">
+                <span style="flex:none;width:18px;height:18px;border-radius:999px;border:1.5px solid #DDDFD2"></span>
+                <span style="flex:none;width:54px;height:28px;border-radius:7px;background:#fff;border:1px solid #E7E8E0;color:#101208;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"></rect><rect x="14" y="4" width="6" height="6"></rect><rect x="4" y="14" width="6" height="6"></rect><path d="M14 14h3v3h-3z"></path><path d="M20 17v3h-3"></path></svg></span>
+                <div style="flex:1"><div style="font-size:14px;font-weight:700">BanglaQR</div><div style="font-size:12.5px;color:#6B6E60;margin-top:2px">Scan &amp; pay from any bank app</div></div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+
+      <!-- summary -->
+      <div style="background:#fff;border:1px solid #E7E8E0;border-radius:24px;padding:26px;position:sticky;top:98px">
+        <div style="font-family:'Archivo',sans-serif;font-size:19px;font-weight:700">Your order</div>
+        <div style="display:flex;gap:12px;align-items:center;margin-top:18px">
+          <div style="position:relative;width:56px;height:52px;flex:none;border-radius:10px;overflow:hidden;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-p1" shape="rect" placeholder=""></image-slot></div>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;line-height:1.35">Toyota Supra A80 — Top Secret</div><div style="font-size:12px;color:#8A8D80;margin-top:2px">Qty 1</div></div>
+          <span style="font-size:13.5px;font-weight:700">৳2,600</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;margin-top:14px">
+          <div style="position:relative;width:56px;height:52px;flex:none;border-radius:10px;overflow:hidden;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-n1" shape="rect" placeholder=""></image-slot></div>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;line-height:1.35">Card Protector — Gen-2, 10pk</div><div style="font-size:12px;color:#8A8D80;margin-top:2px">Qty 1</div></div>
+          <span style="font-size:13.5px;font-weight:700">৳1,300</span>
+        </div>
+        <div style="border-top:1px solid #EFEFE9;margin-top:18px;padding-top:16px">
+          <div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:#6B6E60">Subtotal</span><span style="font-weight:600">৳3,900</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:12px"><span style="color:#6B6E60">Shipping · Inside Dhaka</span><span style="font-weight:600">৳60</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid #EFEFE9;margin-top:16px;padding-top:16px"><span style="font-size:15px;font-weight:700">Total</span><span style="font-family:'Archivo',sans-serif;font-size:22px;font-weight:800">৳3,960</span></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <div style="flex:1;border:1px solid #E7E8E0;border-radius:999px;padding:12px 18px;font-size:13.5px;color:#8A8D80;background:#FAFAF7">Coupon code</div>
+          <div style="border:1.5px solid #101208;color:#101208;font-size:13.5px;font-weight:700;padding:12px 20px;border-radius:999px;cursor:pointer;transition:background .15s ease,color .15s ease" style-hover="background:#101208;color:#fff">Apply</div>
+        </div>
+        <a href="DiecastBD%20Order%20Placed.dc.html" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#A8CD2F;color:#101208;font-size:15.5px;font-weight:700;height:52px;border-radius:999px;margin-top:16px;text-decoration:none;transition:background .15s ease" style-hover="background:#B9DC4B">Place order · ৳3,960</a>
+        <div style="font-size:12px;color:#8A8D80;text-align:center;margin-top:12px;line-height:1.5">By placing your order you agree to our Terms &amp; Refund Policy.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:88px;background:#101208;color:#8A8D80">
+    <div style="max-width:1360px;margin:0 auto;padding:26px 40px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div style="font-family:'Archivo',sans-serif;font-style:italic;font-weight:800;font-size:17px"><span style="color:#fff">DIECAST</span><span style="color:#A8CD2F">BD</span></div>
+      <div style="display:flex;gap:18px;font-size:12.5px;flex-wrap:wrap"><a href="DiecastBD%20About.dc.html" style="color:#C7C9BC;text-decoration:none">About</a><a href="DiecastBD%20Contact.dc.html" style="color:#C7C9BC;text-decoration:none">Contact</a><a href="DiecastBD%20FAQ.dc.html" style="color:#C7C9BC;text-decoration:none">FAQ</a><a href="DiecastBD%20Shipping%20Policy.dc.html" style="color:#C7C9BC;text-decoration:none">Shipping Policy</a><a href="DiecastBD%20Refund%20Policy.dc.html" style="color:#C7C9BC;text-decoration:none">Refund Policy</a><a href="DiecastBD%20Privacy%20Policy.dc.html" style="color:#C7C9BC;text-decoration:none">Privacy Policy</a><a href="DiecastBD%20Terms.dc.html" style="color:#C7C9BC;text-decoration:none">Terms &amp; Conditions</a></div>
+      <div style="display:flex;align-items:center;gap:16px"><div style="display:flex;gap:8px"><a href="https://www.facebook.com/diecastbd.official" target="_blank" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 21.5v-7.1h2.4l.36-2.8h-2.76V9.8c0-.81.22-1.36 1.38-1.36h1.48V5.93c-.26-.03-1.13-.11-2.15-.11-2.13 0-3.58 1.3-3.58 3.68v2.09H8.1v2.8h2.43v7.1h2.87z"></path></svg></a><a href="https://www.instagram.com/diecastbd.official" target="_blank" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"></circle></svg></a><a href="https://www.youtube.com/@diecastbd" target="_blank" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12.5" rx="3.5"></rect><path d="M10.3 9.6l4.8 2.65-4.8 2.65V9.6z" fill="currentColor" stroke="none"></path></svg></a></div><span style="font-size:12px">© 2026 DiecastBD</span></div>
+    </div>
+  </div>
+
+</div>
+</sc-if>
+
+<!-- ================================================== MOBILE -->
+<sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+<div style="background:#FAFAF7;min-height:100vh;padding-bottom:110px" data-screen-label="Checkout Mobile">
+
+  <div style="position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(250,250,247,.6);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid rgba(231,232,224,.6)">
+    <a href="DiecastBD%20Cart.dc.html" style="width:38px;height:38px;border-radius:999px;border:1px solid #E7E8E0;background:#fff;display:flex;align-items:center;justify-content:center;color:#101208;text-decoration:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H6"></path><path d="M11 6.5 5.5 12 11 17.5"></path></svg></a>
+    <span style="font-family:'Archivo',sans-serif;font-size:17px;font-weight:700">Checkout</span>
+    <div style="width:38px"></div>
+  </div>
+
+  <!-- progress -->
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:11.5px;font-weight:600;margin:14px 16px 0">
+    <span style="display:flex;align-items:center;gap:6px;color:#4F6B0B"><span style="width:17px;height:17px;border-radius:999px;background:#A8CD2F;color:#101208;display:inline-flex;align-items:center;justify-content:center"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.3 4.3L19 7.5"></path></svg></span>Cart</span>
+    <span style="width:22px;height:1.5px;background:#DDDFD2"></span>
+    <span style="display:flex;align-items:center;gap:6px;color:#101208"><span style="width:17px;height:17px;border-radius:999px;background:#101208;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700">2</span>Checkout</span>
+    <span style="width:22px;height:1.5px;background:#DDDFD2"></span>
+    <span style="display:flex;align-items:center;gap:6px;color:#8A8D80"><span style="width:17px;height:17px;border-radius:999px;border:1.5px solid #DDDFD2;display:inline-flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700">3</span>Done</span>
+  </div>
+
+  <!-- order summary -->
+  <div style="margin:16px 16px 0;background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13.5px;font-weight:700">Your order (2)</span>
+      <span style="font-family:'Archivo',sans-serif;font-size:16px;font-weight:800">৳3,960</span>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
+      <div style="position:relative;width:44px;height:40px;flex:none;border-radius:9px;overflow:hidden;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-p1" shape="rect" placeholder=""></image-slot></div>
+      <div style="flex:1;min-width:0;font-size:12px;font-weight:600;line-height:1.3">Supra A80 Top Secret <span style="color:#8A8D80;font-weight:500">× 1</span></div>
+      <span style="font-size:12.5px;font-weight:700">৳2,600</span>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+      <div style="position:relative;width:44px;height:40px;flex:none;border-radius:9px;overflow:hidden;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-n1" shape="rect" placeholder=""></image-slot></div>
+      <div style="flex:1;min-width:0;font-size:12px;font-weight:600;line-height:1.3">Protector Gen-2, 10pk <span style="color:#8A8D80;font-weight:500">× 1</span></div>
+      <span style="font-size:12.5px;font-weight:700">৳1,300</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#8A8D80;border-top:1px solid #EFEFE9;margin-top:12px;padding-top:10px"><span>Subtotal ৳3,900 · Shipping ৳60</span><span style="font-weight:600;color:#4F6B0B">Coupon?</span></div>
+  </div>
+
+  <sc-if value="{{ isGuest }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#F1F7DE;border:1px solid #DCE9B4;border-radius:16px;padding:12px 14px;margin:12px 16px 0">
+      <div style="font-size:12px;color:#3A3D33;line-height:1.45"><span style="font-weight:700;color:#101208">Have an account?</span> Sign in to check out faster.</div>
+      <div style="flex:none;background:#101208;color:#fff;font-size:12px;font-weight:600;padding:8px 15px;border-radius:999px">Sign in</div>
+    </div>
+  </sc-if>
+
+  <!-- address -->
+  <div style="margin:16px 16px 0;background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:18px">
+    <div style="display:flex;align-items:center;gap:9px">
+      <span style="width:22px;height:22px;border-radius:999px;background:#101208;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">1</span>
+      <span style="font-family:'Archivo',sans-serif;font-size:15.5px;font-weight:700">Shipping address</span>
+    </div>
+
+    <sc-if value="{{ isUser }}" hint-placeholder-val="{{ false }}">
+      <div style="border:1.5px solid #A8CD2F;background:#FBFDF3;border-radius:14px;padding:14px;display:flex;gap:10px;margin-top:14px">
+        <span style="flex:none;width:16px;height:16px;border-radius:999px;border:4.5px solid #A8CD2F;background:#101208;margin-top:2px"></span>
+        <div style="flex:1">
+          <div style="font-size:12.5px;font-weight:700">Samia Alam Oishi · 01533434824</div>
+          <div style="font-size:12px;color:#6B6E60;margin-top:3px;line-height:1.45">123 West Dhanmondi, Chattogram 1207</div>
+        </div>
+        <span style="font-size:11.5px;font-weight:700;color:#4F6B0B">Edit</span>
+      </div>
+      <div style="border:1.5px dashed #DDDFD2;border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center;gap:7px;color:#6B6E60;font-size:12.5px;font-weight:600;margin-top:10px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg>Add new address</div>
+    </sc-if>
+
+    <sc-if value="{{ isGuest }}" hint-placeholder-val="{{ true }}">
+      <div style="margin-top:14px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">Full name</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 14px;font-size:13px;color:#8A8D80">e.g. Samia Alam</div></div>
+      <div style="margin-top:12px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">Phone</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 14px;font-size:13px;color:#8A8D80">01XXXXXXXXX</div></div>
+      <div style="margin-top:12px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">Address</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 14px;font-size:13px;color:#8A8D80">House, road, area</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+        <div><div style="font-size:12px;font-weight:600;margin-bottom:6px">City</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 14px;font-size:13px;color:#8A8D80">Dhaka</div></div>
+        <div><div style="font-size:12px;font-weight:600;margin-bottom:6px">Postal code</div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 14px;font-size:13px;color:#8A8D80">1207</div></div>
+      </div>
+      <div style="margin-top:12px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">Email <span style="color:#8A8D80;font-weight:500">(optional)</span></div><div style="background:#FAFAF7;border:1px solid #E7E8E0;border-radius:12px;padding:13px 14px;font-size:13px;color:#8A8D80">you@email.com</div></div>
+    </sc-if>
+  </div>
+
+  <!-- delivery -->
+  <div style="margin:12px 16px 0;background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:18px">
+    <div style="display:flex;align-items:center;gap:9px">
+      <span style="width:22px;height:22px;border-radius:999px;background:#101208;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">2</span>
+      <span style="font-family:'Archivo',sans-serif;font-size:15.5px;font-weight:700">Delivery</span>
+    </div>
+    <div style="border:1.5px solid #A8CD2F;background:#FBFDF3;border-radius:14px;padding:13px 14px;display:flex;gap:10px;align-items:center;margin-top:14px">
+      <span style="flex:none;width:16px;height:16px;border-radius:999px;border:4.5px solid #A8CD2F;background:#101208"></span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700">Inside Dhaka</div><div style="font-size:11.5px;color:#6B6E60">24–48 hours</div></div>
+      <span style="font-size:13px;font-weight:700">৳60</span>
+    </div>
+    <div style="border:1px solid #E7E8E0;border-radius:14px;padding:13px 14px;display:flex;gap:10px;align-items:center;margin-top:10px">
+      <span style="flex:none;width:16px;height:16px;border-radius:999px;border:1.5px solid #DDDFD2"></span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700">Nationwide</div><div style="font-size:11.5px;color:#6B6E60">2–4 days, tracked</div></div>
+      <span style="font-size:13px;font-weight:700">৳120</span>
+    </div>
+  </div>
+
+  <!-- payment -->
+  <div style="margin:12px 16px 0;background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:18px">
+    <div style="display:flex;align-items:center;gap:9px">
+      <span style="width:22px;height:22px;border-radius:999px;background:#101208;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">3</span>
+      <span style="font-family:'Archivo',sans-serif;font-size:15.5px;font-weight:700">Payment</span>
+    </div>
+    <sc-if value="{{ codSel }}" hint-placeholder-val="{{ false }}">
+      <div style="border:1.5px solid #A8CD2F;background:#FBFDF3;border-radius:14px;padding:13px 14px;display:flex;gap:10px;align-items:center;margin-top:14px">
+        <span style="flex:none;width:16px;height:16px;border-radius:999px;border:4.5px solid #A8CD2F;background:#101208"></span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Cash on Delivery</div><div style="font-size:11.5px;color:#6B6E60">Pay when it arrives</div></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ codUnsel }}" hint-placeholder-val="{{ true }}">
+      <div onClick="{{ payCod }}" style="border:1px solid #E7E8E0;border-radius:14px;padding:13px 14px;display:flex;gap:10px;align-items:center;margin-top:14px;cursor:pointer">
+        <span style="flex:none;width:16px;height:16px;border-radius:999px;border:1.5px solid #DDDFD2"></span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Cash on Delivery</div><div style="font-size:11.5px;color:#6B6E60">Pay when it arrives</div></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ bkashSel }}" hint-placeholder-val="{{ true }}">
+      <div style="border:1.5px solid #A8CD2F;background:#FBFDF3;border-radius:14px;padding:13px 14px;margin-top:10px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="flex:none;width:16px;height:16px;border-radius:999px;border:4.5px solid #A8CD2F;background:#101208"></span>
+          <span style="flex:none;width:48px;height:25px;border-radius:6px;background:#E2136E;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-style:italic">bKash</span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700">bKash</div><div style="font-size:11.5px;color:#6B6E60">Scan the QR or Send Money</div></div>
+        </div>
+        <div style="border-top:1px solid #E4EDC8;margin-top:12px;padding-top:12px">
+          <div style="display:flex;justify-content:center"><div style="position:relative;width:150px;height:150px;background:#fff;border:1px solid #E7E8E0;border-radius:14px;overflow:hidden"><image-slot style="position:absolute;left:10px;top:10px;width:130px;height:130px" fit="contain" id="qr-bkash" shape="rect" placeholder="bKash QR"></image-slot></div></div>
+          <div style="font-size:10.5px;color:#6B6E60;text-align:center;margin-top:6px">Scan with the bKash app</div>
+          <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #E7E8E0;border-radius:12px;padding:11px 12px;margin-top:10px">
+            <span style="font-size:11.5px;color:#6B6E60">or Send to</span>
+            <span style="font-size:13px;font-weight:800;letter-spacing:.03em">01764250814</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;border:1px solid #E7E8E0;border-radius:999px;padding:5px 10px;font-size:10.5px;font-weight:700;margin-left:auto"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path></svg>Copy</span>
+          </div>
+          <div style="margin-top:10px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">bKash Transaction ID</div><div style="background:#fff;border:1px solid #E7E8E0;border-radius:12px;padding:12px 14px;font-size:13px;color:#8A8D80">e.g. 9HK2XXXXXX</div></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ bkashUnsel }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ payBkash }}" style="border:1px solid #E7E8E0;border-radius:14px;padding:13px 14px;display:flex;gap:10px;align-items:center;margin-top:10px;cursor:pointer">
+        <span style="flex:none;width:16px;height:16px;border-radius:999px;border:1.5px solid #DDDFD2"></span>
+        <span style="flex:none;width:48px;height:25px;border-radius:6px;background:#E2136E;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-style:italic">bKash</span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">bKash</div><div style="font-size:11.5px;color:#6B6E60">Scan the QR or Send Money</div></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ bqrSel }}" hint-placeholder-val="{{ false }}">
+      <div style="border:1.5px solid #A8CD2F;background:#FBFDF3;border-radius:14px;padding:13px 14px;margin-top:10px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="flex:none;width:16px;height:16px;border-radius:999px;border:4.5px solid #A8CD2F;background:#101208"></span>
+          <span style="flex:none;width:48px;height:25px;border-radius:6px;background:#fff;border:1px solid #E7E8E0;color:#101208;display:inline-flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"></rect><rect x="14" y="4" width="6" height="6"></rect><rect x="4" y="14" width="6" height="6"></rect><path d="M14 14h3v3h-3z"></path><path d="M20 17v3h-3"></path></svg></span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700">BanglaQR</div><div style="font-size:11.5px;color:#6B6E60">Scan &amp; pay from any bank app</div></div>
+        </div>
+        <div style="border-top:1px solid #E4EDC8;margin-top:12px;padding-top:12px">
+          <div style="display:flex;justify-content:center"><div style="position:relative;width:150px;height:150px;background:#fff;border:1px solid #E7E8E0;border-radius:14px;overflow:hidden"><image-slot style="position:absolute;left:10px;top:10px;width:130px;height:130px" fit="contain" id="qr-banglaqr" shape="rect" placeholder="BanglaQR code"></image-slot></div></div>
+          <div style="font-size:10.5px;color:#6B6E60;text-align:center;margin-top:6px">Pay the exact total ৳3,960 from any bank or MFS app</div>
+          <div style="margin-top:10px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">Payment reference</div><div style="background:#fff;border:1px solid #E7E8E0;border-radius:12px;padding:12px 14px;font-size:13px;color:#8A8D80">e.g. TXN-XXXXXXXX</div></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ bqrUnsel }}" hint-placeholder-val="{{ true }}">
+      <div onClick="{{ payBqr }}" style="border:1px solid #E7E8E0;border-radius:14px;padding:13px 14px;display:flex;gap:10px;align-items:center;margin-top:10px;cursor:pointer">
+        <span style="flex:none;width:16px;height:16px;border-radius:999px;border:1.5px solid #DDDFD2"></span>
+        <span style="flex:none;width:48px;height:25px;border-radius:6px;background:#fff;border:1px solid #E7E8E0;color:#101208;display:inline-flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"></rect><rect x="14" y="4" width="6" height="6"></rect><rect x="4" y="14" width="6" height="6"></rect><path d="M14 14h3v3h-3z"></path><path d="M20 17v3h-3"></path></svg></span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">BanglaQR</div><div style="font-size:11.5px;color:#6B6E60">Scan &amp; pay from any bank app</div></div>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="font-size:11px;color:#8A8D80;text-align:center;margin:14px 24px 0;line-height:1.5">By placing your order you agree to our Terms &amp; Refund Policy.</div>
+
+  <!-- sticky place order -->
+  <div style="position:fixed;left:12px;right:12px;bottom:12px;background:rgba(13,15,7,.92);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.16);border-radius:22px;box-shadow:0 10px 30px rgba(16,18,8,.45);display:flex;align-items:center;gap:12px;padding:10px 12px 10px 20px;z-index:60">
+    <div>
+      <div style="font-size:10px;font-weight:600;color:#8A8D80;letter-spacing:.06em">TOTAL</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:18px;font-weight:800;color:#fff">৳3,960</div>
+    </div>
+    <a href="DiecastBD%20Order%20Placed.dc.html" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:#A8CD2F;color:#101208;font-size:14px;font-weight:800;height:48px;border-radius:999px;text-decoration:none">Place order <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"></path><path d="M13 6.5 18.5 12 13 17.5"></path></svg></a>
+  </div>
+
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;checkoutMode&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;guest&quot;, &quot;signed-in&quot;], &quot;default&quot;: &quot;guest&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Demo state&quot;}, &quot;previewMode&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;auto&quot;, &quot;desktop&quot;, &quot;mobile&quot;], &quot;default&quot;: &quot;auto&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Preview&quot;}}">
+class Component extends DCLogic {
+  state = { vw: typeof window !== 'undefined' ? window.innerWidth : 1280, pm: 'bkash' };
+
+  componentDidMount() {
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener('resize', this._onResize);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._onResize);
+  }
+
+  renderVals() {
+    const mode = this.props.previewMode ?? 'auto';
+    const vpMobile = this.state.vw < 768;
+    const isMobile = mode === 'mobile' ? true : mode === 'desktop' ? false : vpMobile;
+    const isGuest = (this.props.checkoutMode ?? 'guest') === 'guest';
+    const pm = this.state.pm;
+    return {
+      isMobile: isMobile,
+      isDesktop: !isMobile,
+      isGuest: isGuest,
+      isUser: !isGuest,
+      codSel: pm === 'cod',
+      codUnsel: pm !== 'cod',
+      bkashSel: pm === 'bkash',
+      bkashUnsel: pm !== 'bkash',
+      bqrSel: pm === 'banglaqr',
+      bqrUnsel: pm !== 'banglaqr',
+      payCod: () => this.setState({ pm: 'cod' }),
+      payBkash: () => this.setState({ pm: 'bkash' }),
+      payBqr: () => this.setState({ pm: 'banglaqr' })
+    };
+  }
+}
+</script>
+</body>
+</html>
