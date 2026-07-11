@@ -71,7 +71,7 @@ function RegisterBrand() {
  * screens the grid collapses and the brand panel stacks on top. */
 export function AuthShell({ variant = "signin", back, children }) {
   return (
-    <div className="grid min-h-svh grid-cols-[repeat(auto-fit,minmax(360px,1fr))]">
+    <div className="grid min-h-svh grid-cols-1 md:grid-cols-2">
       {variant === "register" ? <RegisterBrand /> : <SignInBrand />}
       <div className="flex items-center justify-center bg-paper px-6 py-12">
         <div className="w-full max-w-[400px]">
