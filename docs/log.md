@@ -570,4 +570,20 @@ The mobile toolbar's brand quick-chips are data-driven off the real catalog (`us
 
 Both production builds clean, all 35 backend + 11 frontend tests still green, no new lint warnings.
 
+**Follow-up same day: the user reported 4 concrete Shop bugs (images not filling their area, 3 columns instead of 4, mobile filter scroll not working, card/filter sizing) plus a search-as-you-type request.** Investigated each individually rather than guessing; the "images" complaint turned out to be a misunderstanding (the screenshots were of the reference design's own placeholder art, not this app — confirmed and moved on), but the rest were real.
+
+**Grid: 3 columns instead of 4, root-caused with real math, not eyeballed.** The reference's literal `minmax(235px,1fr)` auto-fill value, once the 250px filter sidebar + 36px gap are subtracted from the 1360px content width, leaves 994px available — and `floor((994+20)/(235+20))` is 3, not 4. Verified by computing Grid's actual auto-fill formula before touching any code. Lowered the minmax to 210px, which reliably produces 4 columns at that width while still degrading gracefully on narrower windows.
+
+**Mobile filter toolbar didn't scroll with a mouse.** Every `*.dc.html` reference ships its own global pointerdown/pointermove handler specifically so horizontal-scroll rows drag with a mouse (browsers only give native drag-scroll for touch/trackpad) — that handler is viewer-runtime-only and was never ported into this redesign's own scroll rows. Added a new `useDragScroll` hook and applied it to every bare `overflow-x-auto` row found by search: the Shop mobile chip toolbar, `ShopByShelfSection`'s mobile tiles, `TestimonialsSection`'s mobile cards (Embla-based carousels already had native mouse-drag, needed no change).
+
+**"Card size" and "filter size" issues turned out to be downstream of the grid bug**, not independent — re-verified `FilterSidebar`'s exact metrics against the reference (250px width, 98px sticky offset, 24px padding/radius) and found them already correct; both complaints resolved once the grid itself was fixed.
+
+**Found a real, more serious bug while re-verifying that wasn't in the original report: the footer's SHOP/HELP/policy link columns were invisible** — dark ink text on the dark footer background, across all three footer contexts (big-desktop, slim, mobile-big). Root cause: several `FooterLink` instances had no explicit text-color class and were relying on inheriting color from a parent element — but Phase 1's global `a { color: var(--foreground); }` rule is a direct tag-selector rule, which always wins over inherited color in CSS regardless of how specific the ancestor's own rule looks. Fixed by giving every affected instance its own explicit light color, matching the ones that already had it right.
+
+Also removed the search input's 400ms debounce per explicit request — search now fires on every keystroke (confirmed via network-request timing: a request fires within 200ms of typing, not after a settling delay). The ~30-SKU catalog makes this trivially cheap.
+
+Verified everything with a real headless-browser session: 4-column grid confirmed at 1440px, mouse-drag-to-scroll confirmed by simulating a drag and checking the previously-hidden "In stock" chip becomes visible, footer links confirmed visible in all three contexts, search-as-you-type confirmed via request timing.
+
+Both production builds clean, all 35 backend + 11 frontend tests still green, no new lint warnings.
+
 Phase 6 (Product Details) is next.

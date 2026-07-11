@@ -1,6 +1,7 @@
 import { Star } from "lucide-react";
 import { Container } from "@/components/shared/Container";
 import { SectionHeader } from "@/components/shared/SectionHeader";
+import { useDragScroll } from "@/hooks/useDragScroll";
 
 function TestimonialCard({ testimonial, className }) {
   return (
@@ -23,6 +24,7 @@ function TestimonialCard({ testimonial, className }) {
 // Dhaka"), but Settings.testimonials only stores {name, quote, rating} — no
 // location field — so only the real name renders, rather than inventing one.
 export function TestimonialsSection({ testimonials }) {
+  const dragRef = useDragScroll();
   if (!testimonials?.length) return null;
 
   return (
@@ -38,7 +40,10 @@ export function TestimonialsSection({ testimonials }) {
 
       <div className="md:hidden">
         <div className="mb-3 px-4 font-display text-xl font-bold">What collectors say</div>
-        <div className="scrollbar-none flex snap-x snap-proximity gap-3 overflow-x-auto scroll-pl-4 px-4 pb-1">
+        <div
+          ref={dragRef}
+          className="scrollbar-none flex cursor-grab snap-x snap-proximity gap-3 overflow-x-auto scroll-pl-4 px-4 pb-1 select-none"
+        >
           {testimonials.map((t) => (
             <TestimonialCard key={t.name} testimonial={t} className="w-70 shrink-0 snap-start" />
           ))}

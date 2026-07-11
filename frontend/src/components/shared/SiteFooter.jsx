@@ -111,12 +111,12 @@ export function SiteFooter({ variant = "big" }) {
       <footer className="hidden bg-ink text-[#8A8D80] md:block">
         <Container className="flex flex-wrap items-center justify-between gap-4 py-6.5">
           <Wordmark className="text-[17px]" />
-          <nav className="flex flex-wrap gap-4.5 text-[12.5px] text-[#C7C9BC]">
+          <nav className="flex flex-wrap gap-4.5 text-[12.5px]">
             {helpLinks.map((link) => (
-              <FooterLink key={link.url} {...link} className="hover:text-white" />
+              <FooterLink key={link.url} {...link} className="text-[#C7C9BC] hover:text-white" />
             ))}
             {policyLinks.map((link) => (
-              <FooterLink key={link.url} {...link} className="hover:text-white" />
+              <FooterLink key={link.url} {...link} className="text-[#C7C9BC] hover:text-white" />
             ))}
           </nav>
           <div className="flex items-center gap-4">
@@ -153,7 +153,7 @@ export function SiteFooter({ variant = "big" }) {
             <div className="text-xs font-bold tracking-[.12em] text-faint">SHOP</div>
             <div className="mt-4 flex flex-col gap-2.5 text-[13.5px]">
               {shopLinks.map((link) => (
-                <FooterLink key={link.url} {...link} className="hover:text-white" />
+                <FooterLink key={link.url} {...link} className="text-[#C7C9BC] hover:text-white" />
               ))}
             </div>
           </div>
@@ -202,7 +202,7 @@ export function SiteFooter({ variant = "big" }) {
             <div className="text-[10.5px] font-bold tracking-[.12em] text-faint">SHOP</div>
             <div className="mt-3 flex flex-col gap-2.5 text-[12.5px]">
               {shopLinks.map((link) => (
-                <FooterLink key={link.url} {...link} />
+                <FooterLink key={link.url} {...link} className="text-[#C7C9BC]" />
               ))}
             </div>
           </div>
@@ -210,7 +210,7 @@ export function SiteFooter({ variant = "big" }) {
             <div className="text-[10.5px] font-bold tracking-[.12em] text-faint">HELP</div>
             <div className="mt-3 flex flex-col gap-2.5 text-[12.5px]">
               {helpLinks.map((link) => (
-                <FooterLink key={link.url} {...link} />
+                <FooterLink key={link.url} {...link} className="text-[#C7C9BC]" />
               ))}
             </div>
           </div>
@@ -225,9 +225,9 @@ export function SiteFooter({ variant = "big" }) {
         <div className="mt-4">
           <SocialRow social={social} size="size-8" />
         </div>
-        <nav className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs text-[#C7C9BC]">
+        <nav className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs">
           {policyLinks.map((link) => (
-            <FooterLink key={link.url} {...link} />
+            <FooterLink key={link.url} {...link} className="text-[#C7C9BC]" />
           ))}
         </nav>
         <div className="mt-4 border-t border-white/10 pt-3.5 text-[11px] text-faint">© {year} DiecastBD. All rights reserved.</div>

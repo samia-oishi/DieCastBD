@@ -3,6 +3,7 @@ import { ArrowRight, CarFront } from "lucide-react";
 
 import { Container } from "@/components/shared/Container";
 import { SectionHeader } from "@/components/shared/SectionHeader";
+import { useDragScroll } from "@/hooks/useDragScroll";
 
 function ShelfTile({ label, href, imageUrl, imageFit = "cover" }) {
   return (
@@ -42,6 +43,7 @@ function ShelfTile({ label, href, imageUrl, imageFit = "cover" }) {
  * since a logo mark isn't shot photography); a category with a real `image`
  * renders as a proper full-bleed photo tile. */
 export function ShopByShelfSection({ brands, categories }) {
+  const dragRef = useDragScroll();
   const accessoryCategory = categories?.find((c) => c.slug === "accessories" || /accessor/i.test(c.name));
   const tiles = [
     ...(brands ?? []).map((brand) => ({
@@ -84,7 +86,10 @@ export function ShopByShelfSection({ brands, categories }) {
             View all
           </Link>
         </div>
-        <div className="scrollbar-none flex snap-x snap-proximity gap-3 overflow-x-auto scroll-pl-4 px-4 pb-1">
+        <div
+          ref={dragRef}
+          className="scrollbar-none flex cursor-grab snap-x snap-proximity gap-3 overflow-x-auto scroll-pl-4 px-4 pb-1 select-none"
+        >
           {tiles.map((tile) => (
             <div key={tile.id} className="snap-start">
               <ShelfTile {...tile} />

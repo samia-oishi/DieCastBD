@@ -6,7 +6,7 @@ import { canonical } from "@/lib/siteUrl";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Container } from "@/components/shared/Container";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDragScroll } from "@/hooks/useDragScroll";
 import { useBrands } from "@/features/brands/api/useBrands";
 import { useProducts } from "./api/useProducts";
 import { useShopFilters } from "./hooks/useShopFilters";
@@ -56,12 +56,15 @@ export function ShopPage() {
   const [searchInput, setSearchInput] = useState(filters.q ?? "");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const { data: brands } = useBrands();
+  const chipRowRef = useDragScroll();
 
-  const debouncedSearch = useDebounce(searchInput, 400);
-
+  // Real-time search — query on every keystroke, no debounce. The catalog
+  // is small enough (~30 SKUs) that this is trivially fast, and instant
+  // feedback was an explicit request over the usual "debounce to avoid
+  // hammering the API" default.
   const { data, isLoading, isPlaceholderData } = useProducts({
     ...filters,
-    q: debouncedSearch || undefined,
+    q: searchInput || undefined,
     limit: PAGE_SIZE,
     page: filters.page,
   });
@@ -116,7 +119,7 @@ export function ShopPage() {
         </div>
         <SearchField value={searchInput} onChange={onSearchChange} className="mt-3.5 h-11.5" />
       </div>
-      <div className="scrollbar-none mt-3.5 flex gap-2 overflow-x-auto px-4 pb-0.5 md:hidden">
+      <div ref={chipRowRef} className="scrollbar-none mt-3.5 flex cursor-grab gap-2 overflow-x-auto px-4 pb-0.5 select-none md:hidden">
         <MobileChip active onClick={() => setMobileFiltersOpen(true)}>
           <SlidersHorizontal className="size-3.25" />
           Filters
