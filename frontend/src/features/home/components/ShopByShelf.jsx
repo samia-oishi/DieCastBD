@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
 
 import { Container } from "@/components/shared/Container";
+import { useDragScroll } from "@/hooks/useDragScroll";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ function Tile({ href, label, image, isLogo, className }) {
  * ("Protect & display") tile. Mobile: horizontal snap row of 210px tiles;
  * desktop: 380px grid. */
 export function ShopByShelf({ brands, categories }) {
+  const { ref, dragProps } = useDragScroll();
   const hw = brands?.find((b) => b.slug === "hot-wheels-premium");
   const mini = brands?.find((b) => b.slug === "mini-gt");
   const accessories = categories?.find((c) => c.slug === "accessories");
@@ -59,8 +61,8 @@ export function ShopByShelf({ brands, categories }) {
         <p className="mt-1.5 hidden text-[14.5px] text-muted-foreground md:mt-[7px] md:block">Two brands we trust — and the gear that keeps them mint.</p>
       </Container>
 
-      {/* Mobile: horizontal snap row */}
-      <div data-carousel className="mt-3 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
+      {/* Mobile: horizontal drag row */}
+      <div ref={ref} {...dragProps} data-carousel className="mt-3 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
         {tiles.map((t) => (
           <Tile key={t.href} {...t} className="size-[210px] snap-start" />
         ))}

@@ -11,25 +11,32 @@ import { WishlistButton } from "@/features/wishlist/components/WishlistButton";
 import { RestockAlertDialog } from "@/components/shared/RestockAlertDialog";
 import { useRestockAlertStore } from "@/stores/restockAlertStore";
 
+// Per-variant, per-breakpoint sizing read directly from the design markup.
 const VARIANTS = {
   grid: {
+    outer: "rounded-[20px]",
     img: "h-[150px] md:h-[220px]",
-    pad: "p-[14px] md:pb-4",
-    title: "text-[14.5px] min-h-10",
+    pad: "p-[14px]",
+    kicker: "text-[10.5px] tracking-[0.09em]",
+    title: "mt-[5px] mb-3 text-[14.5px] min-h-10",
     price: "text-[15.5px]",
+    addBtn: "size-8",
   },
   carousel: {
-    img: "h-[150px] md:h-[240px]",
-    pad: "p-4 md:p-[18px] md:pt-4",
-    title: "text-[15px] min-h-[41px]",
-    price: "text-base",
+    outer: "rounded-[18px] md:rounded-[20px]",
+    img: "h-[172px] md:h-[240px]",
+    pad: "px-3.5 pb-3.5 pt-3 md:px-[18px] md:pb-[18px] md:pt-4",
+    kicker: "text-[9.5px] tracking-[0.08em] md:text-[10.5px] md:tracking-[0.09em]",
+    title: "mt-1 mb-2.5 text-[13px] min-h-[35px] md:mt-[5px] md:mb-3 md:text-[15px] md:min-h-[41px]",
+    price: "text-[15px] md:text-base",
+    addBtn: "size-9 md:size-8",
   },
 };
 
 function Badge({ children, tone }) {
   const cls = tone === "sale" ? "bg-brand text-ink" : "bg-ink text-white";
   return (
-    <span className={cn("pointer-events-none rounded-full px-[11px] py-[5px] text-[10.5px] font-bold uppercase tracking-[0.07em]", cls)}>
+    <span className={cn("pointer-events-none rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] md:px-[11px] md:py-[5px] md:text-[10.5px] md:tracking-[0.07em]", cls)}>
       {children}
     </span>
   );
@@ -66,7 +73,8 @@ export function ProductCard({ product, variant = "grid", className }) {
       <div
         onClick={goToProduct}
         className={cn(
-          "group flex w-full cursor-pointer flex-col overflow-hidden rounded-[20px] border border-line bg-white transition-[box-shadow,transform] duration-[180ms] ease-out hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(16,18,8,0.1)]",
+          "group flex h-full w-full cursor-pointer flex-col overflow-hidden border border-line bg-white transition-[box-shadow,transform] duration-[180ms] ease-out hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(16,18,8,0.1)]",
+          v.outer,
           className
         )}
       >
@@ -79,7 +87,7 @@ export function ProductCard({ product, variant = "grid", className }) {
             </div>
           )}
 
-          <div className="pointer-events-none absolute left-3 top-3 flex gap-1.5">
+          <div className="pointer-events-none absolute left-2.5 top-2.5 flex gap-1.5 md:left-3 md:top-3">
             {isNewArrival && <Badge tone="new">New</Badge>}
             {onSale && <Badge tone="sale">Sale</Badge>}
           </div>
@@ -91,7 +99,7 @@ export function ProductCard({ product, variant = "grid", className }) {
 
           {outOfStock && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[rgba(250,250,247,0.55)]">
-              <span className="rounded-full border border-line bg-white px-3.5 py-[7px] text-[11px] font-bold uppercase tracking-[0.07em] text-ink-soft">
+              <span className="rounded-full border border-line bg-white px-2.5 py-[5px] text-[9px] font-bold uppercase tracking-[0.06em] text-ink-soft md:px-3.5 md:py-[7px] md:text-[11px] md:tracking-[0.07em]">
                 Sold Out
               </span>
             </div>
@@ -100,12 +108,12 @@ export function ProductCard({ product, variant = "grid", className }) {
 
         <div className={cn("flex flex-1 flex-col", v.pad)}>
           {brand?.name && (
-            <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-faint">{brand.name}</div>
+            <div className={cn("font-semibold uppercase text-faint", v.kicker)}>{brand.name}</div>
           )}
           <Link
             to={`/products/${slug}`}
             onClick={stop}
-            className={cn("mb-3 mt-[5px] block font-semibold leading-[1.35] text-ink hover:text-ink", v.title)}
+            className={cn("block font-semibold leading-[1.35] text-ink hover:text-ink", v.title)}
           >
             {title}
           </Link>
@@ -113,12 +121,12 @@ export function ProductCard({ product, variant = "grid", className }) {
           <div className="mt-auto flex items-center justify-between">
             {outOfStock ? (
               <>
-                <span className="text-[13.5px] font-semibold text-faint">{formatTaka(effectivePrice)}</span>
+                <span className="text-[12px] font-semibold text-faint md:text-[13.5px]">{formatTaka(effectivePrice)}</span>
                 <button
                   type="button"
                   onClick={isAlerted ? stop : openNotify}
                   className={cn(
-                    "rounded-full border-[1.5px] border-ink px-[13px] py-[7px] text-xs font-bold transition-colors",
+                    "rounded-full border-[1.5px] border-ink px-2.5 py-1.5 text-[10.5px] font-bold transition-colors md:px-[13px] md:py-[7px] md:text-xs",
                     isAlerted ? "cursor-default text-brand-deep" : "text-ink hover:bg-ink hover:text-white"
                   )}
                 >
@@ -127,15 +135,15 @@ export function ProductCard({ product, variant = "grid", className }) {
               </>
             ) : (
               <>
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-baseline gap-1.5 md:gap-2">
                   <span className={cn("font-bold text-ink", v.price)}>{formatTaka(effectivePrice)}</span>
-                  {onSale && <span className="text-[13px] text-faint line-through">{formatTaka(price)}</span>}
+                  {onSale && <span className="text-[11px] text-faint line-through md:text-[13px]">{formatTaka(price)}</span>}
                 </div>
                 <button
                   type="button"
                   onClick={quickAdd}
                   aria-label={`Add ${title} to cart`}
-                  className="flex size-8 items-center justify-center rounded-full bg-ink text-white transition-colors hover:bg-[#5F7A10]"
+                  className={cn("flex shrink-0 items-center justify-center rounded-full bg-ink text-white transition-colors hover:bg-[#5F7A10]", v.addBtn)}
                 >
                   <Plus size={13} strokeWidth={2.2} />
                 </button>

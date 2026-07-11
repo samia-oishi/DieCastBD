@@ -91,7 +91,7 @@ export function HomePage() {
           products={collectorPicks.data?.data}
           isLoading={collectorPicks.isLoading}
           viewAllHref={ROUTES.SHOP}
-          className="pt-6 md:pt-[76px]"
+          className="pt-5 md:pt-[76px]"
         />
       )}
 
@@ -108,7 +108,7 @@ export function HomePage() {
           products={newArrivals.data?.data}
           isLoading={newArrivals.isLoading}
           viewAllHref={ROUTES.SHOP}
-          className="pt-6 md:pt-[76px]"
+          className="pt-[26px] md:pt-[76px]"
         />
       )}
 

@@ -1,34 +1,55 @@
 import { Star } from "lucide-react";
 
 import { Container } from "@/components/shared/Container";
+import { useDragScroll } from "@/hooks/useDragScroll";
 
-function Stars({ count = 5 }) {
+function Stars({ size }) {
   return (
     <div className="flex gap-[3px]">
-      {Array.from({ length: count }).map((_, i) => (
-        <Star key={i} size={15} className="fill-brand text-brand" />
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star key={i} size={size} className="fill-brand text-brand" />
       ))}
     </div>
   );
 }
 
-/** "What collectors say" — real admin-managed testimonials in the design card
- * style. Section hides entirely when there are none (no fabricated reviews). */
+/** "What collectors say" — real admin-managed testimonials. Mobile: horizontal
+ * drag carousel of 280px cards. Desktop: grid. Section hides when empty. */
 export function TestimonialsSection({ testimonials }) {
+  const { ref, dragProps } = useDragScroll();
   if (!testimonials?.length) return null;
+
   return (
-    <section className="pt-6 md:pt-[76px]">
+    <section className="pt-[26px] md:pt-[76px]">
       <Container>
         <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink md:text-[30px]">What collectors say</h2>
-        <p className="mt-1.5 text-[13.5px] text-muted-foreground md:mt-[7px] md:text-[14.5px]">Real orders, real shelves.</p>
-        <div className="mt-4 grid gap-4 md:mt-[26px] md:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
+        <p className="mt-[7px] hidden text-[14.5px] text-muted-foreground md:block">Real orders, real shelves.</p>
+      </Container>
+
+      {/* Mobile: drag carousel */}
+      <div ref={ref} {...dragProps} className="mt-3 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
+        {testimonials.map((t, i) => (
+          <div key={i} className="w-[280px] shrink-0 rounded-[18px] border border-line bg-white p-[18px]">
+            <Stars size={13} />
+            <p className="mt-2.5 text-[13px] leading-[1.55] text-ink-soft">"{t.quote}"</p>
+            <div className="mt-2.5 text-xs">
+              <span className="font-semibold text-ink">{t.name}</span>
+              {t.location && <span className="text-faint"> · {t.location}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: grid */}
+      <Container className="mt-[26px] hidden md:block">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5">
           {testimonials.map((t, i) => (
-            <div key={i} className="rounded-[20px] border border-line bg-white p-[18px] md:p-[26px]">
-              <Stars count={t.rating || 5} />
-              <p className="mt-3 text-[13px] leading-[1.6] text-ink-soft md:mt-3.5 md:text-[15px]">"{t.quote}"</p>
-              <div className="mt-3 md:mt-4">
-                <span className="text-[13px] font-semibold text-ink md:text-sm">{t.name}</span>
-                {t.location && <span className="text-xs text-faint md:text-[12.5px]"> · Verified collector, {t.location}</span>}
+            <div key={i} className="rounded-[20px] border border-line bg-white p-[26px]">
+              <Stars size={15} />
+              <p className="mt-3.5 text-[15px] leading-[1.6] text-ink-soft">"{t.quote}"</p>
+              <div className="mt-4">
+                <span className="text-sm font-semibold text-ink">{t.name}</span>
+                {t.location && <span className="text-[12.5px] text-faint"> · Verified collector, {t.location}</span>}
               </div>
             </div>
           ))}
