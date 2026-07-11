@@ -1,4 +1,7 @@
+import { useLocation } from "react-router";
+
 import { useSettings } from "@/features/settings/api/useSettings";
+import { ROUTES } from "@/constants/routes";
 
 // Design's default announcement segments (desktop only). An admin can override
 // with a single custom message via Settings → Announcement bar.
@@ -14,6 +17,11 @@ function Dot() {
 
 export function AnnouncementBar() {
   const { data: settings } = useSettings();
+  const { pathname } = useLocation();
+  // Per the design, the announcement bar appears on the home page only — inner
+  // pages (Shop/PDP/Cart/…) start directly with the header.
+  if (pathname !== ROUTES.HOME) return null;
+
   const announcement = settings?.announcementBar;
   const hasCustom = announcement?.isActive && announcement?.text;
 

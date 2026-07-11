@@ -17,14 +17,15 @@ const DEFAULT_HEADER_LINKS = [
 
 const FROST = "bg-[rgba(250,250,247,0.6)] [backdrop-filter:blur(24px)_saturate(180%)] [-webkit-backdrop-filter:blur(24px)_saturate(180%)]";
 
-function CartButton({ count, onClick, className, iconSize = 17 }) {
+function CartButton({ count, onClick, className, iconSize = 17, active = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={`Cart${count ? `, ${count} items` : ""}`}
       className={cn(
-        "relative flex items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:border-brand",
+        "relative flex items-center justify-center rounded-full border bg-white text-ink transition-colors hover:border-brand",
+        active ? "border-brand" : "border-line",
         className
       )}
     >
@@ -38,7 +39,7 @@ function CartButton({ count, onClick, className, iconSize = 17 }) {
   );
 }
 
-function DesktopHeader({ links, cartCount, onCartClick, user }) {
+function DesktopHeader({ links, cartCount, onCartClick, user, cartActive }) {
   return (
     <header className={cn("sticky top-0 z-50 hidden border-b border-line md:block", FROST)}>
       <div className="mx-auto flex h-[74px] max-w-[1360px] items-center justify-between gap-8 px-10">
@@ -58,7 +59,7 @@ function DesktopHeader({ links, cartCount, onCartClick, user }) {
           >
             <Heart size={17} strokeWidth={1.8} />
           </Link>
-          <CartButton count={cartCount} onClick={onCartClick} className="size-10" />
+          <CartButton count={cartCount} onClick={onCartClick} className="size-10" active={cartActive} />
           {user ? (
             <Link
               to={ROUTES.ACCOUNT}
@@ -151,6 +152,7 @@ export function SiteHeader({ onCartClick }) {
   const { data: settings } = useSettings();
   const { data: user } = useCurrentUser();
   const { itemCount } = useCart();
+  const { pathname } = useLocation();
 
   const links = settings?.navigation?.headerLinks?.length
     ? settings.navigation.headerLinks
@@ -158,7 +160,7 @@ export function SiteHeader({ onCartClick }) {
 
   return (
     <>
-      <DesktopHeader links={links} cartCount={itemCount} onCartClick={onCartClick} user={user} />
+      <DesktopHeader links={links} cartCount={itemCount} onCartClick={onCartClick} user={user} cartActive={pathname === ROUTES.CART} />
       <MobileAppBar cartCount={itemCount} onCartClick={onCartClick} />
     </>
   );
