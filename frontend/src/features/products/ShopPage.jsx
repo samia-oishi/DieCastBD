@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
 import { canonical } from "@/lib/siteUrl";
@@ -58,7 +58,18 @@ export function ShopPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const { ref: toolbarRef, dragProps } = useDragScroll();
   const { data: brands } = useBrands();
-  const debouncedSearch = useDebounce(searchInput, 400);
+  // Short debounce so results filter live as you type (not only after a long
+  // pause) while still coalescing rapid keystrokes into one request.
+  const debouncedSearch = useDebounce(searchInput, 200);
+
+  // Keep the URL's ?q= in sync with the settled search — shareable/bookmarkable,
+  // without rewriting the URL on every keystroke.
+  useEffect(() => {
+    if ((filters.q ?? "") !== (debouncedSearch || "")) {
+      updateFilters({ q: debouncedSearch || undefined });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   const { data, isLoading, isPlaceholderData } = useProducts({
     ...filters,
@@ -74,10 +85,8 @@ export function ShopPage() {
   const rangeEnd = Math.min(filters.page * PAGE_SIZE, total);
   const showing = total > 0 ? `Showing ${rangeStart}–${rangeEnd} of ${total}` : null;
 
-  const onSearch = (v) => {
-    setSearchInput(v);
-    updateFilters({ q: v || undefined });
-  };
+  // Input just drives local state; the debounce effect above feeds the query + URL.
+  const onSearch = setSearchInput;
 
   const sidebarProps = { filters, updateFilters, clearFilters, activeFilterCount };
 
