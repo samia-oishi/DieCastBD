@@ -20,11 +20,21 @@ function CopyBtn({ value }) {
 
 function Qr({ image, caption }) {
   return (
-    <div className="shrink-0">
+    <div className="mx-auto shrink-0 md:mx-0">
       <div className="flex size-[148px] items-center justify-center overflow-hidden rounded-[14px] border border-line bg-white p-2.5">
         {image?.url ? <img src={image.url} alt="Payment QR" className="size-full object-contain" /> : <QrCode className="size-14 text-faint/40" strokeWidth={1.2} />}
       </div>
-      <div className="mt-1.5 max-w-[148px] text-center text-[11px] text-muted-foreground">{caption}</div>
+      <div className="mx-auto mt-1.5 max-w-[148px] text-center text-[11px] text-muted-foreground">{caption}</div>
+    </div>
+  );
+}
+
+/** Expanded-panel wrapper: QR centered on top (mobile) / left (desktop), the
+ * send-money/reference content beside or below it. */
+function ExpandPanel({ children }) {
+  return (
+    <div className="mt-3.5 border-t border-[#E4EDC8] pt-3.5" onClick={(e) => e.stopPropagation()}>
+      <div className="flex flex-col gap-[18px] md:flex-row md:items-start">{children}</div>
     </div>
   );
 }
@@ -69,12 +79,12 @@ export function PaymentMethods({ value, onChange, bkashConfig, banglaQrConfig, r
       <RadioCard selected={value === "bkash"} onSelect={() => onChange("bkash")}>
         <Head selected={value === "bkash"} logo={<BkashLogo />} title="bKash" subtitle={value === "bkash" ? "Scan the QR or Send Money, then enter your Transaction ID" : "Scan the QR or Send Money"} />
         {value === "bkash" && (
-          <div className="mt-3.5 flex flex-wrap gap-[18px] border-t border-[#E4EDC8] pt-3.5" onClick={(e) => e.stopPropagation()}>
-            {bkashConfig?.qrImage?.url && <Qr image={bkashConfig.qrImage} caption="Scan with the bKash app" />}
-            <div className="min-w-[240px] flex-1">
+          <ExpandPanel>
+            <Qr image={bkashConfig?.qrImage} caption="Scan with the bKash app" />
+            <div className="w-full md:min-w-[240px] md:flex-1">
               {bkashConfig?.merchantNumber && (
                 <div className="flex items-center gap-2.5 rounded-xl border border-line bg-white px-4 py-3">
-                  <span className="text-[13px] text-muted-foreground">Send Money to</span>
+                  <span className="text-[13px] text-muted-foreground">or Send Money to</span>
                   <span className="text-[14.5px] font-extrabold tracking-[0.03em] text-ink">{bkashConfig.merchantNumber}</span>
                   <CopyBtn value={bkashConfig.merchantNumber} />
                 </div>
@@ -83,7 +93,7 @@ export function PaymentMethods({ value, onChange, bkashConfig, banglaQrConfig, r
                 <input {...register("bkashTransactionId")} placeholder="e.g. 9HK2XXXXXX" className={`${inputCls} bg-white`} />
               </FieldBox>
             </div>
-          </div>
+          </ExpandPanel>
         )}
       </RadioCard>
 
@@ -91,9 +101,9 @@ export function PaymentMethods({ value, onChange, bkashConfig, banglaQrConfig, r
       <RadioCard selected={value === "banglaqr"} onSelect={() => onChange("banglaqr")}>
         <Head selected={value === "banglaqr"} logo={<BqrLogo />} title="BanglaQR" subtitle="Scan & pay from any bank or MFS app" />
         {value === "banglaqr" && (
-          <div className="mt-3.5 flex flex-wrap gap-[18px] border-t border-[#E4EDC8] pt-3.5" onClick={(e) => e.stopPropagation()}>
-            {banglaQrConfig?.qrImage?.url && <Qr image={banglaQrConfig.qrImage} caption="Scan from any bank or MFS app" />}
-            <div className="min-w-[240px] flex-1">
+          <ExpandPanel>
+            <Qr image={banglaQrConfig?.qrImage} caption="Scan from any bank or MFS app" />
+            <div className="w-full md:min-w-[240px] md:flex-1">
               <div className="rounded-xl border border-line bg-white px-4 py-3 text-[12.5px] leading-[1.6] text-ink-soft">
                 Pay the exact total <b>{formatTaka(total)}</b>, then enter the payment reference below so we can match it instantly.
               </div>
@@ -101,7 +111,7 @@ export function PaymentMethods({ value, onChange, bkashConfig, banglaQrConfig, r
                 <input {...register("banglaQrReference")} placeholder="e.g. TXN-XXXXXXXX" className={`${inputCls} bg-white`} />
               </FieldBox>
             </div>
-          </div>
+          </ExpandPanel>
         )}
       </RadioCard>
     </div>

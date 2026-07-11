@@ -40,6 +40,12 @@ The **frontend display** effective-price still trips on a stray `salePrice: 0`:
 - **User dropdown in SiteHeader** (`UserMenu`): signed-in user's name (ink pill + chevron) opens a menu → My account, My orders, Wishlist, **Admin dashboard (staff/admin only)**, Sign out (red). Uses `useLogoutMutation`. Verified: admin sees the dashboard link, customer does not.
 - **Sign out is now reachable** from: the header dropdown (desktop), the checkout header (desktop), and the Account page (`ProfileForm` got a Sign out button — mobile users reach it via the bottom-nav Account tab). Previously sign-out existed nowhere in the UI.
 
+## Design-fidelity pass (second round of user feedback)
+- **BanglaQR QR area** now always renders (design shows the QR box even when unconfigured). Previously the box was gated on `banglaQrConfig?.qrImage?.url` — but `banglaQrConfig` is unset in the DB, so it never showed. Now shows the QR (placeholder icon when no image; real image once admin uploads one in Phase 9). Same for bKash (always renders; real QR present).
+- **Delivery eta content** ("24–48 hours" / "2–4 days, tracked") was missing because `shippingZones[].eta` was empty in the DB. Populated via direct `$set` (design values; `eta` is admin-editable and survives future saves — it's in settings.model + validation). DeliveryOptions already rendered `zone.eta`.
+- **Border radius per breakpoint** (parts.jsx): NumberedCard 18px/24px + padding 18/26, badge 22/26px, title 15.5/18px; RadioCard 14px/16px + padding 13·14 / 16·18; RadioDot 16px/18px. Previously fixed at the desktop values on mobile too.
+- **Expanded payment panel is responsive** (`ExpandPanel`): QR centered on top on mobile, left-aligned beside the content on desktop — matching the design's mobile stack vs desktop row. Verified no 390px overflow.
+
 ## Next: Phase 8a — Order Placed + My Orders + Order Detail
 Note: the current `OrderConfirmationPage` already renders correctly (green check, order#, StatusChip, tracker, items, address, summary, CTAs) but is still OLD styling — Phase 8a restyles it to the design + swaps DaisyUI `OrderStatusStepper` → custom `OrderTracker` (migrate the stepper test).
 

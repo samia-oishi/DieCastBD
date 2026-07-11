@@ -1,19 +1,21 @@
 import { cn } from "@/lib/utils";
 
-/** Numbered section card (Address / Delivery / Payment). */
+/** Numbered section card (Address / Delivery / Payment). Radius/padding follow
+ * the design per breakpoint: 18px·18px on mobile, 24px·26px on desktop. */
 export function NumberedCard({ n, title, children, className }) {
   return (
-    <div className={cn("rounded-3xl border border-line bg-white p-5 md:p-[26px]", className)}>
+    <div className={cn("rounded-[18px] border border-line bg-white p-[18px] md:rounded-3xl md:p-[26px]", className)}>
       <div className="flex items-center gap-2.5">
-        <span className="inline-flex size-[26px] items-center justify-center rounded-full bg-ink text-[12.5px] font-bold text-white">{n}</span>
-        <span className="font-display text-[17px] font-bold text-ink md:text-lg">{title}</span>
+        <span className="inline-flex size-[22px] items-center justify-center rounded-full bg-ink text-[11px] font-bold text-white md:size-[26px] md:text-[12.5px]">{n}</span>
+        <span className="font-display text-[15.5px] font-bold text-ink md:text-lg">{title}</span>
       </div>
       {children}
     </div>
   );
 }
 
-/** Selectable radio card (delivery zone / payment method). */
+/** Selectable radio card (delivery zone / payment method). Radius/padding per
+ * breakpoint: 14px·13/14 on mobile, 16px·16/18 on desktop. */
 export function RadioCard({ selected, onSelect, children, className }) {
   return (
     <div
@@ -23,7 +25,7 @@ export function RadioCard({ selected, onSelect, children, className }) {
       tabIndex={0}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onSelect())}
       className={cn(
-        "cursor-pointer rounded-2xl border p-4 transition-colors md:p-[16px_18px]",
+        "cursor-pointer rounded-[14px] border px-3.5 py-[13px] transition-colors md:rounded-2xl md:px-[18px] md:py-4",
         selected ? "border-[1.5px] border-brand bg-[#FBFDF3]" : "border-line bg-white hover:border-ink",
         className
       )}
@@ -33,12 +35,13 @@ export function RadioCard({ selected, onSelect, children, className }) {
   );
 }
 
-/** The lime filled / grey outline radio dot. */
+/** The lime filled / grey outline radio dot (16px mobile / 18px desktop). */
 export function RadioDot({ selected }) {
+  const base = "mt-0.5 size-4 shrink-0 rounded-full md:size-[18px]";
   return selected ? (
-    <span className="mt-0.5 size-[18px] shrink-0 rounded-full border-[5px] border-brand bg-ink" />
+    <span className={cn(base, "border-[4.5px] border-brand bg-ink md:border-[5px]")} />
   ) : (
-    <span className="mt-0.5 size-[18px] shrink-0 rounded-full border-[1.5px] border-[#DDDFD2]" />
+    <span className={cn(base, "border-[1.5px] border-[#DDDFD2]")} />
   );
 }
 
