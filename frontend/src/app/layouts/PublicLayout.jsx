@@ -2,6 +2,7 @@ import { Suspense, useState } from "react";
 import { Outlet, useLocation, matchPath } from "react-router";
 
 import { AnnouncementBar } from "@/components/shared/AnnouncementBar";
+import { ScrollToTop } from "@/components/shared/ScrollToTop";
 import { SiteHeader } from "@/components/shared/SiteHeader";
 import { SiteFooter } from "@/components/shared/SiteFooter";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
@@ -32,6 +33,7 @@ export function PublicLayout() {
 
   return (
     <div className="flex min-h-svh flex-col bg-paper text-ink">
+      <ScrollToTop />
       <AnnouncementBar />
       <SiteHeader onCartClick={() => setCartOpen(true)} />
       <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
