@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 const MAX_WIDTHS = {
-  default: "max-w-7xl",
+  default: "max-w-[1360px]",
   narrow: "max-w-3xl",
 };
 

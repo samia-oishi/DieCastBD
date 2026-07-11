@@ -2,14 +2,7 @@ import { Link } from "react-router";
 import { ShoppingCart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { ROUTES } from "@/constants/routes";
 import { useCart } from "../api/useCart";
 import { CartLineItem } from "./CartLineItem";
@@ -18,21 +11,14 @@ function formatPrice(amount) {
   return `৳${Math.round(amount).toLocaleString("en-US")}`;
 }
 
+// Fully controlled (open/onOpenChange) — no internal trigger. SiteHeader owns
+// its own pill-styled cart icon buttons (desktop + mobile app bar) and drives
+// this sheet directly, since the trigger's visual design differs by breakpoint.
 export function CartDrawer({ open, onOpenChange }) {
   const { items, subtotal, itemCount } = useCart();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Cart" className="relative">
-          <ShoppingCart />
-          {itemCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-              {itemCount}
-            </span>
-          )}
-        </Button>
-      </SheetTrigger>
       <SheetContent side="right" className="flex flex-col overflow-y-auto p-6">
         <SheetHeader className="px-0">
           <SheetTitle>Your Cart {itemCount > 0 && `(${itemCount})`}</SheetTitle>
