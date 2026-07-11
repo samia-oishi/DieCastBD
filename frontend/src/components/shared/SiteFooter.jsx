@@ -128,9 +128,9 @@ function BigFooter() {
   const { tagline, shopLinks, helpLinks, policyLinks, social } = useFooterData();
 
   return (
-    <footer className="bg-ink text-[#C7C9BC]">
+    <footer className="mt-7 text-[#C7C9BC] md:mt-[88px]">
       {/* Mobile */}
-      <div className="rounded-t-[24px] px-5 pb-[104px] pt-7 md:hidden">
+      <div className="rounded-t-[24px] bg-ink px-5 pb-[104px] pt-7 md:hidden">
         <Wordmark size={20} />
         <p className="mt-2.5 text-[12.5px] leading-[1.6] text-[#A9AC9F]">{tagline}</p>
         <NewsletterForm variant="footer" />
@@ -157,7 +157,7 @@ function BigFooter() {
       </div>
 
       {/* Desktop */}
-      <div className="hidden md:block">
+      <div className="hidden bg-ink md:block">
         <div className="mx-auto grid max-w-[1360px] grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-11 px-10 pt-[60px]">
           <div>
             <Wordmark size={23} />

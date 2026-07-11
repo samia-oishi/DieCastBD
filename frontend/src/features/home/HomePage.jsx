@@ -67,7 +67,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="pb-16 md:pb-[88px]">
+    <div>
       <Seo title={settings?.seoDefaults?.title} noTemplate={!!settings?.seoDefaults?.title} description={settings?.seoDefaults?.description}>
         <link rel="canonical" href={canonical("/")} />
         <meta property="og:url" content={canonical("/")} />

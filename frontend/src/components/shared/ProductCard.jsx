@@ -73,7 +73,8 @@ export function ProductCard({ product, variant = "grid", className }) {
       <div
         onClick={goToProduct}
         className={cn(
-          "group flex h-full w-full cursor-pointer flex-col overflow-hidden border border-line bg-white transition-[box-shadow,transform] duration-[180ms] ease-out hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(16,18,8,0.1)]",
+          // Hover lift/shadow is desktop-only — on touch it sticks after a tap.
+          "group flex h-full w-full cursor-pointer flex-col overflow-hidden border border-line bg-white transition-[box-shadow,transform] duration-[180ms] ease-out md:hover:-translate-y-0.5 md:hover:shadow-[0_12px_32px_rgba(16,18,8,0.1)]",
           v.outer,
           className
         )}

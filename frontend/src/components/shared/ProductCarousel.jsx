@@ -22,7 +22,7 @@ export function ProductCarousel({ title, subtitle, products, isLoading, viewAllH
           ref={ref}
           {...dragProps}
           data-carousel
-          className="-mx-4 mt-3 flex snap-x snap-proximity gap-3 scroll-pl-4 overflow-x-auto px-4 pb-1 pt-3 [scrollbar-width:none] md:mx-0 md:mt-3.5 md:gap-5 md:scroll-pl-0 md:px-0 md:pb-3 [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 mt-3 flex snap-x snap-proximity gap-3 scroll-pl-4 overflow-x-auto px-4 pb-1 pt-3 [scrollbar-width:none] md:-mx-3 md:-mb-[26px] md:mt-3.5 md:gap-5 md:scroll-pl-0 md:px-3 md:pb-10 [&::-webkit-scrollbar]:hidden"
         >
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => <SkeletonSlide key={i} />)

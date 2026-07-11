@@ -11,7 +11,7 @@ function Tile({ href, label, image, isLogo, className }) {
     <Link
       to={href}
       className={cn(
-        "group relative block shrink-0 overflow-hidden rounded-[22px] bg-tile transition-[box-shadow,transform] duration-[180ms] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(16,18,8,0.12)] md:rounded-[28px]",
+        "group relative block shrink-0 overflow-hidden rounded-[22px] bg-tile transition-[box-shadow,transform] duration-[180ms] md:hover:-translate-y-0.5 md:hover:shadow-[0_12px_32px_rgba(16,18,8,0.12)] md:rounded-[28px]",
         className
       )}
     >

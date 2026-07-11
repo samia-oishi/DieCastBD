@@ -26,6 +26,9 @@ export function PublicLayout() {
 
   const footerVariant = matchesAny(BIG_FOOTER_ROUTES, pathname) ? "big" : "slim";
   const showBottomNav = !matchesAny(NO_BOTTOM_NAV_ROUTES, pathname);
+  // The big footer clears the floating bottom nav itself (its own bottom padding).
+  // Only slim-footer pages (footer hidden on mobile) need main to reserve nav space.
+  const needsNavClearance = showBottomNav && footerVariant === "slim";
 
   return (
     <div className="flex min-h-svh flex-col bg-paper text-ink">
@@ -33,7 +36,7 @@ export function PublicLayout() {
       <SiteHeader onCartClick={() => setCartOpen(true)} />
       <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
 
-      <main className={showBottomNav ? "flex-1 pb-24 md:pb-0" : "flex-1"}>
+      <main className={needsNavClearance ? "flex-1 pb-24 md:pb-0" : "flex-1"}>
         <Suspense fallback={<FullPageLoader />}>
           <Outlet />
         </Suspense>
