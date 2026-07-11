@@ -1,102 +1,169 @@
 import { Link } from "react-router";
 import { MapPin } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { OrderStatusStepper } from "@/components/shared/OrderStatusStepper";
+import { cn } from "@/lib/utils";
+import { formatTaka } from "@/lib/currency";
+import { cloudinaryCard } from "@/lib/cloudinary";
 import { ROUTES } from "@/constants/routes";
-import { OrderStatusBadge } from "./OrderStatusBadge";
+import { StatusChip } from "@/components/shared/StatusChip";
+import { OrderTracker } from "@/components/shared/OrderTracker";
+import { useSettings } from "@/features/settings/api/useSettings";
 
-function formatPrice(amount) {
-  return `৳${Math.round(amount).toLocaleString("en-US")}`;
+const PAYMENT_LABELS = { cod: "Cash on Delivery", bkash: "bKash", banglaqr: "BanglaQR" };
+
+function formatDate(value) {
+  return new Date(value).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function formatDate(dateString) {
-  return new Date(dateString).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
-}
-
-// The full order display (status, items, address, totals) — shared by the
-// authenticated order-detail page (fetches by orderNumber) and the guest-safe
-// order-confirmation page (renders straight from the just-placed order object,
-// no fetch), so the two never drift apart visually.
-export function OrderReceipt({ order }) {
+function OrderItems({ order }) {
   return (
-    <>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="font-heading text-xl text-foreground">Order {order.orderNumber}</h2>
-          <p className="text-sm text-muted-foreground">Placed {formatDate(order.createdAt)}</p>
+    <div className="rounded-[18px] border border-line bg-white p-4 md:rounded-[20px] md:p-[22px]">
+      <div className="hidden font-display text-base font-bold text-ink md:block">Items</div>
+      <div className="md:mt-4">
+        {order.items.map((item, i) => (
+          <div
+            key={item.sku ?? i}
+            className={cn("flex items-center gap-2.5 md:gap-3.5", i > 0 && "mt-3 border-t border-tile pt-3 md:mt-3.5 md:pt-3.5")}
+          >
+            <div className="relative size-12 shrink-0 overflow-hidden rounded-[10px] bg-tile md:h-[58px] md:w-16 md:rounded-[12px]">
+              {item.thumbnail?.url && <img src={cloudinaryCard(item.thumbnail.url)} alt="" className="size-full object-contain p-1" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="line-clamp-2 text-[12.5px] font-semibold leading-[1.3] text-ink md:text-sm">{item.title}</div>
+              <div className="mt-0.5 text-[11.5px] text-faint md:text-[12.5px]">Qty {item.qty}</div>
+            </div>
+            <span className="text-[13px] font-bold text-ink md:text-[14.5px]">{formatTaka(item.price * item.qty)}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Mobile-only inline total (desktop uses the Summary card) */}
+      <div className="mt-3 flex items-center justify-between border-t border-tile pt-3 md:hidden">
+        <span className="text-[12px] text-faint">
+          Subtotal {formatTaka(order.subtotal)} · Shipping {order.shippingFee > 0 ? formatTaka(order.shippingFee) : "Free"}
+        </span>
+        <span className="font-display text-[15px] font-extrabold text-ink">{formatTaka(order.total)}</span>
+      </div>
+    </div>
+  );
+}
+
+function AddressCard({ order, zoneName }) {
+  const a = order.shippingAddress;
+  return (
+    <div className="flex gap-3 rounded-[18px] border border-line bg-white p-4 md:rounded-[20px] md:p-[22px]">
+      <div className="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-[#EFF5DC] text-brand-deep md:size-[38px]">
+        <MapPin size={16} strokeWidth={1.8} />
+      </div>
+      <div className="min-w-0">
+        <div className="text-[12.5px] font-bold text-ink md:text-sm">
+          {a.recipientName} · {a.phone}
         </div>
-        <OrderStatusBadge status={order.status} />
+        <div className="mt-1 text-[11.5px] leading-[1.55] text-ink-soft md:text-[13px]">
+          {a.addressLine1}, {a.city}
+          {a.district && `, ${a.district}`}
+          {a.postalCode && ` ${a.postalCode}`}
+          {zoneName && (
+            <>
+              <br />
+              {zoneName}
+            </>
+          )}
+        </div>
+        {order.deliveryNote && <div className="mt-1.5 text-[11.5px] text-faint md:text-[12.5px]">Note: {order.deliveryNote}</div>}
       </div>
+    </div>
+  );
+}
 
-      <div className="mb-8 overflow-x-auto rounded-lg border border-border p-4">
-        <OrderStatusStepper status={order.status} />
+function OrderButtons({ className }) {
+  return (
+    <div className={className}>
+      <Link
+        to={ROUTES.ORDERS}
+        className="flex h-12 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white transition-colors hover:bg-[#2A2E1C]"
+      >
+        View my orders
+      </Link>
+      <Link
+        to={ROUTES.SHOP}
+        className="mt-2.5 flex h-[46px] items-center justify-center rounded-full border-[1.5px] border-ink text-sm font-semibold text-ink transition-colors hover:bg-ink hover:text-white"
+      >
+        Continue shopping
+      </Link>
+    </div>
+  );
+}
+
+function SummaryCard({ order, paymentLabel }) {
+  return (
+    <div className="rounded-[20px] border border-line bg-white p-[22px]">
+      <div className="font-display text-base font-bold text-ink">Summary</div>
+      <div className="mt-4 flex justify-between text-[13.5px]">
+        <span className="text-muted-foreground">Subtotal</span>
+        <span className="font-semibold text-ink">{formatTaka(order.subtotal)}</span>
       </div>
-
-      {order.trackingNumber && (
-        <div className="mb-8 rounded-lg border border-border p-4 text-sm">
-          <span className="text-muted-foreground">Tracking number:</span>{" "}
-          <span className="font-medium text-foreground">{order.trackingNumber}</span>
-          {order.courierName && <span className="text-muted-foreground"> via {order.courierName}</span>}
+      {order.discount > 0 && (
+        <div className="mt-[11px] flex justify-between text-[13.5px]">
+          <span className="text-muted-foreground">Discount {order.couponCode && `(${order.couponCode})`}</span>
+          <span className="font-semibold text-brand-deep">−{formatTaka(order.discount)}</span>
         </div>
       )}
+      <div className="mt-[11px] flex justify-between text-[13.5px]">
+        <span className="text-muted-foreground">Shipping</span>
+        <span className="font-semibold text-ink">{order.shippingFee > 0 ? formatTaka(order.shippingFee) : "Free"}</span>
+      </div>
+      <div className="mt-3.5 flex items-baseline justify-between border-t border-line-soft pt-3.5">
+        <span className="text-[14.5px] font-bold text-ink">Total</span>
+        <span className="font-display text-[20px] font-extrabold text-ink">{formatTaka(order.total)}</span>
+      </div>
+      <div className="mt-3 flex justify-between text-[13px]">
+        <span className="text-muted-foreground">Payment</span>
+        <span className="font-semibold text-ink">{paymentLabel}</span>
+      </div>
+      <OrderButtons className="mt-5" />
+    </div>
+  );
+}
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
-        <div className="flex flex-col gap-4 lg:col-span-2">
-          {order.items.map((item) => (
-            <div key={item.sku} className="flex justify-between text-sm">
-              <span className="text-foreground">
-                {item.title} <span className="text-muted-foreground">× {item.qty}</span>
-              </span>
-              <span className="text-foreground">{formatPrice(item.price * item.qty)}</span>
+/** The full order display (head + tracker + items + address + summary), matching
+ * the Order Placed design — shared by the guest-safe confirmation page (renders
+ * straight from the just-placed order, no fetch) and the authenticated order
+ * detail page, so the two never drift. */
+export function OrderReceipt({ order }) {
+  const { data: settings } = useSettings();
+  const zoneName = settings?.shippingZones?.find((z) => z.fee === order.shippingFee)?.name;
+  const paymentLabel = PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod;
+
+  return (
+    <>
+      {/* Order head + tracker */}
+      <div className="rounded-[18px] border border-line bg-white p-[18px] md:rounded-[24px] md:p-[26px_30px]">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="font-display text-[14.5px] font-bold text-ink md:text-[19px]">
+              <span className="hidden md:inline">Order </span>
+              {order.orderNumber}
             </div>
-          ))}
-
-          <div className="mt-4 flex items-start gap-2 rounded-lg border border-border p-4 text-sm">
-            <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <div>
-              <p className="font-medium text-foreground">{order.shippingAddress.recipientName}</p>
-              <p className="text-muted-foreground">
-                {order.shippingAddress.addressLine1}
-                {order.shippingAddress.addressLine2 && `, ${order.shippingAddress.addressLine2}`},{" "}
-                {order.shippingAddress.city}
-                {order.shippingAddress.district && `, ${order.shippingAddress.district}`}
-              </p>
-              <p className="text-muted-foreground">{order.shippingAddress.phone}</p>
-              {order.deliveryNote && <p className="mt-1 text-muted-foreground">Note: {order.deliveryNote}</p>}
+            <div className="mt-1 text-[11.5px] text-faint md:text-[13px]">
+              {formatDate(order.createdAt)} · {paymentLabel}
             </div>
           </div>
+          <StatusChip status={order.status} />
         </div>
+        <div className="mt-5 md:mt-[26px]">
+          <OrderTracker status={order.status} />
+        </div>
+      </div>
 
-        <div className="flex h-fit flex-col gap-2 rounded-xl border border-border p-6 text-sm">
-          <div className="flex justify-between text-muted-foreground">
-            <span>Subtotal</span>
-            <span>{formatPrice(order.subtotal)}</span>
-          </div>
-          {order.discount > 0 && (
-            <div className="flex justify-between text-primary">
-              <span>Discount {order.couponCode && `(${order.couponCode})`}</span>
-              <span>-{formatPrice(order.discount)}</span>
-            </div>
-          )}
-          <div className="flex justify-between text-muted-foreground">
-            <span>Shipping</span>
-            <span>{order.shippingFee > 0 ? formatPrice(order.shippingFee) : "Free"}</span>
-          </div>
-          <div className="flex justify-between border-t border-border pt-2 text-base font-semibold text-foreground">
-            <span>Total</span>
-            <span>{formatPrice(order.total)}</span>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {order.paymentMethod === "cod" ? "Cash on Delivery" : "bKash"}
-            {order.paymentMethod === "bkash" && order.bkashTransactionId && (
-              <> — Transaction ID: <span className="font-medium text-foreground">{order.bkashTransactionId}</span></>
-            )}
-          </p>
-
-          <Button asChild variant="outline" size="sm" className="mt-4">
-            <Link to={ROUTES.SHOP}>Continue shopping</Link>
-          </Button>
+      <div className="mt-4 grid gap-3 md:mt-6 md:grid-cols-[1.55fr_1fr] md:items-start md:gap-6">
+        <div className="flex flex-col gap-3 md:gap-4">
+          <OrderItems order={order} />
+          <AddressCard order={order} zoneName={zoneName} />
+          <OrderButtons className="md:hidden" />
+        </div>
+        <div className="hidden md:block">
+          <SummaryCard order={order} paymentLabel={paymentLabel} />
         </div>
       </div>
     </>

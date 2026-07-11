@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Pagination } from "@/components/shared/Pagination";
-import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
+import { StatusChip } from "@/components/shared/StatusChip";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAdminOrders } from "./api/useAdminOrders";
 
@@ -108,7 +108,7 @@ export function OrdersPage() {
               <TableCell className="text-muted-foreground">{formatDate(order.createdAt)}</TableCell>
               <TableCell>{formatPrice(order.total)}</TableCell>
               <TableCell>
-                <OrderStatusBadge status={order.status} />
+                <StatusChip status={order.status} />
               </TableCell>
             </TableRow>
           ))}

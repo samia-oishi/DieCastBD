@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
-import { OrderStatusStepper } from "@/components/shared/OrderStatusStepper";
+import { OrderTracker } from "@/components/shared/OrderTracker";
+import { StatusChip } from "@/components/shared/StatusChip";
 import { useAdminOrder, useUpdateOrderStatusMutation } from "./api/useAdminOrders";
-import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 
 const STATUS_OPTIONS = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
 
@@ -72,11 +72,11 @@ export function OrderDetailPage() {
             {order.user?.name} · {order.user?.email} · Placed {formatDateTime(order.createdAt)}
           </p>
         </div>
-        <OrderStatusBadge status={order.status} />
+        <StatusChip status={order.status} />
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border p-4">
-        <OrderStatusStepper status={order.status} />
+        <OrderTracker status={order.status} />
       </div>
 
       {order.trackingNumber && (
