@@ -22,7 +22,7 @@ const SIGNIN_PERKS = [
 function SignInBrand() {
   return (
     <div
-      className="flex min-h-[320px] flex-col justify-between gap-10 px-8 py-11 md:px-12"
+      className="hidden min-h-[320px] flex-col justify-between gap-10 px-8 py-11 md:flex md:px-12"
       style={{ background: "radial-gradient(120% 140% at 80% 0%, #BADD4D 0%, #A8CD2F 55%, #9CC12A 100%)" }}
     >
       <Wordmark />
@@ -47,7 +47,7 @@ function SignInBrand() {
 /** Dark brand panel (Create account). */
 function RegisterBrand() {
   return (
-    <div className="flex min-h-[320px] flex-col justify-between gap-10 bg-ink px-8 py-11 md:px-12">
+    <div className="hidden min-h-[320px] flex-col justify-between gap-10 bg-ink px-8 py-11 md:flex md:px-12">
       <Wordmark dark />
       <div>
         <div className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Join the collectors</div>
