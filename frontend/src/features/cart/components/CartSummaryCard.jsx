@@ -1,12 +1,10 @@
-import { useState } from "react";
 import { Link } from "react-router";
-import { ArrowRight, ShieldCheck, Tag, X } from "lucide-react";
-import toast from "react-hot-toast";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
 import { ROUTES } from "@/constants/routes";
-import { useValidateCouponMutation } from "@/features/checkout/api/useCoupon";
+import { CouponRow } from "./CouponRow";
 
 const PAYMENTS = ["COD", "bKash", "BanglaQR"];
 
@@ -18,46 +16,6 @@ function PaymentPills({ small }) {
           {p}
         </span>
       ))}
-    </div>
-  );
-}
-
-function CouponRow({ subtotal, coupon, onApply, onRemove }) {
-  const [code, setCode] = useState("");
-  const validate = useValidateCouponMutation();
-
-  if (coupon) {
-    return (
-      <div className="mt-[18px] flex items-center justify-between rounded-full border border-brand/50 bg-brand-tint/40 px-4 py-2.5 text-[13px]">
-        <span className="flex items-center gap-2 font-semibold text-ink"><Tag className="size-3.5 text-brand-deep" /> {coupon.code} applied</span>
-        <button type="button" onClick={onRemove} aria-label="Remove coupon" className="text-faint hover:text-danger"><X className="size-4" /></button>
-      </div>
-    );
-  }
-
-  const apply = () => {
-    if (!code.trim()) return;
-    validate.mutate(
-      { code: code.trim(), subtotal },
-      {
-        onSuccess: (result) => { onApply(result); setCode(""); },
-        onError: (e) => toast.error(e?.response?.data?.message || "Invalid coupon"),
-      }
-    );
-  };
-
-  return (
-    <div className="mt-[18px] flex gap-2.5">
-      <input
-        value={code}
-        onChange={(e) => setCode(e.target.value.toUpperCase())}
-        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), apply())}
-        placeholder="Coupon code"
-        className="min-w-0 flex-1 rounded-full border border-line bg-paper px-[18px] py-3 text-[13.5px] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-      />
-      <button type="button" onClick={apply} disabled={validate.isPending} className="shrink-0 rounded-full border-[1.5px] border-ink px-5 py-3 text-[13.5px] font-bold text-ink transition-colors hover:bg-ink hover:text-white disabled:opacity-50">
-        {validate.isPending ? "…" : "Apply"}
-      </button>
     </div>
   );
 }
@@ -93,7 +51,7 @@ export function CartSummaryCard({ variant = "desktop", subtotal, shipping, disco
         </div>
       )}
 
-      <CouponRow subtotal={subtotal} coupon={coupon} onApply={onApplyCoupon} onRemove={onRemoveCoupon} />
+      <CouponRow subtotal={subtotal} coupon={coupon} onApply={onApplyCoupon} onRemove={onRemoveCoupon} className="mt-[18px]" />
 
       {!isMobile && (
         <Link to={ROUTES.CHECKOUT} className="mt-4 flex h-[52px] items-center justify-center gap-2.5 rounded-full bg-brand text-[15.5px] font-bold text-ink transition-colors hover:bg-brand-bright">
