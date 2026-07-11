@@ -1,5 +1,5 @@
 # 2026-07-11 — Storefront redesign v2 (Phase 0 complete)
-
+vbhghgk
 Full plan: `/Users/niaz/.claude/plans/read-design-handoff-diecastbd-storefront-swirling-snail.md`.
 Rebuilding the light "paper" storefront **from scratch** (not reusing the reverted `storefront-redesign` frontend), governed by `design_handoff_diecastbd_storefront/` (.dc.html = pixel source of truth). Mobile-first, pixel-perfect, hard stop after each page for user review.
 
