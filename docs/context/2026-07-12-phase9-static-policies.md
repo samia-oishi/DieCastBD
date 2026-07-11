@@ -14,7 +14,17 @@ Continues from `2026-07-12-phase8c-auth.md`. Phase 9 has 3 sub-phases (static / 
 - **Backend**: added `Page.tldr` (model + create/update validation + create controller). Update controller already spreads `req.body`.
 - **Seeded** the design's policy copy (content HTML `<h2>+<p>` per section, plus tldr) into all 4 CMS pages and set `isPublished: true` — so they render real content while the frontend stays CMS-driven. (Pages were previously unpublished + empty → 404.)
 
-## 9c — Admin wiring — NOT STARTED (the remaining Phase 9 work)
+## 9c — Admin wiring — DONE (committed `a8fa99a`, `8781acd`)
+- **Settings editor** (`admin/settings/SettingsPage.jsx`): added **hero style select** (variant), **hero highlight card** (enabled + kicker/title/price), **BanglaQR** payment section (accountInfo + QR upload via generalized `QrImageField`), and **socialLinks.youtube** field. Backend: added `socialLinks.youtube` (model + validation); `SiteFooter` now prefers the admin youtube value. Model already had variant/highlightCard/banglaQrConfig + validation accepted them — only the UI was missing.
+  - **Gotcha fixed**: switched the form to RHF `values: settings` (reactive) and added `key={field.value}` to the hero-style `Select` — Radix Select doesn't display an async-loaded controlled value otherwise (register inputs synced fine; only the Select showed its placeholder). Verified it now shows "Lime showroom".
+- **Inventory** (`admin/inventory/InventoryPage.jsx`): new **Alerts** column showing `restockAlertCount` (already returned by `GET /admin/inventory`); clicking opens a **RestockAlertsDialog** listing waiting contacts via `GET /admin/inventory/:id/restock-alerts` (added `getProductRestockAlerts` + `useProductRestockAlerts`).
+
+## 9c — remaining backlog (DEFERRED — low value, storefront works via fallbacks)
+- Announcement **segments array** (AnnouncementBar hardcodes 3 design segments; `Settings.announcementBar` is still single text+isActive).
+- Footer **payment pills** (SiteFooter hardcodes COD/bKash/BanglaQR).
+These are storefront hardcodes with working defaults; fold into a follow-up if the merchant needs to edit them.
+
+## (superseded) 9c original notes
 The admin is the dark-themed surface (`[data-theme="diecastbd-admin"]`, shadcn/Geist). Needs, per plan + backlog:
 - Settings editor: **hero variant select** (`homepageSections.hero.variant`: lime-showroom/dark-spotlight/photo-fullbleed) + **highlightCard** fields + **banglaQrConfig** (QR image upload + reference) fields.
 - Inventory: **restock-alert count + list** (RestockAlert module was restored in Phase 0).
