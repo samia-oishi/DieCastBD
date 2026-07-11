@@ -1,124 +1,46 @@
 import { Suspense, useState } from "react";
-import { Link, NavLink, Outlet } from "react-router";
-import toast from "react-hot-toast";
-import { Heart, Package } from "lucide-react";
+import { Outlet, useLocation, matchPath } from "react-router";
 
-import { Button } from "@/components/ui/button";
 import { AnnouncementBar } from "@/components/shared/AnnouncementBar";
-import { Footer } from "@/components/shared/Footer";
+import { SiteHeader } from "@/components/shared/SiteHeader";
+import { SiteFooter } from "@/components/shared/SiteFooter";
+import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
-import { cn } from "@/lib/utils";
-import { ROUTES } from "@/constants/routes";
-import { useCurrentUser, useLogoutMutation } from "@/features/auth/api/useAuth";
-import { useSettings } from "@/features/settings/api/useSettings";
 import { CartDrawer } from "@/features/cart/components/CartDrawer";
-import logo from "@/assets/logo/logo.jpg";
+import { ROUTES } from "@/constants/routes";
 
-const NAV_LINK_CLASS = ({ isActive }) =>
-  cn("text-sm transition-colors", isActive ? "text-primary" : "text-muted-foreground hover:text-foreground");
+// Landing / Shop / PDP get the full "big" footer; every other route gets the slim
+// single-row footer per the design references.
+const BIG_FOOTER_ROUTES = [ROUTES.HOME, ROUTES.SHOP, ROUTES.PRODUCT];
+// Cart / Checkout / PDP host their own sticky bottom action bars (Phases 6–7),
+// so the floating bottom nav is suppressed there to avoid stacking two bars.
+const NO_BOTTOM_NAV_ROUTES = [ROUTES.CART, ROUTES.CHECKOUT, ROUTES.PRODUCT];
 
-function HeaderNavLink({ label, url }) {
-  if (/^https?:\/\//.test(url)) {
-    return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className={NAV_LINK_CLASS({ isActive: false })}>
-        {label}
-      </a>
-    );
-  }
-  return (
-    <NavLink to={url} className={NAV_LINK_CLASS}>
-      {label}
-    </NavLink>
-  );
-}
-
-function HeaderAuthState() {
-  const { data: user, isLoading } = useCurrentUser();
-  const logoutMutation = useLogoutMutation();
-
-  if (isLoading) return null;
-
-  if (!user) {
-    return (
-      <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" size="sm">
-          <Link to={ROUTES.LOGIN}>Sign in</Link>
-        </Button>
-        <Button asChild size="sm">
-          <Link to={ROUTES.REGISTER}>Create account</Link>
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-3">
-      <Button asChild variant="ghost" size="icon-sm" aria-label="Orders">
-        <Link to={ROUTES.ORDERS}>
-          <Package />
-        </Link>
-      </Button>
-      <Button asChild variant="ghost" size="icon-sm" aria-label="Wishlist">
-        <Link to={ROUTES.WISHLIST}>
-          <Heart />
-        </Link>
-      </Button>
-      <Button asChild variant="ghost" size="sm">
-        <Link to={ROUTES.ACCOUNT}>{user.name}</Link>
-      </Button>
-      {(user.role === "admin" || user.role === "staff") && (
-        <Button asChild variant="ghost" size="sm">
-          <Link to={ROUTES.ADMIN}>Admin</Link>
-        </Button>
-      )}
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={logoutMutation.isPending}
-        onClick={() => logoutMutation.mutate(undefined, { onError: () => toast.error("Could not sign out") })}
-      >
-        Sign out
-      </Button>
-    </div>
-  );
+function matchesAny(patterns, pathname) {
+  return patterns.some((p) => matchPath({ path: p, end: true }, pathname));
 }
 
 export function PublicLayout() {
   const [cartOpen, setCartOpen] = useState(false);
-  const { data: settings } = useSettings();
-  // Falls back to the original hardcoded "Shop" link if the admin-managed list
-  // is empty (e.g. a live document that predates this field) — the header nav
-  // must never end up completely blank.
-  const headerLinks = settings?.navigation?.headerLinks?.length
-    ? settings.navigation.headerLinks
-    : [{ label: "Shop", url: ROUTES.SHOP }];
+  const { pathname } = useLocation();
+
+  const footerVariant = matchesAny(BIG_FOOTER_ROUTES, pathname) ? "big" : "slim";
+  const showBottomNav = !matchesAny(NO_BOTTOM_NAV_ROUTES, pathname);
 
   return (
-    <div className="flex min-h-svh flex-col bg-background text-foreground">
+    <div className="flex min-h-svh flex-col bg-paper text-ink">
       <AnnouncementBar />
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/90 px-6 py-3 backdrop-blur-sm sm:px-10">
-        <div className="flex items-center gap-8">
-          <Link to={ROUTES.HOME}>
-            <img src={logo} alt="DiecastBD" className="h-5 w-auto sm:h-6" />
-          </Link>
-          <nav className="flex items-center gap-6">
-            {headerLinks.map((link) => (
-              <HeaderNavLink key={link.url} label={link.label} url={link.url} />
-            ))}
-          </nav>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Cart works for guests too (localStorage-backed) — deliberately not gated behind auth. */}
-          <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
-          <HeaderAuthState />
-        </div>
-      </header>
-      <main className="flex-1">
+      <SiteHeader onCartClick={() => setCartOpen(true)} />
+      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
+
+      <main className={showBottomNav ? "flex-1 pb-24 md:pb-0" : "flex-1"}>
         <Suspense fallback={<FullPageLoader />}>
           <Outlet />
         </Suspense>
       </main>
-      <Footer />
+
+      <SiteFooter variant={footerVariant} />
+      {showBottomNav && <MobileBottomNav />}
     </div>
   );
 }

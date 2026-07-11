@@ -20,6 +20,15 @@ export function InstagramIcon(props) {
   );
 }
 
+export function YouTubeIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" {...props}>
+      <rect x="2.5" y="6" width="19" height="12.5" rx="3.5" />
+      <path d="M10.3 9.6l4.8 2.65-4.8 2.65V9.6z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function WhatsAppIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>

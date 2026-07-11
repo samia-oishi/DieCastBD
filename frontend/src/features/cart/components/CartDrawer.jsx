@@ -4,35 +4,25 @@ import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
-  SheetTrigger,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetFooter,
 } from "@/components/ui/sheet";
 import { ROUTES } from "@/constants/routes";
+import { formatTaka } from "@/lib/currency";
 import { useCart } from "../api/useCart";
 import { CartLineItem } from "./CartLineItem";
 
-function formatPrice(amount) {
-  return `৳${Math.round(amount).toLocaleString("en-US")}`;
-}
+const formatPrice = formatTaka;
 
+// Purely controlled sheet — SiteHeader (desktop) and the mobile app bar own the
+// trigger buttons, so the drawer no longer renders its own.
 export function CartDrawer({ open, onOpenChange }) {
   const { items, subtotal, itemCount } = useCart();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Cart" className="relative">
-          <ShoppingCart />
-          {itemCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-              {itemCount}
-            </span>
-          )}
-        </Button>
-      </SheetTrigger>
       <SheetContent side="right" className="flex flex-col overflow-y-auto p-6">
         <SheetHeader className="px-0">
           <SheetTitle>Your Cart {itemCount > 0 && `(${itemCount})`}</SheetTitle>
