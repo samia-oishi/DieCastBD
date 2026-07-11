@@ -37,14 +37,14 @@ export const getPageAdmin = asyncHandler(async (req, res) => {
 });
 
 export const createPage = asyncHandler(async (req, res) => {
-  const { title, content, seo, isPublished } = req.body;
+  const { title, content, tldr, seo, isPublished } = req.body;
   const slug = slugify(title);
 
   if (await Page.exists({ slug })) {
     throw ApiError.conflict("A page with this title already exists");
   }
 
-  const page = await Page.create({ title, slug, content: sanitizePageContent(content), seo, isPublished });
+  const page = await Page.create({ title, slug, content: sanitizePageContent(content), tldr, seo, isPublished });
   sendSuccess(res, { data: page, status: 201, message: "Page created" });
 });
 

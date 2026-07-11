@@ -17,6 +17,9 @@ const pageSchema = new mongoose.Schema(
     // persisted — admin-authored rich text is still untrusted input, and this
     // is rendered with dangerouslySetInnerHTML on the public page.
     content: { type: String, default: "" },
+    // Optional "the short version" summary shown as a TL;DR card above the body
+    // (policy pages). Plain text, newline-separated bullet lines.
+    tldr: { type: String, default: "" },
     seo: { type: seoSchema, default: () => ({}) },
     isPublished: { type: Boolean, default: false },
   },

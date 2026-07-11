@@ -1,20 +1,41 @@
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router";
 
+import { cn } from "@/lib/utils";
 import { canonical } from "@/lib/siteUrl";
-import { Container } from "@/components/shared/Container";
+import { ROUTES } from "@/constants/routes";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
 import { usePage } from "./api/usePages";
 
+// The 4 flat policy routes, in the design's switcher order.
+const POLICIES = [
+  { slug: "shipping-policy", label: "Shipping", to: ROUTES.SHIPPING_POLICY },
+  { slug: "refund-policy", label: "Refunds", to: ROUTES.REFUND_POLICY },
+  { slug: "privacy-policy", label: "Privacy", to: ROUTES.PRIVACY },
+  { slug: "terms-conditions", label: "Terms", to: ROUTES.TERMS },
+];
+
+const PROSE =
+  "flex flex-col gap-3 text-[14.5px] leading-[1.7] text-ink-soft [&_a]:font-semibold [&_a]:text-brand-deep [&_h2]:mt-6 [&_h2]:font-display [&_h2]:text-[17.5px] [&_h2]:font-bold [&_h2]:text-ink [&_h3]:mt-4 [&_h3]:font-display [&_h3]:font-bold [&_h3]:text-ink [&_li]:ml-5 [&_ol]:list-decimal [&_strong]:font-semibold [&_strong]:text-ink [&_ul]:list-disc";
+
+function formatUpdated(value) {
+  if (!value) return null;
+  return new Date(value).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+
 // Shared renderer for every static CMS page (Terms/Privacy/Refund/Shipping
-// Policy) — one component, four routes, each just passing a different slug.
-// `content` is HTML sanitized server-side on save (page.controller.js), so
-// rendering it here is safe.
+// Policy) — one component, four routes, each passing a different slug. The
+// policy BODY is CMS-authored HTML only (sanitized server-side on save); we
+// never hardcode policy copy from the design.
 export function PageView({ slug }) {
   const { data: page, isLoading, isError } = usePage(slug);
 
   if (isLoading) return <FullPageLoader />;
   if (isError || !page) return <NotFoundPage />;
+
+  const updated = formatUpdated(page.updatedAt);
+  const hasContent = page.content && page.content.trim().length > 0;
 
   return (
     <>
@@ -24,13 +45,54 @@ export function PageView({ slug }) {
         <link rel="canonical" href={page.seo?.canonicalUrl || canonical(`/${slug}`)} />
       </Helmet>
 
-      <Container size="narrow" className="flex flex-col gap-6 py-16">
-        <h1 className="font-heading text-3xl text-foreground sm:text-4xl">{page.title}</h1>
-        <div
-          className="flex flex-col gap-4 leading-relaxed text-muted-foreground [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_h1]:font-heading [&_h1]:text-2xl [&_h1]:text-foreground [&_h2]:font-heading [&_h2]:text-xl [&_h2]:text-foreground [&_h3]:font-heading [&_h3]:text-lg [&_h3]:text-foreground [&_li]:ml-5 [&_ol]:list-decimal [&_strong]:font-semibold [&_strong]:text-foreground [&_ul]:list-disc"
-          dangerouslySetInnerHTML={{ __html: page.content }}
-        />
-      </Container>
+      <div className="mx-auto w-full max-w-[760px] px-4 pb-10 pt-8 md:px-6 md:pt-11">
+        <div className="text-xs font-bold uppercase tracking-[0.14em] text-brand-deep">Policy</div>
+        <h1 className="mt-3 font-display text-[28px] font-extrabold tracking-[-0.02em] text-ink md:text-[clamp(28px,4vw,36px)]">{page.title}</h1>
+        {updated && <div className="mt-2 text-[13px] text-faint">Last updated {updated}</div>}
+
+        {/* policy switcher */}
+        <div className="mt-5 flex flex-wrap gap-2">
+          {POLICIES.map((p) => {
+            const active = p.slug === slug;
+            return (
+              <Link
+                key={p.slug}
+                to={p.to}
+                className={cn(
+                  "rounded-full px-[15px] py-2 text-[12.5px] font-semibold transition-colors",
+                  active ? "bg-ink text-white" : "border border-line bg-white text-ink-soft hover:border-ink"
+                )}
+              >
+                {p.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* TL;DR — only when the CMS provides it (never hardcoded) */}
+        {page.tldr && (
+          <div className="mt-6 rounded-[18px] border border-brand-soft-border bg-brand-soft p-[18px_20px]">
+            <div className="text-xs font-extrabold uppercase tracking-[0.1em] text-brand-deep">The short version</div>
+            <div className="mt-2.5 whitespace-pre-line text-[13.5px] leading-[1.55] text-ink-soft">{page.tldr}</div>
+          </div>
+        )}
+
+        {hasContent ? (
+          <div className={cn("mt-8", PROSE)} dangerouslySetInnerHTML={{ __html: page.content }} />
+        ) : (
+          <p className="mt-8 text-[14.5px] leading-[1.7] text-muted-foreground">
+            This policy hasn't been published yet. Reach out via our{" "}
+            <Link to={ROUTES.CONTACT} className="font-semibold text-brand-deep">contact page</Link> and we'll help directly.
+          </p>
+        )}
+
+        <div className="mt-9 flex flex-wrap items-center justify-between gap-4 rounded-[18px] bg-ink p-[20px_22px]">
+          <div className="text-[13.5px] text-[#C7C9BC]">Question about your order? Message us with your order ID.</div>
+          <Link to={ROUTES.CONTACT} className="shrink-0 rounded-full bg-brand px-5 py-2.5 text-[13px] font-bold text-ink transition-colors hover:bg-brand-bright">
+            Contact us
+          </Link>
+        </div>
+      </div>
     </>
   );
 }

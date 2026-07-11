@@ -10,6 +10,7 @@ export const createPageSchema = {
   body: z.object({
     title: z.string().min(1, "Title is required"),
     content: z.string().optional(),
+    tldr: z.string().optional(),
     seo: seo.optional(),
     isPublished: z.coerce.boolean().optional(),
   }),
@@ -20,6 +21,7 @@ export const updatePageSchema = {
   body: z.object({
     title: z.string().min(1).optional(),
     content: z.string().optional(),
+    tldr: z.string().optional(),
     seo: seo.optional(),
     isPublished: z.coerce.boolean().optional(),
   }),
