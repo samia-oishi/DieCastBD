@@ -36,7 +36,11 @@ const NAV_ITEMS = [
 
 export function AdminLayout() {
   return (
-    <div className="flex min-h-svh bg-background text-foreground">
+    // data-theme scopes this whole subtree back to the pre-redesign dark
+    // theme (see index.css) — the storefront redesign is explicitly out of
+    // scope for admin, and this one attribute is the entire mechanism that
+    // keeps every existing shadcn component here pixel-identical.
+    <div data-theme="diecastbd-admin" className="flex min-h-svh bg-background text-foreground">
       <aside className="flex w-64 shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar px-4 py-6 text-sidebar-foreground">
         <div>
           <span className="font-heading text-lg tracking-wide">DiecastBD Admin</span>
