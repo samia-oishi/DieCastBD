@@ -18,12 +18,12 @@ function Field({ label, error, children }) {
   );
 }
 
-export function AddressForm({ onSubmit, isSubmitting, onCancel }) {
+export function AddressForm({ onSubmit, isSubmitting, onCancel, defaultValues, submitLabel = "Save address" }) {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({ resolver: zodResolver(addressSchema) });
+  } = useForm({ resolver: zodResolver(addressSchema), defaultValues });
 
   // Not a <form> — this renders inside the checkout page's own <form>, and a nested
   // <form> is invalid HTML: the submit event bubbles to the outer form's onSubmit
@@ -80,7 +80,7 @@ export function AddressForm({ onSubmit, isSubmitting, onCancel }) {
           disabled={isSubmitting}
           className="rounded-full bg-brand px-5 py-2.5 text-[13.5px] font-bold text-ink transition-colors hover:bg-brand-bright disabled:opacity-60"
         >
-          {isSubmitting ? "Saving…" : "Save address"}
+          {isSubmitting ? "Saving…" : submitLabel}
         </button>
       </div>
     </div>

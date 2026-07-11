@@ -1,45 +1,54 @@
-import { Heart } from "lucide-react";
+import { Heart, ShieldCheck } from "lucide-react";
 import { Link } from "react-router";
 
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ProductCard } from "@/components/shared/ProductCard";
-import { Container } from "@/components/shared/Container";
+import { Seo } from "@/components/shared/Seo";
 import { ROUTES } from "@/constants/routes";
 import { useWishlist } from "./api/useWishlist";
+import { WishlistCard } from "./components/WishlistCard";
 
 export function WishlistPage() {
   const { data: products, isLoading } = useWishlist();
+  const count = products?.length ?? 0;
 
   return (
-    <Container className="py-10">
-      <h1 className="mb-6 font-heading text-3xl text-foreground">My Wishlist</h1>
+    <>
+      <Seo title="My wishlist" />
+      <div className="mx-auto w-full max-w-[1160px] px-4 pb-6 pt-6 md:px-10 md:pb-10 md:pt-10">
+        <h1 className="font-display text-[26px] font-extrabold tracking-[-0.01em] text-ink md:text-[34px] md:tracking-[-0.02em]">My wishlist</h1>
+        {!isLoading && count > 0 && (
+          <p className="mt-1.5 text-[12.5px] text-muted-foreground md:mt-2 md:text-[14.5px]">
+            {count} piece{count !== 1 ? "s" : ""} on your radar — we'll flag price drops and restocks.
+          </p>
+        )}
 
-      {isLoading && (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square w-full rounded-xl" />
-          ))}
-        </div>
-      )}
-
-      {!isLoading && products?.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-24 text-center">
-          <Heart className="size-10 text-muted-foreground/40" strokeWidth={1.25} />
-          <p className="text-muted-foreground">Nothing saved yet.</p>
-          <Button asChild size="sm">
-            <Link to={ROUTES.SHOP}>Browse the collection</Link>
-          </Button>
-        </div>
-      )}
-
-      {!isLoading && products?.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
-        </div>
-      )}
-    </Container>
+        {isLoading ? (
+          <div className="mt-4 grid grid-cols-2 gap-3 md:mt-[26px] md:grid-cols-[repeat(auto-fill,minmax(250px,1fr))] md:gap-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] w-full animate-pulse rounded-[18px] bg-line-soft md:rounded-[20px]" />
+            ))}
+          </div>
+        ) : count === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-24 text-center">
+            <Heart className="size-10 text-faint/40" strokeWidth={1.25} />
+            <p className="text-sm text-muted-foreground">Nothing saved yet.</p>
+            <Link to={ROUTES.SHOP} className="rounded-full bg-brand px-5 py-2.5 text-[13.5px] font-bold text-ink transition-colors hover:bg-brand-bright">
+              Browse the collection
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="mt-4 grid grid-cols-2 gap-3 md:mt-[26px] md:grid-cols-[repeat(auto-fill,minmax(250px,1fr))] md:gap-5">
+              {products.map((product) => (
+                <WishlistCard key={product._id} product={product} />
+              ))}
+            </div>
+            <div className="mt-6 hidden items-center gap-2 text-[13px] text-muted-foreground md:flex">
+              <ShieldCheck size={14} strokeWidth={2} className="text-brand-deep" />
+              Tap the heart to remove a piece — we'll still email you if it drops in price.
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 }
