@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { productKeys } from "./productKeys";
-import { listProducts, getProductBySlug, getRelatedProducts, getFilterOptions } from "./productApi";
+import { listProducts, getProductBySlug, getRelatedProducts, getFilterOptions, createRestockAlert } from "./productApi";
 
 export function useProducts(params) {
   return useQuery({
@@ -31,5 +31,11 @@ export function useFilterOptions() {
     queryKey: ["products", "filter-options"],
     queryFn: getFilterOptions,
     staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useRestockAlertMutation() {
+  return useMutation({
+    mutationFn: ({ productId, contact }) => createRestockAlert(productId, contact),
   });
 }

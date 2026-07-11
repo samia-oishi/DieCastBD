@@ -1,19 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router";
 import useEmblaCarousel from "embla-carousel-react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/shared/ProductCard";
 import { Container } from "@/components/shared/Container";
+import { SectionHeader } from "@/components/shared/SectionHeader";
 
 function CarouselSkeleton() {
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-5">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="flex w-[220px] shrink-0 flex-col gap-3">
-          <Skeleton className="aspect-square w-full rounded-xl" />
+        <div key={i} className="flex w-52.5 shrink-0 flex-col gap-3 md:w-79">
+          <Skeleton className="aspect-square w-full rounded-[20px]" />
           <Skeleton className="h-3 w-2/3" />
           <Skeleton className="h-4 w-1/2" />
         </div>
@@ -22,8 +20,18 @@ function CarouselSkeleton() {
   );
 }
 
+/** Embla-backed product row — Home's Collector Picks/Featured/New Arrivals,
+ * PDP's Related/Recently-viewed. Slides are 210px on mobile (the next card
+ * partially visible, matching README §Key Components) and 316px on desktop.
+ * The reference's arrow buttons jump ~80% of the viewport width via a
+ * hand-rolled native `scrollBy` (its cards sit in a plain `overflow-x:auto`
+ * div, not a real carousel library) — Embla renders via CSS transforms, not
+ * native scroll, so there's no DOM element a native `scrollBy` would move.
+ * `scrollPrev`/`scrollNext` (Embla's actual API for this) is the correct
+ * equivalent: it advances by one full slide group, which is the closest
+ * `slidesToScroll` can honestly get to "most of a screen" here. */
 export function ProductCarouselSection({ title, subtitle, products, isLoading, seeAllHref, seeAllLabel = "See All" }) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", dragFree: true });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", dragFree: true, containScroll: "trimSnaps" });
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
 
@@ -44,47 +52,26 @@ export function ProductCarouselSection({ title, subtitle, products, isLoading, s
   return (
     <section className="py-16">
       <Container>
-        <div className="mb-6 flex items-end justify-between">
-          <div>
-            <h2 className="font-heading text-2xl text-foreground sm:text-3xl">{title}</h2>
-            {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
-          </div>
-          <div className="flex items-center gap-4">
-            {seeAllHref && (
-              <Link to={seeAllHref} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                {seeAllLabel}
-              </Link>
-            )}
-            <div className="hidden gap-2 sm:flex">
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="Previous products"
-                disabled={!canScrollPrev}
-                onClick={() => emblaApi?.scrollPrev()}
-              >
-                <ChevronLeft />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="Next products"
-                disabled={!canScrollNext}
-                onClick={() => emblaApi?.scrollNext()}
-              >
-                <ChevronRight />
-              </Button>
-            </div>
-          </div>
-        </div>
+        <SectionHeader
+          title={title}
+          subtitle={subtitle}
+          seeAllHref={seeAllHref}
+          seeAllLabel={seeAllLabel}
+          onPrev={() => emblaApi?.scrollPrev()}
+          onNext={() => emblaApi?.scrollNext()}
+          canPrev={canScrollPrev}
+          canNext={canScrollNext}
+        />
 
         {isLoading ? (
-          <CarouselSkeleton />
+          <div className="mt-6">
+            <CarouselSkeleton />
+          </div>
         ) : (
-          <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex gap-4">
+          <div className="mt-3.5 -m-3 overflow-hidden py-3" ref={emblaRef}>
+            <div className="flex gap-5 px-3">
               {products.map((product) => (
-                <ProductCard key={product._id} product={product} className="w-[220px] shrink-0 sm:w-[240px]" />
+                <ProductCard key={product._id} product={product} className="w-52.5 shrink-0 md:w-79" />
               ))}
             </div>
           </div>
