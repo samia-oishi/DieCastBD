@@ -47,11 +47,6 @@ export function AddressForm({ onSubmit, isSubmitting, onCancel }) {
           <FieldError errors={errors.addressLine1 ? [errors.addressLine1] : undefined} />
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="addressLine2">Address line 2 (optional)</FieldLabel>
-          <Input id="addressLine2" {...register("addressLine2")} />
-        </Field>
-
         <div className="grid grid-cols-3 gap-3">
           <Field data-invalid={!!errors.city}>
             <FieldLabel htmlFor="city">City</FieldLabel>

@@ -46,6 +46,13 @@ The **frontend display** effective-price still trips on a stray `salePrice: 0`:
 - **Border radius per breakpoint** (parts.jsx): NumberedCard 18px/24px + padding 18/26, badge 22/26px, title 15.5/18px; RadioCard 14px/16px + padding 13·14 / 16·18; RadioDot 16px/18px. Previously fixed at the desktop values on mobile too.
 - **Expanded payment panel is responsive** (`ExpandPanel`): QR centered on top on mobile, left-aligned beside the content on desktop — matching the design's mobile stack vs desktop row. Verified no 390px overflow.
 
+## ⚠️ PROJECT-WIDE GOTCHA: custom radius scale inflates named `rounded-*`
+`src/index.css` (lines ~133-139) redefines the Tailwind radius scale off `--radius: 0.75rem`:
+`rounded-xl` = **16.8px** (not 12), `rounded-2xl` = **21.6px** (not 16), `rounded-3xl` = **26.4px** (not 24), `rounded-lg` = 12px. So any `rounded-xl/2xl/3xl` used expecting the design's 12/16/24 renders too round. **Rule going forward: use explicit `rounded-[Npx]` for design radii on the storefront; reserve named `rounded-*` for shadcn primitives.** (Don't globally redefine the scale — shadcn/admin components depend on it.)
+- **Fixed in checkout** (this round): NumberedCard `md:rounded-[24px]`, RadioCard `md:rounded-[16px]`, inputCls `rounded-[12px]`, guest banner `rounded-[16px]`, CheckoutSummary desktop `rounded-[24px]`, AddressSelector cards/dashed/form `rounded-[16px]`, bKash/BanglaQR rows `rounded-[12px]`. Verified vs the user's design reference at 1440 + 390.
+- Also removed the **"Address line 2" field** from AddressForm and from the saved-address display (not in the design).
+- **STILL TO FIX (approved pages, same bug)** — `md:rounded-3xl`/`rounded-2xl` on main cards in: `CartSummaryCard` (desktop rounded-3xl → 24px, same as CheckoutSummary), `ShopPage` filter aside, `TrustStrip`, `PremiumShelfBanner`, `FeaturedSpotlight`, `ProductGallery`, `HeroSection` HeroImage, `RestockAlertDialog`, `SiteHeader` dropdown, `CartLineItem` thumb. Each needs its per-element design radius read from the corresponding `.dc.html`. Fold into a focused radius-audit pass (or Phase 10).
+
 ## Next: Phase 8a — Order Placed + My Orders + Order Detail
 Note: the current `OrderConfirmationPage` already renders correctly (green check, order#, StatusChip, tracker, items, address, summary, CTAs) but is still OLD styling — Phase 8a restyles it to the design + swaps DaisyUI `OrderStatusStepper` → custom `OrderTracker` (migrate the stepper test).
 

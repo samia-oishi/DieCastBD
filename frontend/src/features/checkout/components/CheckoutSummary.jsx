@@ -24,7 +24,7 @@ function OrderItem({ item }) {
 export function CheckoutSummary({ variant = "desktop", items, subtotal, shipping, discount, total, coupon, onApplyCoupon, onRemoveCoupon, isPending, disabled }) {
   const isMobile = variant === "mobile";
   return (
-    <div className={cn("border border-line bg-white", isMobile ? "rounded-[18px] p-[18px]" : "sticky top-[98px] rounded-3xl p-[26px]")}>
+    <div className={cn("border border-line bg-white", isMobile ? "rounded-[18px] p-[18px]" : "sticky top-[98px] rounded-[24px] p-[26px]")}>
       <div className="font-display text-[19px] font-bold text-ink">Your order</div>
 
       <div className="mt-[18px] flex flex-col gap-3.5">

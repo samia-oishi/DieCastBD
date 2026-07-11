@@ -83,7 +83,7 @@ export function PaymentMethods({ value, onChange, bkashConfig, banglaQrConfig, r
             <Qr image={bkashConfig?.qrImage} caption="Scan with the bKash app" />
             <div className="w-full md:min-w-[240px] md:flex-1">
               {bkashConfig?.merchantNumber && (
-                <div className="flex items-center gap-2.5 rounded-xl border border-line bg-white px-4 py-3">
+                <div className="flex items-center gap-2.5 rounded-[12px] border border-line bg-white px-4 py-3">
                   <span className="text-[13px] text-muted-foreground">or Send Money to</span>
                   <span className="text-[14.5px] font-extrabold tracking-[0.03em] text-ink">{bkashConfig.merchantNumber}</span>
                   <CopyBtn value={bkashConfig.merchantNumber} />
@@ -104,7 +104,7 @@ export function PaymentMethods({ value, onChange, bkashConfig, banglaQrConfig, r
           <ExpandPanel>
             <Qr image={banglaQrConfig?.qrImage} caption="Scan from any bank or MFS app" />
             <div className="w-full md:min-w-[240px] md:flex-1">
-              <div className="rounded-xl border border-line bg-white px-4 py-3 text-[12.5px] leading-[1.6] text-ink-soft">
+              <div className="rounded-[12px] border border-line bg-white px-4 py-3 text-[12.5px] leading-[1.6] text-ink-soft">
                 Pay the exact total <b>{formatTaka(total)}</b>, then enter the payment reference below so we can match it instantly.
               </div>
               <FieldBox label="Payment reference" error={errors.banglaQrReference?.message} className="mt-3">

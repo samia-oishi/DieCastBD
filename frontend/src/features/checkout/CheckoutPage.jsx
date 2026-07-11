@@ -140,7 +140,7 @@ export function CheckoutPage() {
         <div className="mt-5 grid items-start gap-8 md:mt-7 md:grid-cols-[1.55fr_1fr]">
           <div className="flex flex-col gap-[18px]">
             {!user && (
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-brand-soft-border bg-brand-soft px-[18px] py-3.5">
+              <div className="flex items-center justify-between gap-4 rounded-[16px] border border-brand-soft-border bg-brand-soft px-[18px] py-3.5">
                 <div className="text-[13.5px] text-ink-soft"><span className="font-bold text-ink">Have an account?</span> Sign in for saved addresses and order history.</div>
                 <Link to={`${ROUTES.LOGIN}?redirect=/checkout`} className="shrink-0 rounded-full bg-ink px-[18px] py-2.5 text-[13px] font-semibold text-white">Sign in</Link>
               </div>
