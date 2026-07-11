@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
+import { formatPrice } from "@/lib/currency";
 
 // Design copy per variant (DiecastBD Landing Final.dc.html) — used only when
 // the admin hasn't configured that field on the first hero slide, so a store
@@ -61,7 +62,35 @@ function HeroTitle({ title, accent, italic, accentClassName, className }) {
   );
 }
 
-function LimeShowroomHero({ title, titleAccent, subtitle, ctaText, ctaLink, imageUrl }) {
+// Small floating product card on the hero photo — admin-controlled
+// (Settings → Homepage Sections → Hero Highlight Card), only rendered when
+// enabled and carrying at least a title; desktop-only, matching the
+// reference (neither mobile hero markup includes it). `dark` swaps to the
+// dark-spotlight variant's glass treatment (title white, price brand-glow)
+// vs lime-showroom's plain white card.
+function HeroHighlightCard({ card, dark }) {
+  if (!card?.enabled || !card?.title) return null;
+
+  return (
+    <div
+      className={
+        dark
+          ? "absolute right-5 bottom-5 hidden rounded-2xl border border-white/16 bg-[rgba(13,15,7,.78)] px-4.5 py-3 backdrop-blur-lg md:block"
+          : "absolute right-5 bottom-5 hidden rounded-2xl bg-white px-4.5 py-3 shadow-[0_8px_28px_rgba(16,18,8,.18)] md:block"
+      }
+    >
+      {card.kicker && (
+        <div className="text-[10px] font-bold tracking-widest text-faint uppercase">{card.kicker}</div>
+      )}
+      <div className={`mt-0.75 mb-0.5 text-[13.5px] font-semibold ${dark ? "text-white" : "text-ink"}`}>{card.title}</div>
+      {card.price != null && (
+        <div className={`text-[13.5px] font-bold ${dark ? "text-brand-glow" : "text-ink"}`}>{formatPrice(card.price)}</div>
+      )}
+    </div>
+  );
+}
+
+function LimeShowroomHero({ title, titleAccent, subtitle, ctaText, ctaLink, imageUrl, highlightCard }) {
   return (
     <div className={HERO_WRAP}>
       <div className="overflow-hidden rounded-3xl bg-[radial-gradient(120%_140%_at_85%_0%,#BADD4D_0%,#A8CD2F_52%,#9CC12A_100%)] p-5.5 md:rounded-[28px] md:p-16">
@@ -103,6 +132,7 @@ function LimeShowroomHero({ title, titleAccent, subtitle, ctaText, ctaLink, imag
             ) : (
               <div className="absolute inset-0 rounded-2xl bg-white/15" />
             )}
+            <HeroHighlightCard card={highlightCard} />
           </div>
         </div>
       </div>
@@ -110,7 +140,7 @@ function LimeShowroomHero({ title, titleAccent, subtitle, ctaText, ctaLink, imag
   );
 }
 
-function DarkSpotlightHero({ title, titleAccent, subtitle, ctaText, ctaLink, imageUrl }) {
+function DarkSpotlightHero({ title, titleAccent, subtitle, ctaText, ctaLink, imageUrl, highlightCard }) {
   return (
     <div className={HERO_WRAP}>
       <div className="relative overflow-hidden rounded-3xl bg-[radial-gradient(120%_120%_at_85%_0%,#2A2E1C_0%,#14160C_55%,#0B0C06_100%)] p-5.5 md:rounded-[28px] md:px-16 md:py-18">
@@ -154,6 +184,7 @@ function DarkSpotlightHero({ title, titleAccent, subtitle, ctaText, ctaLink, ima
             ) : (
               <div className="absolute inset-0 rounded-2xl border border-white/10 bg-white/5" />
             )}
+            <HeroHighlightCard card={highlightCard} dark />
           </div>
         </div>
       </div>
@@ -223,7 +254,7 @@ const VARIANT_COMPONENT = {
  * Content comes from the first configured `settings.heroBanner` slide
  * (title/subtitle/CTA/image), falling back to the design's own copy
  * per-field so an unconfigured store still shows a real hero. */
-export function HeroSection({ slide, variant = "photo-fullbleed" }) {
+export function HeroSection({ slide, variant = "photo-fullbleed", highlightCard }) {
   const copy = DEFAULT_COPY[variant] ?? DEFAULT_COPY["photo-fullbleed"];
   const Variant = VARIANT_COMPONENT[variant] ?? PhotoFullbleedHero;
 
@@ -243,6 +274,7 @@ export function HeroSection({ slide, variant = "photo-fullbleed" }) {
         ctaText={slide?.ctaText || "Explore the collection"}
         ctaLink={slide?.ctaLink || ROUTES.SHOP}
         imageUrl={slide?.image?.url}
+        highlightCard={highlightCard}
       />
     </section>
   );

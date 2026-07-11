@@ -61,6 +61,14 @@ const homepageSections = z.object({
       autoplay: z.coerce.boolean().optional(),
       autoplayInterval: z.coerce.number().min(1).max(60).optional(),
       variant: z.enum(["lime-showroom", "dark-spotlight", "photo-fullbleed"]).optional(),
+      highlightCard: z
+        .object({
+          enabled: z.coerce.boolean().optional(),
+          kicker: z.string().optional(),
+          title: z.string().optional(),
+          price: z.coerce.number().min(0).optional(),
+        })
+        .optional(),
     })
     .optional(),
   collectorPicks: sectionToggle.optional(),

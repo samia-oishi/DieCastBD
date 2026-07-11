@@ -154,7 +154,7 @@ export function SettingsPage() {
       freeShippingThreshold: 0,
       bkashConfig: { merchantNumber: "", qrImage: null },
       homepageSections: {
-        hero: { enabled: true, variant: "photo-fullbleed" },
+        hero: { enabled: true, variant: "photo-fullbleed", highlightCard: { enabled: false, kicker: "", title: "", price: "" } },
         collectorPicks: { enabled: true },
         featuredProducts: { enabled: true },
         brandsStrip: { enabled: true },
@@ -299,6 +299,39 @@ export function SettingsPage() {
                   )}
                 />
               </Field>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border p-4">
+            <p className="mb-1 text-sm font-medium">Hero Highlight Card</p>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Small floating product card on the hero photo — only shown on the Lime showroom and Dark spotlight styles.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Controller
+                control={control}
+                name="homepageSections.hero.highlightCard.enabled"
+                render={({ field }) => (
+                  <label className="flex items-center justify-between gap-3 text-sm">
+                    Show highlight card
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </label>
+                )}
+              />
+              <div className="grid grid-cols-3 gap-3">
+                <Field>
+                  <FieldLabel>Kicker</FieldLabel>
+                  <Input placeholder="e.g. MINI GT" {...register("homepageSections.hero.highlightCard.kicker")} />
+                </Field>
+                <Field>
+                  <FieldLabel>Title</FieldLabel>
+                  <Input placeholder="e.g. Supra A80 Top Secret" {...register("homepageSections.hero.highlightCard.title")} />
+                </Field>
+                <Field>
+                  <FieldLabel>Price (৳)</FieldLabel>
+                  <Input type="number" min={0} {...register("homepageSections.hero.highlightCard.price")} />
+                </Field>
+              </div>
             </div>
           </div>
 

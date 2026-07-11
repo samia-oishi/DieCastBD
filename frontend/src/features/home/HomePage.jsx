@@ -92,7 +92,11 @@ export function HomePage() {
       </Helmet>
 
       {isEnabled("hero") && (
-        <HeroSection slide={settings?.heroBanner?.[0]} variant={sections?.hero?.variant} />
+        <HeroSection
+          slide={settings?.heroBanner?.[0]}
+          variant={sections?.hero?.variant}
+          highlightCard={sections?.hero?.highlightCard}
+        />
       )}
 
       <ShopByShelfSection brands={brands} categories={categories} />

@@ -124,6 +124,17 @@ const settingsSchema = new mongoose.Schema(
           enum: ["lime-showroom", "dark-spotlight", "photo-fullbleed"],
           default: "photo-fullbleed",
         },
+        // Small floating product card on the hero image — only the
+        // lime-showroom/dark-spotlight variants render it (photo-fullbleed
+        // has no equivalent element in the reference). Defaults off since
+        // there's no real content until an admin fills it in — showing an
+        // empty/fabricated card by default isn't acceptable.
+        highlightCard: {
+          enabled: { type: Boolean, default: false },
+          kicker: String,
+          title: String,
+          price: Number,
+        },
       },
       collectorPicks: { enabled: { type: Boolean, default: true } },
       featuredProducts: { enabled: { type: Boolean, default: true } },

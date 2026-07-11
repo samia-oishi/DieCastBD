@@ -546,4 +546,8 @@ The same root mistake — one flat value silently averaging two different refere
 
 Re-verified visually (screenshots at 1440px and 390px, both hero and shop-by-shelf) and re-ran build/test/lint — all green, no new warnings.
 
+**Third follow-up same day: brought back the hero highlight card the previous pass had deliberately omitted, now admin-controlled.** Added `Settings.homepageSections.hero.highlightCard` (`enabled`/`kicker`/`title`/`price`), defaulting off since there's no real content until an admin sets it. New "Hero Highlight Card" panel in admin Settings (toggle + kicker/title/price inputs) sits next to the hero-style select. `HeroSection` renders it through a new `HeroHighlightCard` component, desktop-only and only on the two variants the reference actually shows it on (never photo-fullbleed) — plain white card on lime-showroom, dark glass + lime-glow price on dark-spotlight, matching the reference's two distinct treatments exactly. Verified both by writing real test content straight to the dev database (the reference's own example: "MINI GT / Supra A80 Top Secret / ৳2,600") and screenshotting each variant, then reverted the test content afterward — carefully leaving the hero variant itself on `dark-spotlight`, since that turned out to already be the user's own real choice (made through the new admin toggle before this test even started), not something to revert.
+
+Both production builds clean, all 35 backend + 11 frontend tests still green, no new lint warnings.
+
 Phase 5 (Shop) is next — same increased rigor (read the exact reference markup per element before writing any class, not an approximate pass) applies going forward.
