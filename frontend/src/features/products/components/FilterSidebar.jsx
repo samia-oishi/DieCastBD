@@ -1,48 +1,51 @@
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/currency";
 import { useBrands } from "@/features/brands/api/useBrands";
 import { useCategories } from "@/features/categories/api/useCategories";
 import { useFilterOptions } from "../api/useProducts";
 
+function FilterPill({ active, children, ...props }) {
+  return (
+    <button
+      className={cn(
+        "rounded-full px-3.5 py-2 text-[12.5px] font-semibold whitespace-nowrap transition-colors",
+        active ? "bg-ink text-white" : "border border-border bg-card text-ink-soft hover:border-foreground"
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 function FilterPillGroup({ label, options, value, onChange }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-foreground">{label}</span>
+    <div className="flex flex-col gap-2.5">
+      <span className="text-[11px] font-bold tracking-widest text-faint uppercase">{label}</span>
       <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => onChange(undefined)}
-          className={cn(
-            "rounded-full border px-3 py-1 text-xs transition-colors",
-            !value ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-foreground/40"
-          )}
-        >
+        <FilterPill active={!value} onClick={() => onChange(undefined)}>
           All
-        </button>
+        </FilterPill>
         {options.map((option) => (
-          <button
-            key={option.slug}
-            onClick={() => onChange(option.slug)}
-            className={cn(
-              "rounded-full border px-3 py-1 text-xs transition-colors",
-              value === option.slug
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border text-muted-foreground hover:border-foreground/40"
-            )}
-          >
+          <FilterPill key={option.slug} active={value === option.slug} onClick={() => onChange(option.slug)}>
             {option.name}
-          </button>
+          </FilterPill>
         ))}
       </div>
     </div>
   );
 }
 
+/** Sticky filter card — README §Screens: brand/category pill groups, series
+ * select, price range slider, in-stock toggle, Clear all. Used as the
+ * desktop sidebar (ShopPage) and, unstyled-wrapper, inside the mobile
+ * filter Sheet — both share this one component so the controls can never
+ * drift apart between breakpoints. */
 export function FilterSidebar({ filters, updateFilters, clearFilters, activeFilterCount }) {
   const { data: brands } = useBrands();
   const { data: categories } = useCategories();
@@ -60,26 +63,21 @@ export function FilterSidebar({ filters, updateFilters, clearFilters, activeFilt
   }, [filters.minPrice, filters.maxPrice, filterOptions]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-foreground">Filters</h2>
+    <div className="flex flex-col gap-5.5">
+      <div className="flex items-baseline justify-between">
+        <span className="font-display text-[17px] font-bold text-foreground">Filters</span>
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            <X /> Clear ({activeFilterCount})
-          </Button>
+          <button onClick={clearFilters} className="text-[12.5px] font-semibold text-brand-deep">
+            Clear all
+          </button>
         )}
       </div>
 
-      {brands && (
-        <FilterPillGroup
-          label="Brand"
-          options={brands}
-          value={filters.brand}
-          onChange={(brand) => updateFilters({ brand })}
-        />
+      {brands?.length > 0 && (
+        <FilterPillGroup label="Brand" options={brands} value={filters.brand} onChange={(brand) => updateFilters({ brand })} />
       )}
 
-      {categories && (
+      {categories?.length > 0 && (
         <FilterPillGroup
           label="Category"
           options={categories}
@@ -89,17 +87,14 @@ export function FilterSidebar({ filters, updateFilters, clearFilters, activeFilt
       )}
 
       {filterOptions?.series?.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-foreground">Series</span>
-          <Select
-            value={filters.series ?? "all"}
-            onValueChange={(v) => updateFilters({ series: v === "all" ? undefined : v })}
-          >
-            <SelectTrigger>
+        <div className="flex flex-col gap-2.5">
+          <span className="text-[11px] font-bold tracking-widest text-faint uppercase">Series</span>
+          <Select value={filters.series ?? "all"} onValueChange={(v) => updateFilters({ series: v === "all" ? undefined : v })}>
+            <SelectTrigger className="h-auto w-full justify-between rounded-full border-border px-4 py-2.75 text-[13.5px] font-semibold text-foreground">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Series</SelectItem>
+              <SelectItem value="all">All series</SelectItem>
               {filterOptions.series.map((series) => (
                 <SelectItem key={series} value={series}>
                   {series}
@@ -112,7 +107,7 @@ export function FilterSidebar({ filters, updateFilters, clearFilters, activeFilt
 
       {filterOptions && bounds[1] > bounds[0] && (
         <div className="flex flex-col gap-3">
-          <span className="text-sm font-medium text-foreground">Price</span>
+          <span className="text-[11px] font-bold tracking-widest text-faint uppercase">Price</span>
           <Slider
             min={bounds[0]}
             max={bounds[1]}
@@ -121,19 +116,16 @@ export function FilterSidebar({ filters, updateFilters, clearFilters, activeFilt
             onValueChange={setPriceRange}
             onValueCommit={([min, max]) => updateFilters({ minPrice: min, maxPrice: max })}
           />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>৳{priceRange[0].toLocaleString()}</span>
-            <span>৳{priceRange[1].toLocaleString()}</span>
+          <div className="flex justify-between text-[12.5px] font-semibold text-muted-2">
+            <span>{formatPrice(priceRange[0])}</span>
+            <span>{formatPrice(priceRange[1])}</span>
           </div>
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">In stock only</span>
-        <Switch
-          checked={!!filters.inStock}
-          onCheckedChange={(checked) => updateFilters({ inStock: checked || undefined })}
-        />
+      <div className="flex items-center justify-between border-t border-line-soft pt-5">
+        <span className="text-[13.5px] font-semibold text-foreground">In stock only</span>
+        <Switch checked={!!filters.inStock} onCheckedChange={(checked) => updateFilters({ inStock: checked || undefined })} />
       </div>
     </div>
   );

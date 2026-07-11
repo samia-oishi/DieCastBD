@@ -551,3 +551,23 @@ Re-verified visually (screenshots at 1440px and 390px, both hero and shop-by-she
 Both production builds clean, all 35 backend + 11 frontend tests still green, no new lint warnings.
 
 Phase 5 (Shop) is next — same increased rigor (read the exact reference markup per element before writing any class, not an approximate pass) applies going forward.
+
+---
+
+## Storefront visual redesign — Phase 5: Shop
+
+Rebuilt `/shop` from `DiecastBD Shop.dc.html` with the same element-by-element precision as the Phase 4 correction pass — every padding/radius/font value read from the actual reference CSS, not approximated.
+
+**Rebuilt**: `FilterSidebar` (pill filter groups for brand/category, a styled series `Select`, the lime price-range slider, an "In stock only" toggle, "Clear all"), `SortDropdown` (pill trigger, "Sort: Newest"), `ProductGrid` (2-column fixed on mobile, `auto-fill(235px)` on desktop — matching the reference exactly, not the old 2/3/4-column responsive scheme), and `ShopPage` itself (desktop: title+subtitle left, search+sort pills right; mobile: title+count row, a full-width search bar, then a horizontal chip toolbar — Filters/Sort/brand-quick-chips/In-stock — that opens the same `FilterSidebar` in a Sheet for the full panel).
+
+**Caught and reverted a real bug before it shipped.** The first pass restyled the *shared* `components/shared/Pagination.jsx` with the redesign's raw brand tokens (`bg-ink`, `text-ink-soft`, `text-faint`). Before calling that done, checked what else imports it — turned out to be 4 admin pages (Inventory, Customers, Newsletter, Orders). Those raw tokens live only in `:root` and are never redeclared inside `[data-theme="diecastbd-admin"]` (unlike the standard shadcn semantic tokens the original component used), so the restyle would have silently leaked the new light theme's pagination look into the admin dashboard — exactly what the Phase 1 dual-theme architecture exists to prevent. Reverted the shared component to its original untouched form and built a separate storefront-only `ShopPagination` for the precise pill styling instead.
+
+Also fixed a smaller UX rough edge while building the mobile filter Sheet: it briefly showed "Filters" twice (the Sheet's own title plus `FilterSidebar`'s internal heading) — made the Sheet's title `sr-only` (still there for `aria-labelledby`) since the visible heading only needs to appear once.
+
+The mobile toolbar's brand quick-chips are data-driven off the real catalog (`useBrands`), not hardcoded to the reference's two example brands. The "Showing X–Y of N" caption computes its range from the real pagination `meta`, not the reference's static demo numbers.
+
+**Verified with a real headless-browser session** at 1440px and 390px against the live dev database (real products, real sold-out/sale states) — desktop filter sidebar, product grid, pagination, and the mobile toolbar + filter Sheet all screenshot correctly; re-confirmed the shared `Pagination.jsx` has zero diff from its last committed version (git diff empty) after the revert, so the 4 admin pages that depend on it are provably untouched.
+
+Both production builds clean, all 35 backend + 11 frontend tests still green, no new lint warnings.
+
+Phase 6 (Product Details) is next.
