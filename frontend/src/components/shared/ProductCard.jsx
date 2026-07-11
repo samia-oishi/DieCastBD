@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { Plus, CarFront } from "lucide-react";
-import toast from "react-hot-toast";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
 import { cloudinaryCard } from "@/lib/cloudinary";
-import { useCart } from "@/features/cart/api/useCart";
+import { useAddToCart } from "@/features/cart/api/useAddToCart";
 import { WishlistButton } from "@/features/wishlist/components/WishlistButton";
 import { RestockAlertDialog } from "@/components/shared/RestockAlertDialog";
 import { useRestockAlertStore } from "@/stores/restockAlertStore";
@@ -45,7 +44,7 @@ function Badge({ children, tone }) {
 export function ProductCard({ product, variant = "grid", className }) {
   const v = VARIANTS[variant] ?? VARIANTS.grid;
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const addToCart = useAddToCart();
   const isAlerted = useRestockAlertStore((s) => s.isAlerted(product._id));
   const [notifyOpen, setNotifyOpen] = useState(false);
 
@@ -59,8 +58,7 @@ export function ProductCard({ product, variant = "grid", className }) {
 
   const quickAdd = (e) => {
     e.stopPropagation();
-    addItem(product, 1);
-    toast.success("Added to cart");
+    addToCart(product, 1);
   };
 
   const openNotify = (e) => {

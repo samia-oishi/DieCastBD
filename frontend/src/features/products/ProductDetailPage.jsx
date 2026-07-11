@@ -15,6 +15,7 @@ import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { ProductCarousel } from "@/components/shared/ProductCarousel";
 import { Container } from "@/components/shared/Container";
 import { useCart } from "@/features/cart/api/useCart";
+import { useAddToCart } from "@/features/cart/api/useAddToCart";
 import { WishlistButton } from "@/features/wishlist/components/WishlistButton";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { useProduct, useRelatedProducts } from "./api/useProducts";
@@ -60,7 +61,8 @@ export function ProductDetailPage() {
   const { data: related } = useRelatedProducts(slug);
   const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
   const recentlyViewed = useRecentlyViewedStore((s) => s.items);
-  const { items, addItem } = useCart();
+  const { items } = useCart();
+  const addToCart = useAddToCart();
   const [qty, setQty] = useState(1);
 
   useEffect(() => {
@@ -81,9 +83,7 @@ export function ProductDetailPage() {
   const otherRecentlyViewed = recentlyViewed.filter((p) => p._id !== product._id);
 
   const onAdd = () => {
-    addItem(product, qty);
-    toast.success(`Added ${qty} to cart`);
-    setQty(1);
+    if (addToCart(product, qty)) setQty(1);
   };
   const onBuyNow = () => navigate(ROUTES.CHECKOUT, { state: { buyNowItem: { product, qty } } });
 

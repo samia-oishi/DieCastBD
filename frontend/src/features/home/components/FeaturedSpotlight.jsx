@@ -1,28 +1,19 @@
 import { useNavigate } from "react-router";
 import { ShoppingBag, Plus } from "lucide-react";
-import toast from "react-hot-toast";
 
 import { Container } from "@/components/shared/Container";
 import { SectionHeader } from "@/components/shared/SectionHeader";
 import { WishlistButton } from "@/features/wishlist/components/WishlistButton";
-import { useCart } from "@/features/cart/api/useCart";
+import { useAddToCart } from "@/features/cart/api/useAddToCart";
 import { formatTaka } from "@/lib/currency";
 import { cloudinaryCard } from "@/lib/cloudinary";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
-function useAddToCart() {
-  const { addItem } = useCart();
-  return (product, e) => {
-    e?.stopPropagation();
-    addItem(product, 1);
-    toast.success("Added to cart");
-  };
-}
-
 function Spotlight({ product }) {
   const navigate = useNavigate();
-  const add = useAddToCart();
+  const addToCart = useAddToCart();
+  const add = (product, e) => { e?.stopPropagation(); addToCart(product, 1); };
   const price = product.salePrice ?? product.price;
   return (
     <div
@@ -53,7 +44,8 @@ function Spotlight({ product }) {
 
 function RowCard({ product, className }) {
   const navigate = useNavigate();
-  const add = useAddToCart();
+  const addToCart = useAddToCart();
+  const add = (product, e) => { e?.stopPropagation(); addToCart(product, 1); };
   const price = product.salePrice ?? product.price;
   return (
     <div
