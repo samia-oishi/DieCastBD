@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 const NEW_ARRIVALS_HREF = ROUTES.SHOP;
 const EXPLORE_HREF = ROUTES.SHOP;
 
-function HeroImage({ image, className, radius = "rounded-2xl" }) {
+function HeroImage({ image, className, radius = "rounded-[16px] md:rounded-[24px]" }) {
   if (image?.url) {
     return <img src={image.url} alt="" className={cn("size-full object-cover", radius, className)} />;
   }
@@ -28,7 +28,7 @@ function HighlightCard({ card, tone }) {
   return (
     <div
       className={cn(
-        "pointer-events-none absolute bottom-5 right-5 rounded-2xl px-[18px] py-3",
+        "pointer-events-none absolute bottom-5 right-5 rounded-[16px] px-[18px] py-3",
         dark
           ? "border border-white/16 bg-[rgba(13,15,7,0.78)] [backdrop-filter:blur(16px)]"
           : "bg-white shadow-[0_8px_28px_rgba(16,18,8,0.18)]"
@@ -132,7 +132,7 @@ function PanelHero({ image, highlightCard, tone }) {
           </div>
         </div>
         <div className="relative mt-4 h-[170px] md:mt-0 md:h-[440px]">
-          <HeroImage image={image} radius="rounded-2xl" />
+          <HeroImage image={image} radius="rounded-[16px] md:rounded-[24px]" />
           <div className="hidden md:block">
             <HighlightCard card={highlightCard} tone={tone} />
           </div>

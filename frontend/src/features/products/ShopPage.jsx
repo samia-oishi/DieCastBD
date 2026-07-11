@@ -152,7 +152,7 @@ export function ShopPage() {
         </Container>
 
         <Container className="mt-7 grid grid-cols-[250px_1fr] items-start gap-9">
-          <aside className="sticky top-[98px] rounded-3xl border border-line bg-white p-6">
+          <aside className="sticky top-[98px] rounded-[24px] border border-line bg-white p-6">
             <FilterSidebar {...sidebarProps} />
           </aside>
           <div>

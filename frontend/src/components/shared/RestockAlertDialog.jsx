@@ -14,8 +14,8 @@ import { useRestockAlertMutation } from "@/features/products/api/useRestockAlert
 function ProductSummary({ product }) {
   const price = product.salePrice ?? product.price;
   return (
-    <div className="mt-[18px] flex items-center gap-3.5 rounded-2xl border border-line-soft bg-paper p-3">
-      <div className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-line-soft bg-white">
+    <div className="mt-[18px] flex items-center gap-3.5 rounded-[16px] border border-line-soft bg-paper p-3">
+      <div className="relative size-14 shrink-0 overflow-hidden rounded-[12px] border border-line-soft bg-white">
         {product.thumbnail?.url && (
           <img src={cloudinaryCard(product.thumbnail.url)} alt="" className="absolute inset-[6%] size-[88%] object-contain" />
         )}
@@ -93,7 +93,7 @@ function RestockAlertBody({ product, onClose }) {
           autoFocus
           placeholder="01XXXXXXXXX or you@email.com"
           {...register("contact")}
-          className="w-full rounded-xl border border-line bg-paper px-4 py-[13px] text-[13.5px] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          className="w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-[13.5px] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         />
         {errors.contact && <p className="mt-1.5 text-xs text-danger">{errors.contact.message}</p>}
       </div>

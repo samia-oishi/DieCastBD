@@ -14,7 +14,7 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
 
   if (images.length === 0) {
     return (
-      <div className="flex h-[300px] items-center justify-center rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-3xl">
+      <div className="flex h-[300px] items-center justify-center rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-[24px]">
         <CarFront className="size-16 text-faint/30" strokeWidth={1} />
       </div>
     );
@@ -27,7 +27,7 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
       <button
         type="button"
         onClick={() => setZoomOpen(true)}
-        className="relative block h-[300px] w-full cursor-zoom-in overflow-hidden rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-3xl"
+        className="relative block h-[300px] w-full cursor-zoom-in overflow-hidden rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-[24px]"
       >
         <img src={cloudinaryCard(active.url)} alt={title} className="size-full object-contain p-[4%]" />
         {isNew && (
@@ -46,7 +46,7 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
               onClick={() => setSelected(i)}
               aria-label={`View ${i + 1}`}
               className={cn(
-                "relative h-[62px] w-[70px] shrink-0 overflow-hidden rounded-xl bg-tile transition-colors md:h-20 md:w-[88px] md:rounded-[14px]",
+                "relative h-[62px] w-[70px] shrink-0 overflow-hidden rounded-[12px] bg-tile transition-colors md:h-20 md:w-[88px] md:rounded-[14px]",
                 i === selected ? "border-2 border-brand" : "border border-line"
               )}
             >
@@ -59,7 +59,7 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
       <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
         <DialogContent className="max-w-3xl border-none bg-transparent p-0 shadow-none" showCloseButton={false}>
           <DialogTitle className="sr-only">{title}</DialogTitle>
-          <img src={active.url} alt={title} className="h-auto max-h-[85vh] w-full rounded-2xl bg-white object-contain" />
+          <img src={active.url} alt={title} className="h-auto max-h-[85vh] w-full rounded-[16px] bg-white object-contain" />
         </DialogContent>
       </Dialog>
     </div>

@@ -11,7 +11,7 @@ export function PremiumShelfBanner({ title, description }) {
   return (
     <section className="pt-6 md:pt-[76px]">
       <Container>
-        <div className="rounded-3xl bg-ink p-6 md:grid md:grid-cols-[repeat(auto-fit,minmax(400px,1fr))] md:items-center md:gap-14 md:p-16">
+        <div className="rounded-[24px] bg-ink p-6 md:grid md:grid-cols-[repeat(auto-fit,minmax(400px,1fr))] md:items-center md:gap-14 md:rounded-[28px] md:p-16">
           <div>
             <div className="text-[10.5px] font-bold uppercase tracking-[0.13em] text-brand md:text-xs md:tracking-[0.14em]">The Premium Shelf</div>
             <h2 className="mt-2.5 font-display text-2xl font-extrabold leading-[1.12] tracking-[-0.015em] text-white md:mt-4 md:text-[clamp(32px,3vw,42px)] md:leading-[1.1]">

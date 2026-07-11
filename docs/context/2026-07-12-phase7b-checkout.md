@@ -51,7 +51,16 @@ The **frontend display** effective-price still trips on a stray `salePrice: 0`:
 `rounded-xl` = **16.8px** (not 12), `rounded-2xl` = **21.6px** (not 16), `rounded-3xl` = **26.4px** (not 24), `rounded-lg` = 12px. So any `rounded-xl/2xl/3xl` used expecting the design's 12/16/24 renders too round. **Rule going forward: use explicit `rounded-[Npx]` for design radii on the storefront; reserve named `rounded-*` for shadcn primitives.** (Don't globally redefine the scale — shadcn/admin components depend on it.)
 - **Fixed in checkout** (this round): NumberedCard `md:rounded-[24px]`, RadioCard `md:rounded-[16px]`, inputCls `rounded-[12px]`, guest banner `rounded-[16px]`, CheckoutSummary desktop `rounded-[24px]`, AddressSelector cards/dashed/form `rounded-[16px]`, bKash/BanglaQR rows `rounded-[12px]`. Verified vs the user's design reference at 1440 + 390.
 - Also removed the **"Address line 2" field** from AddressForm and from the saved-address display (not in the design).
-- **STILL TO FIX (approved pages, same bug)** — `md:rounded-3xl`/`rounded-2xl` on main cards in: `CartSummaryCard` (desktop rounded-3xl → 24px, same as CheckoutSummary), `ShopPage` filter aside, `TrustStrip`, `PremiumShelfBanner`, `FeaturedSpotlight`, `ProductGallery`, `HeroSection` HeroImage, `RestockAlertDialog`, `SiteHeader` dropdown, `CartLineItem` thumb. Each needs its per-element design radius read from the corresponding `.dc.html`. Fold into a focused radius-audit pass (or Phase 10).
+- **DONE — full project-wide sweep** (radii read from each `.dc.html`, desktop+mobile, verified):
+  - Home: HeroImage `16/24`, hero highlight card `16`, FeaturedSpotlight big `20/24` · row `16/20` · thumb `12/14`, TrustStrip desktop `28` (mobile already 20), PremiumShelfBanner `24/28`.
+  - Shop: filter aside `24`.
+  - PDP: ProductGallery main `20/24` · thumbs `12/14` · zoom `16`.
+  - Cart: CartSummaryCard desktop `24`, CartLineItem thumb `12/14`.
+  - Shared: RestockAlertDialog product row `16` · thumb `12` · input `12` (frame already 24), SiteHeader dropdown `16`.
+  - (Hero lime/dark panel was already correct at `24/28`; ShopByShelf tiles already explicit.)
+
+## Checkout radio dot + input height (design uses content-box!)
+The design HTML renders with `box-sizing: content-box`, so its radio dots are bigger than a border-box reading suggests: **selected = 18px + 2×5px border = 28px** (18px ink centre + 5px lime ring); **unselected = 18px + 2×1.5px = 21px** (mobile 25/19px). My border-box RadioDot was only 18px with an 8px centre. Rebuilt `RadioDot` to `size-[25px]/md:size-[28px]` selected, `size-[19px]/md:size-[21px]` unselected — matches the design's chunky selected dot / light hollow unselected ring. Also the inputs were 48px (line-height 1.5) vs the design's **44px** — added `leading-[1.2]` to `inputCls` → now 44px. Both verified by measurement + screenshot vs the rendered `.dc.html`.
 
 ## Next: Phase 8a — Order Placed + My Orders + Order Detail
 Note: the current `OrderConfirmationPage` already renders correctly (green check, order#, StatusChip, tracker, items, address, summary, CTAs) but is still OLD styling — Phase 8a restyles it to the design + swaps DaisyUI `OrderStatusStepper` → custom `OrderTracker` (migrate the stepper test).

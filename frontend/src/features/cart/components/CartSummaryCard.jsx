@@ -26,7 +26,7 @@ function PaymentPills({ small }) {
 export function CartSummaryCard({ variant = "desktop", subtotal, shipping, discount, total, coupon, onApplyCoupon, onRemoveCoupon }) {
   const isMobile = variant === "mobile";
   return (
-    <div className={cn("border border-line bg-white", isMobile ? "rounded-[18px] p-[18px]" : "sticky top-[98px] rounded-3xl p-[26px]")}>
+    <div className={cn("border border-line bg-white", isMobile ? "rounded-[18px] p-[18px]" : "sticky top-[98px] rounded-[24px] p-[26px]")}>
       {!isMobile && <div className="font-display text-[19px] font-bold text-ink">Order summary</div>}
 
       <div className={cn("flex justify-between text-[13px] md:text-sm", isMobile ? "" : "mt-[18px]")}>

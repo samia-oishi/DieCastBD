@@ -31,7 +31,7 @@ export function TrustStrip() {
         </div>
 
         {/* Desktop: joined 4-cell card, hairline grid, 44px icons */}
-        <div className="hidden overflow-hidden rounded-3xl border border-line bg-white md:block">
+        <div className="hidden overflow-hidden rounded-[28px] border border-line bg-white md:block">
           <div className="-ml-px -mt-px grid grid-cols-[repeat(auto-fit,minmax(195px,1fr))]">
             {CELLS.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-center gap-3.5 border-l border-t border-line-soft p-[28px_26px]">

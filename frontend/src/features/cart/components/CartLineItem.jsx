@@ -8,7 +8,7 @@ import { useCart } from "../api/useCart";
 
 function Thumb({ product, className }) {
   return (
-    <Link to={`/products/${product.slug}`} className={cn("relative shrink-0 overflow-hidden rounded-xl bg-tile md:rounded-[14px]", className)}>
+    <Link to={`/products/${product.slug}`} className={cn("relative shrink-0 overflow-hidden rounded-[12px] bg-tile md:rounded-[14px]", className)}>
       {product.thumbnail?.url ? (
         <img src={cloudinaryCard(product.thumbnail.url)} alt={product.title} className="size-full object-contain p-[6%]" />
       ) : (

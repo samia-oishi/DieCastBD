@@ -35,13 +35,15 @@ export function RadioCard({ selected, onSelect, children, className }) {
   );
 }
 
-/** The lime filled / grey outline radio dot (16px mobile / 18px desktop). */
+/** The lime-filled / grey-outline radio dot. Sizes match the design's
+ * content-box dots: selected is a chunky filled dot (25px mobile / 28px desktop,
+ * with a thick lime ring + ink centre), unselected a lighter hollow ring
+ * (19px mobile / 21px desktop). */
 export function RadioDot({ selected }) {
-  const base = "mt-0.5 size-4 shrink-0 rounded-full md:size-[18px]";
   return selected ? (
-    <span className={cn(base, "border-[4.5px] border-brand bg-ink md:border-[5px]")} />
+    <span className="mt-px size-[25px] shrink-0 rounded-full border-[4.5px] border-brand bg-ink md:size-[28px] md:border-[5px]" />
   ) : (
-    <span className={cn(base, "border-[1.5px] border-[#DDDFD2]")} />
+    <span className="mt-px size-[19px] shrink-0 rounded-full border-[1.5px] border-[#DDDFD2] md:size-[21px]" />
   );
 }
 
@@ -59,4 +61,4 @@ export function FieldBox({ label, hint, error, children, className }) {
 }
 
 export const inputCls =
-  "w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-[13.5px] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  "w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-[13.5px] leading-[1.2] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";

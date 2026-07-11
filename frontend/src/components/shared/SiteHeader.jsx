@@ -69,7 +69,7 @@ function UserMenu({ user }) {
           <ChevronDown size={15} strokeWidth={2} className="opacity-80" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="w-56 rounded-2xl p-1.5">
+      <DropdownMenuContent align="end" sideOffset={8} className="w-56 rounded-[16px] p-1.5">
         <DropdownMenuLabel className="px-2 pb-1 pt-1.5 font-normal">
           <div className="text-[13px] font-semibold text-ink">{user.name}</div>
           {user.email && <div className="truncate text-xs text-muted-foreground">{user.email}</div>}
