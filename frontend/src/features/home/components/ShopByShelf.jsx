@@ -62,7 +62,7 @@ export function ShopByShelf({ brands, categories }) {
       </Container>
 
       {/* Mobile: horizontal drag row */}
-      <div ref={ref} {...dragProps} data-carousel className="mt-3 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
+      <div ref={ref} {...dragProps} data-carousel className="mt-3 flex snap-x snap-proximity gap-3 scroll-pl-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
         {tiles.map((t) => (
           <Tile key={t.href} {...t} className="size-[210px] snap-start" />
         ))}

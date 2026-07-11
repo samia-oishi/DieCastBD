@@ -9,7 +9,9 @@ export function SectionHeader({ title, subtitle, viewAllHref, viewAllLabel = "Vi
     <div className="flex items-end justify-between gap-4">
       <div>
         <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink md:text-[30px]">{title}</h2>
-        {subtitle && <p className="mt-1.5 text-[13.5px] text-muted-foreground md:mt-[7px] md:text-[14.5px]">{subtitle}</p>}
+        {/* Subtitle is desktop-only — the design's mobile section headers show
+            just the title + View all. */}
+        {subtitle && <p className="mt-1.5 hidden text-[13.5px] text-muted-foreground md:mt-[7px] md:block md:text-[14.5px]">{subtitle}</p>}
       </div>
       {viewAllHref && (
         <Link

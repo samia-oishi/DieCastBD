@@ -27,9 +27,9 @@ export function TestimonialsSection({ testimonials }) {
       </Container>
 
       {/* Mobile: drag carousel */}
-      <div ref={ref} {...dragProps} className="mt-3 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
+      <div ref={ref} {...dragProps} className="mt-3 flex snap-x snap-proximity gap-3 scroll-pl-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
         {testimonials.map((t, i) => (
-          <div key={i} className="w-[280px] shrink-0 rounded-[18px] border border-line bg-white p-[18px]">
+          <div key={i} className="w-[280px] shrink-0 snap-start rounded-[18px] border border-line bg-white p-[18px]">
             <Stars size={13} />
             <p className="mt-2.5 text-[13px] leading-[1.55] text-ink-soft">"{t.quote}"</p>
             <div className="mt-2.5 text-xs">
