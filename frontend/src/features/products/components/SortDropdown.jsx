@@ -15,7 +15,9 @@ export function SortDropdown({ value, onChange, prefix = false, className }) {
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
         className={cn(
-          "h-auto gap-2 rounded-full border-line bg-white px-[18px] py-3 text-sm font-semibold text-ink",
+          // Neutralize shadcn's fixed data-[size=default]:h-8 so padding sets the
+          // height and the control matches the adjacent search pill / filter chips.
+          "gap-2 rounded-full border-line bg-white px-[18px] py-3 text-sm font-semibold text-ink data-[size=default]:h-auto",
           className
         )}
       >
