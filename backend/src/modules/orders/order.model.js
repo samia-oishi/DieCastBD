@@ -54,9 +54,10 @@ const orderSchema = new mongoose.Schema(
     shippingFee: { type: Number, required: true },
     total: { type: Number, required: true },
 
-    paymentMethod: { type: String, enum: ["cod", "bkash"], required: true },
+    paymentMethod: { type: String, enum: ["cod", "bkash", "banglaqr"], required: true },
     paymentStatus: { type: String, enum: ["pending", "paid", "failed", "refunded"], default: "pending" },
     bkashTransactionId: { type: String, default: null },
+    banglaQrReference: { type: String, default: null },
 
     status: {
       type: String,

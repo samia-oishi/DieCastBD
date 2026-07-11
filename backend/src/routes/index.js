@@ -15,6 +15,7 @@ import * as orderRoutes from "../modules/orders/order.routes.js";
 import analyticsRoutes from "../modules/analytics/analytics.routes.js";
 import inventoryRoutes from "../modules/inventory/inventory.routes.js";
 import * as pageRoutes from "../modules/pages/page.routes.js";
+import * as restockAlertRoutes from "../modules/restockAlerts/restockAlert.routes.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
 
@@ -27,6 +28,7 @@ router.use("/users", userRoutes.customerRouter);
 router.use("/brands", brandRoutes.publicRouter);
 router.use("/categories", categoryRoutes.publicRouter);
 router.use("/products", productRoutes.publicRouter);
+router.use("/products", restockAlertRoutes.publicRouter);
 router.use("/settings", settingsRoutes.publicRouter);
 router.use("/newsletter", newsletterRoutes.publicRouter);
 router.use("/contact", contactRoutes);
@@ -46,6 +48,7 @@ router.use("/admin/analytics", ...requireAdmin, analyticsRoutes);
 router.use("/admin/users", ...requireAdmin, userRoutes.adminRouter);
 router.use("/admin/coupons", ...requireAdmin, couponRoutes.adminRouter);
 router.use("/admin/inventory", ...requireAdmin, inventoryRoutes);
+router.use("/admin/inventory", ...requireAdmin, restockAlertRoutes.adminRouter);
 router.use("/admin/newsletter", ...requireAdmin, newsletterRoutes.adminRouter);
 router.use("/admin/pages", ...requireAdmin, pageRoutes.adminRouter);
 
