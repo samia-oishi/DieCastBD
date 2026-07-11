@@ -1,73 +1,51 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router";
+import { MailCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldError, FieldGroup, FieldDescription } from "@/components/ui/field";
+import { Seo } from "@/components/shared/Seo";
 import { ROUTES } from "@/constants/routes";
 import { forgotPasswordSchema } from "../schemas/authSchemas";
 import { useForgotPasswordMutation } from "../api/useAuth";
 import { getAuthErrorMessage } from "../api/firebaseAuth";
+import { AuthShell } from "./AuthShell";
+import { AuthField, AuthSubmit, authInputCls } from "./authParts";
 
 export function ForgotPasswordForm() {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({ resolver: zodResolver(forgotPasswordSchema) });
-
+  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(forgotPasswordSchema) });
   const resetMutation = useForgotPasswordMutation();
 
-  const onSubmit = ({ email }) => {
-    resetMutation.mutate(email, {
-      onError: (error) => toast.error(getAuthErrorMessage(error)),
-    });
-  };
-
-  if (resetMutation.isSuccess) {
-    return (
-      <div className="flex flex-col gap-3 text-center">
-        <h1 className="font-heading text-2xl">Check your email</h1>
-        <p className="text-sm text-muted-foreground">
-          If an account exists for that address, we've sent a password reset link.
-        </p>
-        <Link to={ROUTES.LOGIN} className="text-sm text-primary hover:underline">
-          Back to sign in
-        </Link>
-      </div>
-    );
-  }
+  const onSubmit = ({ email }) =>
+    resetMutation.mutate(email, { onError: (error) => toast.error(getAuthErrorMessage(error)) });
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-heading text-2xl">Reset your password</h1>
-        <p className="text-sm text-muted-foreground">
-          Enter your email and we'll send you a reset link.
-        </p>
-      </div>
+    <AuthShell variant="signin" back={{ to: ROUTES.LOGIN, label: "Back to sign in" }}>
+      <Seo title="Reset password" />
+      {resetMutation.isSuccess ? (
+        <div className="mt-8">
+          <div className="inline-flex size-12 items-center justify-center rounded-full bg-[#EFF5DC] text-brand-deep">
+            <MailCheck size={22} strokeWidth={1.9} />
+          </div>
+          <h1 className="mt-4 font-display text-[26px] font-extrabold tracking-[-0.015em] text-ink">Check your email</h1>
+          <p className="mt-2 text-[14.5px] leading-[1.6] text-muted-foreground">
+            If an account exists for that address, we've sent a password reset link.
+          </p>
+          <Link to={ROUTES.LOGIN} className="mt-6 inline-block text-[13.5px] font-bold text-ink">Back to sign in</Link>
+        </div>
+      ) : (
+        <>
+          <h1 className="mt-[22px] font-display text-[30px] font-extrabold tracking-[-0.015em] text-ink">Reset your password</h1>
+          <p className="mt-2 text-[14.5px] text-muted-foreground">Enter your email and we'll send you a reset link.</p>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <FieldGroup>
-          <Field data-invalid={!!errors.email}>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input id="email" type="email" autoComplete="email" {...register("email")} />
-            <FieldError errors={errors.email ? [errors.email] : undefined} />
-          </Field>
-
-          <Field>
-            <Button type="submit" disabled={resetMutation.isPending}>
-              {resetMutation.isPending ? "Sending..." : "Send reset link"}
-            </Button>
-          </Field>
-
-          <FieldDescription className="text-center">
-            <Link to={ROUTES.LOGIN}>Back to sign in</Link>
-          </FieldDescription>
-        </FieldGroup>
-      </form>
-    </div>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-[26px]">
+            <AuthField label="Email" error={errors.email?.message}>
+              <input type="email" autoComplete="email" placeholder="you@email.com" className={authInputCls} {...register("email")} />
+            </AuthField>
+            <AuthSubmit disabled={resetMutation.isPending}>{resetMutation.isPending ? "Sending…" : "Send reset link"}</AuthSubmit>
+          </form>
+        </>
+      )}
+    </AuthShell>
   );
 }

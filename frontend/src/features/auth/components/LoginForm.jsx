@@ -3,87 +3,68 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import toast from "react-hot-toast";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldError, FieldGroup, FieldDescription } from "@/components/ui/field";
+import { Seo } from "@/components/shared/Seo";
 import { ROUTES } from "@/constants/routes";
 import { loginSchema } from "../schemas/authSchemas";
 import { useLoginMutation, useGoogleLoginMutation } from "../api/useAuth";
 import { getAuthErrorMessage } from "../api/firebaseAuth";
+import { AuthShell } from "./AuthShell";
+import { AuthField, PasswordInput, AuthSubmit, OrDivider, GoogleButton, authInputCls } from "./authParts";
 
 export function LoginForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirect") || ROUTES.HOME;
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({ resolver: zodResolver(loginSchema) });
-
+  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(loginSchema) });
   const loginMutation = useLoginMutation();
   const googleMutation = useGoogleLoginMutation();
 
-  const onSubmit = (values) => {
+  const onSubmit = (values) =>
     loginMutation.mutate(values, {
       onSuccess: () => navigate(redirectTo, { replace: true }),
       onError: (error) => toast.error(getAuthErrorMessage(error)),
     });
-  };
 
-  const onGoogleLogin = () => {
+  const onGoogleLogin = () =>
     googleMutation.mutate(undefined, {
       onSuccess: () => navigate(redirectTo, { replace: true }),
       onError: (error) => toast.error(getAuthErrorMessage(error)),
     });
-  };
 
   const isPending = loginMutation.isPending || googleMutation.isPending;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-heading text-2xl">Sign in</h1>
-        <p className="text-sm text-muted-foreground">Welcome back, collector.</p>
-      </div>
+    <AuthShell variant="signin" back={{ to: ROUTES.SHOP, label: "Back to the store" }}>
+      <Seo title="Sign in" />
+      <h1 className="mt-[22px] font-display text-[30px] font-extrabold tracking-[-0.015em] text-ink">Sign in</h1>
+      <p className="mt-2 text-[14.5px] text-muted-foreground">Welcome back, collector.</p>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <FieldGroup>
-          <Field data-invalid={!!errors.email}>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input id="email" type="email" autoComplete="email" {...register("email")} />
-            <FieldError errors={errors.email ? [errors.email] : undefined} />
-          </Field>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-[26px]">
+        <AuthField label="Email" error={errors.email?.message}>
+          <input type="email" autoComplete="email" placeholder="you@email.com" className={authInputCls} {...register("email")} />
+        </AuthField>
 
-          <Field data-invalid={!!errors.password}>
-            <div className="flex items-center justify-between">
-              <FieldLabel htmlFor="password">Password</FieldLabel>
-              <Link to={ROUTES.FORGOT_PASSWORD} className="text-sm text-muted-foreground hover:text-primary">
-                Forgot password?
-              </Link>
-            </div>
-            <Input id="password" type="password" autoComplete="current-password" {...register("password")} />
-            <FieldError errors={errors.password ? [errors.password] : undefined} />
-          </Field>
+        <AuthField
+          label="Password"
+          className="mt-4"
+          error={errors.password?.message}
+          action={<Link to={ROUTES.FORGOT_PASSWORD} className="text-[12.5px] font-semibold text-brand-deep">Forgot password?</Link>}
+        >
+          <PasswordInput register={register("password")} placeholder="••••••••" autoComplete="current-password" />
+        </AuthField>
 
-          <Field>
-            <Button type="submit" disabled={isPending}>
-              {loginMutation.isPending ? "Signing in..." : "Sign in"}
-            </Button>
-          </Field>
-
-          <Field>
-            <Button type="button" variant="outline" disabled={isPending} onClick={onGoogleLogin}>
-              {googleMutation.isPending ? "Connecting..." : "Continue with Google"}
-            </Button>
-          </Field>
-
-          <FieldDescription className="text-center">
-            Don't have an account? <Link to={ROUTES.REGISTER}>Create one</Link>
-          </FieldDescription>
-        </FieldGroup>
+        <AuthSubmit disabled={isPending}>{loginMutation.isPending ? "Signing in…" : "Sign in"}</AuthSubmit>
       </form>
-    </div>
+
+      <OrDivider />
+      <GoogleButton onClick={onGoogleLogin} disabled={isPending}>
+        {googleMutation.isPending ? "Connecting…" : "Continue with Google"}
+      </GoogleButton>
+
+      <div className="mt-6 text-center text-[13.5px] text-muted-foreground">
+        New to DiecastBD? <Link to={ROUTES.REGISTER} className="font-bold text-ink">Create an account</Link>
+      </div>
+    </AuthShell>
   );
 }

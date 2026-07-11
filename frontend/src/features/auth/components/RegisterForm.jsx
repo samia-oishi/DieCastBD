@@ -3,97 +3,69 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldError, FieldGroup, FieldDescription } from "@/components/ui/field";
+import { Seo } from "@/components/shared/Seo";
 import { ROUTES } from "@/constants/routes";
 import { registerSchema } from "../schemas/authSchemas";
 import { useRegisterMutation, useGoogleLoginMutation } from "../api/useAuth";
 import { getAuthErrorMessage } from "../api/firebaseAuth";
+import { AuthShell } from "./AuthShell";
+import { AuthField, PasswordInput, PasswordStrengthMeter, AuthSubmit, OrDivider, GoogleButton, authInputCls } from "./authParts";
 
 export function RegisterForm() {
   const navigate = useNavigate();
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({ resolver: zodResolver(registerSchema) });
-
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({ resolver: zodResolver(registerSchema) });
   const registerMutation = useRegisterMutation();
   const googleMutation = useGoogleLoginMutation();
 
-  const onSubmit = (values) => {
+  const onSubmit = (values) =>
     registerMutation.mutate(values, {
       onSuccess: () => navigate(ROUTES.HOME, { replace: true }),
       onError: (error) => toast.error(getAuthErrorMessage(error)),
     });
-  };
 
-  const onGoogleLogin = () => {
+  const onGoogleLogin = () =>
     googleMutation.mutate(undefined, {
       onSuccess: () => navigate(ROUTES.HOME, { replace: true }),
       onError: (error) => toast.error(getAuthErrorMessage(error)),
     });
-  };
 
   const isPending = registerMutation.isPending || googleMutation.isPending;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-heading text-2xl">Create an account</h1>
-        <p className="text-sm text-muted-foreground">Join DiecastBD.</p>
-      </div>
+    <AuthShell variant="register" back={{ to: ROUTES.LOGIN, label: "Back to sign in" }}>
+      <Seo title="Create an account" />
+      <h1 className="mt-[22px] font-display text-[30px] font-extrabold tracking-[-0.015em] text-ink">Create an account</h1>
+      <p className="mt-2 text-[14.5px] text-muted-foreground">Takes under a minute — then straight back to the shelf.</p>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <FieldGroup>
-          <Field data-invalid={!!errors.name}>
-            <FieldLabel htmlFor="name">Full name</FieldLabel>
-            <Input id="name" autoComplete="name" {...register("name")} />
-            <FieldError errors={errors.name ? [errors.name] : undefined} />
-          </Field>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-[26px]">
+        <AuthField label="Full name" error={errors.name?.message}>
+          <input autoComplete="name" placeholder="e.g. Samia Alam" className={authInputCls} {...register("name")} />
+        </AuthField>
 
-          <Field data-invalid={!!errors.email}>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input id="email" type="email" autoComplete="email" {...register("email")} />
-            <FieldError errors={errors.email ? [errors.email] : undefined} />
-          </Field>
+        <AuthField label="Email" className="mt-4" error={errors.email?.message}>
+          <input type="email" autoComplete="email" placeholder="you@email.com" className={authInputCls} {...register("email")} />
+        </AuthField>
 
-          <Field data-invalid={!!errors.password}>
-            <FieldLabel htmlFor="password">Password</FieldLabel>
-            <Input id="password" type="password" autoComplete="new-password" {...register("password")} />
-            <FieldError errors={errors.password ? [errors.password] : undefined} />
-          </Field>
+        <AuthField label="Password" className="mt-4" error={errors.password?.message}>
+          <PasswordInput register={register("password")} placeholder="8+ characters" autoComplete="new-password" />
+          <PasswordStrengthMeter value={watch("password")} />
+        </AuthField>
 
-          <Field data-invalid={!!errors.confirmPassword}>
-            <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
-            <Input
-              id="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              {...register("confirmPassword")}
-            />
-            <FieldError errors={errors.confirmPassword ? [errors.confirmPassword] : undefined} />
-          </Field>
-
-          <Field>
-            <Button type="submit" disabled={isPending}>
-              {registerMutation.isPending ? "Creating account..." : "Create account"}
-            </Button>
-          </Field>
-
-          <Field>
-            <Button type="button" variant="outline" disabled={isPending} onClick={onGoogleLogin}>
-              {googleMutation.isPending ? "Connecting..." : "Continue with Google"}
-            </Button>
-          </Field>
-
-          <FieldDescription className="text-center">
-            Already have an account? <Link to={ROUTES.LOGIN}>Sign in</Link>
-          </FieldDescription>
-        </FieldGroup>
+        <AuthSubmit disabled={isPending}>{registerMutation.isPending ? "Creating account…" : "Create account"}</AuthSubmit>
       </form>
-    </div>
+
+      <OrDivider />
+      <GoogleButton onClick={onGoogleLogin} disabled={isPending}>
+        {googleMutation.isPending ? "Connecting…" : "Continue with Google"}
+      </GoogleButton>
+
+      <p className="mt-[18px] text-center text-xs leading-[1.5] text-faint">
+        By creating an account you agree to our <Link to={ROUTES.TERMS} className="text-ink-soft">Terms</Link> &amp;{" "}
+        <Link to={ROUTES.PRIVACY} className="text-ink-soft">Privacy Policy</Link>.
+      </p>
+      <div className="mt-3.5 text-center text-[13.5px] text-muted-foreground">
+        Already have an account? <Link to={ROUTES.LOGIN} className="font-bold text-ink">Sign in</Link>
+      </div>
+    </AuthShell>
   );
 }
