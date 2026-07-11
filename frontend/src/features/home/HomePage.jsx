@@ -5,9 +5,11 @@ import { ROUTES } from "@/constants/routes";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { useProducts } from "@/features/products/api/useProducts";
 import { useBrands } from "@/features/brands/api/useBrands";
+import { useCategories } from "@/features/categories/api/useCategories";
 import { HeroSection } from "./components/HeroSection";
 import { ProductCarouselSection } from "@/components/shared/ProductCarouselSection";
-import { BrandsStrip } from "./components/BrandsStrip";
+import { ShopByShelfSection } from "./components/ShopByShelfSection";
+import { FeaturedSpotlight } from "./components/FeaturedSpotlight";
 import { WhyChooseUsSection } from "./components/WhyChooseUsSection";
 import { CollectorPromiseSection } from "./components/CollectorPromiseSection";
 import { InstagramPlaceholder } from "./components/InstagramPlaceholder";
@@ -17,8 +19,9 @@ import { TestimonialsSection } from "./components/TestimonialsSection";
 export function HomePage() {
   const { data: settings } = useSettings();
   const { data: brands } = useBrands();
+  const { data: categories } = useCategories();
 
-  const featured = useProducts({ featured: true, limit: 8 });
+  const featured = useProducts({ featured: true, limit: 4 });
   const newArrivals = useProducts({ newArrival: true, limit: 8, sort: "newest" });
   const collectorPicks = useProducts({ hero: true, limit: 8 });
 
@@ -88,38 +91,32 @@ export function HomePage() {
         <script type="application/ld+json">{JSON.stringify(websiteJsonLd)}</script>
       </Helmet>
 
-      {isEnabled("hero") && (
-        <HeroSection
-          slides={settings?.heroBanner}
-          autoplay={sections?.hero?.autoplay ?? true}
-          autoplayInterval={sections?.hero?.autoplayInterval ?? 6}
-        />
-      )}
+      {isEnabled("hero") && <HeroSection slide={settings?.heroBanner?.[0]} />}
+
+      <ShopByShelfSection brands={brands} categories={categories} />
 
       {isEnabled("collectorPicks") && (
         <ProductCarouselSection
-          title="Collector Picks"
-          subtitle="The pieces we'd add to our own shelf first."
+          title="Collector picks"
+          subtitle="The shelf-worthy shortlist — chosen like it's our money."
           products={collectorPicks.data?.data}
           isLoading={collectorPicks.isLoading}
           seeAllHref={ROUTES.SHOP}
         />
       )}
 
-      {isEnabled("featuredProducts") && (
-        <ProductCarouselSection
-          title="Featured Products"
-          products={featured.data?.data}
-          isLoading={featured.isLoading}
-          seeAllHref={ROUTES.SHOP}
+      {isEnabled("featuredProducts") && <FeaturedSpotlight products={featured.data?.data} isLoading={featured.isLoading} />}
+
+      {isEnabled("collectorPromise") && (
+        <CollectorPromiseSection
+          title={settings?.collectorPromise?.title}
+          description={settings?.collectorPromise?.description}
         />
       )}
 
-      {isEnabled("brandsStrip") && <BrandsStrip brands={brands} />}
-
       {isEnabled("newArrivals") && (
         <ProductCarouselSection
-          title="New Arrivals"
+          title="New arrivals"
           subtitle="Just landed from the latest import batch."
           products={newArrivals.data?.data}
           isLoading={newArrivals.isLoading}
@@ -128,12 +125,6 @@ export function HomePage() {
       )}
 
       {isEnabled("whyChooseUs") && <WhyChooseUsSection items={settings?.whyChooseUs} />}
-      {isEnabled("collectorPromise") && (
-        <CollectorPromiseSection
-          title={settings?.collectorPromise?.title}
-          description={settings?.collectorPromise?.description}
-        />
-      )}
       {isEnabled("testimonials") && <TestimonialsSection testimonials={settings?.testimonials} />}
       {isEnabled("instagramFeed") && (
         <InstagramPlaceholder instagramUrl={settings?.socialLinks?.instagram} />

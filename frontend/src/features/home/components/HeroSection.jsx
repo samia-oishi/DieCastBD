@@ -1,107 +1,218 @@
-import { useEffect, useState, useCallback } from "react";
-import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
 import { Link } from "react-router";
-import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import logo from "@/assets/logo/logo.jpg";
+import { ROUTES } from "@/constants/routes";
 
-export function HeroSection({ slides, autoplay = true, autoplayInterval = 6 }) {
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop: true },
-    autoplay ? [Autoplay({ delay: autoplayInterval * 1000, stopOnInteraction: true })] : []
-  );
-  const [selectedIndex, setSelectedIndex] = useState(0);
+// Design copy per variant (DiecastBD Landing Final.dc.html) — used only when
+// the admin hasn't configured that field on the first hero slide, so a store
+// with no hero content yet still shows something real rather than a blank
+// section, without ever overriding real admin-entered copy.
+const DEFAULT_COPY = {
+  "lime-showroom": {
+    title: "Own the",
+    titleAccent: "original.",
+    subtitle:
+      "Hot Wheels Premium and MINI GT 1:64 — sourced direct, inspected piece by piece, and packed the way we'd pack our own.",
+  },
+  "dark-spotlight": {
+    title: "Real metal.",
+    titleAccent: "Zero fakes.",
+    subtitle: "Hot Wheels Premium and MINI GT 1:64 under studio lights — sourced direct, inspected piece by piece, delivered nationwide.",
+  },
+  "photo-fullbleed": {
+    title: "Authenticity,",
+    titleAccent: "cast in metal.",
+    subtitle: "Verified Hot Wheels Premium & MINI GT — one import batch, gone for good.",
+  },
+};
 
-  const onSelect = useCallback((api) => setSelectedIndex(api.selectedScrollSnap()), []);
+const BADGE_ICON = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3l7 2.7v5.6c0 4.6-3.1 7.6-7 8.9-3.9-1.3-7-4.3-7-8.9V5.7L12 3z" />
+    <path d="M9 11.8l2.1 2.1 4-4.2" />
+  </svg>
+);
 
-  useEffect(() => {
-    if (!emblaApi) return;
-    onSelect(emblaApi);
-    emblaApi.on("select", onSelect);
-  }, [emblaApi, onSelect]);
+// Same outer gutter every variant shares: 16px/12px-top on mobile (<768px),
+// 40px/24px-top on desktop, replicating the reference's
+// `max-width:1360px;margin:0 auto;padding:24px 40px 0` container exactly —
+// including at viewport widths between 768–1360px, where a naive
+// `mx-auto max-w-[1360px]` (no persistent side padding) would collapse to a
+// 0px gutter. 1360 content + 40px padding each side = 1440px outer bound.
+const HERO_WRAP = "mx-auto max-w-[1440px] px-4 pt-3 md:px-10 md:pt-6";
 
-  if (!slides?.length) return null;
-
+function LimeShowroomHero({ title, titleAccent, subtitle, ctaText, ctaLink, imageUrl }) {
   return (
-    <section className="relative overflow-hidden border-b border-border">
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex">
-          {slides.map((slide, index) => (
-            <div key={index} className="relative min-w-0 shrink-0 grow-0 basis-full">
-              <div className="relative flex min-h-[70svh] items-center justify-center overflow-hidden bg-background px-6 py-24 sm:min-h-[80svh]">
-                {slide.image?.url ? (
-                  <>
-                    <img
-                      src={slide.image.url}
-                      alt=""
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 size-full object-cover"
-                    />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
-                  </>
-                ) : (
-                  <img
-                    src={logo}
-                    alt=""
-                    aria-hidden="true"
-                    className="pointer-events-none absolute left-1/2 top-1/2 w-[140%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-[0.05]"
-                  />
-                )}
-                <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
-                  <motion.h1
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={index === selectedIndex ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className="font-heading text-4xl tracking-tight text-foreground sm:text-6xl"
-                  >
-                    {slide.title}
-                  </motion.h1>
-                  {slide.subtitle && (
-                    <motion.p
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={index === selectedIndex ? { opacity: 1, y: 0 } : {}}
-                      transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-                      className="max-w-lg text-balance text-muted-foreground sm:text-lg"
-                    >
-                      {slide.subtitle}
-                    </motion.p>
-                  )}
-                  {slide.ctaText && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={index === selectedIndex ? { opacity: 1, y: 0 } : {}}
-                      transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-                    >
-                      <Button asChild size="lg">
-                        <Link to={slide.ctaLink || "/"}>{slide.ctaText}</Link>
-                      </Button>
-                    </motion.div>
-                  )}
-                </div>
-              </div>
+    <div className={HERO_WRAP}>
+      <div className="overflow-hidden rounded-3xl bg-[radial-gradient(120%_140%_at_85%_0%,#BADD4D_0%,#A8CD2F_52%,#9CC12A_100%)] p-6 md:rounded-[28px] md:p-16">
+        <div className="grid items-center gap-10 md:grid-cols-2 md:gap-14">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/35 px-4 py-2 text-xs font-semibold text-[#1C2108] md:text-[12.5px]">
+              {BADGE_ICON}
+              Every piece hand-verified
             </div>
-          ))}
+            <h1 className="mt-3.5 font-display text-[33px] leading-[1.05] font-extrabold tracking-[-0.02em] text-ink md:mt-5.5 md:text-[clamp(44px,4.6vw,64px)] md:leading-[1.02]">
+              {title} {titleAccent && <em className="italic">{titleAccent}</em>}
+            </h1>
+            <p className="mt-2.5 max-w-115 text-[13.5px] leading-[1.55] text-ink/78 md:mt-5 md:text-[17px] md:leading-[1.65]">{subtitle}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-3.5 md:mt-7.5">
+              <Link
+                to={ctaLink}
+                className="flex h-12.5 w-full items-center justify-center gap-2 rounded-full bg-ink text-[14.5px] font-semibold text-white transition-colors hover:bg-[#2A2E1C] md:h-auto md:w-auto md:px-7 md:py-3.75"
+              >
+                {ctaText}
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                to={ROUTES.SHOP}
+                className="hidden items-center gap-2 rounded-full border-[1.5px] border-ink/30 px-6.5 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:border-ink hover:bg-white/25 md:inline-flex"
+              >
+                New arrivals
+              </Link>
+            </div>
+            <div className="mt-3 text-[11px] font-medium text-ink/60 md:mt-6.5 md:text-[13px]">
+              Cash on delivery · bKash · BanglaQR — delivered nationwide
+            </div>
+          </div>
+          <div className="relative h-44 md:h-110">
+            {imageUrl ? (
+              <img src={imageUrl} alt="" className="absolute inset-0 size-full rounded-2xl object-cover" />
+            ) : (
+              <div className="absolute inset-0 rounded-2xl bg-white/15" />
+            )}
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {slides.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => emblaApi?.scrollTo(index)}
-              className={cn(
-                "h-1.5 rounded-full transition-all",
-                index === selectedIndex ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/40"
-              )}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
+function DarkSpotlightHero({ title, titleAccent, subtitle, ctaText, ctaLink, imageUrl }) {
+  return (
+    <div className={HERO_WRAP}>
+      <div className="relative overflow-hidden rounded-3xl bg-[radial-gradient(120%_120%_at_85%_0%,#2A2E1C_0%,#14160C_55%,#0B0C06_100%)] p-6 md:rounded-[28px] md:p-16">
+        <div className="pointer-events-none absolute -top-35 right-[6%] hidden size-115 rounded-full bg-[radial-gradient(circle,rgba(168,205,47,.2)_0%,rgba(168,205,47,0)_70%)] md:block" />
+        <div className="relative grid items-center gap-10 md:grid-cols-2 md:gap-14">
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/8 px-4 py-2 text-xs font-semibold text-brand-glow md:text-[12.5px]">
+              {BADGE_ICON}
+              Every piece hand-verified
+            </div>
+            <h1 className="mt-3.5 font-display text-[33px] leading-[1.05] font-extrabold tracking-[-0.02em] text-white md:mt-5.5 md:text-[clamp(44px,4.6vw,64px)] md:leading-[1.02]">
+              {title} {titleAccent && <em className="text-brand-glow italic">{titleAccent}</em>}
+            </h1>
+            <p className="mt-2.5 max-w-115 text-[13.5px] leading-[1.55] text-[#A9AC9F] md:mt-5 md:text-[17px] md:leading-[1.65]">{subtitle}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-3.5 md:mt-7.5">
+              <Link
+                to={ctaLink}
+                className="flex h-12.5 w-full items-center justify-center gap-2 rounded-full bg-brand text-[14.5px] font-bold text-ink transition-colors hover:bg-brand-bright md:h-auto md:w-auto md:px-7 md:py-3.75"
+              >
+                {ctaText}
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                to={ROUTES.SHOP}
+                className="hidden items-center gap-2 rounded-full border-[1.5px] border-white/28 px-6.5 py-3.5 text-[15px] font-semibold text-white transition-colors hover:border-white md:inline-flex"
+              >
+                New arrivals
+              </Link>
+            </div>
+            <div className="mt-3 text-[11px] font-medium text-white/55 md:mt-6.5 md:text-[13px]">
+              Cash on delivery · bKash · BanglaQR — delivered nationwide
+            </div>
+          </div>
+          <div className="relative h-44 md:h-110">
+            {imageUrl ? (
+              <img src={imageUrl} alt="" className="absolute inset-0 size-full rounded-2xl object-cover" />
+            ) : (
+              <div className="absolute inset-0 rounded-2xl border border-white/10 bg-white/5" />
+            )}
+          </div>
         </div>
-      )}
+      </div>
+    </div>
+  );
+}
+
+function PhotoFullbleedHero({ title, titleAccent, subtitle, ctaText, ctaLink, imageUrl }) {
+  return (
+    <div className={HERO_WRAP}>
+      <div className="relative h-110 overflow-hidden rounded-3xl md:h-140 md:rounded-[28px]">
+        {imageUrl ? (
+          <img src={imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 bg-ink" />
+        )}
+        <div className="absolute inset-0 bg-linear-to-t from-[rgba(10,11,5,.9)] via-[rgba(10,11,5,.35)] to-transparent md:bg-[linear-gradient(75deg,rgba(10,11,5,.82)_0%,rgba(10,11,5,.42)_48%,rgba(10,11,5,.02)_78%)]" />
+
+        <div className="absolute top-6 right-6 hidden items-center rounded-full border border-white/18 bg-[rgba(13,15,7,.6)] px-4.5 py-2.25 text-[12.5px] font-semibold text-white backdrop-blur-lg md:flex">
+          COD · bKash · BanglaQR
+        </div>
+
+        <div className="absolute inset-x-4.5 bottom-4.5 max-w-150 md:inset-x-auto md:left-14 md:bottom-13">
+          <div className="inline-flex items-center gap-1.75 rounded-full border border-white/22 bg-white/14 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-lg md:px-4 md:py-2 md:text-[12.5px]">
+            <span className="text-brand-glow">{BADGE_ICON}</span>
+            Hand-verified authentic
+          </div>
+          <h1 className="mt-3 font-display text-[30px] leading-[1.08] font-extrabold tracking-[-0.02em] text-white md:mt-4.5 md:text-[clamp(42px,4.2vw,58px)] md:leading-[1.04] md:tracking-[-0.022em]">
+            {title} {titleAccent && <em className="italic">{titleAccent}</em>}
+          </h1>
+          <p className="mt-2 max-w-115 text-[13px] leading-[1.55] text-white/85 md:mt-3.5 md:text-[16.5px] md:leading-[1.6]">{subtitle}</p>
+          <div className="mt-3.5 flex flex-wrap items-center gap-3.5 md:mt-6">
+            <Link
+              to={ctaLink}
+              className="flex h-12.5 w-full items-center justify-center gap-2 rounded-full bg-brand text-[14.5px] font-extrabold text-ink transition-colors hover:bg-brand-bright md:h-auto md:w-auto md:px-7 md:py-3.75 md:text-[15px] md:font-bold"
+            >
+              {ctaText}
+              <ArrowRight className="size-4" />
+            </Link>
+            <Link
+              to={ROUTES.SHOP}
+              className="hidden items-center gap-2 rounded-full border border-white/28 bg-white/14 px-6.5 py-3.5 text-[15px] font-semibold text-white backdrop-blur-lg transition-colors hover:border-white md:inline-flex"
+            >
+              New arrivals
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const VARIANT_COMPONENT = {
+  "lime-showroom": LimeShowroomHero,
+  "dark-spotlight": DarkSpotlightHero,
+  "photo-fullbleed": PhotoFullbleedHero,
+};
+
+/** Single static hero (no carousel — the multi-slide autoplay hero was
+ * dropped per explicit user decision, since the design reference shows one
+ * fixed hero, not a rotating banner). Three interchangeable visual styles
+ * exist per the reference; `variant` picks one, default photo-fullbleed per
+ * AI_INSTRUCTIONS Phase 4. Content comes from the first configured
+ * `settings.heroBanner` slide (title/subtitle/CTA/image), falling back to
+ * the design's own copy per-field so an unconfigured store still shows a
+ * real hero rather than a blank one. */
+export function HeroSection({ slide, variant = "photo-fullbleed" }) {
+  const copy = DEFAULT_COPY[variant];
+  const Variant = VARIANT_COMPONENT[variant];
+
+  // The design's title/titleAccent split (plain text + italic emphasis on
+  // the last few words) only makes sense for the design's own default copy —
+  // an admin-entered title is one free-text string with nowhere to carry a
+  // second "accent" fragment, so it renders as-is with no italic split.
+  const usingDefaultTitle = !slide?.title;
+
+  return (
+    <section className="border-b border-border pb-6 md:pb-0">
+      <Variant
+        title={slide?.title || copy.title}
+        titleAccent={usingDefaultTitle ? copy.titleAccent : ""}
+        subtitle={slide?.subtitle || copy.subtitle}
+        ctaText={slide?.ctaText || "Explore the collection"}
+        ctaLink={slide?.ctaLink || ROUTES.SHOP}
+        imageUrl={slide?.image?.url}
+      />
     </section>
   );
 }
