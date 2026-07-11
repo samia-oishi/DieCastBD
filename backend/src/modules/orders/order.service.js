@@ -75,7 +75,6 @@ async function buildAndSaveOrder({
   couponCode,
   paymentMethod,
   bkashTransactionId,
-  banglaQrReference,
   shippingZone,
   session,
 }) {
@@ -119,11 +118,10 @@ async function buildAndSaveOrder({
         shippingFee,
         total,
         paymentMethod,
-        // Manual bKash/BanglaQR — no live gateway, so paymentStatus stays the
-        // default "pending" until an admin manually verifies the reference and
-        // marks it paid; only the reference itself is captured at order time.
+        // Manual bKash — no live gateway, so paymentStatus stays the default
+        // "pending" until an admin manually verifies the Transaction ID and
+        // marks it paid; only the ID itself is captured at order time.
         bkashTransactionId: paymentMethod === "bkash" ? bkashTransactionId : null,
-        banglaQrReference: paymentMethod === "banglaqr" ? banglaQrReference : null,
         status: "pending",
         statusHistory: [{ status: "pending", changedBy: userId, at: new Date() }],
       },
@@ -157,7 +155,6 @@ export async function createOrderFromCart({
   couponCode,
   paymentMethod,
   bkashTransactionId,
-  banglaQrReference,
   shippingZone,
 }) {
   const cart = await Cart.findOne({ user: userId }).populate("items.product");
@@ -184,7 +181,6 @@ export async function createOrderFromCart({
         couponCode,
         paymentMethod,
         bkashTransactionId,
-        banglaQrReference,
         shippingZone,
         session,
       });
@@ -217,7 +213,6 @@ export async function createOrderFromItems({
   couponCode,
   paymentMethod,
   bkashTransactionId,
-  banglaQrReference,
   shippingZone,
 }) {
   if (!items || items.length === 0) throw ApiError.badRequest("No items to order");
@@ -246,7 +241,6 @@ export async function createOrderFromItems({
         couponCode,
         paymentMethod,
         bkashTransactionId,
-        banglaQrReference,
         shippingZone,
         session,
       });

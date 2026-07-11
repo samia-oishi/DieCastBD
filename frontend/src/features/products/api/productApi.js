@@ -19,8 +19,3 @@ export async function getFilterOptions() {
   const { data } = await api.get("/products/filter-options");
   return data.data;
 }
-
-export async function createRestockAlert(productId, contact) {
-  const { data } = await api.post(`/products/${productId}/restock-alert`, { contact });
-  return data.data;
-}

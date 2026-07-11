@@ -7,7 +7,7 @@ export function AnnouncementBar() {
   if (!announcement?.isActive || !announcement?.text) return null;
 
   return (
-    <div className="flex items-center justify-center gap-3.5 bg-ink px-5 py-2.5 text-center text-xs font-medium text-[#DDDFD2] sm:text-[12.5px]">
+    <div className="bg-primary px-4 py-2 text-center text-xs font-medium text-primary-foreground sm:text-sm">
       {announcement.text}
     </div>
   );

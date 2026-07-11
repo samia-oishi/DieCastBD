@@ -19,7 +19,6 @@ export const createOrder = asyncHandler(async (req, res) => {
     couponCode,
     paymentMethod,
     bkashTransactionId,
-    banglaQrReference,
     shippingZone,
   } = req.body;
 
@@ -78,7 +77,6 @@ export const createOrder = asyncHandler(async (req, res) => {
     couponCode,
     paymentMethod,
     bkashTransactionId,
-    banglaQrReference,
     shippingZone,
   };
   const order =

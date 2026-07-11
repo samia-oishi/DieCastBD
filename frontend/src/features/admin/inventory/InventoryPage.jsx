@@ -13,12 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Pagination } from "@/components/shared/Pagination";
 import { useDebounce } from "@/hooks/useDebounce";
-import {
-  useAdminInventory,
-  useProductInventoryLogs,
-  useAdjustStockMutation,
-  useProductRestockAlerts,
-} from "./api/useAdminInventory";
+import { useAdminInventory, useProductInventoryLogs, useAdjustStockMutation } from "./api/useAdminInventory";
 
 function formatDateTime(dateString) {
   return new Date(dateString).toLocaleString("en-US", {
@@ -141,38 +136,6 @@ function HistoryDialog({ product, onClose }) {
   );
 }
 
-function RestockAlertsDialog({ product, onClose }) {
-  const { data: alerts, isLoading } = useProductRestockAlerts(product.id);
-
-  return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Waiting for restock — {product.title}</DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          Phone numbers aren't auto-notified — reach out manually. Email subscribers are emailed automatically
-          the next time this product is restocked.
-        </p>
-        <div className="flex max-h-96 flex-col gap-2 overflow-y-auto text-sm">
-          {isLoading && <p className="text-muted-foreground">Loading...</p>}
-          {!isLoading && alerts?.length === 0 && <p className="text-muted-foreground">No one waiting.</p>}
-          {alerts?.map((alert) => (
-            <div key={alert._id} className="flex items-center justify-between border-b border-border pb-2">
-              <span className="text-foreground">{alert.contact}</span>
-              {alert.notifiedAt ? (
-                <span className="text-xs text-muted-foreground">Notified {formatDateTime(alert.notifiedAt)}</span>
-              ) : (
-                <Badge variant="outline">Waiting</Badge>
-              )}
-            </div>
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export function InventoryPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -180,7 +143,6 @@ export function InventoryPage() {
   const debouncedSearch = useDebounce(search, 400);
   const [adjustingProduct, setAdjustingProduct] = useState(null);
   const [historyProduct, setHistoryProduct] = useState(null);
-  const [restockAlertsProduct, setRestockAlertsProduct] = useState(null);
 
   const { data, isLoading } = useAdminInventory({
     page,
@@ -227,21 +189,20 @@ export function InventoryPage() {
             <TableHead>Stock</TableHead>
             <TableHead>Reserved</TableHead>
             <TableHead>Available</TableHead>
-            <TableHead>Waiting</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading && (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground">
+              <TableCell colSpan={7} className="text-center text-muted-foreground">
                 Loading...
               </TableCell>
             </TableRow>
           )}
           {!isLoading && items.length === 0 && (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground">
+              <TableCell colSpan={7} className="text-center text-muted-foreground">
                 No products found.
               </TableCell>
             </TableRow>
@@ -267,19 +228,6 @@ export function InventoryPage() {
                   </Badge>
                 )}
               </TableCell>
-              <TableCell className="text-muted-foreground">
-                {product.restockAlertCount > 0 ? (
-                  <button
-                    type="button"
-                    className="underline-offset-2 hover:text-foreground hover:underline"
-                    onClick={() => setRestockAlertsProduct(product)}
-                  >
-                    {product.restockAlertCount} waiting
-                  </button>
-                ) : (
-                  "—"
-                )}
-              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
                   <Button variant="ghost" size="icon-sm" aria-label="Stock history" onClick={() => setHistoryProduct(product)}>
@@ -303,9 +251,6 @@ export function InventoryPage() {
 
       {adjustingProduct && <AdjustStockDialog product={adjustingProduct} onClose={() => setAdjustingProduct(null)} />}
       {historyProduct && <HistoryDialog product={historyProduct} onClose={() => setHistoryProduct(null)} />}
-      {restockAlertsProduct && (
-        <RestockAlertsDialog product={restockAlertsProduct} onClose={() => setRestockAlertsProduct(null)} />
-      )}
     </div>
   );
 }

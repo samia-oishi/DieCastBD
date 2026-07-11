@@ -3,50 +3,15 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
-/*
- * TWO independently-scoped themes share this one component library:
- *   - Storefront (PublicLayout/AuthLayout) — the new light "paper" redesign,
- *     applied at :root, no wrapper needed (it's the default experience).
- *   - Admin (AdminLayout) — the ORIGINAL dark/lime/Geist theme, completely
- *     unaffected by the storefront redesign per its own explicit scope
- *     ("admin dashboard is out of scope"). AdminLayout.jsx sets
- *     data-theme="diecastbd-admin" on its root element, which the
- *     [data-theme="diecastbd-admin"] block below re-points every shared
- *     shadcn/DaisyUI token back to its pre-redesign dark value. Every
- *     existing admin component (Button, Table, Dialog, etc.) already reads
- *     these same custom properties, so this single attribute is the only
- *     thing that has to change in AdminLayout for it to stay pixel-identical.
- */
-@plugin "daisyui" { themes: diecastbd --default, diecastbd-admin; }
-
-@plugin "daisyui/theme" {
-  name: "diecastbd";
-  color-scheme: light;
-  --color-base-100: #FAFAF7;
-  --color-base-200: #F1F2EA;
-  --color-base-300: #E7E8E0;
-  --color-base-content: #101208;
-  --color-primary: #A8CD2F;
-  --color-primary-content: #101208;
-  --color-secondary: #EFEFE9;
-  --color-secondary-content: #101208;
-  --color-accent: #A8CD2F;
-  --color-accent-content: #101208;
-  --color-neutral: #EFEFE9;
-  --color-neutral-content: #101208;
-  --color-info: #38bdf8;
-  --color-success: #A8CD2F;
-  --color-warning: #B45309;
-  --color-error: #B3261E;
-  --radius-selector: 0.75rem;
-  --radius-field: 0.75rem;
-  --radius-box: 1.125rem;
+@plugin "daisyui" {
+  themes: diecastbd --default;
 }
 
-/* Original dark theme, byte-for-byte unchanged from before the redesign —
-   admin opts into this via data-theme="diecastbd-admin" (see AdminLayout.jsx). */
+/* DaisyUI is intentionally scoped to a handful of components shadcn doesn't ship
+   (Rating, Steps, Loading) — see Phase 0 architecture doc §6. Values mirror the
+   brand tokens below so those components don't visually clash with the rest of the UI. */
 @plugin "daisyui/theme" {
-  name: "diecastbd-admin";
+  name: "diecastbd";
   color-scheme: dark;
   --color-base-100: #0a0a0a;
   --color-base-200: #141414;
@@ -72,9 +37,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-display);
-    --font-display: var(--display-font);
-    --font-sans: var(--body-font);
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -113,106 +77,18 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
-    /* Storefront-redesign brand tokens (design_handoff_diecastbd_storefront/README.md
-       §Design Tokens) — additive, not present in the admin dark theme at all, so
-       they need no [data-theme="diecastbd-admin"] override; nothing in admin
-       references them. */
-    --color-brand: var(--brand);
-    --color-brand-bright: var(--brand-bright);
-    --color-brand-deep: var(--brand-deep);
-    --color-brand-tint: var(--brand-tint);
-    --color-brand-glow: var(--brand-glow);
-    --color-brand-soft: var(--brand-soft);
-    --color-ink: var(--ink);
-    --color-ink-soft: var(--ink-soft);
-    --color-muted-2: var(--muted-2);
-    --color-faint: var(--faint);
-    --color-paper: var(--paper);
-    --color-line: var(--line);
-    --color-line-soft: var(--line-soft);
-    --color-warn: var(--warn);
-    --color-danger: var(--danger);
 }
 
 /*
- * Storefront is the new default look — a permanent light "paper" theme,
- * same "not a togglable preference" reasoning the old permanent-dark theme
- * had, just a different palette now (see docs/plan.md decision list for the
- * redesign this supersedes). Admin's dark theme lives entirely in the
- * [data-theme="diecastbd-admin"] block further down, unchanged.
+ * DiecastBD is permanently dark — "dark theme" is a fixed brand identity choice,
+ * not a user-togglable preference, so there is deliberately no light `:root` /
+ * `.dark` split here (that would be dead code nobody can reach). If a light mode
+ * is ever required, reintroduce the split at that point.
+ *
+ * Swap --primary and the logo-derived tokens here once the real logo asset lands
+ * in src/assets/logo/ — everything else in the app reads from these variables.
  */
 :root {
-    color-scheme: light;
-
-    --background: #FAFAF7;
-    --foreground: #101208;
-    --card: #FFFFFF;
-    --card-foreground: #101208;
-    --popover: #FFFFFF;
-    --popover-foreground: #101208;
-
-    --primary: #A8CD2F;
-    --primary-foreground: #101208;
-    --secondary: #EFEFE9;
-    --secondary-foreground: #101208;
-    --muted: #EFEFE9;
-    --muted-foreground: #6B6E60;
-    --accent: #F1F7DE;
-    --accent-foreground: #4F6B0B;
-
-    /* Functional/semantic, not brand — matches the existing project convention
-       of keeping error/danger states off the brand color regardless of theme. */
-    --destructive: #B3261E;
-
-    --border: #E7E8E0;
-    --input: #E7E8E0;
-    --ring: #A8CD2F;
-
-    --chart-1: #A8CD2F;
-    --chart-2: #8FB625;
-    --chart-3: #779E1C;
-    --chart-4: #5F7A10;
-    --chart-5: #4F6B0B;
-
-    --radius: 0.75rem;
-
-    /* Admin-only — deliberately left at their original dark values regardless
-       of theme, since only AdminLayout.jsx's sidebar ever reads these. */
-    --sidebar: #0d0d0d;
-    --sidebar-foreground: #fafafa;
-    --sidebar-primary: #a3e635;
-    --sidebar-primary-foreground: #0a0a0a;
-    --sidebar-accent: #1a1a1a;
-    --sidebar-accent-foreground: #fafafa;
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: #a3e635;
-
-    /* Storefront-redesign brand tokens, raw values from
-       design_handoff_diecastbd_storefront/README.md §Design Tokens. */
-    --brand: #A8CD2F;
-    --brand-bright: #B9DC4B;
-    --brand-deep: #4F6B0B;
-    --brand-tint: #EFF5DC;
-    --brand-glow: #C9E469;
-    --brand-soft: #F1F7DE;
-    --ink: #101208;
-    --ink-soft: #3A3D33;
-    --muted-2: #6B6E60;
-    --faint: #8A8D80;
-    --paper: #FAFAF7;
-    --line: #E7E8E0;
-    --line-soft: #EFEFE9;
-    --warn: #B45309;
-    --danger: #B3261E;
-
-    --display-font: "Archivo", sans-serif;
-    --body-font: "Instrument Sans", sans-serif;
-}
-
-/* Admin dashboard — pre-redesign dark theme, byte-for-byte the same values
-   that used to live in :root before this file gained a storefront theme.
-   Opt in via data-theme="diecastbd-admin" (AdminLayout.jsx's root element). */
-[data-theme="diecastbd-admin"] {
     color-scheme: dark;
 
     --background: #0a0a0a;
@@ -231,6 +107,7 @@
     --accent: #1f1f1f;
     --accent-foreground: #fafafa;
 
+    /* Functional/semantic, not brand — a lime error state would be unreadable as "danger". */
     --destructive: #ef4444;
 
     --border: oklch(1 0 0 / 10%);
@@ -245,8 +122,14 @@
 
     --radius: 0.5rem;
 
-    --display-font: "Geist Variable", sans-serif;
-    --body-font: "Geist Variable", sans-serif;
+    --sidebar: #0d0d0d;
+    --sidebar-foreground: #fafafa;
+    --sidebar-primary: #a3e635;
+    --sidebar-primary-foreground: #0a0a0a;
+    --sidebar-accent: #1a1a1a;
+    --sidebar-accent-foreground: #fafafa;
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: #a3e635;
 }
 
 @layer base {
@@ -254,15 +137,9 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground;
     }
   html {
     @apply font-sans;
     }
-  a {
-    color: var(--foreground);
-  }
-  a:hover {
-    color: #5F7A10;
-  }
 }

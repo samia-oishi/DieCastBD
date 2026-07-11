@@ -61,8 +61,8 @@ export function WishlistButton({ product, className, size = "default", showLabel
       aria-label={label}
       aria-pressed={isWishlisted}
       className={cn(
-        "flex items-center justify-center rounded-full bg-white/94 shadow-[0_1px_4px_rgba(16,18,8,.12)] transition-colors",
-        size === "default" ? "size-8.5" : "size-9",
+        "flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm transition-colors hover:bg-background",
+        size === "default" ? "size-8" : "size-9",
         className
       )}
     >

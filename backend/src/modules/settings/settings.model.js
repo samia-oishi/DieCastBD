@@ -46,10 +46,6 @@ const shippingZoneSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     fee: { type: Number, required: true, min: 0 },
-    // Free-text delivery estimate (e.g. "24-48h") shown next to the zone at
-    // checkout — display-only, no logic depends on it. Optional so existing
-    // zones without one just render no ETA line rather than a fabricated one.
-    eta: String,
   },
   { _id: false }
 );
@@ -98,13 +94,6 @@ const settingsSchema = new mongoose.Schema(
       merchantNumber: String,
       qrImage: imageSchema,
     },
-    // Manual BanglaQR flow, same shape/reasoning as bkashConfig above — scan-and-pay
-    // from any bank/MFS app, customer types the resulting payment reference at
-    // checkout, admin verifies manually. No live gateway integration here either.
-    banglaQrConfig: {
-      accountInfo: String,
-      qrImage: imageSchema,
-    },
     // Per-section show/hide for the homepage (System 6, post-launch requirements) —
     // one toggle per section actually rendered on HomePage.jsx today. hero also
     // carries its own autoplay controls since Embla's autoplay delay is otherwise
@@ -115,26 +104,6 @@ const settingsSchema = new mongoose.Schema(
         enabled: { type: Boolean, default: true },
         autoplay: { type: Boolean, default: true },
         autoplayInterval: { type: Number, default: 6, min: 1, max: 60 },
-        // Which of the storefront redesign's 3 hero visual styles to render
-        // (design_handoff_diecastbd_storefront) — admin-selectable per the
-        // implementation instructions, not a per-slide field, since it's a
-        // whole-hero visual choice, not content.
-        variant: {
-          type: String,
-          enum: ["lime-showroom", "dark-spotlight", "photo-fullbleed"],
-          default: "photo-fullbleed",
-        },
-        // Small floating product card on the hero image — only the
-        // lime-showroom/dark-spotlight variants render it (photo-fullbleed
-        // has no equivalent element in the reference). Defaults off since
-        // there's no real content until an admin fills it in — showing an
-        // empty/fabricated card by default isn't acceptable.
-        highlightCard: {
-          enabled: { type: Boolean, default: false },
-          kicker: String,
-          title: String,
-          price: Number,
-        },
       },
       collectorPicks: { enabled: { type: Boolean, default: true } },
       featuredProducts: { enabled: { type: Boolean, default: true } },

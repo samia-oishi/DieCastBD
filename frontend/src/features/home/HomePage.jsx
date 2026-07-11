@@ -5,11 +5,9 @@ import { ROUTES } from "@/constants/routes";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { useProducts } from "@/features/products/api/useProducts";
 import { useBrands } from "@/features/brands/api/useBrands";
-import { useCategories } from "@/features/categories/api/useCategories";
 import { HeroSection } from "./components/HeroSection";
 import { ProductCarouselSection } from "@/components/shared/ProductCarouselSection";
-import { ShopByShelfSection } from "./components/ShopByShelfSection";
-import { FeaturedSpotlight } from "./components/FeaturedSpotlight";
+import { BrandsStrip } from "./components/BrandsStrip";
 import { WhyChooseUsSection } from "./components/WhyChooseUsSection";
 import { CollectorPromiseSection } from "./components/CollectorPromiseSection";
 import { InstagramPlaceholder } from "./components/InstagramPlaceholder";
@@ -19,9 +17,8 @@ import { TestimonialsSection } from "./components/TestimonialsSection";
 export function HomePage() {
   const { data: settings } = useSettings();
   const { data: brands } = useBrands();
-  const { data: categories } = useCategories();
 
-  const featured = useProducts({ featured: true, limit: 4 });
+  const featured = useProducts({ featured: true, limit: 8 });
   const newArrivals = useProducts({ newArrival: true, limit: 8, sort: "newest" });
   const collectorPicks = useProducts({ hero: true, limit: 8 });
 
@@ -93,45 +90,50 @@ export function HomePage() {
 
       {isEnabled("hero") && (
         <HeroSection
-          slide={settings?.heroBanner?.[0]}
-          variant={sections?.hero?.variant}
-          highlightCard={sections?.hero?.highlightCard}
+          slides={settings?.heroBanner}
+          autoplay={sections?.hero?.autoplay ?? true}
+          autoplayInterval={sections?.hero?.autoplayInterval ?? 6}
         />
       )}
 
-      <ShopByShelfSection brands={brands} categories={categories} />
-
       {isEnabled("collectorPicks") && (
         <ProductCarouselSection
-          title="Collector picks"
-          subtitle="The shelf-worthy shortlist — chosen like it's our money."
+          title="Collector Picks"
+          subtitle="The pieces we'd add to our own shelf first."
           products={collectorPicks.data?.data}
           isLoading={collectorPicks.isLoading}
           seeAllHref={ROUTES.SHOP}
         />
       )}
 
-      {isEnabled("featuredProducts") && <FeaturedSpotlight products={featured.data?.data} isLoading={featured.isLoading} />}
+      {isEnabled("featuredProducts") && (
+        <ProductCarouselSection
+          title="Featured Products"
+          products={featured.data?.data}
+          isLoading={featured.isLoading}
+          seeAllHref={ROUTES.SHOP}
+        />
+      )}
 
+      {isEnabled("brandsStrip") && <BrandsStrip brands={brands} />}
+
+      {isEnabled("newArrivals") && (
+        <ProductCarouselSection
+          title="New Arrivals"
+          subtitle="Just landed from the latest import batch."
+          products={newArrivals.data?.data}
+          isLoading={newArrivals.isLoading}
+          seeAllHref={ROUTES.SHOP}
+        />
+      )}
+
+      {isEnabled("whyChooseUs") && <WhyChooseUsSection items={settings?.whyChooseUs} />}
       {isEnabled("collectorPromise") && (
         <CollectorPromiseSection
           title={settings?.collectorPromise?.title}
           description={settings?.collectorPromise?.description}
         />
       )}
-
-      {isEnabled("newArrivals") && (
-        <ProductCarouselSection
-          title="New arrivals"
-          subtitle="Just landed from the latest import batch."
-          products={newArrivals.data?.data}
-          isLoading={newArrivals.isLoading}
-          seeAllHref={ROUTES.SHOP}
-          topClassName="pt-6.5 md:pt-19"
-        />
-      )}
-
-      {isEnabled("whyChooseUs") && <WhyChooseUsSection items={settings?.whyChooseUs} />}
       {isEnabled("testimonials") && <TestimonialsSection testimonials={settings?.testimonials} />}
       {isEnabled("instagramFeed") && (
         <InstagramPlaceholder instagramUrl={settings?.socialLinks?.instagram} />
