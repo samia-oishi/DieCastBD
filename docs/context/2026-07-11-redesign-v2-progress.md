@@ -18,6 +18,14 @@ Plan: `~/.claude/plans/read-design-handoff-diecastbd-storefront-swirling-snail.m
 - Data updates: highlightCard → design example (Supra A80 / 2600); testimonials → design's 3 (Rafid/Tanvir/Nusrat + cities), replacing keyboard-mash test junk; collectorPromise → design's Premium Shelf copy ("Limited runs. Real metal. Gone fast.").
 - ⚠️ **Flag to user**: (1) hero text is design-default (image is admin-editable; full hero-text editability is Phase 9). (2) shop-by-shelf tiles for MINI GT + Accessories have NO images (brand.logo/category.image not set) — render empty tile bg; HW Premium tile shows its logo. (3) testimonials are design examples — user should replace with genuine reviews before launch.
 
+## Standing rules (from user feedback — apply to EVERY phase)
+- **Follow the .dc.html markup strictly** — read per-breakpoint values from the design file; never approximate/average mobile+desktop.
+- **Mobile is the priority.** Verify 390px first, always.
+- Section **subtitles are desktop-only** (hidden on mobile) — SectionHeader already does this.
+- All horizontal carousels need **click-drag** (useDragScroll) + **scroll-pl-4** (scroll-padding-left:16px) so snap doesn't pull the first card flush to x=0.
+- **Announcement bar is hidden on mobile** (hidden md:flex) — keep it that way.
+- Carousel card sizes differ mobile vs desktop (mobile 210w/172h/r18/13px title/36px add; desktop 316w/240h/r20/15px/32px).
+
 ## Backend customizability backlog (build in Phase 9 admin wiring)
 User chose "Dynamic content editable" — make genuinely changeable content admin-editable, design copy = seeded default, static brand copy stays hardcoded.
 - [ ] AnnouncementBar: extend `Settings.announcementBar` to editable **segments array** (currently single `text`+`isActive`; component hardcodes 3 design segments as default). File: `components/shared/AnnouncementBar.jsx`.
