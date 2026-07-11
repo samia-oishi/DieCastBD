@@ -4,14 +4,14 @@ import { SectionHeader } from "@/components/shared/SectionHeader";
 
 function TestimonialCard({ testimonial, className }) {
   return (
-    <div className={`rounded-[20px] border border-border bg-card p-6.5 ${className ?? ""}`}>
+    <div className={`rounded-[18px] border border-border bg-card p-4.5 md:rounded-[20px] md:p-6.5 ${className ?? ""}`}>
       <div className="flex gap-0.75 text-brand">
         {Array.from({ length: testimonial.rating ?? 5 }).map((_, i) => (
-          <Star key={i} className="size-3.75 fill-current" />
+          <Star key={i} className="size-3.25 fill-current md:size-3.75" />
         ))}
       </div>
-      <p className="mt-3.5 text-[15px] leading-[1.6] text-ink-soft">&ldquo;{testimonial.quote}&rdquo;</p>
-      <div className="mt-4 text-sm">
+      <p className="mt-2.5 text-[13px] leading-[1.55] text-ink-soft md:mt-3.5 md:text-[15px] md:leading-[1.6]">&ldquo;{testimonial.quote}&rdquo;</p>
+      <div className="mt-2.5 text-xs md:mt-4 md:text-sm">
         <span className="font-semibold text-foreground">{testimonial.name}</span>
       </div>
     </div>
@@ -26,7 +26,7 @@ export function TestimonialsSection({ testimonials }) {
   if (!testimonials?.length) return null;
 
   return (
-    <section className="pt-16">
+    <section className="pt-6.5 md:pt-19">
       <Container className="hidden md:block">
         <SectionHeader title="What collectors say" subtitle="Real orders, real shelves." />
         <div className="mt-6.5 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5">

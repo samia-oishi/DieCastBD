@@ -41,24 +41,47 @@ const BADGE_ICON = (
 // 0px gutter. 1360 content + 40px padding each side = 1440px outer bound.
 const HERO_WRAP = "mx-auto max-w-[1440px] px-4 pt-3 md:px-10 md:pt-6";
 
+// The reference forces a hard line-break between the two title fragments on
+// desktop only (mobile wraps them on one line, space-separated — its
+// narrower column makes the break unnecessary there). A real admin-entered
+// title has no second fragment to break before, so this renders as nothing
+// when `accent` is empty.
+function HeroTitle({ title, accent, italic, accentClassName, className }) {
+  return (
+    <h1 className={className}>
+      {title}
+      {accent && (
+        <>
+          {" "}
+          <br className="hidden md:inline" />
+          {italic ? <em className={`italic ${accentClassName ?? ""}`}>{accent}</em> : accent}
+        </>
+      )}
+    </h1>
+  );
+}
+
 function LimeShowroomHero({ title, titleAccent, subtitle, ctaText, ctaLink, imageUrl }) {
   return (
     <div className={HERO_WRAP}>
-      <div className="overflow-hidden rounded-3xl bg-[radial-gradient(120%_140%_at_85%_0%,#BADD4D_0%,#A8CD2F_52%,#9CC12A_100%)] p-6 md:rounded-[28px] md:p-16">
+      <div className="overflow-hidden rounded-3xl bg-[radial-gradient(120%_140%_at_85%_0%,#BADD4D_0%,#A8CD2F_52%,#9CC12A_100%)] p-5.5 md:rounded-[28px] md:p-16">
         <div className="grid items-center gap-10 md:grid-cols-2 md:gap-14">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/35 px-4 py-2 text-xs font-semibold text-[#1C2108] md:text-[12.5px]">
+            <div className="inline-flex items-center gap-1.75 rounded-full bg-white/35 px-3 py-1.5 text-[11px] font-semibold text-[#1C2108] md:gap-2 md:px-4 md:py-2 md:text-[12.5px]">
               {BADGE_ICON}
               Every piece hand-verified
             </div>
-            <h1 className="mt-3.5 font-display text-[33px] leading-[1.05] font-extrabold tracking-[-0.02em] text-ink md:mt-5.5 md:text-[clamp(44px,4.6vw,64px)] md:leading-[1.02]">
-              {title} {titleAccent && <em className="italic">{titleAccent}</em>}
-            </h1>
+            <HeroTitle
+              title={title}
+              accent={titleAccent}
+              italic
+              className="mt-3.5 font-display text-[33px] leading-[1.05] font-extrabold tracking-[-0.02em] text-ink md:mt-5.5 md:text-[clamp(44px,4.6vw,64px)] md:leading-[1.02] md:tracking-[-0.022em]"
+            />
             <p className="mt-2.5 max-w-115 text-[13.5px] leading-[1.55] text-ink/78 md:mt-5 md:text-[17px] md:leading-[1.65]">{subtitle}</p>
             <div className="mt-4 flex flex-wrap items-center gap-3.5 md:mt-7.5">
               <Link
                 to={ctaLink}
-                className="flex h-12.5 w-full items-center justify-center gap-2 rounded-full bg-ink text-[14.5px] font-semibold text-white transition-colors hover:bg-[#2A2E1C] md:h-auto md:w-auto md:px-7 md:py-3.75"
+                className="flex h-12.5 w-full items-center justify-center gap-2 rounded-full bg-ink text-[14.5px] font-semibold text-white transition-colors hover:bg-[#2A2E1C] md:h-auto md:w-auto md:px-7 md:py-3.75 md:text-[15px]"
               >
                 {ctaText}
                 <ArrowRight className="size-4" />
@@ -70,11 +93,11 @@ function LimeShowroomHero({ title, titleAccent, subtitle, ctaText, ctaLink, imag
                 New arrivals
               </Link>
             </div>
-            <div className="mt-3 text-[11px] font-medium text-ink/60 md:mt-6.5 md:text-[13px]">
+            <div className="mt-2.5 text-[11px] font-medium text-ink/60 md:mt-6.5 md:text-[13px]">
               Cash on delivery · bKash · BanglaQR — delivered nationwide
             </div>
           </div>
-          <div className="relative h-44 md:h-110">
+          <div className="relative h-42.5 md:h-110">
             {imageUrl ? (
               <img src={imageUrl} alt="" className="absolute inset-0 size-full rounded-2xl object-cover" />
             ) : (
@@ -90,22 +113,26 @@ function LimeShowroomHero({ title, titleAccent, subtitle, ctaText, ctaLink, imag
 function DarkSpotlightHero({ title, titleAccent, subtitle, ctaText, ctaLink, imageUrl }) {
   return (
     <div className={HERO_WRAP}>
-      <div className="relative overflow-hidden rounded-3xl bg-[radial-gradient(120%_120%_at_85%_0%,#2A2E1C_0%,#14160C_55%,#0B0C06_100%)] p-6 md:rounded-[28px] md:p-16">
+      <div className="relative overflow-hidden rounded-3xl bg-[radial-gradient(120%_120%_at_85%_0%,#2A2E1C_0%,#14160C_55%,#0B0C06_100%)] p-5.5 md:rounded-[28px] md:px-16 md:py-18">
         <div className="pointer-events-none absolute -top-35 right-[6%] hidden size-115 rounded-full bg-[radial-gradient(circle,rgba(168,205,47,.2)_0%,rgba(168,205,47,0)_70%)] md:block" />
         <div className="relative grid items-center gap-10 md:grid-cols-2 md:gap-14">
           <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/8 px-4 py-2 text-xs font-semibold text-brand-glow md:text-[12.5px]">
+            <div className="inline-flex items-center gap-1.75 rounded-full border border-white/14 bg-white/8 px-3 py-1.5 text-[11px] font-semibold text-brand-glow md:gap-2 md:px-4 md:py-2 md:text-[12.5px]">
               {BADGE_ICON}
               Every piece hand-verified
             </div>
-            <h1 className="mt-3.5 font-display text-[33px] leading-[1.05] font-extrabold tracking-[-0.02em] text-white md:mt-5.5 md:text-[clamp(44px,4.6vw,64px)] md:leading-[1.02]">
-              {title} {titleAccent && <em className="text-brand-glow italic">{titleAccent}</em>}
-            </h1>
+            <HeroTitle
+              title={title}
+              accent={titleAccent}
+              italic
+              accentClassName="text-brand-glow"
+              className="mt-3.5 font-display text-[33px] leading-[1.05] font-extrabold tracking-[-0.02em] text-white md:mt-5.5 md:text-[clamp(44px,4.6vw,64px)] md:leading-[1.02] md:tracking-[-0.022em]"
+            />
             <p className="mt-2.5 max-w-115 text-[13.5px] leading-[1.55] text-[#A9AC9F] md:mt-5 md:text-[17px] md:leading-[1.65]">{subtitle}</p>
             <div className="mt-4 flex flex-wrap items-center gap-3.5 md:mt-7.5">
               <Link
                 to={ctaLink}
-                className="flex h-12.5 w-full items-center justify-center gap-2 rounded-full bg-brand text-[14.5px] font-bold text-ink transition-colors hover:bg-brand-bright md:h-auto md:w-auto md:px-7 md:py-3.75"
+                className="flex h-12.5 w-full items-center justify-center gap-2 rounded-full bg-brand text-[14.5px] font-bold text-ink transition-colors hover:bg-brand-bright md:h-auto md:w-auto md:px-7 md:py-3.75 md:text-[15px]"
               >
                 {ctaText}
                 <ArrowRight className="size-4" />
@@ -117,11 +144,11 @@ function DarkSpotlightHero({ title, titleAccent, subtitle, ctaText, ctaLink, ima
                 New arrivals
               </Link>
             </div>
-            <div className="mt-3 text-[11px] font-medium text-white/55 md:mt-6.5 md:text-[13px]">
+            <div className="mt-2.5 text-[11px] font-medium text-white/55 md:mt-6.5 md:text-[13px]">
               Cash on delivery · bKash · BanglaQR — delivered nationwide
             </div>
           </div>
-          <div className="relative h-44 md:h-110">
+          <div className="relative h-42.5 md:h-110">
             {imageUrl ? (
               <img src={imageUrl} alt="" className="absolute inset-0 size-full rounded-2xl object-cover" />
             ) : (
@@ -154,9 +181,12 @@ function PhotoFullbleedHero({ title, titleAccent, subtitle, ctaText, ctaLink, im
             <span className="text-brand-glow">{BADGE_ICON}</span>
             Hand-verified authentic
           </div>
-          <h1 className="mt-3 font-display text-[30px] leading-[1.08] font-extrabold tracking-[-0.02em] text-white md:mt-4.5 md:text-[clamp(42px,4.2vw,58px)] md:leading-[1.04] md:tracking-[-0.022em]">
-            {title} {titleAccent && <em className="italic">{titleAccent}</em>}
-          </h1>
+          <HeroTitle
+            title={title}
+            accent={titleAccent}
+            italic={false}
+            className="mt-3 font-display text-[30px] leading-[1.08] font-extrabold tracking-[-0.02em] text-white md:mt-4.5 md:text-[clamp(42px,4.2vw,58px)] md:leading-[1.04] md:tracking-[-0.022em]"
+          />
           <p className="mt-2 max-w-115 text-[13px] leading-[1.55] text-white/85 md:mt-3.5 md:text-[16.5px] md:leading-[1.6]">{subtitle}</p>
           <div className="mt-3.5 flex flex-wrap items-center gap-3.5 md:mt-6">
             <Link
@@ -188,19 +218,20 @@ const VARIANT_COMPONENT = {
 /** Single static hero (no carousel — the multi-slide autoplay hero was
  * dropped per explicit user decision, since the design reference shows one
  * fixed hero, not a rotating banner). Three interchangeable visual styles
- * exist per the reference; `variant` picks one, default photo-fullbleed per
- * AI_INSTRUCTIONS Phase 4. Content comes from the first configured
- * `settings.heroBanner` slide (title/subtitle/CTA/image), falling back to
- * the design's own copy per-field so an unconfigured store still shows a
- * real hero rather than a blank one. */
+ * exist per the reference; `variant` is admin-selectable
+ * (Settings → Homepage Sections → Hero style), default photo-fullbleed.
+ * Content comes from the first configured `settings.heroBanner` slide
+ * (title/subtitle/CTA/image), falling back to the design's own copy
+ * per-field so an unconfigured store still shows a real hero. */
 export function HeroSection({ slide, variant = "photo-fullbleed" }) {
-  const copy = DEFAULT_COPY[variant];
-  const Variant = VARIANT_COMPONENT[variant];
+  const copy = DEFAULT_COPY[variant] ?? DEFAULT_COPY["photo-fullbleed"];
+  const Variant = VARIANT_COMPONENT[variant] ?? PhotoFullbleedHero;
 
-  // The design's title/titleAccent split (plain text + italic emphasis on
-  // the last few words) only makes sense for the design's own default copy —
-  // an admin-entered title is one free-text string with nowhere to carry a
-  // second "accent" fragment, so it renders as-is with no italic split.
+  // The design's title/titleAccent split (plain text + a desktop-only line
+  // break, italicized on two of the three variants) only makes sense for the
+  // design's own default copy — an admin-entered title is one free-text
+  // string with nowhere to carry a second "accent" fragment, so it renders
+  // as-is with no split.
   const usingDefaultTitle = !slide?.title;
 
   return (

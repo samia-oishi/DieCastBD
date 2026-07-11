@@ -17,20 +17,20 @@ export function WhyChooseUsSection({ items }) {
   if (!items?.length) return null;
 
   return (
-    <section className="pt-16">
+    <section className="pt-6.5 md:pt-19">
       <Container>
-        <div className="overflow-hidden rounded-[28px] border border-border bg-card">
+        <div className="overflow-hidden rounded-[20px] border border-border bg-card md:rounded-[28px]">
           <div className="grid grid-cols-[repeat(auto-fit,minmax(195px,1fr))] -m-px">
             {items.map((item) => {
               const Icon = ICON_MAP[item.icon] ?? Sparkles;
               return (
-                <div key={item.title} className="flex items-center gap-3.5 border-t border-l border-line-soft p-5.5 sm:gap-4 sm:p-7">
-                  <div className="flex size-9.5 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-deep sm:size-11">
-                    <Icon className="size-4 sm:size-4.75" strokeWidth={1.8} />
+                <div key={item.title} className="flex items-center gap-3 border-t border-l border-line-soft p-4 md:gap-3.5 md:p-7">
+                  <div className="flex size-9.5 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-deep md:size-11">
+                    <Icon className="size-4 md:size-4.75" strokeWidth={1.8} />
                   </div>
                   <div>
-                    <div className="text-[13px] font-bold text-foreground sm:text-[14.5px]">{item.title}</div>
-                    {item.description && <div className="mt-0.5 text-[11.5px] text-muted-foreground sm:text-[12.5px]">{item.description}</div>}
+                    <div className="text-[13px] font-bold text-foreground md:text-[14.5px]">{item.title}</div>
+                    {item.description && <div className="mt-0.5 text-[11.5px] text-muted-foreground md:text-[12.5px]">{item.description}</div>}
                   </div>
                 </div>
               );

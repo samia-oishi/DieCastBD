@@ -30,7 +30,15 @@ function CarouselSkeleton() {
  * `scrollPrev`/`scrollNext` (Embla's actual API for this) is the correct
  * equivalent: it advances by one full slide group, which is the closest
  * `slidesToScroll` can honestly get to "most of a screen" here. */
-export function ProductCarouselSection({ title, subtitle, products, isLoading, seeAllHref, seeAllLabel = "See All" }) {
+export function ProductCarouselSection({
+  title,
+  subtitle,
+  products,
+  isLoading,
+  seeAllHref,
+  seeAllLabel = "See All",
+  topClassName = "pt-5 md:pt-19",
+}) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", dragFree: true, containScroll: "trimSnaps" });
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
@@ -50,7 +58,7 @@ export function ProductCarouselSection({ title, subtitle, products, isLoading, s
   if (!isLoading && (!products || products.length === 0)) return null;
 
   return (
-    <section className="py-16">
+    <section className={topClassName}>
       <Container>
         <SectionHeader
           title={title}

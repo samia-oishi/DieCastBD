@@ -8,7 +8,7 @@ function ShelfTile({ label, href, imageUrl, imageFit = "cover" }) {
   return (
     <Link
       to={href}
-      className="group relative block h-52.5 w-52.5 shrink-0 overflow-hidden rounded-3xl bg-[#F1F2EA] transition-[box-shadow,transform] duration-[180ms] ease-out hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(16,18,8,.12)] md:h-95 md:w-full"
+      className="group relative block h-52.5 w-52.5 shrink-0 overflow-hidden rounded-[22px] bg-[#F1F2EA] transition-[box-shadow,transform] duration-180 ease-out hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(16,18,8,.12)] md:h-95 md:w-full md:rounded-[28px]"
     >
       {imageUrl ? (
         <img
@@ -25,7 +25,7 @@ function ShelfTile({ label, href, imageUrl, imageFit = "cover" }) {
           <CarFront className="size-12 text-muted-foreground/30" strokeWidth={1.25} />
         </div>
       )}
-      <span className="absolute bottom-3 left-3 rounded-full bg-white px-3.5 py-2 text-[13px] font-bold text-foreground shadow-[0_4px_14px_rgba(16,18,8,.14)] md:bottom-4.5 md:left-4.5 md:px-5 md:py-2.75 md:text-[15px]">
+      <span className="absolute bottom-3 left-3 rounded-full bg-white px-3.5 py-2 text-xs font-extrabold text-foreground shadow-[0_4px_14px_rgba(16,18,8,.14)] md:bottom-4.5 md:left-4.5 md:px-5 md:py-2.75 md:text-[15px] md:font-bold">
         {label}
       </span>
       <span className="absolute right-2.5 bottom-2.5 flex size-8.5 items-center justify-center rounded-full bg-brand text-ink shadow-[0_4px_14px_rgba(16,18,8,.16)] md:right-4 md:bottom-4 md:size-10.5">
@@ -67,7 +67,7 @@ export function ShopByShelfSection({ brands, categories }) {
   if (!tiles.length) return null;
 
   return (
-    <section className="pt-16">
+    <section className="pt-6 md:pt-19">
       <Container className="hidden md:block">
         <SectionHeader title="Shop by shelf" subtitle="Two brands we trust — and the gear that keeps them mint." />
         <div className="mt-6.5 grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">

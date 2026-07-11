@@ -154,7 +154,7 @@ export function SettingsPage() {
       freeShippingThreshold: 0,
       bkashConfig: { merchantNumber: "", qrImage: null },
       homepageSections: {
-        hero: { enabled: true, autoplay: true, autoplayInterval: 6 },
+        hero: { enabled: true, variant: "photo-fullbleed" },
         collectorPicks: { enabled: true },
         featuredProducts: { enabled: true },
         brandsStrip: { enabled: true },
@@ -265,7 +265,7 @@ export function SettingsPage() {
         </FieldGroup>
       </SectionCard>
 
-      <SectionCard title="Homepage Sections" description="Show or hide sections on the homepage, and control the hero carousel's autoplay.">
+      <SectionCard title="Homepage Sections" description="Show or hide sections on the homepage, and choose the hero's visual style.">
         <div className="flex flex-col gap-4">
           <div className="rounded-lg border border-border p-4">
             <p className="mb-3 text-sm font-medium">Hero Banner</p>
@@ -280,19 +280,24 @@ export function SettingsPage() {
                   </label>
                 )}
               />
-              <Controller
-                control={control}
-                name="homepageSections.hero.autoplay"
-                render={({ field }) => (
-                  <label className="flex items-center justify-between gap-3 text-sm">
-                    Autoplay
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </label>
-                )}
-              />
               <Field>
-                <FieldLabel>Autoplay interval (seconds)</FieldLabel>
-                <Input type="number" min={1} max={60} className="max-w-xs" {...register("homepageSections.hero.autoplayInterval")} />
+                <FieldLabel>Hero style</FieldLabel>
+                <Controller
+                  control={control}
+                  name="homepageSections.hero.variant"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="max-w-xs">
+                        <SelectValue placeholder="Select hero style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="photo-fullbleed">Photo full-bleed</SelectItem>
+                        <SelectItem value="lime-showroom">Lime showroom</SelectItem>
+                        <SelectItem value="dark-spotlight">Dark spotlight</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </Field>
             </div>
           </div>

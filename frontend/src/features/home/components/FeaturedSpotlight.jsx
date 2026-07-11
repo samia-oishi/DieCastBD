@@ -115,7 +115,7 @@ export function FeaturedSpotlight({ products, isLoading }) {
   const [spotlight, ...rows] = products ?? [];
 
   return (
-    <section className="py-16">
+    <section className="pt-6 md:pt-19">
       <Container>
         <SectionHeader title="Featured products" subtitle="This week's spotlight — one centerpiece, three strong seconds." seeAllHref={ROUTES.SHOP} />
         {isLoading ? (

@@ -91,7 +91,9 @@ export function HomePage() {
         <script type="application/ld+json">{JSON.stringify(websiteJsonLd)}</script>
       </Helmet>
 
-      {isEnabled("hero") && <HeroSection slide={settings?.heroBanner?.[0]} />}
+      {isEnabled("hero") && (
+        <HeroSection slide={settings?.heroBanner?.[0]} variant={sections?.hero?.variant} />
+      )}
 
       <ShopByShelfSection brands={brands} categories={categories} />
 
@@ -121,6 +123,7 @@ export function HomePage() {
           products={newArrivals.data?.data}
           isLoading={newArrivals.isLoading}
           seeAllHref={ROUTES.SHOP}
+          topClassName="pt-6.5 md:pt-19"
         />
       )}
 

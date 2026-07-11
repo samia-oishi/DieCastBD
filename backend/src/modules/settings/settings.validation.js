@@ -60,6 +60,7 @@ const homepageSections = z.object({
       enabled: z.coerce.boolean().optional(),
       autoplay: z.coerce.boolean().optional(),
       autoplayInterval: z.coerce.number().min(1).max(60).optional(),
+      variant: z.enum(["lime-showroom", "dark-spotlight", "photo-fullbleed"]).optional(),
     })
     .optional(),
   collectorPicks: sectionToggle.optional(),

@@ -115,6 +115,15 @@ const settingsSchema = new mongoose.Schema(
         enabled: { type: Boolean, default: true },
         autoplay: { type: Boolean, default: true },
         autoplayInterval: { type: Number, default: 6, min: 1, max: 60 },
+        // Which of the storefront redesign's 3 hero visual styles to render
+        // (design_handoff_diecastbd_storefront) — admin-selectable per the
+        // implementation instructions, not a per-slide field, since it's a
+        // whole-hero visual choice, not content.
+        variant: {
+          type: String,
+          enum: ["lime-showroom", "dark-spotlight", "photo-fullbleed"],
+          default: "photo-fullbleed",
+        },
       },
       collectorPicks: { enabled: { type: Boolean, default: true } },
       featuredProducts: { enabled: { type: Boolean, default: true } },

@@ -89,7 +89,7 @@ export const settingsSeed = {
   // Every section enabled, matching the homepage exactly as it renders today —
   // this seed/migration must not make anything disappear on deploy.
   homepageSections: {
-    hero: { enabled: true, autoplay: true, autoplayInterval: 6 },
+    hero: { enabled: true, autoplay: true, autoplayInterval: 6, variant: "photo-fullbleed" },
     collectorPicks: { enabled: true },
     featuredProducts: { enabled: true },
     brandsStrip: { enabled: true },
