@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
-import { History, PackagePlus } from "lucide-react";
+import { History, PackagePlus, BellRing } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Pagination } from "@/components/shared/Pagination";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useAdminInventory, useProductInventoryLogs, useAdjustStockMutation } from "./api/useAdminInventory";
+import { useAdminInventory, useProductInventoryLogs, useProductRestockAlerts, useAdjustStockMutation } from "./api/useAdminInventory";
 
 function formatDateTime(dateString) {
   return new Date(dateString).toLocaleString("en-US", {
@@ -136,6 +136,33 @@ function HistoryDialog({ product, onClose }) {
   );
 }
 
+function RestockAlertsDialog({ product, onClose }) {
+  const { data: alerts, isLoading } = useProductRestockAlerts(product.id);
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Restock alerts — {product.title}</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">Customers waiting to hear when this is back in stock.</p>
+        <div className="flex max-h-96 flex-col gap-2 overflow-y-auto text-sm">
+          {isLoading && <p className="text-muted-foreground">Loading...</p>}
+          {!isLoading && alerts?.length === 0 && <p className="text-muted-foreground">No one's waiting yet.</p>}
+          {alerts?.map((alert) => (
+            <div key={alert._id} className="flex items-center justify-between border-b border-border pb-2">
+              <span className="text-foreground">{alert.contact}</span>
+              <span className="text-xs text-muted-foreground">
+                {alert.notifiedAt ? `Notified ${formatDateTime(alert.notifiedAt)}` : `Waiting since ${formatDateTime(alert.createdAt)}`}
+              </span>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function InventoryPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -143,6 +170,7 @@ export function InventoryPage() {
   const debouncedSearch = useDebounce(search, 400);
   const [adjustingProduct, setAdjustingProduct] = useState(null);
   const [historyProduct, setHistoryProduct] = useState(null);
+  const [alertsProduct, setAlertsProduct] = useState(null);
 
   const { data, isLoading } = useAdminInventory({
     page,
@@ -189,20 +217,21 @@ export function InventoryPage() {
             <TableHead>Stock</TableHead>
             <TableHead>Reserved</TableHead>
             <TableHead>Available</TableHead>
+            <TableHead>Alerts</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground">
+              <TableCell colSpan={8} className="text-center text-muted-foreground">
                 Loading...
               </TableCell>
             </TableRow>
           )}
           {!isLoading && items.length === 0 && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground">
+              <TableCell colSpan={8} className="text-center text-muted-foreground">
                 No products found.
               </TableCell>
             </TableRow>
@@ -228,6 +257,15 @@ export function InventoryPage() {
                   </Badge>
                 )}
               </TableCell>
+              <TableCell>
+                {product.restockAlertCount > 0 ? (
+                  <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2" onClick={() => setAlertsProduct(product)}>
+                    <BellRing className="size-3.5" /> {product.restockAlertCount}
+                  </Button>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
                   <Button variant="ghost" size="icon-sm" aria-label="Stock history" onClick={() => setHistoryProduct(product)}>
@@ -251,6 +289,7 @@ export function InventoryPage() {
 
       {adjustingProduct && <AdjustStockDialog product={adjustingProduct} onClose={() => setAdjustingProduct(null)} />}
       {historyProduct && <HistoryDialog product={historyProduct} onClose={() => setHistoryProduct(null)} />}
+      {alertsProduct && <RestockAlertsDialog product={alertsProduct} onClose={() => setAlertsProduct(null)} />}
     </div>
   );
 }

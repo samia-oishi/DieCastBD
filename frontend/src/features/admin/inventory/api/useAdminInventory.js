@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAdminInventory, getProductInventoryLogs, adjustStock } from "./inventoryApi";
+import { listAdminInventory, getProductInventoryLogs, adjustStock, getProductRestockAlerts } from "./inventoryApi";
 
 export function useAdminInventory(params) {
   return useQuery({
@@ -13,6 +13,14 @@ export function useProductInventoryLogs(productId) {
   return useQuery({
     queryKey: ["admin", "inventory", "logs", productId],
     queryFn: () => getProductInventoryLogs(productId),
+    enabled: !!productId,
+  });
+}
+
+export function useProductRestockAlerts(productId) {
+  return useQuery({
+    queryKey: ["admin", "inventory", "restock-alerts", productId],
+    queryFn: () => getProductRestockAlerts(productId),
     enabled: !!productId,
   });
 }
