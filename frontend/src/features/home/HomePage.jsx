@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 
 import { SITE_URL, canonical } from "@/lib/siteUrl";
+import { ROUTES } from "@/constants/routes";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { useProducts } from "@/features/products/api/useProducts";
 import { useBrands } from "@/features/brands/api/useBrands";
@@ -101,6 +102,7 @@ export function HomePage() {
           subtitle="The pieces we'd add to our own shelf first."
           products={collectorPicks.data?.data}
           isLoading={collectorPicks.isLoading}
+          seeAllHref={ROUTES.SHOP}
         />
       )}
 
@@ -109,6 +111,7 @@ export function HomePage() {
           title="Featured Products"
           products={featured.data?.data}
           isLoading={featured.isLoading}
+          seeAllHref={ROUTES.SHOP}
         />
       )}
 
@@ -120,6 +123,7 @@ export function HomePage() {
           subtitle="Just landed from the latest import batch."
           products={newArrivals.data?.data}
           isLoading={newArrivals.isLoading}
+          seeAllHref={ROUTES.SHOP}
         />
       )}
 

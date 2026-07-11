@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -21,7 +22,7 @@ function CarouselSkeleton() {
   );
 }
 
-export function ProductCarouselSection({ title, subtitle, products, isLoading }) {
+export function ProductCarouselSection({ title, subtitle, products, isLoading, seeAllHref, seeAllLabel = "See All" }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", dragFree: true });
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
@@ -48,25 +49,32 @@ export function ProductCarouselSection({ title, subtitle, products, isLoading })
             <h2 className="font-heading text-2xl text-foreground sm:text-3xl">{title}</h2>
             {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
           </div>
-          <div className="hidden gap-2 sm:flex">
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label="Previous products"
-              disabled={!canScrollPrev}
-              onClick={() => emblaApi?.scrollPrev()}
-            >
-              <ChevronLeft />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label="Next products"
-              disabled={!canScrollNext}
-              onClick={() => emblaApi?.scrollNext()}
-            >
-              <ChevronRight />
-            </Button>
+          <div className="flex items-center gap-4">
+            {seeAllHref && (
+              <Link to={seeAllHref} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                {seeAllLabel}
+              </Link>
+            )}
+            <div className="hidden gap-2 sm:flex">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label="Previous products"
+                disabled={!canScrollPrev}
+                onClick={() => emblaApi?.scrollPrev()}
+              >
+                <ChevronLeft />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label="Next products"
+                disabled={!canScrollNext}
+                onClick={() => emblaApi?.scrollNext()}
+              >
+                <ChevronRight />
+              </Button>
+            </div>
           </div>
         </div>
 

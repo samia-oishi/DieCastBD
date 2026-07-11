@@ -407,3 +407,19 @@ Both production builds clean (Tiptap's ~427KB/~134KB-gzipped bundle is isolated 
 **Verified via curl against the real dev database:** confirmed the live migration round-tripped correctly (`GET /settings` before/after matching exactly what was hardcoded); PATCHed a second header link in, confirmed it round-tripped; reverted back to the single real "Shop" link afterward — this is real production Settings data, not disposable test data.
 
 Both production builds clean, all 35 backend tests and 11 frontend tests still green.
+
+---
+
+## System 11 — Homepage "See All" CTA
+
+The smallest, lowest-risk system in the whole batch — zero backend, DB, or API changes.
+
+**Frontend.** `ProductCarouselSection.jsx` (the single shared component behind all 3 homepage product carousels *and* the PDP's "Related Products"/"Recently Viewed") gained two optional props: `seeAllHref` and `seeAllLabel` (default `"See All"`). When `seeAllHref` is provided, a plain text link renders next to the existing prev/next carousel buttons; when it's not, nothing changes — every other consumer of this component is unaffected. Wired `seeAllHref={ROUTES.SHOP}` into `HomePage.jsx`'s three product sections (Collector Picks, Featured Products, New Arrivals), all pointing at the plain unfiltered `/shop` — the literal reading of the requirement ("navigate to the main Shop/Store page"), which the architecture review had flagged as the default absent a stated preference for per-section filtered deep-links.
+
+Both production builds clean, all 35 backend tests and 11 frontend tests still green (no backend changes to test — build/test run was a regression check, not new coverage).
+
+---
+
+## Post-launch feature systems: all 11 shipped
+
+Every system from the original architecture review is now built, verified, and documented, one at a time as approved: Guest Checkout → Shipping Zones → Buy Now → Manual bKash → Sale Badge + Cost/Profit → Homepage Section Toggles → Order Management (unrestricted status + symmetric stock) → Dashboard Analytics → CMS Pages → Header/Footer Management → Homepage "See All". Along the way, two real pre-existing bugs from before this batch started were found and fixed: hero slide images silently never rendering (Phase 4-era gap), and a phantom `reservedStock` hold left by a real refund processed before System 7's stock-state-machine fix existed. Two things remain open, deliberately not part of this batch: real legal copy for the 4 new CMS pages (seeded empty, waiting on the user), and the deferred live bKash gateway integration (still COD + manual "Send Money" bKash for v1.0).
