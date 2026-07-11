@@ -158,10 +158,11 @@ const APPBAR_CIRCLE = "flex size-[38px] items-center justify-center rounded-full
 function MobileAppBar({ cartCount, onCartClick }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  // Product-detail routes get a back-button app bar (back · logo · wishlist · cart)
-  // per the design; the cart gets a titled back bar; every other route gets the
-  // plain logo · cart bar.
-  const isDetail = !!matchPath({ path: ROUTES.PRODUCT, end: true }, pathname);
+  // Deeper/detail routes (PDP, order detail, My orders, Wishlist) get a
+  // back-button app bar (back · logo · wishlist · cart); the cart gets a titled
+  // back bar; every other route gets the plain logo · cart bar.
+  const BACK_BAR = [ROUTES.PRODUCT, ROUTES.ORDERS, "/orders/:orderNumber", ROUTES.WISHLIST];
+  const isDetail = BACK_BAR.some((path) => !!matchPath({ path, end: true }, pathname));
   const isCart = !!matchPath({ path: ROUTES.CART, end: true }, pathname);
 
   if (isCart) {

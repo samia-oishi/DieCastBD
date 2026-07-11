@@ -10,7 +10,7 @@ import { formatTaka } from "@/lib/currency";
 import { ROUTES } from "@/constants/routes";
 import { Seo } from "@/components/shared/Seo";
 import { StatusChip } from "@/components/shared/StatusChip";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ResponsiveModal } from "@/components/shared/ResponsiveModal";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useCurrentUser, useLogoutMutation } from "@/features/auth/api/useAuth";
 import { useUpdateProfileMutation, useDeactivateAccountMutation } from "./api/useAccount";
@@ -61,29 +61,26 @@ function EditProfileDialog({ open, onOpenChange, user }) {
     });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-[20px] p-6 sm:max-w-md">
-        <DialogTitle className="font-display text-lg font-bold text-ink">Account details</DialogTitle>
-        <div className="mt-4 flex flex-col gap-4">
-          <div>
-            <div className="mb-[7px] text-[12.5px] font-semibold text-ink">Full name</div>
-            <input {...register("name")} className={inputCls} />
-            {errors.name && <p className="mt-1.5 text-xs text-danger">{errors.name.message}</p>}
-          </div>
-          <div>
-            <div className="mb-[7px] text-[12.5px] font-semibold text-ink">Phone</div>
-            <input {...register("phone")} inputMode="numeric" className={inputCls} />
-            {errors.phone && <p className="mt-1.5 text-xs text-danger">{errors.phone.message}</p>}
-          </div>
-          <div className="mt-1 flex justify-end gap-1">
-            <button type="button" onClick={() => onOpenChange(false)} className="rounded-full px-5 py-2.5 text-[13.5px] font-semibold text-muted-foreground hover:text-ink">Cancel</button>
-            <button type="button" onClick={handleSubmit(onSubmit)} disabled={mutation.isPending} className="rounded-full bg-brand px-5 py-2.5 text-[13.5px] font-bold text-ink transition-colors hover:bg-brand-bright disabled:opacity-60">
-              {mutation.isPending ? "Saving…" : "Save changes"}
-            </button>
-          </div>
+    <ResponsiveModal open={open} onOpenChange={onOpenChange} title="Account details">
+      <div className="flex flex-col gap-4">
+        <div>
+          <div className="mb-[7px] text-[12.5px] font-semibold text-ink">Full name</div>
+          <input {...register("name")} className={inputCls} />
+          {errors.name && <p className="mt-1.5 text-xs text-danger">{errors.name.message}</p>}
         </div>
-      </DialogContent>
-    </Dialog>
+        <div>
+          <div className="mb-[7px] text-[12.5px] font-semibold text-ink">Phone</div>
+          <input {...register("phone")} inputMode="numeric" className={inputCls} />
+          {errors.phone && <p className="mt-1.5 text-xs text-danger">{errors.phone.message}</p>}
+        </div>
+        <div className="mt-1 flex justify-end gap-1">
+          <button type="button" onClick={() => onOpenChange(false)} className="rounded-full px-5 py-2.5 text-[13.5px] font-semibold text-muted-foreground hover:text-ink">Cancel</button>
+          <button type="button" onClick={handleSubmit(onSubmit)} disabled={mutation.isPending} className="rounded-full bg-brand px-5 py-2.5 text-[13.5px] font-bold text-ink transition-colors hover:bg-brand-bright disabled:opacity-60">
+            {mutation.isPending ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      </div>
+    </ResponsiveModal>
   );
 }
 
@@ -103,18 +100,15 @@ function AddressDialog({ open, onOpenChange, editing }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-[20px] p-6 sm:max-w-lg">
-        <DialogTitle className="mb-4 font-display text-lg font-bold text-ink">{isEdit ? "Edit address" : "Add address"}</DialogTitle>
-        <AddressForm
-          onSubmit={onSubmit}
-          isSubmitting={mutation.isPending}
-          onCancel={() => onOpenChange(false)}
-          defaultValues={editing ?? undefined}
-          submitLabel={isEdit ? "Save changes" : "Save address"}
-        />
-      </DialogContent>
-    </Dialog>
+    <ResponsiveModal open={open} onOpenChange={onOpenChange} title={isEdit ? "Edit address" : "Add address"}>
+      <AddressForm
+        onSubmit={onSubmit}
+        isSubmitting={mutation.isPending}
+        onCancel={() => onOpenChange(false)}
+        defaultValues={editing ?? undefined}
+        submitLabel={isEdit ? "Save changes" : "Save address"}
+      />
+    </ResponsiveModal>
   );
 }
 
