@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/shared/SiteFooter";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { CartDrawer } from "@/features/cart/components/CartDrawer";
+import { CheckoutHeader } from "@/features/checkout/components/CheckoutHeader";
 import { ROUTES } from "@/constants/routes";
 
 // Landing / Shop / PDP get the full "big" footer; every other route gets the slim
@@ -27,6 +28,9 @@ export function PublicLayout() {
 
   const footerVariant = matchesAny(BIG_FOOTER_ROUTES, pathname) ? "big" : "slim";
   const showBottomNav = !matchesAny(NO_BOTTOM_NAV_ROUTES, pathname);
+  // Checkout swaps the storefront nav for its own minimal header (logo · progress
+  // stepper · auth actions) per the design.
+  const isCheckout = !!matchPath({ path: ROUTES.CHECKOUT, end: true }, pathname);
   // The big footer clears the floating bottom nav itself (its own bottom padding).
   // Only slim-footer pages (footer hidden on mobile) need main to reserve nav space.
   const needsNavClearance = showBottomNav && footerVariant === "slim";
@@ -35,7 +39,7 @@ export function PublicLayout() {
     <div className="flex min-h-svh flex-col bg-paper text-ink">
       <ScrollToTop />
       <AnnouncementBar />
-      <SiteHeader onCartClick={() => setCartOpen(true)} />
+      {isCheckout ? <CheckoutHeader /> : <SiteHeader onCartClick={() => setCartOpen(true)} />}
       <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
 
       <main className={needsNavClearance ? "flex-1 pb-24 md:pb-0" : "flex-1"}>

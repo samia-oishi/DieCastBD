@@ -1,16 +1,21 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router";
+import { LogOut } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError, FieldGroup, FieldDescription } from "@/components/ui/field";
-import { useCurrentUser } from "@/features/auth/api/useAuth";
+import { ROUTES } from "@/constants/routes";
+import { useCurrentUser, useLogoutMutation } from "@/features/auth/api/useAuth";
 import { updateProfileSchema } from "../schemas/accountSchemas";
 import { useUpdateProfileMutation, useDeactivateAccountMutation } from "../api/useAccount";
 
 export function ProfileForm() {
   const { data: user } = useCurrentUser();
+  const navigate = useNavigate();
+  const logoutMutation = useLogoutMutation();
 
   const {
     register,
@@ -30,6 +35,8 @@ export function ProfileForm() {
       onError: () => toast.error("Could not update profile"),
     });
   };
+
+  const onSignOut = () => logoutMutation.mutate(undefined, { onSuccess: () => navigate(ROUTES.HOME) });
 
   const onDeactivate = () => {
     if (!window.confirm("Deactivate your account? You'll be signed out immediately.")) return;
@@ -68,6 +75,11 @@ export function ProfileForm() {
           </Field>
         </FieldGroup>
       </form>
+
+      <Button type="button" variant="outline" onClick={onSignOut} disabled={logoutMutation.isPending} className="gap-2">
+        <LogOut size={16} strokeWidth={1.9} />
+        {logoutMutation.isPending ? "Signing out..." : "Sign out"}
+      </Button>
 
       <div className="border-t border-border pt-6">
         <FieldDescription className="mb-3">

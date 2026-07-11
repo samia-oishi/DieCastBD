@@ -35,6 +35,11 @@ The **frontend display** effective-price still trips on a stray `salePrice: 0`:
 - Frontend tests 17/17, backend tests 35/35, frontend build clean (~480KB), lint warnings-only (removed 2 I introduced).
 - Screenshots: `frontend/qa/phase7b-checkout/built-390.png` (clean, ৳2,560), `built-1440.png`, `confirmation-1440.png`.
 
+## Post-review fixes (user feedback after 7b)
+- **Dedicated checkout header** (`features/checkout/components/CheckoutHeader.jsx`) replaces the storefront nav on `/checkout`, matching the design exactly: desktop = logo · centered progress stepper · auth actions (guest: Sign in + Create account lime pill; user: name + Sign out pill); mobile = back button + "Checkout" title app bar. Wired in `PublicLayout` via `isCheckout` (renders CheckoutHeader instead of SiteHeader). CheckoutPage body now shows the stepper mobile-only (centered) and the H1/subtitle desktop-only (mobile title lives in the app bar).
+- **User dropdown in SiteHeader** (`UserMenu`): signed-in user's name (ink pill + chevron) opens a menu → My account, My orders, Wishlist, **Admin dashboard (staff/admin only)**, Sign out (red). Uses `useLogoutMutation`. Verified: admin sees the dashboard link, customer does not.
+- **Sign out is now reachable** from: the header dropdown (desktop), the checkout header (desktop), and the Account page (`ProfileForm` got a Sign out button — mobile users reach it via the bottom-nav Account tab). Previously sign-out existed nowhere in the UI.
+
 ## Next: Phase 8a — Order Placed + My Orders + Order Detail
 Note: the current `OrderConfirmationPage` already renders correctly (green check, order#, StatusChip, tracker, items, address, summary, CTAs) but is still OLD styling — Phase 8a restyles it to the design + swaps DaisyUI `OrderStatusStepper` → custom `OrderTracker` (migrate the stepper test).
 

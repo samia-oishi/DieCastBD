@@ -126,9 +126,11 @@ export function CheckoutPage() {
       <Seo title="Checkout" />
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mx-auto w-full max-w-[1160px] px-4 pb-28 pt-5 md:px-10 md:pb-10 md:pt-10">
-        <CheckoutSteps className="mb-5 md:mb-6" />
-        <h1 className="font-display text-[26px] font-extrabold tracking-[-0.02em] text-ink md:text-[34px]">Checkout</h1>
-        <p className="mt-2 text-[13.5px] text-muted-foreground md:text-[14.5px]">Almost there — delivery details, then pick how you pay.</p>
+        {/* Mobile progress row — the desktop stepper lives in CheckoutHeader */}
+        <CheckoutSteps className="justify-center text-[11.5px] md:hidden" />
+        {/* Title — desktop only; on mobile it sits in the app bar */}
+        <h1 className="hidden font-display text-[34px] font-extrabold tracking-[-0.02em] text-ink md:block">Checkout</h1>
+        <p className="mt-2 hidden text-[14.5px] text-muted-foreground md:block">Almost there — delivery details, then pick how you pay.</p>
 
         {/* Mobile: order summary on top */}
         <div className="mt-5 md:hidden">
