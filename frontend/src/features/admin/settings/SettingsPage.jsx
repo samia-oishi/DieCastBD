@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Plus, Trash2, ImageUp } from "lucide-react";
@@ -95,13 +95,13 @@ function SectionToggleRow({ control, name, label }) {
   );
 }
 
-function BkashQrImage({ control }) {
+function QrImageField({ control, name }) {
   const uploadMutation = useUploadSettingsImageMutation();
 
   return (
     <Controller
       control={control}
-      name="bkashConfig.qrImage"
+      name={name}
       render={({ field }) => (
         <div className="flex items-center gap-3">
           {field.value?.url ? (
@@ -113,7 +113,7 @@ function BkashQrImage({ control }) {
           )}
           <Button variant="outline" size="sm" asChild disabled={uploadMutation.isPending}>
             <label className="cursor-pointer">
-              <ImageUp /> {uploadMutation.isPending ? "Uploading..." : "Upload QR"}
+              <ImageUp /> {uploadMutation.isPending ? "Uploading…" : "Upload QR"}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp,image/avif"
@@ -141,20 +141,28 @@ export function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const updateMutation = useUpdateSettingsMutation();
 
-  const { register, control, handleSubmit, reset } = useForm({
+  const { register, control, handleSubmit } = useForm({
+    values: settings,
     defaultValues: {
       heroBanner: [],
       announcementBar: { text: "", isActive: false },
       whyChooseUs: [],
       collectorPromise: { title: "", description: "" },
       testimonials: [],
-      socialLinks: { facebook: "", instagram: "", whatsapp: "" },
+      socialLinks: { facebook: "", instagram: "", whatsapp: "", youtube: "" },
       contactInfo: { email: "", phone: "", address: "" },
       shippingZones: [],
       freeShippingThreshold: 0,
       bkashConfig: { merchantNumber: "", qrImage: null },
+      banglaQrConfig: { accountInfo: "", qrImage: null },
       homepageSections: {
-        hero: { enabled: true, autoplay: true, autoplayInterval: 6 },
+        hero: {
+          enabled: true,
+          autoplay: true,
+          autoplayInterval: 6,
+          variant: "photo-fullbleed",
+          highlightCard: { enabled: false, kicker: "", title: "", price: 0 },
+        },
         collectorPicks: { enabled: true },
         featuredProducts: { enabled: true },
         brandsStrip: { enabled: true },
@@ -178,10 +186,6 @@ export function SettingsPage() {
   const shippingZones = useFieldArray({ control, name: "shippingZones" });
   const headerLinks = useFieldArray({ control, name: "navigation.headerLinks" });
   const footerLinks = useFieldArray({ control, name: "navigation.footerLinks" });
-
-  useEffect(() => {
-    if (settings) reset(settings);
-  }, [settings, reset]);
 
   if (isLoading) return <FullPageLoader />;
 
@@ -294,6 +298,50 @@ export function SettingsPage() {
                 <FieldLabel>Autoplay interval (seconds)</FieldLabel>
                 <Input type="number" min={1} max={60} className="max-w-xs" {...register("homepageSections.hero.autoplayInterval")} />
               </Field>
+              <Field>
+                <FieldLabel>Hero style</FieldLabel>
+                <Controller
+                  control={control}
+                  name="homepageSections.hero.variant"
+                  render={({ field }) => (
+                    <Select key={field.value} value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="max-w-xs"><SelectValue placeholder="Select a hero style" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="lime-showroom">Lime showroom</SelectItem>
+                        <SelectItem value="dark-spotlight">Dark spotlight</SelectItem>
+                        <SelectItem value="photo-fullbleed">Photo full-bleed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </Field>
+
+              <div className="rounded-lg border border-border p-4">
+                <Controller
+                  control={control}
+                  name="homepageSections.hero.highlightCard.enabled"
+                  render={({ field }) => (
+                    <label className="flex items-center justify-between gap-3 text-sm">
+                      Highlight card (lime / dark hero only)
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </label>
+                  )}
+                />
+                <div className="mt-3 grid grid-cols-3 gap-3">
+                  <Field>
+                    <FieldLabel>Kicker</FieldLabel>
+                    <Input {...register("homepageSections.hero.highlightCard.kicker")} placeholder="MINI GT" />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Title</FieldLabel>
+                    <Input {...register("homepageSections.hero.highlightCard.title")} placeholder="Supra A80…" />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Price (৳)</FieldLabel>
+                    <Input type="number" {...register("homepageSections.hero.highlightCard.price")} />
+                  </Field>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -446,7 +494,7 @@ export function SettingsPage() {
 
       <SectionCard title="Social Links">
         <FieldGroup>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <Field>
               <FieldLabel>Facebook</FieldLabel>
               <Input {...register("socialLinks.facebook")} placeholder="https://facebook.com/..." />
@@ -454,6 +502,10 @@ export function SettingsPage() {
             <Field>
               <FieldLabel>Instagram</FieldLabel>
               <Input {...register("socialLinks.instagram")} placeholder="https://instagram.com/..." />
+            </Field>
+            <Field>
+              <FieldLabel>YouTube</FieldLabel>
+              <Input {...register("socialLinks.youtube")} placeholder="https://youtube.com/@..." />
             </Field>
             <Field>
               <FieldLabel>WhatsApp</FieldLabel>
@@ -531,7 +583,23 @@ export function SettingsPage() {
           </Field>
           <Field>
             <FieldLabel>Payment QR code</FieldLabel>
-            <BkashQrImage control={control} />
+            <QrImageField control={control} name="bkashConfig.qrImage" />
+          </Field>
+        </FieldGroup>
+      </SectionCard>
+
+      <SectionCard
+        title="Payment — BanglaQR"
+        description="Customers scan this QR from any bank/MFS app and enter the resulting payment reference at checkout."
+      >
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Account / merchant info</FieldLabel>
+            <Input className="max-w-xs" {...register("banglaQrConfig.accountInfo")} placeholder="e.g. DiecastBD · 01XXXXXXXXX" />
+          </Field>
+          <Field>
+            <FieldLabel>BanglaQR code</FieldLabel>
+            <QrImageField control={control} name="banglaQrConfig.qrImage" />
           </Field>
         </FieldGroup>
       </SectionCard>

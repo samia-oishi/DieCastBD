@@ -50,7 +50,7 @@ function useFooterData() {
     social: {
       facebook: social.facebook || SOCIAL_DEFAULTS.facebook,
       instagram: social.instagram || SOCIAL_DEFAULTS.instagram,
-      youtube: SOCIAL_DEFAULTS.youtube,
+      youtube: social.youtube || SOCIAL_DEFAULTS.youtube,
     },
   };
 }

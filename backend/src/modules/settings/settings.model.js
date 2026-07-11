@@ -83,6 +83,7 @@ const settingsSchema = new mongoose.Schema(
       facebook: String,
       instagram: String,
       whatsapp: String,
+      youtube: String,
     },
     contactInfo: {
       email: String,

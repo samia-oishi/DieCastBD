@@ -92,7 +92,7 @@ export const updateSettingsSchema = {
     testimonials: z.array(testimonial).optional(),
     faqs: z.array(faq).optional(),
     socialLinks: z
-      .object({ facebook: z.string().optional(), instagram: z.string().optional(), whatsapp: z.string().optional() })
+      .object({ facebook: z.string().optional(), instagram: z.string().optional(), whatsapp: z.string().optional(), youtube: z.string().optional() })
       .optional(),
     contactInfo: z
       .object({ email: z.string().optional(), phone: z.string().optional(), address: z.string().optional() })
