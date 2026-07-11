@@ -8,6 +8,12 @@ export const useCartStore = create(
     (set, get) => ({
       items: [], // { product (snapshot), qty }
 
+      // Applied coupon (client-side preview) — persisted so the Cart page's
+      // coupon carries into Checkout. { code, discount, type, value } | null.
+      coupon: null,
+      setCoupon: (coupon) => set({ coupon }),
+      clearCoupon: () => set({ coupon: null }),
+
       addItem: (product, qty = 1) => {
         const items = get().items;
         const existing = items.find((i) => i.product._id === product._id);

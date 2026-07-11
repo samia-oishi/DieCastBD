@@ -101,8 +101,22 @@ function MobileAppBar({ cartCount, onCartClick }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   // Product-detail routes get a back-button app bar (back · logo · wishlist · cart)
-  // per the design; every other route gets the plain logo · cart bar.
+  // per the design; the cart gets a titled back bar; every other route gets the
+  // plain logo · cart bar.
   const isDetail = !!matchPath({ path: ROUTES.PRODUCT, end: true }, pathname);
+  const isCart = !!matchPath({ path: ROUTES.CART, end: true }, pathname);
+
+  if (isCart) {
+    return (
+      <header className={cn("sticky top-0 z-50 flex items-center justify-between border-b border-[rgba(231,232,224,0.6)] px-4 py-3 md:hidden", FROST)}>
+        <button type="button" onClick={() => navigate(-1)} aria-label="Back" className={APPBAR_CIRCLE}>
+          <ArrowLeft size={16} strokeWidth={2} />
+        </button>
+        <span className="font-display text-[17px] font-bold text-ink">Your cart{cartCount ? ` (${cartCount})` : ""}</span>
+        <div className="w-[38px]" />
+      </header>
+    );
+  }
 
   return (
     <header className={cn("sticky top-0 z-50 flex items-center justify-between border-b border-[rgba(231,232,224,0.6)] px-4 pb-3 pt-3 md:hidden", FROST)}>

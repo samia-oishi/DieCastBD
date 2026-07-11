@@ -1,61 +1,56 @@
 import { Link } from "react-router";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingBag, ArrowRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ROUTES } from "@/constants/routes";
 import { formatTaka } from "@/lib/currency";
 import { useCart } from "../api/useCart";
 import { CartLineItem } from "./CartLineItem";
 
-const formatPrice = formatTaka;
-
-// Purely controlled sheet — SiteHeader (desktop) and the mobile app bar own the
-// trigger buttons, so the drawer no longer renders its own.
+// Purely controlled sheet — SiteHeader / mobile app bar own the trigger buttons.
 export function CartDrawer({ open, onOpenChange }) {
   const { items, subtotal, itemCount } = useCart();
+  const close = () => onOpenChange(false);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex flex-col overflow-y-auto p-6">
-        <SheetHeader className="px-0">
-          <SheetTitle>Your Cart {itemCount > 0 && `(${itemCount})`}</SheetTitle>
+      <SheetContent side="right" className="flex flex-col gap-0 bg-paper p-5">
+        <SheetHeader className="px-0 pb-2">
+          <SheetTitle className="font-display text-[19px] font-bold text-ink">
+            Your cart{itemCount > 0 ? ` (${itemCount})` : ""}
+          </SheetTitle>
         </SheetHeader>
 
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-            <ShoppingCart className="size-10 text-muted-foreground/40" strokeWidth={1.25} />
+            <div className="flex size-14 items-center justify-center rounded-full bg-tile text-faint">
+              <ShoppingBag className="size-6" strokeWidth={1.5} />
+            </div>
             <p className="text-muted-foreground">Your cart is empty.</p>
-            <Button asChild size="sm" onClick={() => onOpenChange(false)}>
-              <Link to={ROUTES.SHOP}>Browse the collection</Link>
-            </Button>
+            <Link to={ROUTES.SHOP} onClick={close} className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-ink transition-colors hover:bg-brand-bright">
+              Browse the collection
+            </Link>
           </div>
         ) : (
           <>
-            <div className="flex flex-1 flex-col gap-5 overflow-y-auto py-2">
+            <div className="-mx-1 flex flex-1 flex-col gap-2.5 overflow-y-auto px-1 py-2">
               {items.map((item) => (
-                <CartLineItem key={item.product._id} item={item} />
+                <CartLineItem key={item.product._id} item={item} compact />
               ))}
             </div>
 
-            <SheetFooter className="flex-col gap-3 px-0">
-              <div className="flex items-center justify-between text-sm font-medium text-foreground">
-                <span>Subtotal</span>
-                <span>{formatPrice(subtotal)}</span>
+            <div className="mt-2 flex flex-col gap-3 border-t border-line pt-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-bold text-ink">{formatTaka(subtotal)}</span>
               </div>
-              <Button asChild size="lg" onClick={() => onOpenChange(false)}>
-                <Link to={ROUTES.CHECKOUT}>Checkout</Link>
-              </Button>
-              <Button asChild variant="outline" onClick={() => onOpenChange(false)}>
-                <Link to={ROUTES.CART}>View Cart</Link>
-              </Button>
-            </SheetFooter>
+              <Link to={ROUTES.CHECKOUT} onClick={close} className="flex h-12 items-center justify-center gap-2 rounded-full bg-brand text-[15px] font-bold text-ink transition-colors hover:bg-brand-bright">
+                Checkout <ArrowRight size={16} strokeWidth={2.2} />
+              </Link>
+              <Link to={ROUTES.CART} onClick={close} className="flex h-11 items-center justify-center rounded-full border border-line bg-white text-sm font-semibold text-ink transition-colors hover:border-ink">
+                View cart
+              </Link>
+            </div>
           </>
         )}
       </SheetContent>
