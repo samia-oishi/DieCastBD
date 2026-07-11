@@ -18,6 +18,7 @@ const testimonial = z.object({
   name: z.string().min(1),
   quote: z.string().min(1),
   rating: z.coerce.number().min(1).max(5).optional(),
+  location: z.string().optional(),
 });
 
 const faq = z.object({

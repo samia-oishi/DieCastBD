@@ -13,6 +13,11 @@ Plan: `~/.claude/plans/read-design-handoff-diecastbd-storefront-swirling-snail.m
 - `navigation.headerLinks` → design's 4 brand links (New arrivals / Hot Wheels Premium / MINI GT / Accessories with /shop deep-links).
 - ⚠️ `hero.highlightCard` still has leftover TEST data ("ROXY GT 991 PORSCHE / ৳200") — decide in Phase 4.
 
+## Phase 4 done — Home
+- `ffab386`..HEAD: HeroSection (3 variants, lime default, highlight card), ShopByShelf, FeaturedSpotlight (spotlight+rows), PremiumShelfBanner, TrustStrip, TestimonialsSection, ProductCarousel (native scroll, Container-aligned). Deleted BrandsStrip/CollectorPromise/Instagram/NewsletterSection (dead). Backend: added `location` to testimonial schema+validation.
+- Data updates: highlightCard → design example (Supra A80 / 2600); testimonials → design's 3 (Rafid/Tanvir/Nusrat + cities), replacing keyboard-mash test junk; collectorPromise → design's Premium Shelf copy ("Limited runs. Real metal. Gone fast.").
+- ⚠️ **Flag to user**: (1) hero text is design-default (image is admin-editable; full hero-text editability is Phase 9). (2) shop-by-shelf tiles for MINI GT + Accessories have NO images (brand.logo/category.image not set) — render empty tile bg; HW Premium tile shows its logo. (3) testimonials are design examples — user should replace with genuine reviews before launch.
+
 ## Backend customizability backlog (build in Phase 9 admin wiring)
 User chose "Dynamic content editable" — make genuinely changeable content admin-editable, design copy = seeded default, static brand copy stays hardcoded.
 - [ ] AnnouncementBar: extend `Settings.announcementBar` to editable **segments array** (currently single `text`+`isActive`; component hardcodes 3 design segments as default). File: `components/shared/AnnouncementBar.jsx`.

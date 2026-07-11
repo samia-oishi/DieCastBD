@@ -1,26 +1,35 @@
 import { Star } from "lucide-react";
+
 import { Container } from "@/components/shared/Container";
 
-// Hidden entirely until real reviews exist — no fabricated testimonials.
+function Stars({ count = 5 }) {
+  return (
+    <div className="flex gap-[3px]">
+      {Array.from({ length: count }).map((_, i) => (
+        <Star key={i} size={15} className="fill-brand text-brand" />
+      ))}
+    </div>
+  );
+}
+
+/** "What collectors say" — real admin-managed testimonials in the design card
+ * style. Section hides entirely when there are none (no fabricated reviews). */
 export function TestimonialsSection({ testimonials }) {
   if (!testimonials?.length) return null;
-
   return (
-    <section className="border-t border-border bg-card/40 py-16">
+    <section className="pt-6 md:pt-[76px]">
       <Container>
-        <h2 className="mb-10 text-center font-heading text-2xl text-foreground sm:text-3xl">
-          What Collectors Say
-        </h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {testimonials.map((t) => (
-            <div key={t.name} className="flex flex-col gap-3 rounded-xl border border-border p-6">
-              <div className="flex gap-0.5 text-primary">
-                {Array.from({ length: t.rating ?? 5 }).map((_, i) => (
-                  <Star key={i} className="size-4 fill-current" />
-                ))}
+        <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink md:text-[30px]">What collectors say</h2>
+        <p className="mt-1.5 text-[13.5px] text-muted-foreground md:mt-[7px] md:text-[14.5px]">Real orders, real shelves.</p>
+        <div className="mt-4 grid gap-4 md:mt-[26px] md:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
+          {testimonials.map((t, i) => (
+            <div key={i} className="rounded-[20px] border border-line bg-white p-[18px] md:p-[26px]">
+              <Stars count={t.rating || 5} />
+              <p className="mt-3 text-[13px] leading-[1.6] text-ink-soft md:mt-3.5 md:text-[15px]">"{t.quote}"</p>
+              <div className="mt-3 md:mt-4">
+                <span className="text-[13px] font-semibold text-ink md:text-sm">{t.name}</span>
+                {t.location && <span className="text-xs text-faint md:text-[12.5px]"> · Verified collector, {t.location}</span>}
               </div>
-              <p className="text-sm text-muted-foreground">&ldquo;{t.quote}&rdquo;</p>
-              <span className="text-sm font-medium text-foreground">{t.name}</span>
             </div>
           ))}
         </div>
