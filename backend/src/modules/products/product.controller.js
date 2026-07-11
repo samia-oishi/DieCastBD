@@ -46,7 +46,15 @@ async function buildPublicFilter({
   if (featured) filter.isFeatured = true;
   if (hero) filter.isHeroProduct = true;
   if (newArrival) filter.isNewArrival = true;
-  if (q) filter.$text = { $search: q };
+  if (q) {
+    // Case-insensitive substring search (matches partial input like a single
+    // letter) across the customer-facing text fields — not MongoDB $text, which
+    // only matches whole words. Special chars are escaped so input can't form an
+    // invalid or injected regex.
+    const escaped = String(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rx = new RegExp(escaped, "i");
+    filter.$or = [{ title: rx }, { sku: rx }, { series: rx }, { tags: rx }];
+  }
 
   return filter;
 }
