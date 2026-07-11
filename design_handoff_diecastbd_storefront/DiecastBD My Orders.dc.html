@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF7;font-family:'Instrument Sans',system-ui,sans-serif;color:#101208;-webkit-font-smoothing:antialiased}
+a{color:#101208}a:hover{color:#5F7A10}
+</style>
+</helmet>
+
+<!-- ================================================== DESKTOP -->
+<sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+<div style="background:#FAFAF7;min-height:100vh;display:flex;flex-direction:column" data-screen-label="My Orders Desktop">
+
+  <div style="position:sticky;top:0;z-index:50;background:rgba(250,250,247,.6);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid #E7E8E0">
+    <div style="max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:32px;padding:0 40px;height:74px">
+      <a href="DiecastBD%20Landing%20Final.dc.html" style="display:block"><img src="assets/diecastbd-logo.png" alt="DiecastBD" style="height:24px;display:block"></a>
+      <div style="display:flex;align-items:center;gap:30px;font-size:14.5px;font-weight:500;color:#3A3D33">
+        <a href="DiecastBD%20Shop.dc.html" style="text-decoration:none;color:#3A3D33">Shop</a>
+        <span style="color:#101208;font-weight:600;border-bottom:2px solid #A8CD2F;padding-bottom:2px">My orders</span>
+        <span style="cursor:pointer">Wishlist</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="font-size:14px;font-weight:600">Samia Alam Oishi</span>
+        <div style="border:1px solid #E7E8E0;background:#fff;color:#101208;font-size:13.5px;font-weight:600;padding:10px 20px;border-radius:999px;cursor:pointer">Sign out</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1060px;margin:0 auto;padding:40px 40px 0;width:100%;box-sizing:border-box;flex:1">
+    <h1 style="font-family:'Archivo',sans-serif;font-size:34px;font-weight:800;letter-spacing:-0.02em;margin:0">My orders</h1>
+    <p style="font-size:14.5px;color:#6B6E60;margin:8px 0 0">Track, review, or reorder — every piece you've claimed.</p>
+
+    <div style="display:flex;gap:8px;margin-top:22px">
+      <span style="background:#101208;color:#fff;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer">All</span>
+      <span style="background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;color:#3A3D33;cursor:pointer">Active</span>
+      <span style="background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;color:#3A3D33;cursor:pointer">Delivered</span>
+      <span style="background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;color:#3A3D33;cursor:pointer">Cancelled</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px">
+
+      <a href="DiecastBD%20Order%20Placed.dc.html" style="text-decoration:none;color:#101208;background:#fff;border:1px solid #E7E8E0;border-radius:20px;padding:20px 22px;display:flex;align-items:center;gap:20px;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.08);transform:translateY(-1px)">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:12px"><span style="font-family:'Archivo',sans-serif;font-size:16px;font-weight:700">DBD-20260711-EC4F48</span><span style="background:#F7EAD6;color:#B45309;font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px">Pending</span></div>
+          <div style="font-size:13px;color:#8A8D80;margin-top:6px">Jul 11, 2026 · 2 items — Supra A80 Top Secret, Card Protector Gen-2</div>
+        </div>
+        <span style="font-family:'Archivo',sans-serif;font-size:18px;font-weight:800">৳3,960</span>
+        <span style="color:#8A8D80"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15 12l-5.5 6"></path></svg></span>
+      </a>
+
+      <a href="DiecastBD%20Order%20Placed.dc.html" style="text-decoration:none;color:#101208;background:#fff;border:1px solid #E7E8E0;border-radius:20px;padding:20px 22px;display:flex;align-items:center;gap:20px;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.08);transform:translateY(-1px)">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:12px"><span style="font-family:'Archivo',sans-serif;font-size:16px;font-weight:700">DBD-20260705-A1B2C3</span><span style="background:#EFF5DC;color:#4F6B0B;font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px">Delivered</span></div>
+          <div style="font-size:13px;color:#8A8D80;margin-top:6px">Jul 5, 2026 · 1 item — F1 Gold Label Ferrari SF-25</div>
+        </div>
+        <span style="font-family:'Archivo',sans-serif;font-size:18px;font-weight:800">৳2,560</span>
+        <span style="color:#8A8D80"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15 12l-5.5 6"></path></svg></span>
+      </a>
+
+      <a href="DiecastBD%20Order%20Placed.dc.html" style="text-decoration:none;color:#101208;background:#fff;border:1px solid #E7E8E0;border-radius:20px;padding:20px 22px;display:flex;align-items:center;gap:20px;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.08);transform:translateY(-1px)">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:12px"><span style="font-family:'Archivo',sans-serif;font-size:16px;font-weight:700">DBD-20260709-729429</span><span style="background:#F9E3E1;color:#B3261E;font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px">Refunded</span></div>
+          <div style="font-size:13px;color:#8A8D80;margin-top:6px">Jul 10, 2026 · 2 items — Ferrari 5-Pack, Sterling Case</div>
+        </div>
+        <span style="font-family:'Archivo',sans-serif;font-size:18px;font-weight:800">৳3,520</span>
+        <span style="color:#8A8D80"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15 12l-5.5 6"></path></svg></span>
+      </a>
+
+      <a href="DiecastBD%20Order%20Placed.dc.html" style="text-decoration:none;color:#101208;background:#fff;border:1px solid #E7E8E0;border-radius:20px;padding:20px 22px;display:flex;align-items:center;gap:20px;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.08);transform:translateY(-1px)">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:12px"><span style="font-family:'Archivo',sans-serif;font-size:16px;font-weight:700">DBD-20260709-B4519B</span><span style="background:#F9E3E1;color:#B3261E;font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px">Cancelled</span></div>
+          <div style="font-size:13px;color:#8A8D80;margin-top:6px">Jul 10, 2026 · 1 item — Team Transport Escort RS1600</div>
+        </div>
+        <span style="font-family:'Archivo',sans-serif;font-size:18px;font-weight:800">৳5,500</span>
+        <span style="color:#8A8D80"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15 12l-5.5 6"></path></svg></span>
+      </a>
+
+    </div>
+  </div>
+
+  <div style="margin-top:88px;background:#101208;color:#8A8D80">
+    <div style="max-width:1360px;margin:0 auto;padding:26px 40px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div style="font-family:'Archivo',sans-serif;font-style:italic;font-weight:800;font-size:17px"><span style="color:#fff">DIECAST</span><span style="color:#A8CD2F">BD</span></div>
+      <div style="display:flex;gap:18px;font-size:12.5px;flex-wrap:wrap"><a href="DiecastBD%20About.dc.html" style="color:#C7C9BC;text-decoration:none">About</a><a href="DiecastBD%20Contact.dc.html" style="color:#C7C9BC;text-decoration:none">Contact</a><a href="DiecastBD%20FAQ.dc.html" style="color:#C7C9BC;text-decoration:none">FAQ</a><a href="DiecastBD%20Shipping%20Policy.dc.html" style="color:#C7C9BC;text-decoration:none">Shipping Policy</a><a href="DiecastBD%20Refund%20Policy.dc.html" style="color:#C7C9BC;text-decoration:none">Refund Policy</a><a href="DiecastBD%20Privacy%20Policy.dc.html" style="color:#C7C9BC;text-decoration:none">Privacy Policy</a><a href="DiecastBD%20Terms.dc.html" style="color:#C7C9BC;text-decoration:none">Terms &amp; Conditions</a></div>
+      <div style="display:flex;align-items:center;gap:16px"><div style="display:flex;gap:8px"><a href="https://www.facebook.com/diecastbd.official" target="_blank" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 21.5v-7.1h2.4l.36-2.8h-2.76V9.8c0-.81.22-1.36 1.38-1.36h1.48V5.93c-.26-.03-1.13-.11-2.15-.11-2.13 0-3.58 1.3-3.58 3.68v2.09H8.1v2.8h2.43v7.1h2.87z"></path></svg></a><a href="https://www.instagram.com/diecastbd.official" target="_blank" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"></circle></svg></a><a href="https://www.youtube.com/@diecastbd" target="_blank" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12.5" rx="3.5"></rect><path d="M10.3 9.6l4.8 2.65-4.8 2.65V9.6z" fill="currentColor" stroke="none"></path></svg></a></div><span style="font-size:12px">© 2026 DiecastBD</span></div>
+    </div>
+  </div>
+
+</div>
+</sc-if>
+
+<!-- ================================================== MOBILE -->
+<sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+<div style="background:#FAFAF7;min-height:100vh;padding-bottom:104px" data-screen-label="My Orders Mobile">
+
+  <div style="position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;background:rgba(250,250,247,.6);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid rgba(231,232,224,.6)">
+    <a href="DiecastBD%20Landing%20Final.dc.html" style="display:block"><img src="assets/diecastbd-logo.png" alt="DiecastBD" style="height:20px;display:block"></a>
+    <span style="font-size:13px;font-weight:700">Samia Alam Oishi</span>
+  </div>
+
+  <div style="margin:16px 16px 0">
+    <span style="font-family:'Archivo',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.01em">My orders</span>
+    <div style="display:flex;gap:8px;overflow-x:auto;padding:14px 0 2px">
+      <span style="flex:none;background:#101208;color:#fff;border-radius:999px;padding:9px 16px;font-size:12.5px;font-weight:600">All</span>
+      <span style="flex:none;background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:9px 16px;font-size:12.5px;font-weight:600;color:#3A3D33">Active</span>
+      <span style="flex:none;background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:9px 16px;font-size:12.5px;font-weight:600;color:#3A3D33">Delivered</span>
+      <span style="flex:none;background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:9px 16px;font-size:12.5px;font-weight:600;color:#3A3D33">Cancelled</span>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:12px;margin:12px 16px 0">
+
+    <a href="DiecastBD%20Order%20Placed.dc.html" style="text-decoration:none;color:#101208;background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <span style="font-family:'Archivo',sans-serif;font-size:14px;font-weight:700">DBD-20260711-EC4F48</span>
+        <span style="background:#F7EAD6;color:#B45309;font-size:10.5px;font-weight:700;padding:5px 11px;border-radius:999px">Pending</span>
+      </div>
+      <div style="font-size:11.5px;color:#8A8D80;margin-top:6px;line-height:1.5">Jul 11, 2026 · 2 items<br>Supra A80 Top Secret, Card Protector Gen-2</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid #F1F2EA;margin-top:12px;padding-top:11px">
+        <span style="font-family:'Archivo',sans-serif;font-size:15.5px;font-weight:800">৳3,960</span>
+        <span style="font-size:12px;font-weight:700;color:#4F6B0B">Track order →</span>
+      </div>
+    </a>
+
+    <a href="DiecastBD%20Order%20Placed.dc.html" style="text-decoration:none;color:#101208;background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <span style="font-family:'Archivo',sans-serif;font-size:14px;font-weight:700">DBD-20260705-A1B2C3</span>
+        <span style="background:#EFF5DC;color:#4F6B0B;font-size:10.5px;font-weight:700;padding:5px 11px;border-radius:999px">Delivered</span>
+      </div>
+      <div style="font-size:11.5px;color:#8A8D80;margin-top:6px;line-height:1.5">Jul 5, 2026 · 1 item<br>F1 Gold Label Ferrari SF-25</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid #F1F2EA;margin-top:12px;padding-top:11px">
+        <span style="font-family:'Archivo',sans-serif;font-size:15.5px;font-weight:800">৳2,560</span>
+        <span style="font-size:12px;font-weight:700;color:#4F6B0B">Buy again →</span>
+      </div>
+    </a>
+
+    <a href="DiecastBD%20Order%20Placed.dc.html" style="text-decoration:none;color:#101208;background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <span style="font-family:'Archivo',sans-serif;font-size:14px;font-weight:700">DBD-20260709-729429</span>
+        <span style="background:#F9E3E1;color:#B3261E;font-size:10.5px;font-weight:700;padding:5px 11px;border-radius:999px">Refunded</span>
+      </div>
+      <div style="font-size:11.5px;color:#8A8D80;margin-top:6px;line-height:1.5">Jul 10, 2026 · 2 items<br>Ferrari 5-Pack, Sterling Case</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid #F1F2EA;margin-top:12px;padding-top:11px">
+        <span style="font-family:'Archivo',sans-serif;font-size:15.5px;font-weight:800">৳3,520</span>
+        <span style="font-size:12px;font-weight:700;color:#8A8D80">Details →</span>
+      </div>
+    </a>
+
+    <a href="DiecastBD%20Order%20Placed.dc.html" style="text-decoration:none;color:#101208;background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <span style="font-family:'Archivo',sans-serif;font-size:14px;font-weight:700">DBD-20260709-B4519B</span>
+        <span style="background:#F9E3E1;color:#B3261E;font-size:10.5px;font-weight:700;padding:5px 11px;border-radius:999px">Cancelled</span>
+      </div>
+      <div style="font-size:11.5px;color:#8A8D80;margin-top:6px;line-height:1.5">Jul 10, 2026 · 1 item<br>Team Transport Escort RS1600</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid #F1F2EA;margin-top:12px;padding-top:11px">
+        <span style="font-family:'Archivo',sans-serif;font-size:15.5px;font-weight:800">৳5,500</span>
+        <span style="font-size:12px;font-weight:700;color:#8A8D80">Details →</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- bottom nav (Account active) -->
+  <div style="position:fixed;left:12px;right:12px;bottom:12px;height:66px;background:rgba(13,15,7,.92);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.16);border-radius:22px;box-shadow:0 10px 30px rgba(16,18,8,.45);display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:60">
+    <a href="DiecastBD%20Landing%20Final.dc.html" style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#B4B7A8;text-decoration:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20h-5.5v-5.5h-5V20H4V10.5z"></path></svg><span style="font-size:10px;font-weight:600">Home</span></a>
+    <a href="DiecastBD%20Shop.dc.html" style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#B4B7A8;text-decoration:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg><span style="font-size:10px;font-weight:600">Shop</span></a>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#B4B7A8"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg><span style="font-size:10px;font-weight:600">Saved</span></div>
+    <a href="DiecastBD%20Cart.dc.html" style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#B4B7A8;text-decoration:none;position:relative"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8h13l-1.1 12H6.6L5.5 8z"></path><path d="M9 10V7a3 3 0 0 1 6 0v3"></path></svg><span style="font-size:10px;font-weight:600">Cart</span></a>
+    <a href="DiecastBD%20Account.dc.html" style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#C9E469;text-decoration:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.4"></circle><path d="M5 20c1.2-3.1 3.8-4.7 7-4.7s5.8 1.6 7 4.7"></path></svg><span style="font-size:10px;font-weight:800">Account</span></a>
+  </div>
+
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;previewMode&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;auto&quot;, &quot;desktop&quot;, &quot;mobile&quot;], &quot;default&quot;: &quot;auto&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Preview&quot;}}">
+class Component extends DCLogic {
+  state = { vw: typeof window !== 'undefined' ? window.innerWidth : 1280 };
+
+  componentDidMount() {
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener('resize', this._onResize);
+    this._drag = null;
+    this._suppressClick = false;
+    this._onDown = (e) => {
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      let el = e.target;
+      while (el && el !== document.body) {
+        if (el.scrollWidth > el.clientWidth + 4) {
+          const cs = window.getComputedStyle(el);
+          if (cs.overflowX === 'auto' || cs.overflowX === 'scroll') break;
+        }
+        el = el.parentElement;
+      }
+      if (!el || el === document.body) return;
+      this._drag = { el: el, x: e.clientX, left: el.scrollLeft, moved: false, snap: el.style.scrollSnapType };
+    };
+    this._onMove = (e) => {
+      const d = this._drag;
+      if (!d) return;
+      const dx = e.clientX - d.x;
+      if (!d.moved && Math.abs(dx) > 6) {
+        d.moved = true;
+        d.el.style.scrollSnapType = 'none';
+        document.body.style.userSelect = 'none';
+      }
+      if (d.moved) {
+        d.el.scrollLeft = d.left - dx;
+        e.preventDefault();
+      }
+    };
+    this._onUp = () => {
+      const d = this._drag;
+      if (d && d.moved) {
+        const el = d.el, snap = d.snap;
+        document.body.style.userSelect = '';
+        this._suppressClick = true;
+        setTimeout(() => { el.style.scrollSnapType = snap || ''; this._suppressClick = false; }, 80);
+      }
+      this._drag = null;
+    };
+    this._onClickCapture = (e) => {
+      if (this._suppressClick) { e.preventDefault(); e.stopPropagation(); this._suppressClick = false; }
+    };
+    window.addEventListener('pointerdown', this._onDown);
+    window.addEventListener('pointermove', this._onMove);
+    window.addEventListener('pointerup', this._onUp);
+    window.addEventListener('click', this._onClickCapture, true);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._onResize);
+    window.removeEventListener('pointerdown', this._onDown);
+    window.removeEventListener('pointermove', this._onMove);
+    window.removeEventListener('pointerup', this._onUp);
+    window.removeEventListener('click', this._onClickCapture, true);
+  }
+
+  renderVals() {
+    const mode = this.props.previewMode ?? 'auto';
+    const vpMobile = this.state.vw < 768;
+    const isMobile = mode === 'mobile' ? true : mode === 'desktop' ? false : vpMobile;
+    return { isMobile: isMobile, isDesktop: !isMobile };
+  }
+}
+</script>
+</body>
+</html>

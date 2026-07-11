@@ -189,20 +189,21 @@ export function InventoryPage() {
             <TableHead>Stock</TableHead>
             <TableHead>Reserved</TableHead>
             <TableHead>Available</TableHead>
+            <TableHead>Waiting</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground">
+              <TableCell colSpan={8} className="text-center text-muted-foreground">
                 Loading...
               </TableCell>
             </TableRow>
           )}
           {!isLoading && items.length === 0 && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground">
+              <TableCell colSpan={8} className="text-center text-muted-foreground">
                 No products found.
               </TableCell>
             </TableRow>
@@ -227,6 +228,9 @@ export function InventoryPage() {
                     Low
                   </Badge>
                 )}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {product.restockAlertCount > 0 ? `${product.restockAlertCount} waiting` : "—"}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">

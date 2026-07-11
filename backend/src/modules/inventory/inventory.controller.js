@@ -1,5 +1,6 @@
 import { Product } from "../products/product.model.js";
 import { InventoryLog } from "../inventoryLogs/inventoryLog.model.js";
+import { RestockAlert } from "../restockAlerts/restockAlert.model.js";
 import { LOW_STOCK_THRESHOLD } from "../../config/constants.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
@@ -20,6 +21,11 @@ export const listInventory = asyncHandler(async (req, res) => {
     .select("title sku thumbnail stock reservedStock status")
     .sort({ stock: 1 });
 
+  // Waiting-list counts, not tied to the filtered/paginated set above — cheap
+  // since the catalog is small (dozens of SKUs, see comment above).
+  const alertCounts = await RestockAlert.aggregate([{ $group: { _id: "$product", count: { $sum: 1 } } }]);
+  const alertCountByProduct = new Map(alertCounts.map((a) => [a._id.toString(), a.count]));
+
   products = products.map((p) => ({
     id: p._id,
     title: p.title,
@@ -30,6 +36,7 @@ export const listInventory = asyncHandler(async (req, res) => {
     reservedStock: p.reservedStock,
     availableStock: p.availableStock,
     isLowStock: p.availableStock <= LOW_STOCK_THRESHOLD,
+    restockAlertCount: alertCountByProduct.get(p._id.toString()) ?? 0,
   }));
 
   if (lowStockOnly) products = products.filter((p) => p.isLowStock);

@@ -81,6 +81,11 @@ export const settingsSeed = {
     merchantNumber: "",
     qrImage: null,
   },
+  // Same reasoning as bkashConfig — no real BanglaQR account details to seed with.
+  banglaQrConfig: {
+    accountInfo: "",
+    qrImage: null,
+  },
   // Every section enabled, matching the homepage exactly as it renders today —
   // this seed/migration must not make anything disappear on deploy.
   homepageSections: {

@@ -28,10 +28,16 @@ const faq = z.object({
 const shippingZone = z.object({
   name: z.string().min(1),
   fee: z.coerce.number().min(0),
+  eta: z.string().optional(),
 });
 
 const bkashConfig = z.object({
   merchantNumber: z.string().optional(),
+  qrImage: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
+});
+
+const banglaQrConfig = z.object({
+  accountInfo: z.string().optional(),
   qrImage: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
 });
 
@@ -84,6 +90,7 @@ export const updateSettingsSchema = {
     shippingZones: z.array(shippingZone).optional(),
     freeShippingThreshold: z.coerce.number().min(0).optional(),
     bkashConfig: bkashConfig.optional(),
+    banglaQrConfig: banglaQrConfig.optional(),
     homepageSections: homepageSections.optional(),
     navigation: navigation.optional(),
     seoDefaults: z.object({ title: z.string().optional(), description: z.string().optional() }).optional(),

@@ -46,6 +46,10 @@ const shippingZoneSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     fee: { type: Number, required: true, min: 0 },
+    // Free-text delivery estimate (e.g. "24-48h") shown next to the zone at
+    // checkout — display-only, no logic depends on it. Optional so existing
+    // zones without one just render no ETA line rather than a fabricated one.
+    eta: String,
   },
   { _id: false }
 );
@@ -92,6 +96,13 @@ const settingsSchema = new mongoose.Schema(
     // there's no live payment gateway integration, admin verifies manually.
     bkashConfig: {
       merchantNumber: String,
+      qrImage: imageSchema,
+    },
+    // Manual BanglaQR flow, same shape/reasoning as bkashConfig above — scan-and-pay
+    // from any bank/MFS app, customer types the resulting payment reference at
+    // checkout, admin verifies manually. No live gateway integration here either.
+    banglaQrConfig: {
+      accountInfo: String,
       qrImage: imageSchema,
     },
     // Per-section show/hide for the homepage (System 6, post-launch requirements) —

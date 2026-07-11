@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;0,800;1,600;1,700;1,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="image-slot.js"></script>
+<style>
+body{margin:0;background:#FAFAF7;font-family:'Instrument Sans',system-ui,sans-serif;color:#101208;-webkit-font-smoothing:antialiased}
+a{color:#101208}a:hover{color:#5F7A10}
+[data-carousel]::-webkit-scrollbar{display:none;height:0}
+</style>
+</helmet>
+
+<!-- ================================================== DESKTOP / TABLET -->
+<sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+<div style="background:#FAFAF7;min-height:100vh" data-screen-label="Shop Desktop">
+
+  <!-- header -->
+  <div style="position:sticky;top:0;z-index:50;background:rgba(250,250,247,.6);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid #E7E8E0">
+    <div style="max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:32px;padding:0 40px;height:74px">
+      <a href="DiecastBD%20Landing%20Final.dc.html" style="display:block"><img src="assets/diecastbd-logo.png" alt="DiecastBD" style="height:24px;display:block"></a>
+      <div style="display:flex;align-items:center;gap:30px;font-size:14.5px;font-weight:500;color:#3A3D33">
+        <span style="color:#101208;font-weight:600;border-bottom:2px solid #A8CD2F;padding-bottom:2px;cursor:pointer">Shop</span>
+        <span style="cursor:pointer;transition:color .15s ease" style-hover="color:#5F7A10">New arrivals</span>
+        <span style="cursor:pointer;transition:color .15s ease" style-hover="color:#5F7A10">Hot Wheels Premium</span>
+        <span style="cursor:pointer;transition:color .15s ease" style-hover="color:#5F7A10">MINI GT</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:999px;border:1px solid #E7E8E0;display:flex;align-items:center;justify-content:center;color:#101208;background:#fff;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#A8CD2F"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+        <div style="position:relative;width:40px;height:40px;border-radius:999px;border:1px solid #E7E8E0;display:flex;align-items:center;justify-content:center;color:#101208;background:#fff;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#A8CD2F">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8h13l-1.1 12H6.6L5.5 8z"></path><path d="M9 10V7a3 3 0 0 1 6 0v3"></path></svg>
+          <span style="position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:#A8CD2F;color:#101208;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px">{{ cartCount }}</span>
+        </div>
+        <div style="background:#101208;color:#fff;font-size:14px;font-weight:600;padding:11px 22px;border-radius:999px;margin-left:6px;cursor:pointer;transition:background .15s ease" style-hover="background:#2A2E1C">Sign in</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- page head -->
+  <div style="max-width:1360px;margin:0 auto;padding:36px 40px 0">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
+      <div>
+        <h1 style="font-family:'Archivo',sans-serif;font-size:38px;font-weight:800;letter-spacing:-0.02em;margin:0">Shop the shelf</h1>
+        <p style="font-size:14.5px;color:#6B6E60;margin:8px 0 0">32 pieces in stock right now — every one hand-verified.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:12px 20px;width:340px;color:#8A8D80;transition:border-color .15s ease" style-hover="border-color:#A8CD2F">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+          <span style="font-size:14px">Search the collection…</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:600;color:#101208;cursor:pointer">
+          Sort: Newest
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5 12 15.5 18 9.5"></path></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- body: sidebar + grid -->
+  <div style="max-width:1360px;margin:0 auto;padding:28px 40px 0;display:grid;grid-template-columns:250px 1fr;gap:36px;align-items:start">
+
+    <!-- filters -->
+    <div style="background:#fff;border:1px solid #E7E8E0;border-radius:24px;padding:24px;position:sticky;top:98px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <div style="font-family:'Archivo',sans-serif;font-size:17px;font-weight:700">Filters</div>
+        <div style="font-size:12.5px;font-weight:600;color:#4F6B0B;cursor:pointer">Clear all</div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;color:#8A8D80;margin:22px 0 10px">BRAND</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="background:#101208;color:#fff;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer">All</span>
+        <span style="background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;color:#3A3D33;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208">Hot Wheels Premium</span>
+        <span style="background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;color:#3A3D33;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208">MINI GT</span>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;color:#8A8D80;margin:22px 0 10px">CATEGORY</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="background:#101208;color:#fff;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer">All</span>
+        <span style="background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;color:#3A3D33;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208">Premium singles</span>
+        <span style="background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;color:#3A3D33;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208">Multi-packs</span>
+        <span style="background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;color:#3A3D33;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208">Accessories</span>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;color:#8A8D80;margin:22px 0 10px">SERIES</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid #E7E8E0;border-radius:999px;padding:11px 16px;font-size:13.5px;font-weight:600;color:#101208;cursor:pointer">
+        All series
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5 12 15.5 18 9.5"></path></svg>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;color:#8A8D80;margin:24px 0 14px">PRICE</div>
+      <div style="position:relative;height:4px;border-radius:999px;background:#E7E8E0;margin:0 8px">
+        <div style="position:absolute;left:8%;right:12%;top:0;bottom:0;border-radius:999px;background:#A8CD2F"></div>
+        <div style="position:absolute;left:8%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:999px;background:#fff;border:2px solid #101208;cursor:pointer"></div>
+        <div style="position:absolute;right:12%;top:50%;transform:translate(50%,-50%);width:18px;height:18px;border-radius:999px;background:#fff;border:2px solid #101208;cursor:pointer"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:#6B6E60;margin-top:10px"><span>৳1,100</span><span>৳3,200</span></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:24px;padding-top:20px;border-top:1px solid #EFEFE9">
+        <span style="font-size:13.5px;font-weight:600">In stock only</span>
+        <div style="width:44px;height:24px;border-radius:999px;background:#E7E8E0;position:relative;cursor:pointer"><span style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(16,18,8,.2)"></span></div>
+      </div>
+    </div>
+
+    <!-- product grid -->
+    <div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:20px">
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-p1" shape="rect" placeholder="Product photo"></image-slot>
+            <span style="position:absolute;top:12px;left:12px;background:#101208;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.07em;padding:5px 11px;border-radius:999px;pointer-events:none">NEW</span>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">MINI GT</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">Toyota Supra A80 — Top Secret</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700">৳2,600</span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-p2" shape="rect" placeholder="Product photo"></image-slot>
+            <sc-if value="{{ soldOut }}" hint-placeholder-val="{{ true }}">
+              <div style="position:absolute;inset:0;background:rgba(250,250,247,.55);display:flex;align-items:center;justify-content:center;pointer-events:none"><span style="background:#fff;border:1px solid #E7E8E0;color:#3A3D33;font-size:11px;font-weight:700;letter-spacing:.07em;padding:7px 14px;border-radius:999px">SOLD OUT</span></div>
+            </sc-if>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">Hot Wheels Premium</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">Car Culture: Aero Styles — LB Nissan</a>
+            <sc-if value="{{ soldOut }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:13.5px;font-weight:600;color:#8A8D80">৳2,000</span>
+                <span onClick="{{ stopClick }}" style="border:1.5px solid #101208;color:#101208;font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer;transition:background .15s ease,color .15s ease" style-hover="background:#101208;color:#fff">Notify me</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ inStock }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:15.5px;font-weight:700">৳2,000</span>
+                <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-p3" shape="rect" placeholder="Product photo"></image-slot>
+            <span style="position:absolute;top:12px;left:12px;background:#101208;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.07em;padding:5px 11px;border-radius:999px;pointer-events:none">NEW</span>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">Hot Wheels Premium</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">F1 Gold Label — Ferrari SF-25</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700">৳2,500</span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-p4" shape="rect" placeholder="Product photo"></image-slot>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">Hot Wheels Premium</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">Ferrari 5-Pack — 2025</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700">৳3,200</span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-p5" shape="rect" placeholder="Product photo"></image-slot>
+            <span style="position:absolute;top:12px;left:12px;background:#101208;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.07em;padding:5px 11px;border-radius:999px;pointer-events:none">NEW</span>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">Hot Wheels Premium</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">Boulevard: Porsche 911 Turbo (930)</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700">৳1,900</span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-p6" shape="rect" placeholder="Product photo"></image-slot>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">MINI GT</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">Honda NSX Type R (NA1)</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700">৳2,400</span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-n1" shape="rect" placeholder="Product photo"></image-slot>
+            <div style="position:absolute;top:12px;left:12px;display:flex;gap:6px;pointer-events:none"><span style="background:#A8CD2F;color:#101208;font-size:10.5px;font-weight:700;letter-spacing:.07em;padding:5px 11px;border-radius:999px">SALE</span></div>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">Accessories</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">Card Protector — Top-Open Gen-2, 10pk</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="display:flex;align-items:baseline;gap:7px"><span style="font-size:15.5px;font-weight:700">৳1,300</span><span style="font-size:12.5px;font-weight:500;color:#A2A597;text-decoration:line-through">৳1,500</span></span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-n2" shape="rect" placeholder="Product photo"></image-slot>
+            <span style="position:absolute;top:12px;left:12px;background:#101208;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.07em;padding:5px 11px;border-radius:999px;pointer-events:none">NEW</span>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">MINI GT</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">#1106 Mazda RX-7 — RE Amemiya</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700">৳2,400</span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-n3" shape="rect" placeholder="Product photo"></image-slot>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">Accessories</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">Sterling Case — Mainline, 12pk</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700">৳1,800</span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-n4" shape="rect" placeholder="Product photo"></image-slot>
+            <span style="position:absolute;top:12px;left:12px;background:#101208;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.07em;padding:5px 11px;border-radius:999px;pointer-events:none">NEW</span>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">MINI GT</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">Nissan GT-R R34 — Top Secret</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700">৳2,600</span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-n5" shape="rect" placeholder="Product photo"></image-slot>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">Accessories</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">Card Protector — Folding PVC Display</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700">৳1,500</span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:20px;overflow:hidden;transition:box-shadow .18s ease,transform .18s ease" style-hover="box-shadow:0 12px 32px rgba(16,18,8,.1);transform:translateY(-2px)">
+          <div style="position:relative;height:220px;background:#F1F2EA">
+            <image-slot style="position:absolute;inset:0" id="1a-n6" shape="rect" placeholder="Product photo"></image-slot>
+            <span style="position:absolute;top:12px;left:12px;background:#101208;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.07em;padding:5px 11px;border-radius:999px;pointer-events:none">NEW</span>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(16,18,8,.12);display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">Hot Wheels Premium</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.35;margin:5px 0 12px;min-height:40px;color:#101208">Fast &amp; Furious — Toyota Supra MK4</a>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700">৳2,200</span>
+              <div onClick="{{ stopClick }}" style="width:32px;height:32px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease" style-hover="background:#5F7A10"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- pagination -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:40px">
+        <div style="width:40px;height:40px;border-radius:999px;border:1px solid #DDDFD2;background:#fff;display:flex;align-items:center;justify-content:center;color:#B4B7A8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6 9 12l5.5 6"></path></svg></div>
+        <div style="width:40px;height:40px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">1</div>
+        <div style="width:40px;height:40px;border-radius:999px;border:1px solid #DDDFD2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#3A3D33;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208">2</div>
+        <div style="width:40px;height:40px;border-radius:999px;border:1px solid #DDDFD2;background:#fff;display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#101208"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15 12l-5.5 6"></path></svg></div>
+      </div>
+      <div style="text-align:center;font-size:12.5px;color:#8A8D80;margin-top:12px">Showing 1–12 of 32</div>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div style="margin-top:88px;background:#101208;color:#C7C9BC">
+    <div style="max-width:1360px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:44px;padding:60px 40px 0">
+      <div>
+        <div style="font-family:'Archivo',sans-serif;font-style:italic;font-weight:800;font-size:23px;letter-spacing:-0.01em"><span style="color:#fff">DIECAST</span><span style="color:#A8CD2F">BD</span></div>
+        <p style="font-size:14px;line-height:1.6;color:#A9AC9F;margin:14px 0 0;max-width:280px">Premium diecast for serious collectors in Bangladesh.</p>
+        <div style="display:flex;gap:8px;margin:20px 0 0;flex-wrap:wrap">
+          <span style="border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;color:#DDDFD2">COD</span>
+          <span style="border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;color:#DDDFD2">bKash</span>
+          <span style="border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;color:#DDDFD2">BanglaQR</span>
+        </div>
+        <div style="display:flex;gap:10px;margin:18px 0 0">
+          <a href="https://www.facebook.com/diecastbd.official" target="_blank" style="width:36px;height:36px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none;transition:border-color .15s ease,color .15s ease" style-hover="border-color:#A8CD2F;color:#A8CD2F"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 21.5v-7.1h2.4l.36-2.8h-2.76V9.8c0-.81.22-1.36 1.38-1.36h1.48V5.93c-.26-.03-1.13-.11-2.15-.11-2.13 0-3.58 1.3-3.58 3.68v2.09H8.1v2.8h2.43v7.1h2.87z"></path></svg></a>
+          <a href="https://www.instagram.com/diecastbd.official" target="_blank" style="width:36px;height:36px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none;transition:border-color .15s ease,color .15s ease" style-hover="border-color:#A8CD2F;color:#A8CD2F"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"></circle></svg></a>
+          <a href="https://www.youtube.com/@diecastbd" target="_blank" style="width:36px;height:36px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none;transition:border-color .15s ease,color .15s ease" style-hover="border-color:#A8CD2F;color:#A8CD2F"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12.5" rx="3.5"></rect><path d="M10.3 9.6l4.8 2.65-4.8 2.65V9.6z" fill="currentColor" stroke="none"></path></svg></a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.12em;color:#8A8D80">SHOP</div>
+        <div style="display:flex;flex-direction:column;gap:11px;margin-top:16px;font-size:13.5px"><span style="cursor:pointer">New arrivals</span><span style="cursor:pointer">Hot Wheels Premium</span><span style="cursor:pointer">MINI GT</span><span style="cursor:pointer">Accessories</span></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.12em;color:#8A8D80">HELP</div>
+        <div style="display:flex;flex-direction:column;gap:11px;margin-top:16px;font-size:13.5px"><a href="DiecastBD%20About.dc.html" style="color:#C7C9BC;text-decoration:none">About</a><a href="DiecastBD%20Contact.dc.html" style="color:#C7C9BC;text-decoration:none">Contact</a><a href="DiecastBD%20FAQ.dc.html" style="color:#C7C9BC;text-decoration:none">FAQ</a></div>
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff">The drop list</div>
+        <p style="font-size:13px;color:#A9AC9F;margin:8px 0 0">New arrivals and restocks, straight to your inbox. No spam.</p>
+        <div style="display:flex;gap:10px;margin:16px 0 0">
+          <div style="flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:13px 20px;font-size:13.5px;color:#8A8D80">Your email address</div>
+          <div style="background:#A8CD2F;color:#101208;font-size:14px;font-weight:700;padding:13px 24px;border-radius:999px;cursor:pointer;transition:background .15s ease" style-hover="background:#B9DC4B">Join</div>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1360px;margin:48px auto 0;padding:0 40px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.1);padding:20px 0;font-size:12.5px;color:#8A8D80">
+        <span>© 2026 DiecastBD. All rights reserved.</span>
+        <span style="display:flex;gap:22px;flex-wrap:wrap"><a href="DiecastBD%20Shipping%20Policy.dc.html" style="color:#8A8D80;text-decoration:none">Shipping Policy</a><a href="DiecastBD%20Refund%20Policy.dc.html" style="color:#8A8D80;text-decoration:none">Refund Policy</a><a href="DiecastBD%20Privacy%20Policy.dc.html" style="color:#8A8D80;text-decoration:none">Privacy Policy</a><a href="DiecastBD%20Terms.dc.html" style="color:#8A8D80;text-decoration:none">Terms &amp; Conditions</a></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</sc-if>
+
+<!-- ================================================== MOBILE -->
+<sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+<div style="background:#FAFAF7;min-height:100vh" data-screen-label="Shop Mobile">
+
+  <!-- app bar -->
+  <div style="position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;background:rgba(250,250,247,.6);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid rgba(231,232,224,.6)">
+    <a href="DiecastBD%20Landing%20Final.dc.html" style="display:block"><img src="assets/diecastbd-logo.png" alt="DiecastBD" style="height:20px;display:block"></a>
+    <div style="position:relative;width:38px;height:38px;border-radius:999px;border:1px solid #E7E8E0;background:#fff;display:flex;align-items:center;justify-content:center;color:#101208">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8h13l-1.1 12H6.6L5.5 8z"></path><path d="M9 10V7a3 3 0 0 1 6 0v3"></path></svg>
+      <span style="position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:999px;background:#A8CD2F;color:#101208;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px">{{ cartCount }}</span>
+    </div>
+  </div>
+
+  <!-- title + search -->
+  <div style="margin:16px 16px 0">
+    <div style="display:flex;align-items:baseline;justify-content:space-between">
+      <span style="font-family:'Archivo',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.01em">Shop the shelf</span>
+      <span style="font-size:12px;color:#8A8D80;font-weight:500">32 pieces</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:13px 18px;color:#8A8D80;margin-top:14px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+      <span style="font-size:13.5px">Search the collection…</span>
+    </div>
+  </div>
+
+  <!-- filter toolbar -->
+  <div style="display:flex;gap:8px;overflow-x:auto;padding:14px 16px 2px" data-carousel="true" style2="x">
+    <span style="flex:none;display:inline-flex;align-items:center;gap:7px;background:#101208;color:#fff;border-radius:999px;padding:10px 16px;font-size:12.5px;font-weight:600"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M7 12h10"></path><path d="M10 18h4"></path></svg>Filters</span>
+    <span style="flex:none;display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:10px 16px;font-size:12.5px;font-weight:600;color:#3A3D33">Newest <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5 12 15.5 18 9.5"></path></svg></span>
+    <span style="flex:none;background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:10px 16px;font-size:12.5px;font-weight:600;color:#3A3D33">Hot Wheels Premium</span>
+    <span style="flex:none;background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:10px 16px;font-size:12.5px;font-weight:600;color:#3A3D33">MINI GT</span>
+    <span style="flex:none;background:#fff;border:1px solid #E7E8E0;border-radius:999px;padding:10px 16px;font-size:12.5px;font-weight:600;color:#3A3D33">In stock</span>
+  </div>
+
+  <!-- grid -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 16px 0">
+
+    <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:18px;overflow:hidden">
+      <div style="height:150px;position:relative;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-p1" shape="rect" placeholder="Photo"></image-slot><span style="position:absolute;top:9px;left:9px;background:#101208;color:#fff;font-size:9px;font-weight:700;letter-spacing:.06em;padding:4px 8px;border-radius:999px;pointer-events:none">NEW</span></div>
+      <div style="padding:11px 12px 13px">
+        <div style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#8A8D80;font-weight:600">MINI GT</div>
+        <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;color:#101208;font-size:12.5px;font-weight:600;line-height:1.3;margin:4px 0 8px;min-height:33px">Supra A80 Top Secret</a>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:700">৳2,600</span><div onClick="{{ stopClick }}" style="width:30px;height:30px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div></div>
+      </div>
+    </div>
+
+    <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:18px;overflow:hidden">
+      <div style="height:150px;position:relative;background:#F1F2EA">
+        <image-slot style="position:absolute;inset:0" id="1a-p2" shape="rect" placeholder="Photo"></image-slot>
+        <sc-if value="{{ soldOut }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;background:rgba(250,250,247,.55);display:flex;align-items:center;justify-content:center;pointer-events:none"><span style="background:#fff;border:1px solid #E7E8E0;color:#3A3D33;font-size:9px;font-weight:700;letter-spacing:.06em;padding:5px 10px;border-radius:999px">SOLD OUT</span></div></sc-if>
+      </div>
+      <div style="padding:11px 12px 13px">
+        <div style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#8A8D80;font-weight:600">Hot Wheels Premium</div>
+        <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;color:#101208;font-size:12.5px;font-weight:600;line-height:1.3;margin:4px 0 8px;min-height:33px">Aero Styles — LB Nissan</a>
+        <sc-if value="{{ soldOut }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:600;color:#8A8D80">৳2,000</span><span onClick="{{ stopClick }}" style="border:1.5px solid #101208;color:#101208;font-size:10.5px;font-weight:700;padding:6px 10px;border-radius:999px">Notify me</span></div></sc-if>
+        <sc-if value="{{ inStock }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:700">৳2,000</span><div onClick="{{ stopClick }}" style="width:30px;height:30px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div></div></sc-if>
+      </div>
+    </div>
+
+    <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:18px;overflow:hidden">
+      <div style="height:150px;position:relative;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-p3" shape="rect" placeholder="Photo"></image-slot><span style="position:absolute;top:9px;left:9px;background:#101208;color:#fff;font-size:9px;font-weight:700;letter-spacing:.06em;padding:4px 8px;border-radius:999px;pointer-events:none">NEW</span></div>
+      <div style="padding:11px 12px 13px">
+        <div style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#8A8D80;font-weight:600">Hot Wheels Premium</div>
+        <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;color:#101208;font-size:12.5px;font-weight:600;line-height:1.3;margin:4px 0 8px;min-height:33px">F1 — Ferrari SF-25</a>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:700">৳2,500</span><div onClick="{{ stopClick }}" style="width:30px;height:30px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div></div>
+      </div>
+    </div>
+
+    <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:18px;overflow:hidden">
+      <div style="height:150px;position:relative;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-n1" shape="rect" placeholder="Photo"></image-slot><span style="position:absolute;top:9px;left:9px;background:#A8CD2F;color:#101208;font-size:9px;font-weight:700;letter-spacing:.06em;padding:4px 8px;border-radius:999px;pointer-events:none">SALE</span></div>
+      <div style="padding:11px 12px 13px">
+        <div style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#8A8D80;font-weight:600">Accessories</div>
+        <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;color:#101208;font-size:12.5px;font-weight:600;line-height:1.3;margin:4px 0 8px;min-height:33px">Protector Gen-2, 10pk</a>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:baseline;gap:5px"><span style="font-size:13.5px;font-weight:700">৳1,300</span><span style="font-size:10.5px;color:#A2A597;text-decoration:line-through">৳1,500</span></span><div onClick="{{ stopClick }}" style="width:30px;height:30px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div></div>
+      </div>
+    </div>
+
+    <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:18px;overflow:hidden">
+      <div style="height:150px;position:relative;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-n2" shape="rect" placeholder="Photo"></image-slot><span style="position:absolute;top:9px;left:9px;background:#101208;color:#fff;font-size:9px;font-weight:700;letter-spacing:.06em;padding:4px 8px;border-radius:999px;pointer-events:none">NEW</span></div>
+      <div style="padding:11px 12px 13px">
+        <div style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#8A8D80;font-weight:600">MINI GT</div>
+        <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;color:#101208;font-size:12.5px;font-weight:600;line-height:1.3;margin:4px 0 8px;min-height:33px">Mazda RX-7 RE Amemiya</a>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:700">৳2,400</span><div onClick="{{ stopClick }}" style="width:30px;height:30px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div></div>
+      </div>
+    </div>
+
+    <div onClick="{{ goProduct }}" style="cursor:pointer;background:#fff;border:1px solid #E7E8E0;border-radius:18px;overflow:hidden">
+      <div style="height:150px;position:relative;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-p4" shape="rect" placeholder="Photo"></image-slot></div>
+      <div style="padding:11px 12px 13px">
+        <div style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#8A8D80;font-weight:600">Hot Wheels Premium</div>
+        <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;color:#101208;font-size:12.5px;font-weight:600;line-height:1.3;margin:4px 0 8px;min-height:33px">Ferrari 5-Pack — 2025</a>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:700">৳3,200</span><div onClick="{{ stopClick }}" style="width:30px;height:30px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- pagination -->
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:24px 16px 0">
+    <div style="width:38px;height:38px;border-radius:999px;border:1px solid #DDDFD2;background:#fff;display:flex;align-items:center;justify-content:center;color:#B4B7A8"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6 9 12l5.5 6"></path></svg></div>
+    <div style="width:38px;height:38px;border-radius:999px;background:#101208;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:700">1</div>
+    <div style="width:38px;height:38px;border-radius:999px;border:1px solid #DDDFD2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:#3A3D33">2</div>
+    <div style="width:38px;height:38px;border-radius:999px;border:1px solid #DDDFD2;background:#fff;display:flex;align-items:center;justify-content:center;color:#101208"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15 12l-5.5 6"></path></svg></div>
+  </div>
+  <div style="text-align:center;font-size:11.5px;color:#8A8D80;margin-top:10px">Showing 1–6 of 32</div>
+
+  <!-- footer -->
+  <div style="margin:28px 0 0;background:#101208;color:#C7C9BC;border-radius:24px 24px 0 0;padding:28px 20px 104px">
+    <div style="font-family:'Archivo',sans-serif;font-style:italic;font-weight:800;font-size:20px"><span style="color:#fff">DIECAST</span><span style="color:#A8CD2F">BD</span></div>
+    <p style="font-size:12.5px;line-height:1.6;color:#A9AC9F;margin:10px 0 0">Premium diecast for serious collectors in Bangladesh.</p>
+    <div style="display:flex;gap:8px;margin:18px 0 0">
+      <span style="border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:600;color:#DDDFD2">COD</span>
+      <span style="border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:600;color:#DDDFD2">bKash</span>
+      <span style="border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:600;color:#DDDFD2">BanglaQR</span>
+    </div>
+    <div style="display:flex;gap:8px;margin:16px 0 0">
+      <a href="https://www.facebook.com/diecastbd.official" target="_blank" style="width:32px;height:32px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 21.5v-7.1h2.4l.36-2.8h-2.76V9.8c0-.81.22-1.36 1.38-1.36h1.48V5.93c-.26-.03-1.13-.11-2.15-.11-2.13 0-3.58 1.3-3.58 3.68v2.09H8.1v2.8h2.43v7.1h2.87z"></path></svg></a>
+      <a href="https://www.instagram.com/diecastbd.official" target="_blank" style="width:32px;height:32px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"></circle></svg></a>
+      <a href="https://www.youtube.com/@diecastbd" target="_blank" style="width:32px;height:32px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12.5" rx="3.5"></rect><path d="M10.3 9.6l4.8 2.65-4.8 2.65V9.6z" fill="currentColor" stroke="none"></path></svg></a>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:20px;font-size:12px;color:#C7C9BC"><span>About</span><span>Contact</span><span>FAQ</span><span>Shipping Policy</span><span>Refund Policy</span><span>Privacy Policy</span><span>Terms &amp; Conditions</span></div>
+    <div style="border-top:1px solid rgba(255,255,255,.1);margin-top:16px;padding-top:14px;font-size:11px;color:#8A8D80">© 2026 DiecastBD. All rights reserved.</div>
+  </div>
+
+  <!-- bottom nav -->
+  <div style="position:fixed;left:12px;right:12px;bottom:12px;height:66px;background:rgba(13,15,7,.92);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.16);border-radius:22px;box-shadow:0 10px 30px rgba(16,18,8,.45);display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:60">
+    <a href="DiecastBD%20Landing%20Final.dc.html" style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#B4B7A8;text-decoration:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20h-5.5v-5.5h-5V20H4V10.5z"></path></svg><span style="font-size:10px;font-weight:600">Home</span></a>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#C9E469"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg><span style="font-size:10px;font-weight:800">Shop</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#B4B7A8"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg><span style="font-size:10px;font-weight:600">Saved</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#B4B7A8;position:relative"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8h13l-1.1 12H6.6L5.5 8z"></path><path d="M9 10V7a3 3 0 0 1 6 0v3"></path></svg><span style="font-size:10px;font-weight:600">Cart</span><span style="position:absolute;top:-5px;right:-7px;min-width:16px;height:16px;border-radius:999px;background:#A8CD2F;color:#101208;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px">{{ cartCount }}</span></div>
+    <a href="DiecastBD%20Account.dc.html" style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#B4B7A8;text-decoration:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.4"></circle><path d="M5 20c1.2-3.1 3.8-4.7 7-4.7s5.8 1.6 7 4.7"></path></svg><span style="font-size:10px;font-weight:600">Account</span></a>
+  </div>
+
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;previewMode&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;auto&quot;, &quot;desktop&quot;, &quot;mobile&quot;], &quot;default&quot;: &quot;auto&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Preview&quot;}, &quot;cartCount&quot;: {&quot;editor&quot;: &quot;int&quot;, &quot;default&quot;: 2, &quot;tsType&quot;: &quot;number&quot;, &quot;min&quot;: 0, &quot;max&quot;: 99, &quot;section&quot;: &quot;Demo state&quot;}, &quot;soldOutDemo&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Demo state&quot;}}">
+class Component extends DCLogic {
+  state = { vw: typeof window !== 'undefined' ? window.innerWidth : 1280 };
+
+  componentDidMount() {
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener('resize', this._onResize);
+    this._drag = null;
+    this._suppressClick = false;
+    this._onDown = (e) => {
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      let el = e.target;
+      while (el && el !== document.body) {
+        if (el.scrollWidth > el.clientWidth + 4) {
+          const cs = window.getComputedStyle(el);
+          if (cs.overflowX === 'auto' || cs.overflowX === 'scroll') break;
+        }
+        el = el.parentElement;
+      }
+      if (!el || el === document.body) return;
+      this._drag = { el: el, x: e.clientX, left: el.scrollLeft, moved: false, snap: el.style.scrollSnapType };
+    };
+    this._onMove = (e) => {
+      const d = this._drag;
+      if (!d) return;
+      const dx = e.clientX - d.x;
+      if (!d.moved && Math.abs(dx) > 6) {
+        d.moved = true;
+        d.el.style.scrollSnapType = 'none';
+        document.body.style.userSelect = 'none';
+      }
+      if (d.moved) {
+        d.el.scrollLeft = d.left - dx;
+        e.preventDefault();
+      }
+    };
+    this._onUp = () => {
+      const d = this._drag;
+      if (d && d.moved) {
+        const el = d.el, snap = d.snap;
+        document.body.style.userSelect = '';
+        this._suppressClick = true;
+        setTimeout(() => { el.style.scrollSnapType = snap || ''; this._suppressClick = false; }, 80);
+      }
+      this._drag = null;
+    };
+    this._onClickCapture = (e) => {
+      if (this._suppressClick) { e.preventDefault(); e.stopPropagation(); this._suppressClick = false; }
+    };
+    window.addEventListener('pointerdown', this._onDown);
+    window.addEventListener('pointermove', this._onMove);
+    window.addEventListener('pointerup', this._onUp);
+    window.addEventListener('click', this._onClickCapture, true);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._onResize);
+    window.removeEventListener('pointerdown', this._onDown);
+    window.removeEventListener('pointermove', this._onMove);
+    window.removeEventListener('pointerup', this._onUp);
+    window.removeEventListener('click', this._onClickCapture, true);
+  }
+
+  renderVals() {
+    const mode = this.props.previewMode ?? 'auto';
+    const vpMobile = this.state.vw < 768;
+    const isMobile = mode === 'mobile' ? true : mode === 'desktop' ? false : vpMobile;
+    const soldOut = this.props.soldOutDemo ?? true;
+    return {
+      isMobile: isMobile,
+      isDesktop: !isMobile,
+      goProduct: () => { window.location.href = 'DiecastBD Product Details.dc.html'; },
+      stopClick: (e) => e.stopPropagation(),
+      cartCount: this.props.cartCount ?? 2,
+      soldOut: soldOut,
+      inStock: !soldOut
+    };
+  }
+}
+</script>
+</body>
+</html>

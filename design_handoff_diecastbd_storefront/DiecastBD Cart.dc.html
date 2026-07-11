@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="image-slot.js"></script>
+<style>
+body{margin:0;background:#FAFAF7;font-family:'Instrument Sans',system-ui,sans-serif;color:#101208;-webkit-font-smoothing:antialiased}
+a{color:#101208}a:hover{color:#5F7A10}
+</style>
+</helmet>
+
+<!-- ================================================== DESKTOP -->
+<sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+<div style="background:#FAFAF7;min-height:100vh;display:flex;flex-direction:column" data-screen-label="Cart Desktop">
+
+  <div style="position:sticky;top:0;z-index:50;background:rgba(250,250,247,.6);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid #E7E8E0">
+    <div style="max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:32px;padding:0 40px;height:74px">
+      <a href="DiecastBD%20Landing%20Final.dc.html" style="display:block"><img src="assets/diecastbd-logo.png" alt="DiecastBD" style="height:24px;display:block"></a>
+      <div style="display:flex;align-items:center;gap:30px;font-size:14.5px;font-weight:500;color:#3A3D33">
+        <a href="DiecastBD%20Shop.dc.html" style="text-decoration:none;color:#3A3D33">Shop</a>
+        <span style="cursor:pointer">New arrivals</span><span style="cursor:pointer">Hot Wheels Premium</span><span style="cursor:pointer">MINI GT</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:999px;border:1px solid #E7E8E0;display:flex;align-items:center;justify-content:center;color:#101208;background:#fff;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></div>
+        <div style="position:relative;width:40px;height:40px;border-radius:999px;border:1px solid #A8CD2F;display:flex;align-items:center;justify-content:center;color:#101208;background:#fff">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8h13l-1.1 12H6.6L5.5 8z"></path><path d="M9 10V7a3 3 0 0 1 6 0v3"></path></svg>
+          <span style="position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:#A8CD2F;color:#101208;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px">{{ cartCount }}</span>
+        </div>
+        <div style="background:#101208;color:#fff;font-size:14px;font-weight:600;padding:11px 22px;border-radius:999px;margin-left:6px;cursor:pointer">Sign in</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1160px;margin:0 auto;padding:40px 40px 0;width:100%;box-sizing:border-box;flex:1">
+    <h1 style="font-family:'Archivo',sans-serif;font-size:34px;font-weight:800;letter-spacing:-0.02em;margin:0">Your cart</h1>
+    <p style="font-size:14.5px;color:#6B6E60;margin:8px 0 0">{{ cartCount }} pieces reserved for you — stock is held while you check out.</p>
+
+    <div style="display:grid;grid-template-columns:1.55fr 1fr;gap:32px;margin-top:28px;align-items:start">
+
+      <!-- items -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <div style="background:#fff;border:1px solid #E7E8E0;border-radius:20px;padding:16px 18px;display:flex;gap:16px;align-items:center">
+          <div style="position:relative;width:96px;height:88px;flex:none;border-radius:14px;overflow:hidden;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-p1" shape="rect" placeholder="Photo"></image-slot></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">MINI GT</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;color:#101208;font-size:15px;font-weight:600;line-height:1.35;margin:4px 0 6px">Toyota Supra A80 — Top Secret</a>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#4F6B0B"><span style="width:6px;height:6px;border-radius:999px;background:#A8CD2F"></span>In stock</div>
+          </div>
+          <div style="display:flex;align-items:center;border:1px solid #E7E8E0;border-radius:999px;background:#FAFAF7">
+            <div onClick="{{ dec1 }}" style="width:38px;height:40px;display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5.5 12h13"></path></svg></div>
+            <span style="min-width:22px;text-align:center;font-size:14.5px;font-weight:700">{{ q1 }}</span>
+            <div onClick="{{ inc1 }}" style="width:38px;height:40px;display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+          </div>
+          <div style="width:88px;text-align:right;font-size:16px;font-weight:700">{{ line1Str }}</div>
+          <div style="width:36px;height:36px;border-radius:999px;border:1px solid #E7E8E0;background:#fff;display:flex;align-items:center;justify-content:center;color:#8A8D80;cursor:pointer;transition:color .15s ease,border-color .15s ease" style-hover="color:#B3261E;border-color:#B3261E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg></div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #E7E8E0;border-radius:20px;padding:16px 18px;display:flex;gap:16px;align-items:center">
+          <div style="position:relative;width:96px;height:88px;flex:none;border-radius:14px;overflow:hidden;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-n1" shape="rect" placeholder="Photo"></image-slot></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">Accessories</div>
+            <a href="DiecastBD%20Product%20Details.dc.html" style="display:block;text-decoration:none;color:#101208;font-size:15px;font-weight:600;line-height:1.35;margin:4px 0 6px">Card Protector — Top-Open Gen-2, 10pk</a>
+            <div style="display:flex;align-items:baseline;gap:7px;font-size:12px"><span style="font-weight:600;color:#4F6B0B">On sale</span><span style="color:#A2A597;text-decoration:line-through">৳1,500</span></div>
+          </div>
+          <div style="display:flex;align-items:center;border:1px solid #E7E8E0;border-radius:999px;background:#FAFAF7">
+            <div onClick="{{ dec2 }}" style="width:38px;height:40px;display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5.5 12h13"></path></svg></div>
+            <span style="min-width:22px;text-align:center;font-size:14.5px;font-weight:700">{{ q2 }}</span>
+            <div onClick="{{ inc2 }}" style="width:38px;height:40px;display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+          </div>
+          <div style="width:88px;text-align:right;font-size:16px;font-weight:700">{{ line2Str }}</div>
+          <div style="width:36px;height:36px;border-radius:999px;border:1px solid #E7E8E0;background:#fff;display:flex;align-items:center;justify-content:center;color:#8A8D80;cursor:pointer;transition:color .15s ease,border-color .15s ease" style-hover="color:#B3261E;border-color:#B3261E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg></div>
+        </div>
+
+        <a href="DiecastBD%20Shop.dc.html" style="display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#101208;text-decoration:none;margin-top:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H6"></path><path d="M11 6.5 5.5 12 11 17.5"></path></svg>Continue shopping</a>
+      </div>
+
+      <!-- summary -->
+      <div style="background:#fff;border:1px solid #E7E8E0;border-radius:24px;padding:26px;position:sticky;top:98px">
+        <div style="font-family:'Archivo',sans-serif;font-size:19px;font-weight:700">Order summary</div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:18px"><span style="color:#6B6E60">Subtotal</span><span style="font-weight:600">{{ subtotalStr }}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:12px"><span style="color:#6B6E60">Shipping <span style="color:#A2A597">· Inside Dhaka</span></span><span style="font-weight:600">৳60</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid #EFEFE9;margin-top:16px;padding-top:16px"><span style="font-size:15px;font-weight:700">Total</span><span style="font-family:'Archivo',sans-serif;font-size:22px;font-weight:800">{{ totalStr }}</span></div>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <div style="flex:1;border:1px solid #E7E8E0;border-radius:999px;padding:12px 18px;font-size:13.5px;color:#8A8D80;background:#FAFAF7">Coupon code</div>
+          <div style="border:1.5px solid #101208;color:#101208;font-size:13.5px;font-weight:700;padding:12px 20px;border-radius:999px;cursor:pointer;transition:background .15s ease,color .15s ease" style-hover="background:#101208;color:#fff">Apply</div>
+        </div>
+        <a href="DiecastBD%20Checkout.dc.html" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#A8CD2F;color:#101208;font-size:15.5px;font-weight:700;height:52px;border-radius:999px;margin-top:16px;text-decoration:none;transition:background .15s ease" style-hover="background:#B9DC4B">Checkout <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"></path><path d="M13 6.5 18.5 12 13 17.5"></path></svg></a>
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:16px">
+          <span style="border:1px solid #E7E8E0;border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:600;color:#55584C">COD</span>
+          <span style="border:1px solid #E7E8E0;border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:600;color:#55584C">bKash</span>
+          <span style="border:1px solid #E7E8E0;border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:600;color:#55584C">BanglaQR</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:#6B6E60;margin-top:12px"><span style="color:#4F6B0B"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.7v5.6c0 4.6-3.1 7.6-7 8.9-3.9-1.3-7-4.3-7-8.9V5.7L12 3z"></path><path d="M9 11.8l2.1 2.1 4-4.2"></path></svg></span>Verified authentic · collector-grade packing</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:88px;background:#101208;color:#8A8D80">
+    <div style="max-width:1360px;margin:0 auto;padding:26px 40px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div style="font-family:'Archivo',sans-serif;font-style:italic;font-weight:800;font-size:17px"><span style="color:#fff">DIECAST</span><span style="color:#A8CD2F">BD</span></div>
+      <div style="display:flex;gap:18px;font-size:12.5px;flex-wrap:wrap"><a href="DiecastBD%20About.dc.html" style="color:#C7C9BC;text-decoration:none">About</a><a href="DiecastBD%20Contact.dc.html" style="color:#C7C9BC;text-decoration:none">Contact</a><a href="DiecastBD%20FAQ.dc.html" style="color:#C7C9BC;text-decoration:none">FAQ</a><a href="DiecastBD%20Shipping%20Policy.dc.html" style="color:#C7C9BC;text-decoration:none">Shipping Policy</a><a href="DiecastBD%20Refund%20Policy.dc.html" style="color:#C7C9BC;text-decoration:none">Refund Policy</a><a href="DiecastBD%20Privacy%20Policy.dc.html" style="color:#C7C9BC;text-decoration:none">Privacy Policy</a><a href="DiecastBD%20Terms.dc.html" style="color:#C7C9BC;text-decoration:none">Terms &amp; Conditions</a></div>
+      <div style="display:flex;align-items:center;gap:16px"><div style="display:flex;gap:8px"><a href="https://www.facebook.com/diecastbd.official" target="_blank" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 21.5v-7.1h2.4l.36-2.8h-2.76V9.8c0-.81.22-1.36 1.38-1.36h1.48V5.93c-.26-.03-1.13-.11-2.15-.11-2.13 0-3.58 1.3-3.58 3.68v2.09H8.1v2.8h2.43v7.1h2.87z"></path></svg></a><a href="https://www.instagram.com/diecastbd.official" target="_blank" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"></circle></svg></a><a href="https://www.youtube.com/@diecastbd" target="_blank" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#DDDFD2;text-decoration:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12.5" rx="3.5"></rect><path d="M10.3 9.6l4.8 2.65-4.8 2.65V9.6z" fill="currentColor" stroke="none"></path></svg></a></div><span style="font-size:12px">© 2026 DiecastBD</span></div>
+    </div>
+  </div>
+
+</div>
+</sc-if>
+
+<!-- ================================================== MOBILE -->
+<sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+<div style="background:#FAFAF7;min-height:100vh;padding-bottom:110px" data-screen-label="Cart Mobile">
+
+  <div style="position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(250,250,247,.6);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid rgba(231,232,224,.6)">
+    <a href="DiecastBD%20Shop.dc.html" style="width:38px;height:38px;border-radius:999px;border:1px solid #E7E8E0;background:#fff;display:flex;align-items:center;justify-content:center;color:#101208;text-decoration:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H6"></path><path d="M11 6.5 5.5 12 11 17.5"></path></svg></a>
+    <span style="font-family:'Archivo',sans-serif;font-size:17px;font-weight:700">Your cart ({{ cartCount }})</span>
+    <div style="width:38px"></div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:12px;margin:16px 16px 0">
+
+    <div style="background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:14px;display:flex;gap:12px">
+      <div style="position:relative;width:78px;height:74px;flex:none;border-radius:12px;overflow:hidden;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-p1" shape="rect" placeholder="Photo"></image-slot></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;gap:8px">
+          <div style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#8A8D80;font-weight:600">MINI GT</div>
+          <div style="color:#8A8D80"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg></div>
+        </div>
+        <div style="font-size:13px;font-weight:600;line-height:1.3;margin:3px 0 8px">Toyota Supra A80 — Top Secret</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;border:1px solid #E7E8E0;border-radius:999px;background:#FAFAF7">
+            <div onClick="{{ dec1 }}" style="width:32px;height:34px;display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5.5 12h13"></path></svg></div>
+            <span style="min-width:18px;text-align:center;font-size:13px;font-weight:700">{{ q1 }}</span>
+            <div onClick="{{ inc1 }}" style="width:32px;height:34px;display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+          </div>
+          <span style="font-size:14.5px;font-weight:700">{{ line1Str }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:14px;display:flex;gap:12px">
+      <div style="position:relative;width:78px;height:74px;flex:none;border-radius:12px;overflow:hidden;background:#F1F2EA"><image-slot style="position:absolute;inset:0" id="1a-n1" shape="rect" placeholder="Photo"></image-slot></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;gap:8px">
+          <div style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#8A8D80;font-weight:600">Accessories</div>
+          <div style="color:#8A8D80"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg></div>
+        </div>
+        <div style="font-size:13px;font-weight:600;line-height:1.3;margin:3px 0 8px">Card Protector — Top-Open Gen-2, 10pk</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;border:1px solid #E7E8E0;border-radius:999px;background:#FAFAF7">
+            <div onClick="{{ dec2 }}" style="width:32px;height:34px;display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5.5 12h13"></path></svg></div>
+            <span style="min-width:18px;text-align:center;font-size:13px;font-weight:700">{{ q2 }}</span>
+            <div onClick="{{ inc2 }}" style="width:32px;height:34px;display:flex;align-items:center;justify-content:center;color:#101208;cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13"></path><path d="M5.5 12h13"></path></svg></div>
+          </div>
+          <span style="font-size:14.5px;font-weight:700">{{ line2Str }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #E7E8E0;border-radius:18px;padding:18px">
+      <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#6B6E60">Subtotal</span><span style="font-weight:600">{{ subtotalStr }}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:10px"><span style="color:#6B6E60">Shipping · Inside Dhaka</span><span style="font-weight:600">৳60</span></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <div style="flex:1;border:1px solid #E7E8E0;border-radius:999px;padding:11px 16px;font-size:12.5px;color:#8A8D80;background:#FAFAF7">Coupon code</div>
+        <div style="border:1.5px solid #101208;color:#101208;font-size:12.5px;font-weight:700;padding:11px 18px;border-radius:999px">Apply</div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:14px">
+        <span style="border:1px solid #E7E8E0;border-radius:999px;padding:4px 11px;font-size:10.5px;font-weight:600;color:#55584C">COD</span>
+        <span style="border:1px solid #E7E8E0;border-radius:999px;padding:4px 11px;font-size:10.5px;font-weight:600;color:#55584C">bKash</span>
+        <span style="border:1px solid #E7E8E0;border-radius:999px;padding:4px 11px;font-size:10.5px;font-weight:600;color:#55584C">BanglaQR</span>
+      </div>
+    </div>
+
+    <a href="DiecastBD%20Shop.dc.html" style="display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:#101208;text-decoration:none;margin:4px 0 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H6"></path><path d="M11 6.5 5.5 12 11 17.5"></path></svg>Continue shopping</a>
+  </div>
+
+  <!-- sticky checkout bar -->
+  <div style="position:fixed;left:12px;right:12px;bottom:12px;background:rgba(13,15,7,.92);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.16);border-radius:22px;box-shadow:0 10px 30px rgba(16,18,8,.45);display:flex;align-items:center;gap:12px;padding:10px 12px 10px 20px;z-index:60">
+    <div>
+      <div style="font-size:10px;font-weight:600;color:#8A8D80;letter-spacing:.06em">TOTAL</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:18px;font-weight:800;color:#fff">{{ totalStr }}</div>
+    </div>
+    <a href="DiecastBD%20Checkout.dc.html" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:#A8CD2F;color:#101208;font-size:14px;font-weight:800;height:48px;border-radius:999px;text-decoration:none">Checkout <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"></path><path d="M13 6.5 18.5 12 13 17.5"></path></svg></a>
+  </div>
+
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;previewMode&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;auto&quot;, &quot;desktop&quot;, &quot;mobile&quot;], &quot;default&quot;: &quot;auto&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Preview&quot;}}">
+class Component extends DCLogic {
+  state = {
+    vw: typeof window !== 'undefined' ? window.innerWidth : 1280,
+    q1: 1,
+    q2: 1
+  };
+
+  componentDidMount() {
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener('resize', this._onResize);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._onResize);
+  }
+
+  renderVals() {
+    const mode = this.props.previewMode ?? 'auto';
+    const vpMobile = this.state.vw < 768;
+    const isMobile = mode === 'mobile' ? true : mode === 'desktop' ? false : vpMobile;
+    const p1 = 2600, p2 = 1300, ship = 60;
+    const q1 = this.state.q1, q2 = this.state.q2;
+    const fmt = n => '\u09f3' + n.toLocaleString('en-IN');
+    return {
+      isMobile: isMobile,
+      isDesktop: !isMobile,
+      cartCount: q1 + q2,
+      q1: q1,
+      q2: q2,
+      inc1: () => this.setState(s => ({ q1: Math.min(5, s.q1 + 1) })),
+      dec1: () => this.setState(s => ({ q1: Math.max(1, s.q1 - 1) })),
+      inc2: () => this.setState(s => ({ q2: Math.min(5, s.q2 + 1) })),
+      dec2: () => this.setState(s => ({ q2: Math.max(1, s.q2 - 1) })),
+      line1Str: fmt(p1 * q1),
+      line2Str: fmt(p2 * q2),
+      subtotalStr: fmt(p1 * q1 + p2 * q2),
+      totalStr: fmt(p1 * q1 + p2 * q2 + ship)
+    };
+  }
+}
+</script>
+</body>
+</html>
