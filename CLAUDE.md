@@ -12,7 +12,7 @@ DiecastBD — premium diecast e-commerce for Bangladesh (BDT ৳, COD + manual b
 - `docs/Inventory.md` — source of truth for the product catalog. Seeded via `npm run seed`, never hardcoded into the frontend.
 - `docs/context/` — **session context snapshots.** At the start of a session, read the newest snapshot to pick up prior working state. Before context runs out, before `/clear`, and at the end of any session that changed project state, write/update a dated snapshot (`YYYY-MM-DD-<topic>.md`) covering what was done, current repo/server state, unfinished work, and gotchas — see the folder's README.
 
-Note: a storefront visual redesign (light "paper" theme, built from a `design_handoff_diecastbd_storefront/` package) was fully reverted on `main` in commit `929085a`; that work survives on the `storefront-redesign` branch if it's ever wanted again. `main` is the original dark-theme storefront.
+Note: the **storefront redesign v2** (light "paper" theme, brand lime `#A8CD2F`, built from `design_handoff_diecastbd_storefront/`) is now **live on `main`** — the customer-facing storefront is the light theme; the **admin dashboard stays dark** (`[data-theme="diecastbd-admin"]`, verified byte-identical by `frontend/scripts/verify-theme-split.mjs`). See `docs/plan.md` §7 decisions 42–49 and the "Storefront Redesign v2" entry in `docs/log.md`. Gotcha: `index.css` redefines the Tailwind radius scale, so use explicit `rounded-[Npx]` for storefront design radii (named `rounded-*` are reserved for shadcn primitives). An earlier v1 redesign attempt was reverted (commit `929085a`) and survives on the `storefront-redesign` branch; v2 was rebuilt from scratch, not from it.
 
 ## Commands
 
