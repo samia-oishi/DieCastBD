@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
-import { SlidersHorizontal, Search, X } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 
 import { canonical } from "@/lib/siteUrl";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Pagination } from "@/components/shared/Pagination";
+import { cn } from "@/lib/utils";
+import { Seo } from "@/components/shared/Seo";
 import { Container } from "@/components/shared/Container";
+import { Pagination } from "@/components/shared/Pagination";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useDragScroll } from "@/hooks/useDragScroll";
+import { useBrands } from "@/features/brands/api/useBrands";
 import { useProducts } from "./api/useProducts";
 import { useShopFilters } from "./hooks/useShopFilters";
 import { FilterSidebar } from "./components/FilterSidebar";
@@ -18,11 +18,46 @@ import { ProductGrid } from "./components/ProductGrid";
 
 const PAGE_SIZE = 24;
 
+function SearchPill({ value, onChange, className }) {
+  return (
+    <div className={cn("flex items-center gap-2.5 rounded-full border border-line bg-white px-[18px] py-3 text-faint transition-colors focus-within:border-brand", className)}>
+      <Search className="size-4 shrink-0" strokeWidth={2} />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search the collection…"
+        className="w-full bg-transparent text-[13.5px] text-ink placeholder:text-faint focus:outline-none md:text-sm"
+      />
+      {value && (
+        <button type="button" onClick={() => onChange("")} aria-label="Clear search" className="text-faint hover:text-ink">
+          <X className="size-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Chip({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2.5 text-[12.5px] font-semibold transition-colors",
+        active ? "bg-ink text-white" : "border border-line bg-white text-ink-soft"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function ShopPage() {
   const { filters, updateFilters, setPage, clearFilters, activeFilterCount } = useShopFilters();
   const [searchInput, setSearchInput] = useState(filters.q ?? "");
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const { ref: toolbarRef, dragProps } = useDragScroll();
+  const { data: brands } = useBrands();
   const debouncedSearch = useDebounce(searchInput, 400);
 
   const { data, isLoading, isPlaceholderData } = useProducts({
@@ -34,93 +69,104 @@ export function ShopPage() {
 
   const products = data?.data ?? [];
   const meta = data?.meta;
+  const total = meta?.total ?? 0;
+  const rangeStart = total === 0 ? 0 : (filters.page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(filters.page * PAGE_SIZE, total);
+  const showing = total > 0 ? `Showing ${rangeStart}–${rangeEnd} of ${total}` : null;
+
+  const onSearch = (v) => {
+    setSearchInput(v);
+    updateFilters({ q: v || undefined });
+  };
 
   const sidebarProps = { filters, updateFilters, clearFilters, activeFilterCount };
 
   return (
     <>
-      <Helmet>
-        <title>Shop Hot Wheels &amp; MINI GT Diecast Cars in Bangladesh | DiecastBD</title>
-        <meta
-          name="description"
-          content="Browse authentic Hot Wheels Premium and MINI GT diecast cars in Bangladesh — Car Culture, F1, JDM and more. 1:64 scale, nationwide delivery, cash on delivery."
-        />
-        {/* Canonical points at the clean /shop URL so filtered/paginated views don't
-            fragment ranking signals across many near-duplicate query-string URLs. */}
+      <Seo
+        title="Shop Hot Wheels & MINI GT Diecast Cars in Bangladesh"
+        description="Browse authentic Hot Wheels Premium and MINI GT diecast cars in Bangladesh — Car Culture, F1, JDM and more. 1:64 scale, nationwide delivery, cash on delivery."
+      >
         <link rel="canonical" href={canonical("/shop")} />
-      </Helmet>
+      </Seo>
 
-      <Container className="py-10">
-        <h1 className="mb-6 font-heading text-3xl text-foreground">Shop</h1>
-
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[220px] flex-1">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search products..."
-              value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value);
-                updateFilters({ q: e.target.value || undefined });
-              }}
-              className="pl-8"
-            />
-            {searchInput && (
-              <button
-                onClick={() => {
-                  setSearchInput("");
-                  updateFilters({ q: undefined });
-                }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="size-4" />
-              </button>
-            )}
+      {/* ---------- Mobile head + toolbar ---------- */}
+      <div className="md:hidden">
+        <div className="mx-4 mt-4">
+          <div className="flex items-baseline justify-between">
+            <h1 className="font-display text-[26px] font-extrabold tracking-[-0.01em] text-ink">Shop the shelf</h1>
+            {total > 0 && <span className="text-xs font-medium text-faint">{total} pieces</span>}
           </div>
-
-          <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="lg:hidden">
-                <SlidersHorizontal /> Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="overflow-y-auto p-6">
-              <SheetHeader className="px-0">
-                <SheetTitle>Filters</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4">
-                <FilterSidebar {...sidebarProps} />
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          <SortDropdown value={filters.sort} onChange={(sort) => updateFilters({ sort })} />
+          <SearchPill value={searchInput} onChange={onSearch} className="mt-3.5" />
         </div>
+        <div ref={toolbarRef} {...dragProps} className="flex gap-2 scroll-pl-4 overflow-x-auto px-4 pb-0.5 pt-3.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Chip active onClick={() => setSheetOpen(true)}>
+            <SlidersHorizontal className="size-[13px]" strokeWidth={2} />
+            Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
+          </Chip>
+          <SortDropdown value={filters.sort} onChange={(sort) => updateFilters({ sort })} className="shrink-0 px-4 py-2.5 text-[12.5px]" />
+          {brands?.map((b) => (
+            <Chip key={b.slug} active={filters.brand === b.slug} onClick={() => updateFilters({ brand: filters.brand === b.slug ? undefined : b.slug })}>
+              {b.name}
+            </Chip>
+          ))}
+          <Chip active={!!filters.inStock} onClick={() => updateFilters({ inStock: filters.inStock ? undefined : true })}>
+            In stock
+          </Chip>
+        </div>
+        <div className="mx-4 mt-4">
+          <div className={isPlaceholderData ? "opacity-60 transition-opacity" : ""}>
+            <ProductGrid products={products} isLoading={isLoading && !isPlaceholderData} />
+          </div>
+          {meta && meta.totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+            </div>
+          )}
+          {showing && <p className="mt-2.5 text-center text-[11.5px] text-faint">{showing}</p>}
+        </div>
+      </div>
 
-        <div className="flex gap-10">
-          <aside className="hidden w-56 shrink-0 lg:block">
+      {/* ---------- Desktop head + body ---------- */}
+      <div className="hidden md:block">
+        <Container className="pt-9">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <h1 className="font-display text-[38px] font-extrabold tracking-[-0.02em] text-ink">Shop the shelf</h1>
+              {total > 0 && <p className="mt-2 text-[14.5px] text-muted-foreground">{total} pieces in stock right now — every one hand-verified.</p>}
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <SearchPill value={searchInput} onChange={onSearch} className="w-[340px]" />
+              <SortDropdown value={filters.sort} onChange={(sort) => updateFilters({ sort })} prefix />
+            </div>
+          </div>
+        </Container>
+
+        <Container className="mt-7 grid grid-cols-[250px_1fr] items-start gap-9">
+          <aside className="sticky top-[98px] rounded-3xl border border-line bg-white p-6">
             <FilterSidebar {...sidebarProps} />
           </aside>
-
-          <div className="flex-1">
-            {meta && (
-              <p className="mb-4 text-sm text-muted-foreground">
-                {meta.total} product{meta.total !== 1 && "s"}
-              </p>
-            )}
-
+          <div>
             <div className={isPlaceholderData ? "opacity-60 transition-opacity" : ""}>
               <ProductGrid products={products} isLoading={isLoading && !isPlaceholderData} />
             </div>
-
             {meta && meta.totalPages > 1 && (
               <div className="mt-10">
                 <Pagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
               </div>
             )}
+            {showing && <p className="mt-3 text-center text-[12.5px] text-faint">{showing}</p>}
           </div>
-        </div>
-      </Container>
+        </Container>
+      </div>
+
+      {/* ---------- Mobile filter sheet ---------- */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="left" className="w-[86%] max-w-sm overflow-y-auto bg-paper p-6">
+          <SheetTitle className="sr-only">Filters</SheetTitle>
+          <FilterSidebar {...sidebarProps} />
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

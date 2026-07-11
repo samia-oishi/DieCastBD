@@ -14,13 +14,13 @@ import { useRestockAlertStore } from "@/stores/restockAlertStore";
 // Per-variant, per-breakpoint sizing read directly from the design markup.
 const VARIANTS = {
   grid: {
-    outer: "rounded-[20px]",
+    outer: "rounded-[18px] md:rounded-[20px]",
     img: "h-[150px] md:h-[220px]",
-    pad: "p-[14px]",
-    kicker: "text-[10.5px] tracking-[0.09em]",
-    title: "mt-[5px] mb-3 text-[14.5px] min-h-10",
-    price: "text-[15.5px]",
-    addBtn: "size-8",
+    pad: "px-3 pb-[13px] pt-[11px] md:px-4 md:pb-4 md:pt-[14px]",
+    kicker: "text-[9.5px] tracking-[0.08em] md:text-[10.5px] md:tracking-[0.09em]",
+    title: "mt-1 mb-2 text-[12.5px] min-h-[33px] md:mt-[5px] md:mb-3 md:text-[14.5px] md:min-h-10",
+    price: "text-[13.5px] md:text-[15.5px]",
+    addBtn: "size-[30px] md:size-8",
   },
   carousel: {
     outer: "rounded-[18px] md:rounded-[20px]",

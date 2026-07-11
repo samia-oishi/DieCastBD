@@ -1,37 +1,34 @@
 import { PackageSearch } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/shared/ProductCard";
 
 function GridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,minmax(235px,1fr))] md:gap-5">
       {Array.from({ length: 12 }).map((_, i) => (
-        <div key={i} className="flex flex-col gap-3">
-          <Skeleton className="aspect-square w-full rounded-xl" />
-          <Skeleton className="h-3 w-2/3" />
-          <Skeleton className="h-4 w-1/2" />
-        </div>
+        <div key={i} className="h-[280px] animate-pulse rounded-[18px] bg-line-soft md:h-[340px] md:rounded-[20px]" />
       ))}
     </div>
   );
 }
 
+/** Responsive product grid: 2-col on mobile (12px gap), auto-fill minmax(235px)
+ * on desktop (20px gap), matching DiecastBD Shop.dc.html. */
 export function ProductGrid({ products, isLoading }) {
   if (isLoading) return <GridSkeleton />;
 
   if (!products?.length) {
     return (
       <div className="flex flex-col items-center gap-3 py-24 text-center">
-        <PackageSearch className="size-10 text-muted-foreground/40" strokeWidth={1.25} />
+        <PackageSearch className="size-10 text-faint/50" strokeWidth={1.25} />
         <p className="text-muted-foreground">No products match these filters.</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,minmax(235px,1fr))] md:gap-5">
       {products.map((product) => (
-        <ProductCard key={product._id} product={product} />
+        <ProductCard key={product._id} product={product} variant="grid" />
       ))}
     </div>
   );
