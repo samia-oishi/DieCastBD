@@ -7,6 +7,21 @@ const envSchema = z.object({
   MONGODB_URI: z.string().min(1, "MONGODB_URI is required"),
   CLIENT_URL: z.string().min(1, "CLIENT_URL is required"),
 
+  // Extra browser origins allowed to make credentialed CORS requests, on top of
+  // CLIENT_URL. Comma-separated. Use it to let a locally-running frontend
+  // (http://localhost:5173) hit a deployed backend without changing CLIENT_URL —
+  // which must stay the single canonical origin for sitemap and email links.
+  CORS_ORIGINS: z
+    .string()
+    .optional()
+    .default("")
+    .transform((val) =>
+      val
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean)
+    ),
+
   JWT_ACCESS_SECRET: z.string().min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
   JWT_REFRESH_SECRET: z.string().min(32, "JWT_REFRESH_SECRET must be at least 32 characters"),
   JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
@@ -63,3 +78,10 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export const isProduction = env.NODE_ENV === "production";
+
+// Origins the CORS middleware reflects for credentialed requests: the canonical
+// CLIENT_URL plus any CORS_ORIGINS. Trailing slashes are stripped so entries
+// match the browser's slash-less Origin header, and duplicates are removed.
+export const allowedOrigins = [env.CLIENT_URL, ...env.CORS_ORIGINS]
+  .map((o) => o.replace(/\/$/, ""))
+  .filter((o, i, arr) => arr.indexOf(o) === i);

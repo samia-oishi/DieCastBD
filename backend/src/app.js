@@ -5,7 +5,7 @@ import morgan from "morgan";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 
-import { env, isProduction } from "./config/env.js";
+import { env, isProduction, allowedOrigins } from "./config/env.js";
 import { connectDB } from "./config/db.js";
 import { sanitizeInput } from "./middlewares/sanitize.js";
 import { apiLimiter } from "./middlewares/rateLimiters.js";
@@ -30,7 +30,7 @@ app.disable("x-powered-by");
 app.use(helmet());
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: allowedOrigins,
     credentials: true,
   })
 );
