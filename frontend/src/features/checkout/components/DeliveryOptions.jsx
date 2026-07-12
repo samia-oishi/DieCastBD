@@ -12,6 +12,9 @@ export function DeliveryOptions({ zones, value, onChange }) {
             <div className="flex-1">
               <div className="text-sm font-bold text-ink">{zone.name}</div>
               {zone.eta && <div className="mt-0.5 text-[12.5px] text-muted-foreground">{zone.eta}</div>}
+              {zone.requiresPrepay && (
+                <div className="mt-0.5 text-[12.5px] text-muted-foreground">Delivery charge must be paid upfront</div>
+              )}
             </div>
             <span className="text-sm font-bold text-ink">{zone.fee > 0 ? formatTaka(zone.fee) : "Free"}</span>
           </div>

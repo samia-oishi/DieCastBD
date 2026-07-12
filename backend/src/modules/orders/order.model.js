@@ -59,6 +59,41 @@ const orderSchema = new mongoose.Schema(
     bkashTransactionId: { type: String, default: null },
     banglaQrReference: { type: String, default: null },
 
+    // Business payment option selected at checkout (System: pre-order/payment-options
+    // requirement) — orthogonal to paymentMethod, which stays the payment *channel*
+    // (cod/bkash/banglaqr). Computed once at order-creation time by
+    // paymentPlan.service.js (calculateAmountPaid) and snapshotted here so a later
+    // product config change never rewrites historical order numbers.
+    paymentOption: {
+      type: String,
+      enum: ["cod", "deliveryOnly", "partialAdvance", "full"],
+      // Function defaults below exist solely to backfill a semantically-correct
+      // value for pre-Phase-4 historical orders with no migration script: back
+      // then paymentMethod was the only payment signal available, so that's what
+      // gets reconstructed when an old document is read without this field stored.
+      default: function () {
+        return this.paymentMethod === "cod" ? "cod" : "full";
+      },
+    },
+    advancePaymentPercent: { type: Number, min: 1, max: 100, default: null },
+    // amountPaid + amountDue === total is a hard invariant, enforced by
+    // calculateAmountPaid for every order created from Phase 4 onward. Same
+    // historical-backfill reasoning as paymentOption above: "cod" meant nothing
+    // was paid upfront, "bkash"/"banglaqr" meant the full amount was already
+    // collected via the pre-existing manual-proof flow.
+    amountPaid: {
+      type: Number,
+      default: function () {
+        return this.paymentMethod === "cod" ? 0 : this.total;
+      },
+    },
+    amountDue: {
+      type: Number,
+      default: function () {
+        return this.paymentMethod === "cod" ? this.total : 0;
+      },
+    },
+
     status: {
       type: String,
       enum: ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"],

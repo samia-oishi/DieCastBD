@@ -6,6 +6,7 @@ import { InventoryLog } from "../inventoryLogs/inventoryLog.model.js";
 import { Settings } from "../settings/settings.model.js";
 import { Coupon } from "../coupons/coupon.model.js";
 import { findValidCoupon, calculateDiscount } from "../coupons/coupon.service.js";
+import { assertPaymentMethodAllowed, calculateAmountPaid } from "./paymentPlan.service.js";
 import { generateOrderNumber } from "../../utils/generateOrderNumber.js";
 import { ApiError } from "../../utils/apiError.js";
 
@@ -77,6 +78,7 @@ async function buildAndSaveOrder({
   deliveryNote,
   couponCode,
   paymentMethod,
+  paymentOption,
   bkashTransactionId,
   banglaQrReference,
   shippingZone,
@@ -92,14 +94,24 @@ async function buildAndSaveOrder({
   }
 
   const settings = await Settings.findOne().session(session);
+  const zone = settings?.shippingZones?.find((z) => z.name === shippingZone);
   // Falls back to 0 (not a throw) if the zone doesn't match any configured
   // zone — e.g. stale admin config — so a checkout never hard-fails over a
   // shipping-fee lookup miss; it just ships free rather than blocking the order.
-  const zoneFee = settings?.shippingZones?.find((z) => z.name === shippingZone)?.fee ?? 0;
+  const zoneFee = zone?.fee ?? 0;
+  const zoneRequiresPrepay = zone?.requiresPrepay ?? false;
   const freeShippingThreshold = settings?.freeShippingThreshold ?? 0;
   const shippingFee = freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : zoneFee;
 
   const total = subtotal - discount + shippingFee;
+
+  const resolvedPaymentOption = paymentOption || "cod";
+  assertPaymentMethodAllowed({ normalizedItems, paymentOption: resolvedPaymentOption, zoneRequiresPrepay });
+  const {
+    amountPaid,
+    amountDue,
+    advancePaymentPercent: resolvedAdvancePercent,
+  } = calculateAmountPaid({ normalizedItems, subtotal, total, shippingFee, paymentOption: resolvedPaymentOption });
 
   let orderNumber = generateOrderNumber();
   if (await Order.exists({ orderNumber }).session(session)) {
@@ -127,6 +139,10 @@ async function buildAndSaveOrder({
         // marks it paid; only the reference itself is captured at order time.
         bkashTransactionId: paymentMethod === "bkash" ? bkashTransactionId : null,
         banglaQrReference: paymentMethod === "banglaqr" ? banglaQrReference : null,
+        paymentOption: resolvedPaymentOption,
+        advancePaymentPercent: resolvedAdvancePercent,
+        amountPaid,
+        amountDue,
         status: "pending",
         statusHistory: [{ status: "pending", changedBy: userId, at: new Date() }],
       },
@@ -159,6 +175,7 @@ export async function createOrderFromCart({
   deliveryNote,
   couponCode,
   paymentMethod,
+  paymentOption,
   bkashTransactionId,
   banglaQrReference,
   shippingZone,
@@ -186,6 +203,7 @@ export async function createOrderFromCart({
         deliveryNote,
         couponCode,
         paymentMethod,
+        paymentOption,
         bkashTransactionId,
         banglaQrReference,
         shippingZone,
@@ -219,6 +237,7 @@ export async function createOrderFromItems({
   deliveryNote,
   couponCode,
   paymentMethod,
+  paymentOption,
   bkashTransactionId,
   banglaQrReference,
   shippingZone,
@@ -248,6 +267,7 @@ export async function createOrderFromItems({
         deliveryNote,
         couponCode,
         paymentMethod,
+        paymentOption,
         bkashTransactionId,
         banglaQrReference,
         shippingZone,

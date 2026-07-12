@@ -13,6 +13,7 @@ import { useCurrentUser } from "@/features/auth/api/useAuth";
 import { useCreateOrderMutation } from "@/features/orders/api/useOrders";
 import { useCartStore } from "@/stores/cartStore";
 import { checkoutSchema } from "./schemas/checkoutSchema";
+import { resolvePaymentOptionAvailability, calculateAmountPaidPreview } from "./lib/paymentPlanPreview";
 import { CheckoutSteps } from "./components/CheckoutSteps";
 import { NumberedCard, FieldBox, inputCls } from "./components/parts";
 import { AddressSelector } from "./components/AddressSelector";
@@ -60,11 +61,13 @@ export function CheckoutPage() {
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { paymentMethod: "cod", shippingZone: "", bkashTransactionId: "", banglaQrReference: "", deliveryNote: "" },
+    defaultValues: { paymentMethod: "cod", paymentOption: "cod", shippingZone: "", bkashTransactionId: "", banglaQrReference: "", deliveryNote: "" },
   });
 
   const shippingZones = settings?.shippingZones ?? [];
   const selectedZone = watch("shippingZone");
+  const paymentMethodValue = watch("paymentMethod");
+  const paymentOptionValue = watch("paymentOption");
 
   useEffect(() => {
     if (!selectedZone && shippingZones.length > 0) setValue("shippingZone", shippingZones[0].name);
@@ -72,12 +75,50 @@ export function CheckoutPage() {
 
   const hasStockIssue = items.some((item) => item.stockIssue);
   const freeThreshold = settings?.freeShippingThreshold ?? 0;
-  const zoneFee = shippingZones.find((z) => z.name === selectedZone)?.fee ?? 0;
+  const selectedZoneData = shippingZones.find((z) => z.name === selectedZone);
+  const zoneFee = selectedZoneData?.fee ?? 0;
+  const zoneRequiresPrepay = selectedZoneData?.requiresPrepay ?? false;
   const freeShipping = freeThreshold > 0 && subtotal >= freeThreshold;
   const shippingFee = freeShipping ? 0 : zoneFee;
   const discount = couponDiscount(coupon, subtotal);
   const total = Math.max(0, subtotal - discount) + shippingFee;
   const shipping = { name: selectedZone || (shippingZones[0]?.name ?? "Standard"), fee: zoneFee, free: freeShipping };
+
+  // Per-product paymentOptions + the zone's requiresPrepay flag together decide
+  // which order-level paymentOption(s) the whole cart can use — preview only,
+  // the backend re-validates and computes the authoritative amounts.
+  const paymentPlan = resolvePaymentOptionAvailability({ items, zoneRequiresPrepay });
+  const nonCodOptions = ["deliveryOnly", "partialAdvance", "full"]
+    .filter((key) => paymentPlan.availability[key])
+    .map((key) => ({
+      key,
+      ...calculateAmountPaidPreview({
+        subtotal,
+        total,
+        shippingFee,
+        paymentOption: key,
+        advancePaymentPercent: paymentPlan.advancePaymentPercent,
+      }),
+    }));
+  const codDisabled = !paymentPlan.availability.cod;
+
+  // Keep the form's paymentOption in sync with what's actually selectable:
+  // COD payment method can only ever mean the "cod" business option; bKash/
+  // BanglaQR must pick one of the available non-cod options (auto-picks the
+  // first if the cart contents changed out from under a stale selection, or
+  // steers the customer off a disabled COD choice automatically).
+  useEffect(() => {
+    if (paymentMethodValue === "cod") {
+      if (codDisabled) {
+        setValue("paymentMethod", "bkash");
+      } else if (paymentOptionValue !== "cod") {
+        setValue("paymentOption", "cod");
+      }
+    } else if (!nonCodOptions.some((o) => o.key === paymentOptionValue)) {
+      setValue("paymentOption", nonCodOptions[0]?.key ?? "full");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentMethodValue, codDisabled, nonCodOptions.map((o) => o.key).join(","), paymentOptionValue]);
 
   if (!cartLoading && items.length === 0 && !createOrderMutation.isSuccess) {
     return <Navigate to={ROUTES.CART} replace />;
@@ -177,6 +218,11 @@ export function CheckoutPage() {
                     register={register}
                     errors={errors}
                     total={total}
+                    codDisabled={codDisabled}
+                    codDisabledReason={paymentPlan.codDisabledReason}
+                    paymentOption={paymentOptionValue}
+                    onPaymentOptionChange={(key) => setValue("paymentOption", key)}
+                    nonCodOptions={nonCodOptions}
                   />
                 )}
               />

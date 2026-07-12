@@ -35,6 +35,11 @@ export const createOrderSchema = {
       deliveryNote: z.string().optional(),
       couponCode: z.string().optional(),
       paymentMethod: z.enum(["cod", "bkash", "banglaqr"]),
+      // Business payment option (System: pre-order/payment-options requirement) —
+      // orthogonal to paymentMethod above. Defaults to "cod" so existing/unaware
+      // frontend builds that don't send this field keep behaving exactly as
+      // before (full COD, nothing collected upfront).
+      paymentOption: z.enum(["cod", "deliveryOnly", "partialAdvance", "full"]).optional().default("cod"),
       bkashTransactionId: z.string().optional(),
       banglaQrReference: z.string().optional(),
       shippingZone: z.string().min(1, "Shipping zone is required"),
@@ -49,6 +54,14 @@ export const createOrderSchema = {
     .refine((data) => data.paymentMethod !== "banglaqr" || !!data.banglaQrReference?.trim(), {
       message: "BanglaQR payment reference is required",
       path: ["banglaQrReference"],
+    })
+    // Any paymentOption other than "cod" collects money upfront via the manual
+    // bKash/BanglaQR proof flow — Cash on Delivery has no mechanism to collect
+    // a delivery-only/advance/full amount before the courier hands over the
+    // parcel, so it can't be paired with those options.
+    .refine((data) => data.paymentOption === "cod" || data.paymentMethod !== "cod", {
+      message: "This payment option requires paying via bKash or BanglaQR, not Cash on Delivery",
+      path: ["paymentMethod"],
     }),
 };
 

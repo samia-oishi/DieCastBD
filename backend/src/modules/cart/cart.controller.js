@@ -23,7 +23,12 @@ async function findActiveProduct(productId) {
 async function serializeCart(cart) {
   const populated = await cart.populate({
     path: "items.product",
-    select: "title slug thumbnail price salePrice stock reservedStock status isDeleted",
+    // paymentOptions/advancePaymentPercent are needed client-side (CheckoutPage)
+    // to compute which order-level paymentOption is available/COD-disabled
+    // before submitting — server-side assertPaymentMethodAllowed is still the
+    // authoritative check, this is just so the UI doesn't guess.
+    select:
+      "title slug thumbnail price salePrice stock reservedStock status isDeleted paymentOptions advancePaymentPercent",
   });
 
   const items = populated.items
