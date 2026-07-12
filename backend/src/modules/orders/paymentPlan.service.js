@@ -43,7 +43,11 @@ export function assertPaymentMethodAllowed({ normalizedItems, paymentOption, zon
     const requirement = resolveItemPaymentRequirement(product);
     const allowed =
       (paymentOption === "cod" && requirement.allowsCod) ||
-      (paymentOption === "deliveryOnly" && requirement.allowsDeliveryOnly) ||
+      // A zone that requires prepay is itself satisfied by paying just the
+      // delivery charge — that's the whole point of the requirement — so
+      // "deliveryOnly" is always allowed here even for a product that never
+      // opted into the "Delivery Charge Only" business option on its own.
+      (paymentOption === "deliveryOnly" && (requirement.allowsDeliveryOnly || zoneRequiresPrepay)) ||
       (paymentOption === "partialAdvance" && requirement.requiresAdvance) ||
       (paymentOption === "full" && requirement.allowsFull);
 

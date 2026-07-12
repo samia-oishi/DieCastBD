@@ -43,7 +43,14 @@ export function resolvePaymentOptionAvailability({ items, zoneRequiresPrepay }) 
 
   const availability = {};
   for (const option of ["cod", "deliveryOnly", "partialAdvance", "full"]) {
-    const allItemsAllow = requirements.length > 0 && requirements.every(OPTION_CHECKERS[option]);
+    // A zone that requires prepay is satisfied by paying just the delivery
+    // charge — that's the requirement's entire purpose — so "deliveryOnly" is
+    // always available in that case, even for a product that never opted
+    // into the "Delivery Charge Only" business option itself. Mirrors the
+    // backend's assertPaymentMethodAllowed.
+    const allItemsAllow =
+      requirements.length > 0 &&
+      requirements.every((r) => (option === "deliveryOnly" && zoneRequiresPrepay) || OPTION_CHECKERS[option](r));
     availability[option] = option === "cod" ? allItemsAllow && !zoneRequiresPrepay : allItemsAllow;
   }
 

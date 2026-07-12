@@ -102,6 +102,29 @@ describe("assertPaymentMethodAllowed", () => {
       })
     ).not.toThrow();
   });
+
+  it("allows deliveryOnly when the zone forces prepay, even for a product that never opted into deliveryOnly itself", () => {
+    // Regression guard: a zone-forced prepay must be satisfiable by paying just
+    // the delivery charge, not force the customer up to "full" just because the
+    // product's own paymentOptions don't list "deliveryOnly".
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: codFullProduct }],
+        paymentOption: "deliveryOnly",
+        zoneRequiresPrepay: true,
+      })
+    ).not.toThrow();
+  });
+
+  it("still rejects deliveryOnly for a non-deliveryOnly product when the zone does NOT force prepay", () => {
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: codFullProduct }],
+        paymentOption: "deliveryOnly",
+        zoneRequiresPrepay: false,
+      })
+    ).toThrow(/cannot be ordered/);
+  });
 });
 
 describe("calculateAmountPaid", () => {

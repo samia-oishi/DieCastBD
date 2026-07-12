@@ -220,6 +220,8 @@ export function CheckoutPage() {
                     total={total}
                     codDisabled={codDisabled}
                     codDisabledReason={paymentPlan.codDisabledReason}
+                    zoneRequiresPrepay={zoneRequiresPrepay}
+                    shippingFee={shippingFee}
                     paymentOption={paymentOptionValue}
                     onPaymentOptionChange={(key) => setValue("paymentOption", key)}
                     nonCodOptions={nonCodOptions}

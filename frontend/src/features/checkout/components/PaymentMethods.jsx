@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Check, QrCode } from "lucide-react";
+import { Copy, Check, QrCode, Wallet } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { formatTaka } from "@/lib/currency";
@@ -49,12 +49,32 @@ function BqrLogo() {
 
 function Head({ selected, logo, title, subtitle }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-start gap-3">
       <RadioDot selected={selected} />
       {logo}
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <div className="text-sm font-bold text-ink">{title}</div>
         <div className="mt-0.5 text-[12.5px] text-muted-foreground">{subtitle}</div>
+      </div>
+    </div>
+  );
+}
+
+/** Prominent, unmissable callout shown above the payment cards when the
+ * selected delivery zone forces prepaying the delivery charge — tells the
+ * customer exactly what to do (COD is disabled below, but this is the
+ * actionable "do this instead" companion to that inline reason) rather than
+ * leaving them to discover "Delivery charge only" on their own inside the
+ * bKash/BanglaQR panel. Amber palette matches the zone card's own prepay tag
+ * and the order-confirmation email's "balance due" callout for consistency. */
+function PrepayNotice({ shippingFee }) {
+  return (
+    <div className="mb-3.5 flex items-start gap-2.5 rounded-[14px] border border-[#FED7AA] bg-[#FFF7ED] px-4 py-3.5">
+      <Wallet size={18} strokeWidth={2.2} className="mt-0.5 shrink-0 text-[#9A3412]" />
+      <div className="text-[13px] leading-[1.55] text-[#9A3412]">
+        <span className="font-bold">This delivery zone requires paying the delivery charge upfront.</span>{" "}
+        Select bKash or BanglaQR below and choose <span className="font-bold">“Delivery charge only”</span> to pay
+        just {formatTaka(shippingFee)} now — the rest is collected when your order arrives.
       </div>
     </div>
   );
@@ -114,12 +134,13 @@ export function PaymentMethods({
   total,
   codDisabled = false,
   codDisabledReason = null,
+  zoneRequiresPrepay = false,
+  shippingFee = 0,
   paymentOption = "full",
   onPaymentOptionChange = () => {},
   nonCodOptions = [],
   amountPaidPreview,
 }) {
-  const showPicker = nonCodOptions.length > 1;
   const selectedPreview = nonCodOptions.find((o) => o.key === paymentOption);
   const payNowNote = selectedPreview
     ? `Pay ${formatTaka(selectedPreview.amountPaid)} now${
@@ -129,15 +150,17 @@ export function PaymentMethods({
 
   return (
     <div className="mt-5 flex flex-col gap-3">
+      {zoneRequiresPrepay && <PrepayNotice shippingFee={shippingFee} />}
+
       {/* COD */}
       <RadioCard
         selected={value === "cod"}
         onSelect={() => !codDisabled && onChange("cod")}
         className={codDisabled ? "cursor-not-allowed opacity-60" : undefined}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <RadioDot selected={value === "cod" && !codDisabled} />
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <div className="text-sm font-bold text-ink">Cash on Delivery</div>
             <div className="mt-0.5 text-[12.5px] text-muted-foreground">
               {codDisabled ? codDisabledReason : "Pay when it arrives — nothing now"}
@@ -161,11 +184,9 @@ export function PaymentMethods({
                   <CopyBtn value={bkashConfig.merchantNumber} />
                 </div>
               )}
-              {showPicker && (
-                <div className="mt-3 rounded-[12px] border border-line bg-white px-4 py-3 text-[12.5px] leading-[1.6] text-ink-soft">
-                  {payNowNote}
-                </div>
-              )}
+              <div className="mt-3 rounded-[12px] border border-line bg-white px-4 py-3 text-[12.5px] leading-[1.6] text-ink-soft">
+                {payNowNote}
+              </div>
               <FieldBox label="bKash Transaction ID" error={errors.bkashTransactionId?.message} className="mt-3">
                 <input {...register("bkashTransactionId")} placeholder="e.g. 9HK2XXXXXX" className={`${inputCls} bg-white`} />
               </FieldBox>
