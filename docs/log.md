@@ -647,3 +647,13 @@ Reported against the live checkout (screenshots of an outside-Dhaka `requiresPre
 **Tests:** two new cases added to `paymentPlan.checkoutEnforcement.test.js` — `deliveryOnly` now allowed for a `["cod","full"]` product when the zone forces prepay, and still correctly rejected for the same product when it doesn't (guards against over-widening the fix).
 
 **Verified:** backend `npm test` 59/59 (57 pre-existing + 2 new); frontend `npm run lint` clean (same 4 pre-existing unrelated warnings) and `npm run build` clean.
+
+## 2026-07-13 — Zone-requiresPrepay narrowed to a cod-only-item safety net
+
+Follow-up merchant clarification on the fix above: a zone's `requiresPrepay` flag should NOT override a product that already has its own non-cod payment option configured (`deliveryOnly`, `partialAdvance`, or `full` — including the ordinary default `["cod","full"]`). The zone force should only kick in for a product that is genuinely **cod-only** (no built-in alternative to plain COD at all) — that's the one case the merchant actually needs a safety net for. See plan.md §7 decision #64.
+
+**Backend + frontend mirror:** `paymentPlan.service.js` (`assertPaymentMethodAllowed`) and `paymentPlanPreview.js` (`resolvePaymentOptionAvailability`) both gained an `isCodOnlyRequirement()` helper and now compute the zone force **per item** inside the existing loop, instead of a single cart-level check. Result: `cod` stays allowed for a cod+full product even in a prepay zone; `deliveryOnly` is no longer force-allowed for it either (the force is now scoped only to items with no alternative). A mixed cart with one cod-only item still correctly blocks `cod` in a prepay zone regardless of the other items. The frontend preview now also returns `zoneForcesPrepay` (true only when the force is actually binding for the current cart), which `CheckoutPage.jsx` passes into the `PrepayNotice` banner instead of the raw zone flag — so the banner no longer shows for a cart where the zone setting is on but doesn't actually restrict anything.
+
+**Tests:** rewrote the zone/prepay block in `paymentPlan.checkoutEnforcement.test.js` — cod allowed for cod+full under a forcing zone, deliveryOnly rejected for cod+full under a forcing zone, cod-only product still blocked/force-allowed as before, plus a new mixed-cart regression case.
+
+**Verified:** backend `npm test` 63/63; frontend `npm run lint`/`npm run build` clean (same pre-existing warnings only).

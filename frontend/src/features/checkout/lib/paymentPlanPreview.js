@@ -32,26 +32,40 @@ export const PAYMENT_OPTION_LABELS = {
   full: "Full payment",
 };
 
+// A product with no configured alternative to plain COD at all — the only
+// case the zone's requiresPrepay flag is meant to guard against. Mirrors the
+// backend's isCodOnlyRequirement.
+function isCodOnlyRequirement(r) {
+  return r.allowsCod && !r.allowsDeliveryOnly && !r.requiresAdvance && !r.allowsFull;
+}
+
 /** For a cart's line items + the selected zone's requiresPrepay flag, works out
  * which of the 4 order-level paymentOptions are usable for the WHOLE cart
  * (every item must allow it — same rule as the backend's per-item loop, so a
  * cart mixing a cod-only item with a partialAdvance-required item naturally
  * ends up with neither "cod" nor "partialAdvance" universally available,
- * surfacing as a rejection message rather than a silent split). */
+ * surfacing as a rejection message rather than a silent split).
+ *
+ * zoneRequiresPrepay is a SAFETY NET, not a blanket override: it only forces
+ * anything for an item that is itself cod-only (no deliveryOnly/partialAdvance/
+ * full configured) — a product that already offers one of those alternatives,
+ * including the default cod+full, is trusted to have its own payment risk
+ * already handled, so the zone doesn't block its COD or need to fall back to
+ * "deliveryOnly" for it. Mirrors the backend's assertPaymentMethodAllowed. */
 export function resolvePaymentOptionAvailability({ items, zoneRequiresPrepay }) {
   const requirements = items.map((item) => resolveItemPaymentRequirement(item.product));
+  const zoneForcesAnyItem = zoneRequiresPrepay && requirements.some(isCodOnlyRequirement);
 
   const availability = {};
   for (const option of ["cod", "deliveryOnly", "partialAdvance", "full"]) {
-    // A zone that requires prepay is satisfied by paying just the delivery
-    // charge — that's the requirement's entire purpose — so "deliveryOnly" is
-    // always available in that case, even for a product that never opted
-    // into the "Delivery Charge Only" business option itself. Mirrors the
-    // backend's assertPaymentMethodAllowed.
-    const allItemsAllow =
+    availability[option] =
       requirements.length > 0 &&
-      requirements.every((r) => (option === "deliveryOnly" && zoneRequiresPrepay) || OPTION_CHECKERS[option](r));
-    availability[option] = option === "cod" ? allItemsAllow && !zoneRequiresPrepay : allItemsAllow;
+      requirements.every((r) => {
+        const zoneForcesThisItem = zoneRequiresPrepay && isCodOnlyRequirement(r);
+        if (option === "cod") return r.allowsCod && !zoneForcesThisItem;
+        if (option === "deliveryOnly") return r.allowsDeliveryOnly || zoneForcesThisItem;
+        return OPTION_CHECKERS[option](r);
+      });
   }
 
   const advancePercents = requirements
@@ -61,12 +75,16 @@ export function resolvePaymentOptionAvailability({ items, zoneRequiresPrepay }) 
 
   let codDisabledReason = null;
   if (!availability.cod) {
-    codDisabledReason = zoneRequiresPrepay
+    codDisabledReason = zoneForcesAnyItem
       ? "This delivery zone requires paying the delivery charge upfront — Cash on Delivery isn't available here."
       : "One or more items in your order require advance or delivery-charge payment and can't be ordered with Cash on Delivery.";
   }
 
-  return { availability, advancePaymentPercent, codDisabledReason };
+  // Whether the zone's prepay requirement is actually binding for THIS cart —
+  // used by the checkout UI to decide whether to show the "this zone requires
+  // prepay" callout (raw zoneRequiresPrepay alone would be misleading once a
+  // cart's items already have their own non-cod alternative configured).
+  return { availability, advancePaymentPercent, codDisabledReason, zoneForcesPrepay: zoneForcesAnyItem };
 }
 
 // Preview mirror of calculateAmountPaid — same math, non-authoritative.

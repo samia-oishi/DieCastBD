@@ -22,36 +22,47 @@ export function resolveItemPaymentRequirement(product) {
   };
 }
 
-// Validates the single order-level paymentOption against every item's own
-// allowed options AND the destination zone's requiresPrepay flag. Deliberately
-// has no special-case "mixed cart" detection: a cart mixing a cod-only item
-// with a partialAdvance-required item is rejected no matter which of the two
-// paymentOptions is chosen, because whichever one is picked, the OTHER item in
-// the loop below fails its own check — exactly the "rejected with a message,
-// not silently split" behavior the requirement calls for.
-export function assertPaymentMethodAllowed({ normalizedItems, paymentOption, zoneRequiresPrepay }) {
-  // Outside-Dhaka prepay is a shipping-zone rule, not a product rule, so it's
-  // checked independently of the per-item loop: no product config can override
-  // a zone that requires the delivery charge to be paid upfront.
-  if (zoneRequiresPrepay && paymentOption === "cod") {
-    throw ApiError.badRequest(
-      "Cash on Delivery isn't available for this delivery zone — the delivery charge must be paid upfront."
-    );
-  }
+// A product with no configured alternative to plain COD at all — the only
+// case the zone's requiresPrepay flag is meant to guard against (see below).
+function isCodOnlyRequirement(requirement) {
+  return requirement.allowsCod && !requirement.allowsDeliveryOnly && !requirement.requiresAdvance && !requirement.allowsFull;
+}
 
+// Validates the single order-level paymentOption against every item's own
+// allowed options AND (conditionally) the destination zone's requiresPrepay
+// flag. Deliberately has no special-case "mixed cart" detection beyond the
+// per-item loop: a cart mixing a cod-only item with a partialAdvance-required
+// item is rejected no matter which of the two paymentOptions is chosen,
+// because whichever one is picked, the OTHER item in the loop below fails its
+// own check — exactly the "rejected with a message, not silently split"
+// behavior the requirement calls for.
+//
+// zoneRequiresPrepay is a SAFETY NET, not a blanket override: it only forces
+// anything for an item that is itself cod-only (no deliveryOnly/partialAdvance/
+// full configured). A product that already offers one of those alternatives —
+// including the default cod+full — is trusted to have its own payment risk
+// already handled, so the zone doesn't second-guess it or block its COD.
+export function assertPaymentMethodAllowed({ normalizedItems, paymentOption, zoneRequiresPrepay }) {
   for (const { product } of normalizedItems) {
     const requirement = resolveItemPaymentRequirement(product);
+    const zoneForcesThisItem = zoneRequiresPrepay && isCodOnlyRequirement(requirement);
+
     const allowed =
-      (paymentOption === "cod" && requirement.allowsCod) ||
-      // A zone that requires prepay is itself satisfied by paying just the
-      // delivery charge — that's the whole point of the requirement — so
-      // "deliveryOnly" is always allowed here even for a product that never
-      // opted into the "Delivery Charge Only" business option on its own.
-      (paymentOption === "deliveryOnly" && (requirement.allowsDeliveryOnly || zoneRequiresPrepay)) ||
+      (paymentOption === "cod" && requirement.allowsCod && !zoneForcesThisItem) ||
+      // The zone-forced case is itself satisfied by paying just the delivery
+      // charge — that's the whole point of the requirement — so "deliveryOnly"
+      // is allowed here even though the cod-only product never opted into the
+      // "Delivery Charge Only" business option on its own.
+      (paymentOption === "deliveryOnly" && (requirement.allowsDeliveryOnly || zoneForcesThisItem)) ||
       (paymentOption === "partialAdvance" && requirement.requiresAdvance) ||
       (paymentOption === "full" && requirement.allowsFull);
 
     if (!allowed) {
+      if (paymentOption === "cod" && zoneForcesThisItem) {
+        throw ApiError.badRequest(
+          `"${product.title}" can only be ordered with Cash on Delivery, but this delivery zone requires paying the delivery charge upfront — please choose Delivery Charge Only, Partial Advance, or Full Payment instead.`
+        );
+      }
       throw ApiError.badRequest(
         `"${product.title}" cannot be ordered with the selected payment option — please choose a different payment method.`
       );

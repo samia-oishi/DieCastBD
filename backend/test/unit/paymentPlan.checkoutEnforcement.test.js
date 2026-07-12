@@ -83,14 +83,74 @@ describe("assertPaymentMethodAllowed", () => {
     ).toThrow(/cannot be ordered/);
   });
 
-  it("rejects cod when the zone forces prepay, even for a cod-allowed product", () => {
+  // zoneRequiresPrepay is a SAFETY NET, not a blanket override: it only kicks
+  // in for an item that is itself cod-only (no deliveryOnly/partialAdvance/
+  // full configured). A product that already offers one of those alternatives
+  // — including the default cod+full — is trusted to have its own payment
+  // risk handled, so the zone must NOT block its COD or force it onto
+  // "deliveryOnly".
+
+  it("rejects cod for a cod-only product when the zone forces prepay", () => {
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: codOnlyProduct }],
+        paymentOption: "cod",
+        zoneRequiresPrepay: true,
+      })
+    ).toThrow(/requires paying the delivery charge upfront/);
+  });
+
+  it("allows deliveryOnly for a cod-only product when the zone forces prepay, even though the product never opted into deliveryOnly itself", () => {
+    // Regression guard: a zone-forced prepay must be satisfiable by paying just
+    // the delivery charge, not force the customer up to "full" just because the
+    // product's own paymentOptions don't list "deliveryOnly".
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: codOnlyProduct }],
+        paymentOption: "deliveryOnly",
+        zoneRequiresPrepay: true,
+      })
+    ).not.toThrow();
+  });
+
+  it("still allows cod for a cod-only product when the zone does NOT force prepay", () => {
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: codOnlyProduct }],
+        paymentOption: "cod",
+        zoneRequiresPrepay: false,
+      })
+    ).not.toThrow();
+  });
+
+  it("allows cod for a cod+full product even when the zone forces prepay — the product's own full-payment alternative means the zone doesn't need to force anything", () => {
     expect(() =>
       assertPaymentMethodAllowed({
         normalizedItems: [{ product: codFullProduct }],
         paymentOption: "cod",
         zoneRequiresPrepay: true,
       })
-    ).toThrow(/Cash on Delivery isn't available/);
+    ).not.toThrow();
+  });
+
+  it("still rejects deliveryOnly for a cod+full product even when the zone forces prepay — the force only applies to cod-only items", () => {
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: codFullProduct }],
+        paymentOption: "deliveryOnly",
+        zoneRequiresPrepay: true,
+      })
+    ).toThrow(/cannot be ordered/);
+  });
+
+  it("rejects deliveryOnly for a cod+full product when the zone does NOT force prepay either", () => {
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: codFullProduct }],
+        paymentOption: "deliveryOnly",
+        zoneRequiresPrepay: false,
+      })
+    ).toThrow(/cannot be ordered/);
   });
 
   it("allows full payment even when the zone forces prepay", () => {
@@ -103,27 +163,14 @@ describe("assertPaymentMethodAllowed", () => {
     ).not.toThrow();
   });
 
-  it("allows deliveryOnly when the zone forces prepay, even for a product that never opted into deliveryOnly itself", () => {
-    // Regression guard: a zone-forced prepay must be satisfiable by paying just
-    // the delivery charge, not force the customer up to "full" just because the
-    // product's own paymentOptions don't list "deliveryOnly".
+  it("rejects a mixed cart where one item is cod-only in a prepay zone and cod is selected, even though another item allows cod+full", () => {
     expect(() =>
       assertPaymentMethodAllowed({
-        normalizedItems: [{ product: codFullProduct }],
-        paymentOption: "deliveryOnly",
+        normalizedItems: [{ product: codFullProduct }, { product: codOnlyProduct }],
+        paymentOption: "cod",
         zoneRequiresPrepay: true,
       })
-    ).not.toThrow();
-  });
-
-  it("still rejects deliveryOnly for a non-deliveryOnly product when the zone does NOT force prepay", () => {
-    expect(() =>
-      assertPaymentMethodAllowed({
-        normalizedItems: [{ product: codFullProduct }],
-        paymentOption: "deliveryOnly",
-        zoneRequiresPrepay: false,
-      })
-    ).toThrow(/cannot be ordered/);
+    ).toThrow(/requires paying the delivery charge upfront/);
   });
 });
 
