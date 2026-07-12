@@ -35,7 +35,7 @@ export function NewsletterForm({ variant = "default" }) {
             placeholder="Your email address"
             aria-label="Email address"
             {...register("email")}
-            className="w-full rounded-full border border-white/14 bg-white/[0.07] px-5 py-3 text-[13.5px] text-white placeholder:text-[#8A8D80] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            className="w-full rounded-full border border-white/14 bg-white/[0.07] px-5 py-3 text-base text-white placeholder:text-[#8A8D80] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:text-[13.5px]"
           />
           {errors.email && <p className="mt-1.5 pl-2 text-xs text-[#E9A9A2]">{errors.email.message}</p>}
         </div>

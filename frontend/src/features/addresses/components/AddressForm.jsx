@@ -6,7 +6,7 @@ import { addressSchema } from "../schemas/addressSchema";
 // Matches the guest checkout form (GuestAddressForm / checkout parts.jsx) so the
 // logged-in "add address" form is visually identical to the guest one.
 const inputCls =
-  "w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-[13.5px] leading-[1.2] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  "w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-base leading-[1.2] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:text-[13.5px]";
 
 function Field({ label, error, children }) {
   return (

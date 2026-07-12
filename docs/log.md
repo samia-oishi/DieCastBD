@@ -461,3 +461,32 @@ The site went live on Vercel: storefront at **diecastbd.com**, API at **api.diec
 **6 — The 401 wall (the real lesson).** With the frontend on `diecastbd.com` and the backend still on `die-castbd-backend.vercel.app`, the admin dashboard 401'd on *every* authed call (`/auth/refresh`, `/cart`, `/wishlist`, `/admin/*`). Configs were all correct (axios `withCredentials`, cookies `sameSite:"none"; secure`) — the problem was architectural: those are **cross-site third-party cookies** (`diecastbd.com` vs `vercel.app`), which browsers block. Fixed with **zero code change** by giving the backend the `api.diecastbd.com` subdomain — same registrable domain as the storefront, so the cookies are first-party and accepted. `VITE_API_BASE_URL` repointed to `https://api.diecastbd.com/api/v1` and the frontend rebuilt (VITE vars are build-time). Site fully functional after that.
 
 Cron jobs run via Vercel Cron over HTTP to `/api/v1/cron/*` (guarded by `CRON_SECRET`). `docs/DEPLOYMENT.md` carries the env-var tables, the DNS/email details, and a symptom→cause→fix troubleshooting table for all of the above.
+
+---
+
+## 2026-07-12 — Hero: full per-variant admin customization + section alignment
+
+User reported the homepage hero (1) exposed no admin editing beyond the small floating highlight card and (2) looked bigger / wider than the sections below it, and asked for full customization of all three hero styles with a mobile-first bias. The hero was already three hardcoded layouts (`lime-showroom` / `dark-spotlight` / `photo-fullbleed`) selected by a settings `variant`; only the highlight card was editable, and all the text (badge, headline, subtitle, both CTAs, footnote) was hardcoded per variant in `HeroSection.jsx`.
+
+**What changed** (see plan.md §7 decision #51 for the architecture):
+- **Backend** — added `homepageSections.hero.content.{limeShowroom,darkSpotlight,photoFullbleed}` (a `heroVariantContentSchema`: badge, titleLine1, titleLine2, subtitle, primary/secondary CTA text+link, footnote) to the settings model + matching optional Zod validation. Per-variant per the user's choice, so each style keeps its own copy even though only the selected one renders.
+- **Frontend render** — `HeroSection.jsx` now resolves copy via `resolveCopy(variant, content)`, which trims each admin value and falls back to that variant's `DEFAULTS` (the existing shipped copy) when blank. So an un-edited document — including live production, which has no `content` field — renders identically. CTAs use the editable links (default `/shop`). Dropped the separate mobile/desktop copy strings (mobile-first: one value, desktop keeps the two-line headline via a responsive `<br>`). `HomePage.jsx` maps the `variant` enum → content key and passes the active variant's content.
+- **Admin** — `SettingsPage.jsx` gained a "Hero copy per style" block: three labeled sub-cards (Lime / Dark / Photo), each with all the text fields, placeholders showing the default that renders when left blank.
+- **Alignment** — hero was `max-w-[1440px]` vs every other section's `Container` `max-w-[1360px]` (edges bled 80px wider); changed to `1360px`. Normalized the dark panel's oversized `md:p-[72px_64px]` → `md:p-16` (matching lime) and trimmed `photo-fullbleed` height `560px→520px`.
+
+**Verified:** frontend `npm run lint` (only pre-existing warnings) + `npm run build` clean; backend `npm test` 35/35 green. Rendered the home page against the **live** backend in a preview — production's contentless hero showed the exact default copy at mobile and 1280px, and the hero left edge aligned with the "Shop by shelf" section below. All new settings fields are additive/optional, so the running Vercel deployment is unaffected until edited; **the backend must be redeployed for the new admin fields to persist.**
+
+---
+
+## 2026-07-12 — Mobile: kill iOS input zoom + scrollable bottom-sheet modals
+
+Fixes the user-reported mobile bug ("typing inside a modal breaks the whole website layout") across every storefront input and modal. See plan.md §7 decision #52 for the architecture.
+
+**Root cause** — iOS Safari force-zooms the entire page when a focused `<input>`/`<textarea>` has a computed `font-size < 16px`, panning the layout sideways and leaving the site stuck zoomed. Every custom storefront field was `text-[13.5px]` (auth fields `text-sm`/14px), so all of them tripped it. A secondary issue: the two bottom-sheet modals had no height cap or scroll, so the keyboard covered the lower fields with no way to reach them.
+
+**What changed** (frontend-only, CSS):
+- **Inputs → 16px on mobile** — each custom field now leads with `text-base` (16px) and restores its design size behind `md:` (`md:text-[13.5px]` / `md:text-sm`); desktop is pixel-unchanged. Touched the four shared `inputCls` constants (`addresses/AddressForm.jsx`, `account/AccountPage.jsx`, `checkout/components/parts.jsx`, `about-contact/ContactPage.jsx`), the auth `authInputCls` (`auth/components/authParts.jsx`), and the standalone inputs (`products/ShopPage.jsx` search, `cart/components/CouponRow.jsx`, `newsletter/components/NewsletterForm.jsx`, `shared/RestockAlertDialog.jsx`). shadcn `Input`/`Textarea` (admin) were already 16px-safe — untouched.
+- **Bottom sheets scroll** — added `data-[side=bottom]:max-h-[92dvh]` + `data-[side=bottom]:overflow-y-auto` to `SheetContent` in `components/ui/sheet.jsx`, scoped to the bottom side only (the two consumers are `ResponsiveModal` + `RestockAlertDialog`; the right-side CartDrawer already scrolls its own list and is untouched).
+- **Viewport meta** — added `interactive-widget=resizes-content` to `index.html` so the layout viewport shrinks to the visible area when the keyboard opens.
+
+**Verified:** `npm run lint` (only pre-existing warnings) + `npm run build` clean; in the mobile preview (375px) the shop search input computes to `16px` (was 13.5px). All storefront inputs share the identical `text-base md:…` Tailwind pattern, so all read 16px on mobile. Frontend-only CSS — no backend/schema change, safe for the live deployment; needs a frontend rebuild/redeploy to take effect (build-time CSS).

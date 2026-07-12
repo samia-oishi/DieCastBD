@@ -61,4 +61,4 @@ export function FieldBox({ label, hint, error, children, className }) {
 }
 
 export const inputCls =
-  "w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-[13.5px] leading-[1.2] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  "w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-base leading-[1.2] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:text-[13.5px]";

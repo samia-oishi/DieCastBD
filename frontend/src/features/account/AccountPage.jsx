@@ -21,7 +21,7 @@ import { useAddresses, useCreateAddressMutation, useUpdateAddressMutation } from
 import { AddressForm } from "@/features/addresses/components/AddressForm";
 
 const inputCls =
-  "w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-[13.5px] leading-[1.2] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  "w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-base leading-[1.2] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:text-[13.5px]";
 
 const PAYMENT_LABELS = { cod: "Cash on Delivery", bkash: "bKash", banglaqr: "BanglaQR" };
 const LABEL = "text-[11px] font-bold uppercase tracking-[0.12em] text-faint";

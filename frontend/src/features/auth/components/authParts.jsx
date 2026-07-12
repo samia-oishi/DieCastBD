@@ -4,7 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const authInputCls =
-  "w-full rounded-[12px] border border-line bg-white px-4 py-[14px] text-sm leading-[1.2] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  "w-full rounded-[12px] border border-line bg-white px-4 py-[14px] text-base leading-[1.2] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:text-sm";
 
 /** Label + control + error, matching the design's field spacing. */
 export function AuthField({ label, action, error, children, className }) {

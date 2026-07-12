@@ -26,7 +26,7 @@ function SearchPill({ value, onChange, className }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search the collection…"
-        className="w-full bg-transparent text-[13.5px] text-ink placeholder:text-faint focus:outline-none md:text-sm"
+        className="w-full bg-transparent text-base text-ink placeholder:text-faint focus:outline-none md:text-sm"
       />
       {value && (
         <button type="button" onClick={() => onChange("")} aria-label="Clear search" className="text-faint hover:text-ink">

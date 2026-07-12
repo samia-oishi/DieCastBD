@@ -37,7 +37,7 @@ export function CouponRow({ subtotal, coupon, onApply, onRemove, className }) {
         onChange={(e) => setCode(e.target.value.toUpperCase())}
         onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), apply())}
         placeholder="Coupon code"
-        className="min-w-0 flex-1 rounded-full border border-line bg-paper px-[18px] py-3 text-[13.5px] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        className="min-w-0 flex-1 rounded-full border border-line bg-paper px-[18px] py-3 text-base text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:text-[13.5px]"
       />
       <button type="button" onClick={apply} disabled={validate.isPending} className="shrink-0 rounded-full border-[1.5px] border-ink px-5 py-3 text-[13.5px] font-bold text-ink transition-colors hover:bg-ink hover:text-white disabled:opacity-50">
         {validate.isPending ? "…" : "Apply"}

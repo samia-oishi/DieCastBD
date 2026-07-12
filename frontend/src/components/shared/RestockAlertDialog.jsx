@@ -93,7 +93,7 @@ function RestockAlertBody({ product, onClose }) {
           autoFocus
           placeholder="01XXXXXXXXX or you@email.com"
           {...register("contact")}
-          className="w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-[13.5px] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          className="w-full rounded-[12px] border border-line bg-paper px-4 py-[13px] text-base text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:text-[13.5px]"
         />
         {errors.contact && <p className="mt-1.5 text-xs text-danger">{errors.contact.message}</p>}
       </div>
