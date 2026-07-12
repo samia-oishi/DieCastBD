@@ -220,6 +220,14 @@ All 11 phases shipped, hard-stop-per-page, each verified with Playwright screens
 
 ---
 
+## Production deployment — Vercel (both apps)
+
+Full runbook + env vars + DNS + troubleshooting table in `docs/DEPLOYMENT.md`. This decision records the load-bearing choices.
+
+50. **Both apps deploy to Vercel as two projects from one repo; the backend is a serverless function on the `api.diecastbd.com` *subdomain*, not a bare `*.vercel.app` host.** Topology: `diecastbd.com` (apex, canonical) → frontend project (Root Directory `frontend`, Vite); `www` → 308 redirect to apex; `api.diecastbd.com` → backend project (Root Directory `backend`, Express serverless); DNS on Vercel nameservers (Vercel authoritative). **Four things had to be true, each learned by hitting the failure first:** (a) **jose ESM** — `firebase-admin` → `jwks-rsa` `require()`s ESM-only `jose@6` and crashes with `ERR_REQUIRE_ESM`; pinned via `overrides: { "jose": "^4.15.9" }` (CJS-compatible) in `backend/package.json`. (b) **Serverless entrypoint** — Vercel's modern `functions`/`rewrites` config left framework auto-detection on, which grabbed the Express app in `src/app.js` and demanded a default export (`Invalid export found in module src/app.js`); switched `backend/vercel.json` to legacy `builds`/`routes` pinning the single `api/index.js` handler (connect-DB-then-delegate), which disables auto-detection entirely — **do not re-add `functions`/`rewrites`**. As belt-and-suspenders `src/app.js` also `export default app` + a `process.env.VERCEL`-gated `connectDB()` middleware, so it's a valid handler even if served directly (local/tests unaffected — no `VERCEL` env). (c) **Same-site cookies** — auth is httpOnly cookies with `sameSite:"none"; secure:true`; with the backend on `die-castbd-backend.vercel.app` those were cross-site third-party cookies that browsers block (Safari always, Chrome increasingly) → **401 on every authed route** and the admin dashboard couldn't load. Fixed with zero code change by moving the backend to `api.diecastbd.com` (same registrable domain as the storefront → first-party cookies). `CLIENT_URL` stays the single canonical frontend origin (`https://diecastbd.com`) — it's used for CORS *and* sitemap/email links, so it can't be a list; a new optional `CORS_ORIGINS` env var adds extra credentialed-CORS origins (e.g. `http://localhost:5173`) without corrupting those links. (d) **Frontend lockfile** — `@fontsource-variable/*` were declared in `package.json` but unresolved in `package-lock.json`, failing `npm run build` (and Vercel `npm ci`); reconciled with `npm install`. Cron jobs run via Vercel Cron over HTTP to `/api/v1/cron/*` (guarded by `CRON_SECRET`), not `node-cron`. `VITE_` vars are build-time-inlined, so changing `VITE_API_BASE_URL` requires a frontend **rebuild**, not just a redeploy of the same build.
+
+---
+
 ## 8. Phase Roadmap
 
 | Phase | Scope | Status |

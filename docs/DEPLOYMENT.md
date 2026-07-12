@@ -1,104 +1,201 @@
-# DiecastBD — Deployment Runbook
+# DiecastBD — Deployment Runbook (Vercel)
 
-Step-by-step guide to deploying DiecastBD v1.0 to production. The two apps deploy
-independently: the **frontend** (Vite SPA) to **Vercel**, the **backend** (Express API)
-to **Render**. Both are 12-factor and env-driven — no host lock-in in the code.
+How DiecastBD runs in production, and how to reproduce or debug it. **Both apps are
+deployed to Vercel as two separate projects from the same monorepo.** This doc is the
+source of truth for the live topology; cross-check against it before changing anything
+deploy-related.
 
-Target topology:
+> History note: an earlier draft of this runbook targeted **Render** for the backend.
+> That plan was dropped — the backend now runs on Vercel serverless. The Render steps
+> survive only in git history.
+
+## Live topology
 
 ```
-diecastbd.com          → Vercel (frontend)
-api.diecastbd.com      → Render (backend)
-MongoDB Atlas, Firebase, Cloudinary, Resend → already provisioned (dev + prod share, or split)
+diecastbd.com          → Vercel · frontend project (Vite SPA)   · Root Directory: frontend/
+www.diecastbd.com      → 308 redirect → diecastbd.com
+api.diecastbd.com      → Vercel · backend project (Express API) · Root Directory: backend/
+MongoDB Atlas · Firebase · Cloudinary · Resend  → external, env-driven
+DNS                    → Vercel nameservers (Vercel is authoritative for diecastbd.com)
 ```
 
----
-
-## 0. Prerequisites (accounts you need)
-
-- [ ] **Vercel** account (frontend hosting)
-- [ ] **Render** account (backend hosting) — or Railway; the steps are equivalent
-- [ ] **GitHub** repo pushed (both apps live in one repo; each deploys from its own subdirectory)
-- [ ] Existing credentials from development: **MongoDB Atlas**, **Firebase** (client config + Admin service account), **Cloudinary**, **Resend** (domain `diecastbd.com` already verified)
-- [ ] Access to **DNS** for `diecastbd.com`
-
-> **Decision — shared vs. separate prod database.** The dev work so far uses one Atlas
-> cluster. For launch you can either keep using it (simplest) or create a separate prod
-> database/cluster (cleaner separation, recommended if you'll keep developing). Either
-> way, ensure the Atlas Network Access allowlist includes Render's outbound IPs (or
-> `0.0.0.0/0` if you accept the tradeoff — Atlas still requires auth).
+`diecastbd.com` (apex) is the **canonical** origin. The backend lives on the
+`api.diecastbd.com` **subdomain of the same registrable domain** — this is not cosmetic,
+it's what makes auth work (see "Why the backend must be a subdomain" below).
 
 ---
 
-## 1. Backend → Render
+## 1. The two Vercel projects
 
-1. **New Web Service** → connect the GitHub repo → set **Root Directory** to `backend`.
-2. **Build command:** `npm install` · **Start command:** `npm start`.
-3. **Health check path:** `/health` (already implemented — returns `{ success, data: { uptime } }`).
-4. **Environment variables** (Render dashboard → Environment). Copy from `backend/.env.example`; the required ones:
+Both import the **same GitHub repo**; they differ only by Root Directory. Each reads its
+own `vercel.json`.
 
-   | Var | Value |
-   |---|---|
-   | `NODE_ENV` | `production` |
-   | `PORT` | `10000` (Render sets this; the app reads it) |
-   | `MONGODB_URI` | Atlas connection string (prod DB) |
-   | `CLIENT_URL` | `https://diecastbd.com` (exact origin — used for CORS **and** absolute sitemap URLs) |
-   | `JWT_ACCESS_SECRET` | fresh 32+ char random string (**not** the dev value) |
-   | `JWT_REFRESH_SECRET` | fresh 32+ char random string |
-   | `COOKIE_SECRET` | fresh 32+ char random string |
-   | `JWT_ACCESS_EXPIRES_IN` | `15m` (default) |
-   | `JWT_REFRESH_EXPIRES_IN` | `30d` (default) |
-   | `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY` | from the service account (keep the `\n` escapes in the private key — the code un-escapes them) |
-   | `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | from Cloudinary |
-   | `RESEND_API_KEY` | from Resend |
-   | `EMAIL_FROM` | `noreply@diecastbd.com` |
-   | `ADMIN_EMAILS` | comma-separated admin emails (auto-promoted on first **verified** sign-in) |
+| | Frontend project | Backend project |
+|---|---|---|
+| Root Directory | `frontend` | `backend` |
+| Framework preset | Vite (auto) | Other |
+| Build | `npm run build` → `dist` | (serverless, no static output) |
+| Custom domain | `diecastbd.com` + `www` redirect | `api.diecastbd.com` |
+| Config | `frontend/vercel.json` | `backend/vercel.json` |
 
-   > Generate a secret: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
-
-5. Deploy. Confirm `https://<your-service>.onrender.com/health` returns 200.
-6. (Optional but recommended) add the custom domain **`api.diecastbd.com`** in Render → Settings → Custom Domains, and create the DNS record it gives you.
-
-**Already handled in code for this environment:**
-- `app.set("trust proxy", 1)` in production → `secure` cookies are set and rate-limiting keys off the real client IP behind Render's proxy.
-- Cookies use `sameSite: "none"; secure: true` in production → they work across the `diecastbd.com` ↔ `api.diecastbd.com` origin split.
+**Root Directory is mandatory.** If it isn't set, Vercel ignores that app's `vercel.json`
+and mis-detects the build. A `/var/task/backend/...` path in a backend error log confirms
+Root Directory is `backend`.
 
 ---
 
-## 2. Frontend → Vercel
+## 2. Backend serverless setup (the part that fought us)
 
-1. **New Project** → import the repo → set **Root Directory** to `frontend`. Framework preset: **Vite** (auto-detected). Build: `npm run build`, output `dist`.
-2. **Environment variables** (from `frontend/.env.example`), all `VITE_`-prefixed so they're inlined at build:
+The backend is a normal Express app served as a single Vercel serverless function.
 
-   | Var | Value |
-   |---|---|
-   | `VITE_API_BASE_URL` | `https://api.diecastbd.com/api/v1` |
-   | `VITE_SITE_URL` | `https://diecastbd.com` (used for canonical URLs, `og:url`, and JSON-LD — must be the real public origin for SEO) |
-   | `VITE_FIREBASE_API_KEY` … `VITE_FIREBASE_APP_ID` | the Firebase **client** config values |
+**Entry point:** `backend/api/index.js` — a default-exported handler that ensures the
+(cached) Mongo connection, then delegates to the Express app:
 
-3. **`frontend/vercel.json` is already committed** and does three things — **before deploying, edit one line in it:** replace `REPLACE_WITH_BACKEND_URL` in the `/sitemap.xml` rewrite with your real backend host (e.g. `api.diecastbd.com`). The file provides:
-   - **SPA fallback** — every non-file route rewrites to `index.html` so client-side routing works on refresh/deep-link.
-   - **Sitemap proxy** — `diecastbd.com/sitemap.xml` → the backend's dynamic sitemap, so crawlers find it at the site root.
-   - **COOP header** — `Cross-Origin-Opener-Policy: same-origin-allow-popups`, which silences the Firebase sign-in-popup `window.closed` warning.
-4. Deploy. Add the custom domain **`diecastbd.com`** (and `www` → redirect) in Vercel → Domains, and create the DNS records it gives you.
+```js
+export default async function handler(req, res) {
+  await connectDB();
+  return app(req, res);
+}
+```
+
+**`backend/vercel.json` pins that one entry with legacy `builds`/`routes`:**
+
+```json
+{
+  "builds":  [{ "src": "api/index.js", "use": "@vercel/node" }],
+  "routes":  [{ "src": "/(.*)", "dest": "api/index.js" }],
+  "crons":   [ /* stale-reservation release + analytics rollup */ ]
+}
+```
+
+> **Why `builds`, not `functions`/`rewrites`:** with the modern `functions` property,
+> Vercel *also* auto-detected the Express app in `src/app.js` and tried to serve it as a
+> native server — throwing `Invalid export found in module src/app.js. The default export
+> must be a function or server`. `builds` disables framework auto-detection entirely, so
+> **only** `api/index.js` is built. Do not re-introduce `functions`/`rewrites` here.
+
+**Belt-and-suspenders in `src/app.js`:** it also `export default app` and, gated on
+`process.env.VERCEL`, runs a middleware that calls `connectDB()` — so if Vercel ever serves
+`app.js` directly, it's still a valid handler with a live DB. Local dev and tests (no
+`VERCEL` env) are unaffected.
+
+**Serverless DB connection** (`src/config/db.js`) caches the connection promise across warm
+invocations with a small `maxPoolSize` — many serverless instances each open their own pool.
+
+**Cron jobs** run via Vercel Cron hitting `/api/v1/cron/*` over HTTP (guarded by
+`CRON_SECRET`), not `node-cron`, which needs a long-running process.
 
 ---
 
-## 3. Wire the services together (post-deploy)
+## 3. Environment variables
 
-- [ ] **Firebase Authorized Domains** — Firebase Console → Authentication → Settings → Authorized domains → add `diecastbd.com` (and the `*.vercel.app` preview domain if you use previews). Google/email sign-in is blocked from unlisted domains.
-- [ ] **CORS** — confirm the backend's `CLIENT_URL` exactly matches `https://diecastbd.com` (no trailing slash). The API only accepts credentialed requests from that origin.
-- [ ] **Smoke test the full flow on production:** load the storefront, sign in, add to cart, place a COD order, confirm the confirmation email arrives, then check the order appears in `/admin`.
-- [ ] **Google Search Console** — add the property, verify, and submit `https://diecastbd.com/sitemap.xml`.
+`.env` is **not** deployed — set these in each project's Vercel dashboard (Settings →
+Environment Variables → Production). The backend fails fast on boot if any required var is
+missing (Zod-validated in `src/config/env.js`).
+
+### Backend project
+| Var | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `MONGODB_URI` | Atlas connection string (Atlas Network Access must allow `0.0.0.0/0` — Vercel IPs aren't static) |
+| `CLIENT_URL` | `https://diecastbd.com` — the **single canonical** frontend origin. Used for CORS **and** sitemap/email links. No trailing slash. |
+| `CORS_ORIGINS` | *(optional)* extra comma-separated origins allowed for credentialed CORS, e.g. `http://localhost:5173` for local frontend dev against prod. Leave blank in a pure-prod setup. |
+| `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` / `COOKIE_SECRET` | fresh 32+ char randoms (not dev values) |
+| `JWT_ACCESS_EXPIRES_IN` / `JWT_REFRESH_EXPIRES_IN` | `15m` / `30d` (defaults) |
+| `CRON_SECRET` | random; Vercel Cron sends it as `Authorization: Bearer …` |
+| `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY` | service account (keep `\n` escapes in the key) |
+| `CLOUDINARY_*` · `RESEND_API_KEY` · `EMAIL_FROM` (`noreply@diecastbd.com`) | as provisioned |
+| `ADMIN_EMAILS` | comma-separated; auto-promoted to `admin` on first **verified** sign-in |
+
+### Frontend project (all `VITE_`-prefixed → inlined at build time)
+| Var | Value |
+|---|---|
+| `VITE_API_BASE_URL` | `https://api.diecastbd.com/api/v1` |
+| `VITE_SITE_URL` | `https://diecastbd.com` (canonical URLs / og:url / JSON-LD) |
+| `VITE_FIREBASE_API_KEY` … `VITE_FIREBASE_APP_ID` | Firebase **client** config (public by design) |
+
+> **`VITE_` vars are baked in at build time.** Changing one has no effect until the frontend
+> **rebuilds** — Redeploy the frontend project (or push a commit). A backend env change needs
+> a backend **redeploy**; adding a *domain* does **not** need a rebuild (it just re-aliases).
 
 ---
 
-## 4. Known follow-ups (not blockers)
+## 4. Domains & DNS
 
-- **bKash** — checkout is COD-only for v1.0; the `Order` schema already carries the bKash fields, so enabling it later is additive (needs real merchant credentials).
-- **Rate-limit store** — the limiter is in-memory; fine on a single Render instance. If you scale to multiple instances, move it to a shared (Redis) store so limits are shared.
-- **HWCC-004** — one product has no image pending a data fix (M3 vs M5 discrepancy in `docs/Inventory.md`); see `docs/log.md`.
+Nameservers for `diecastbd.com` point at Vercel, so **Vercel is the authoritative DNS** and
+auto-manages the A/CNAME records for the site and subdomains — you don't add those by hand.
+
+- **Frontend:** add `diecastbd.com` (Connect to Production) + `www.diecastbd.com` as a **308
+  Permanent Redirect → diecastbd.com**. When adding `www`, **uncheck "Include apex and www
+  variants"** or Vercel tries to redirect the apex to itself ("a domain cannot redirect to
+  itself").
+- **Backend:** add `api.diecastbd.com` (Connect to Production; no redirect, no variants).
+
+**Email (Resend) DNS lives in Vercel now.** Because nameservers moved to Vercel, the Resend
+records that used to live at the old DNS host had to be **re-created in Vercel → Domains →
+diecastbd.com → DNS Records**: the `MX` + SPF `TXT` on the `send` subdomain and the
+`resend._domainkey` DKIM `TXT` (values come from Resend → Domains → diecastbd.com). In
+Vercel's Name field enter only the subdomain part (`send`, `resend._domainkey`) — it appends
+`.diecastbd.com`. If you ever re-point nameservers again, re-add these or order emails stop.
 
 ---
 
-For architecture and history, see `docs/plan.md` (current state) and `docs/log.md` (changelog).
+## 5. Why the backend must be a subdomain (`api.diecastbd.com`)
+
+Auth is cookie-based: `POST /auth/session` sets httpOnly `accessToken`/`refreshToken`
+cookies (`sameSite:"none"; secure:true` in production, `src/utils/cookies.js`); the axios
+client sends them with `withCredentials:true`.
+
+When the backend was on `die-castbd-backend.vercel.app`, those cookies were **cross-site**
+(`diecastbd.com` vs `vercel.app` are different registrable domains) → browsers treat them as
+**third-party cookies** and block them (Safari always, Chrome increasingly). Symptom: every
+authed call — `/auth/refresh`, `/cart`, `/wishlist`, `/admin/*` — returned **401**, and the
+admin dashboard couldn't load.
+
+Moving the backend to `api.diecastbd.com` makes it **same-site** with the storefront, so the
+cookies are **first-party** and accepted everywhere. No code change was needed — just the
+subdomain + pointing `VITE_API_BASE_URL` at it. **Never put the backend on a bare
+`*.vercel.app` host in production** for this reason.
+
+---
+
+## 6. Post-deploy wiring checklist
+
+- [ ] Backend `CLIENT_URL` = `https://diecastbd.com` (exact) — else CORS blocks the storefront.
+- [ ] Firebase Console → Auth → Settings → **Authorized domains** → add `diecastbd.com`.
+- [ ] Admin access: your sign-in email is in backend `ADMIN_EMAILS` **and** verified.
+- [ ] Smoke test in a fresh/incognito window: `api.diecastbd.com/health` → 200 · storefront
+      loads products · sign in · add to cart · place a COD order · order shows in `/admin` and
+      the confirmation email arrives.
+- [ ] Google Search Console → submit `https://diecastbd.com/sitemap.xml` (proxied by
+      `frontend/vercel.json` to `api.diecastbd.com/sitemap.xml`).
+
+---
+
+## 7. Issues hit during first deploy (and their fixes)
+
+Quick reference if any recur:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `ERR_REQUIRE_ESM … jose` from `jwks-rsa` | `firebase-admin` → `jwks-rsa` requires ESM-only `jose@6` via CommonJS `require()` | `overrides: { "jose": "^4.15.9" }` in `backend/package.json` (CJS-compatible). Verify lockfile resolves `jwks-rsa/node_modules/jose@4.x`. |
+| `Invalid export found in module src/app.js. The default export must be a function or server` | Vercel auto-detected the Express app as a native server | `builds`/`routes` in `backend/vercel.json` (pins `api/index.js`, kills auto-detection) + `export default app` in `src/app.js`. |
+| Frontend build: `Can't resolve '@fontsource-variable/archivo'` | `package-lock.json` out of sync — fonts declared but not resolved | `npm install` in `frontend/` to reconcile the lockfile, commit it. Vercel `npm ci` would fail on the mismatch. |
+| Storefront/admin: 401 on all authed routes | cross-site third-party auth cookies (backend on `*.vercel.app`) | Move backend to `api.diecastbd.com` (§5). |
+| `www` add fails: "a domain cannot redirect to itself" | "Include apex and www variants" checkbox expands the input to include the apex | Uncheck it; add `www` alone as a 308 redirect to the apex. |
+
+---
+
+## 8. Known follow-ups (not blockers)
+
+- **bKash** — v1.0 is COD + manual bKash "Send Money"; the live gateway is deferred (schema
+  already carries the fields).
+- **Rate-limit store** — in-memory; fine per-instance. Serverless spreads across instances, so
+  limits aren't globally shared — move to Redis if that matters.
+- **Real policy copy** — the 4 CMS policy pages are seeded from the design; the merchant should
+  replace them with genuine legal text via Admin → Pages.
+
+---
+
+For architecture and history, see `docs/plan.md` (§7 decision #50 covers this deployment) and
+`docs/log.md`.
