@@ -15,6 +15,13 @@ import { PremiumShelfBanner } from "./components/PremiumShelfBanner";
 import { TrustStrip } from "./components/TrustStrip";
 import { TestimonialsSection } from "./components/TestimonialsSection";
 
+// Maps the hero `variant` enum to its per-variant content key in settings.
+const HERO_CONTENT_KEY = {
+  "lime-showroom": "limeShowroom",
+  "dark-spotlight": "darkSpotlight",
+  "photo-fullbleed": "photoFullbleed",
+};
+
 export function HomePage() {
   const { data: settings } = useSettings();
   const { data: brands } = useBrands();
@@ -79,7 +86,12 @@ export function HomePage() {
       </Helmet>
 
       {isEnabled("hero") && (
-        <HeroSection variant={hero?.variant} image={settings?.heroBanner?.[0]?.image} highlightCard={hero?.highlightCard} />
+        <HeroSection
+          variant={hero?.variant}
+          image={settings?.heroBanner?.[0]?.image}
+          highlightCard={hero?.highlightCard}
+          content={hero?.content?.[HERO_CONTENT_KEY[hero?.variant] ?? "limeShowroom"]}
+        />
       )}
 
       {isEnabled("brandsStrip") && <ShopByShelf brands={brands} categories={categories} />}

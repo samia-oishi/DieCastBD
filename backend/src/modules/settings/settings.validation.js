@@ -44,6 +44,18 @@ const banglaQrConfig = z.object({
 
 const sectionToggle = z.object({ enabled: z.coerce.boolean().optional() });
 
+const heroVariantContent = z.object({
+  badge: z.string().optional(),
+  titleLine1: z.string().optional(),
+  titleLine2: z.string().optional(),
+  subtitle: z.string().optional(),
+  primaryCtaText: z.string().optional(),
+  primaryCtaLink: z.string().optional(),
+  secondaryCtaText: z.string().optional(),
+  secondaryCtaLink: z.string().optional(),
+  footnote: z.string().optional(),
+});
+
 const navLink = z.object({
   label: z.string().min(1),
   url: z.string().min(1),
@@ -68,6 +80,13 @@ const homepageSections = z.object({
           kicker: z.string().optional(),
           title: z.string().optional(),
           price: z.coerce.number().min(0).optional(),
+        })
+        .optional(),
+      content: z
+        .object({
+          limeShowroom: heroVariantContent.optional(),
+          darkSpotlight: heroVariantContent.optional(),
+          photoFullbleed: heroVariantContent.optional(),
         })
         .optional(),
     })

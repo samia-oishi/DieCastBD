@@ -68,6 +68,94 @@ function HeroSlideImage({ control, index }) {
   );
 }
 
+// Per-variant hero copy editors. Placeholders show the shipped default that
+// renders when a field is left blank, so admins can see what they're overriding
+// (and clearing a field restores that default rather than blanking the hero).
+const HERO_VARIANTS = [
+  {
+    key: "limeShowroom",
+    label: "Lime showroom",
+    ph: {
+      badge: "Every piece hand-verified",
+      titleLine1: "Own the",
+      titleLine2: "original.",
+      subtitle: "Hot Wheels Premium and MINI GT 1:64 — sourced direct, inspected piece by piece…",
+      footnote: "Cash on delivery · bKash · BanglaQR — delivered nationwide",
+    },
+  },
+  {
+    key: "darkSpotlight",
+    label: "Dark spotlight",
+    ph: {
+      badge: "Every piece hand-verified",
+      titleLine1: "Real metal.",
+      titleLine2: "Zero fakes.",
+      subtitle: "Hot Wheels Premium and MINI GT 1:64 under studio lights — inspected piece by piece…",
+      footnote: "Cash on delivery · bKash · BanglaQR — delivered nationwide",
+    },
+  },
+  {
+    key: "photoFullbleed",
+    label: "Photo full-bleed",
+    ph: {
+      badge: "Hand-verified authentic",
+      titleLine1: "Authenticity,",
+      titleLine2: "cast in metal.",
+      subtitle: "Verified Hot Wheels Premium & MINI GT — one import batch, gone for good.",
+      footnote: "COD · bKash · BanglaQR",
+    },
+  },
+];
+
+function HeroVariantFields({ register, base, ph }) {
+  return (
+    <FieldGroup>
+      <Field>
+        <FieldLabel>Badge</FieldLabel>
+        <Input {...register(`${base}.badge`)} placeholder={ph.badge} />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field>
+          <FieldLabel>Title line 1</FieldLabel>
+          <Input {...register(`${base}.titleLine1`)} placeholder={ph.titleLine1} />
+        </Field>
+        <Field>
+          <FieldLabel>Title line 2 (emphasized)</FieldLabel>
+          <Input {...register(`${base}.titleLine2`)} placeholder={ph.titleLine2} />
+        </Field>
+      </div>
+      <Field>
+        <FieldLabel>Subtitle</FieldLabel>
+        <Textarea rows={2} {...register(`${base}.subtitle`)} placeholder={ph.subtitle} />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field>
+          <FieldLabel>Primary button text</FieldLabel>
+          <Input {...register(`${base}.primaryCtaText`)} placeholder="Explore the collection" />
+        </Field>
+        <Field>
+          <FieldLabel>Primary button link</FieldLabel>
+          <Input {...register(`${base}.primaryCtaLink`)} placeholder="/shop" />
+        </Field>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field>
+          <FieldLabel>Secondary button text</FieldLabel>
+          <Input {...register(`${base}.secondaryCtaText`)} placeholder="New arrivals" />
+        </Field>
+        <Field>
+          <FieldLabel>Secondary button link</FieldLabel>
+          <Input {...register(`${base}.secondaryCtaLink`)} placeholder="/shop" />
+        </Field>
+      </div>
+      <Field>
+        <FieldLabel>Footnote</FieldLabel>
+        <Input {...register(`${base}.footnote`)} placeholder={ph.footnote} />
+      </Field>
+    </FieldGroup>
+  );
+}
+
 const HOMEPAGE_SECTIONS = [
   { key: "collectorPicks", label: "Collector Picks" },
   { key: "featuredProducts", label: "Featured Products" },
@@ -162,6 +250,7 @@ export function SettingsPage() {
           autoplayInterval: 6,
           variant: "photo-fullbleed",
           highlightCard: { enabled: false, kicker: "", title: "", price: 0 },
+          content: { limeShowroom: {}, darkSpotlight: {}, photoFullbleed: {} },
         },
         collectorPicks: { enabled: true },
         featuredProducts: { enabled: true },
@@ -340,6 +429,21 @@ export function SettingsPage() {
                     <FieldLabel>Price (৳)</FieldLabel>
                     <Input type="number" {...register("homepageSections.hero.highlightCard.price")} />
                   </Field>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border p-4">
+                <p className="text-sm font-medium">Hero copy per style</p>
+                <p className="mb-3 mt-1 text-xs text-muted-foreground">
+                  Edit the text for each style. Only the style selected above is shown on the homepage. Leave a field blank to use its default (shown as the placeholder).
+                </p>
+                <div className="flex flex-col gap-4">
+                  {HERO_VARIANTS.map(({ key, label, ph }) => (
+                    <div key={key} className="rounded-lg border border-border p-4">
+                      <p className="mb-3 text-sm font-medium">{label}</p>
+                      <HeroVariantFields register={register} base={`homepageSections.hero.content.${key}`} ph={ph} />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

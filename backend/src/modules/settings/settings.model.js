@@ -65,6 +65,25 @@ const navLinkSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Editable copy for a single hero visual style. Every field is optional: when a
+// field is blank the storefront falls back to that variant's shipped design
+// copy (HeroSection.jsx DEFAULTS), so an un-edited/un-migrated document renders
+// exactly as it does today. titleLine2 is the emphasized (italic/lime) line.
+const heroVariantContentSchema = new mongoose.Schema(
+  {
+    badge: String,
+    titleLine1: String,
+    titleLine2: String,
+    subtitle: String,
+    primaryCtaText: String,
+    primaryCtaLink: String,
+    secondaryCtaText: String,
+    secondaryCtaLink: String,
+    footnote: String,
+  },
+  { _id: false }
+);
+
 const settingsSchema = new mongoose.Schema(
   {
     heroBanner: { type: [heroSlideSchema], default: [] },
@@ -138,6 +157,15 @@ const settingsSchema = new mongoose.Schema(
           kicker: String,
           title: String,
           price: Number,
+        },
+        // Per-variant editable hero copy (badge/title/subtitle/CTAs/footnote).
+        // One content object per visual style so admins can tailor each of the
+        // three heroes independently; only the currently selected `variant`
+        // renders. All fields optional — blanks fall back to shipped defaults.
+        content: {
+          limeShowroom: heroVariantContentSchema,
+          darkSpotlight: heroVariantContentSchema,
+          photoFullbleed: heroVariantContentSchema,
         },
       },
       collectorPicks: { enabled: { type: Boolean, default: true } },
