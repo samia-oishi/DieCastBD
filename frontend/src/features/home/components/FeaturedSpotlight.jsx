@@ -20,8 +20,8 @@ function Spotlight({ product }) {
       onClick={() => navigate(`/products/${product.slug}`)}
       className="flex cursor-pointer flex-col overflow-hidden rounded-[20px] border border-line bg-white transition-shadow duration-[180ms] md:hover:shadow-[0_12px_32px_rgba(16,18,8,0.1)] md:rounded-[24px]"
     >
-      <div className="relative h-[190px] bg-brand-tint md:h-[330px]">
-        {product.thumbnail?.url && <img src={cloudinaryCard(product.thumbnail.url)} alt={product.title} className="size-full object-cover" />}
+      <div className="relative flex h-[190px] items-center justify-center overflow-hidden bg-brand-tint md:h-[330px]">
+        {product.thumbnail?.url && <img src={cloudinaryCard(product.thumbnail.url)} alt={product.title} className="h-full w-auto max-w-none" />}
         {product.isNewArrival && (
           <span className="pointer-events-none absolute left-2.5 top-2.5 rounded-full bg-ink px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-white md:left-3.5 md:top-3.5 md:px-[11px] md:py-[5px] md:text-[10.5px] md:tracking-[0.07em]">NEW</span>
         )}
@@ -52,8 +52,8 @@ function RowCard({ product, className }) {
       onClick={() => navigate(`/products/${product.slug}`)}
       className={cn("flex flex-1 cursor-pointer items-center gap-3 rounded-[16px] border border-line bg-white p-2.5 pr-3.5 transition-shadow duration-[180ms] md:hover:shadow-[0_12px_32px_rgba(16,18,8,0.1)] md:gap-4 md:rounded-[20px] md:p-[14px] md:pl-[14px] md:pr-[18px]", className)}
     >
-      <div className="relative size-[74px] shrink-0 overflow-hidden rounded-[12px] bg-tile md:h-[112px] md:w-[124px] md:rounded-[14px]">
-        {product.thumbnail?.url && <img src={cloudinaryCard(product.thumbnail.url)} alt={product.title} className="size-full object-cover" />}
+      <div className="relative flex size-[74px] shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-tile md:h-[112px] md:w-[124px] md:rounded-[14px]">
+        {product.thumbnail?.url && <img src={cloudinaryCard(product.thumbnail.url)} alt={product.title} className="h-full w-auto max-w-none" />}
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-[9px] font-semibold uppercase tracking-[0.08em] text-faint md:text-[10.5px] md:tracking-[0.09em]">{product.brand?.name}</div>

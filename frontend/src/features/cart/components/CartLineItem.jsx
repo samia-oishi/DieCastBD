@@ -8,9 +8,9 @@ import { useCart } from "../api/useCart";
 
 function Thumb({ product, className }) {
   return (
-    <Link to={`/products/${product.slug}`} className={cn("relative shrink-0 overflow-hidden rounded-[12px] bg-tile md:rounded-[14px]", className)}>
+    <Link to={`/products/${product.slug}`} className={cn("relative flex shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-tile md:rounded-[14px]", className)}>
       {product.thumbnail?.url ? (
-        <img src={cloudinaryCard(product.thumbnail.url)} alt={product.title} className="size-full object-cover" />
+        <img src={cloudinaryCard(product.thumbnail.url)} alt={product.title} className="h-full w-auto max-w-none" />
       ) : (
         <div className="flex size-full items-center justify-center"><CarFront className="size-6 text-faint/40" strokeWidth={1.25} /></div>
       )}

@@ -1,11 +1,17 @@
-// Product card image transform: pad (never crop) to a 1:1 canvas. Catalog
-// photos are shots of the actual retail packaging (blister card/box) — the
-// packaging IS the product, so cropping it (c_fill) chops off real content
-// (card header, box edge). c_pad shows the full photo always; it fills
-// height with no padding for portrait/blister-shaped sources (the catalog
-// norm) and pads white — matching the card's own white background — only
-// for the rarer landscape source. Non-Cloudinary URLs pass through untouched.
-const CARD_TRANSFORM = "c_pad,b_white,ar_1:1,w_800";
+// Product card image transform: just cap the delivered width — never crop,
+// never force a square canvas. Catalog photos are shots of the actual retail
+// packaging (blister card/box) — the packaging IS the product, so cropping
+// it (c_fill) chops off real content (card header, box edge). Forcing a 1:1
+// canvas (c_pad,ar_1:1) was tried too, but it bakes white letterbox bars
+// into the pixels for every non-square source (this catalog is ~half 3:2
+// landscape) — the photo itself then visibly doesn't fill a wide/tall card
+// even though the square placeholder does, which reads as a layout bug.
+// c_limit preserves the source's native aspect ratio and never upscales;
+// every consuming `<img>` uses `object-contain` in a box with a matching
+// background color, so the browser does any letterboxing at the CSS layer
+// (transparent, no baked-in bars) instead of Cloudinary baking it into the
+// image. Non-Cloudinary URLs pass through untouched.
+const CARD_TRANSFORM = "c_limit,w_800";
 
 export function cloudinaryCard(url) {
   if (!url || typeof url !== "string") return url;

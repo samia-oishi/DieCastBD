@@ -89,9 +89,9 @@ export function WishlistCard({ product }) {
         onClick={() => navigate(`/products/${slug}`)}
         className="group flex cursor-pointer flex-col overflow-hidden rounded-[18px] border border-line bg-white transition-[box-shadow,transform] duration-[180ms] md:rounded-[20px] md:hover:-translate-y-0.5 md:hover:shadow-[0_12px_32px_rgba(16,18,8,0.1)]"
       >
-        <div className="relative h-[145px] bg-tile md:h-[230px]">
+        <div className="relative flex h-[145px] items-center justify-center overflow-hidden bg-tile md:h-[230px]">
           {thumbnail?.url ? (
-            <img src={cloudinaryCard(thumbnail.url)} alt={title} className="size-full object-cover" />
+            <img src={cloudinaryCard(thumbnail.url)} alt={title} className="h-full w-auto max-w-none" />
           ) : (
             <div className="flex size-full items-center justify-center">
               <CarFront className="size-10 text-faint/50" strokeWidth={1.25} />

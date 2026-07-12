@@ -14,7 +14,7 @@ import { useRestockAlertStore } from "@/stores/restockAlertStore";
 const VARIANTS = {
   grid: {
     outer: "rounded-[18px] md:rounded-[20px]",
-    img: "h-[150px] md:h-[220px]",
+    img: "h-[205px] md:h-[300px]",
     pad: "px-3 pb-[13px] pt-[11px] md:px-4 md:pb-4 md:pt-[14px]",
     kicker: "text-[9.5px] tracking-[0.08em] md:text-[10.5px] md:tracking-[0.09em]",
     title: "mt-1 mb-2 text-[12.5px] min-h-[33px] md:mt-[5px] md:mb-3 md:text-[14.5px] md:min-h-10",
@@ -23,7 +23,7 @@ const VARIANTS = {
   },
   carousel: {
     outer: "rounded-[18px] md:rounded-[20px]",
-    img: "h-[172px] md:h-[240px]",
+    img: "h-[215px] md:h-[300px]",
     pad: "px-3.5 pb-3.5 pt-3 md:px-[18px] md:pb-[18px] md:pt-4",
     kicker: "text-[9.5px] tracking-[0.08em] md:text-[10.5px] md:tracking-[0.09em]",
     title: "mt-1 mb-2.5 text-[13px] min-h-[35px] md:mt-[5px] md:mb-3 md:text-[15px] md:min-h-[41px]",
@@ -77,9 +77,9 @@ export function ProductCard({ product, variant = "grid", className }) {
           className
         )}
       >
-        <div className={cn("relative bg-white", v.img)}>
+        <div className={cn("relative flex items-center justify-center overflow-hidden bg-white", v.img)}>
           {thumbnail?.url ? (
-            <img src={cloudinaryCard(thumbnail.url)} alt={title} className="size-full object-cover" />
+            <img src={cloudinaryCard(thumbnail.url)} alt={title} className="h-full w-auto max-w-none" />
           ) : (
             <div className="flex size-full items-center justify-center bg-tile">
               <CarFront className="size-10 text-faint/50" strokeWidth={1.25} />

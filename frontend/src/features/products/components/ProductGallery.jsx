@@ -27,9 +27,9 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
       <button
         type="button"
         onClick={() => setZoomOpen(true)}
-        className="relative block h-[300px] w-full cursor-zoom-in overflow-hidden rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-[24px]"
+        className="relative flex h-[300px] w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-[24px]"
       >
-        <img src={cloudinaryCard(active.url)} alt={title} className="size-full object-cover" />
+        <img src={cloudinaryCard(active.url)} alt={title} className="h-full w-auto max-w-none" />
         {isNew && (
           <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-ink px-2.5 py-[5px] text-[9.5px] font-bold uppercase tracking-[0.06em] text-white md:left-4 md:top-4 md:px-3 md:py-1.5 md:text-[10.5px] md:tracking-[0.07em]">
             New
@@ -46,11 +46,11 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
               onClick={() => setSelected(i)}
               aria-label={`View ${i + 1}`}
               className={cn(
-                "relative h-[62px] w-[70px] shrink-0 overflow-hidden rounded-[12px] bg-tile transition-colors md:h-20 md:w-[88px] md:rounded-[14px]",
+                "relative flex h-[62px] w-[70px] shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-tile transition-colors md:h-20 md:w-[88px] md:rounded-[14px]",
                 i === selected ? "border-2 border-brand" : "border border-line"
               )}
             >
-              <img src={cloudinaryCard(image.url)} alt="" className="size-full object-cover" />
+              <img src={cloudinaryCard(image.url)} alt="" className="h-full w-auto max-w-none" />
             </button>
           ))}
         </div>
