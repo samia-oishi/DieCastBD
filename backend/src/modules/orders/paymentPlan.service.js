@@ -31,15 +31,24 @@ export function resolveItemPaymentRequirement(product) {
 // "rejected with a message, not silently split" behavior the requirement
 // calls for.
 //
-// zoneRequiresPrepay is a BLANKET OVERRIDE, not a per-item safety net: if the
-// destination zone requires prepay, COD is disabled for the whole order
-// regardless of any individual product's own paymentOptions (including the
-// ordinary default cod+full) — the customer must pay at least the delivery
-// charge to confirm the order. This does NOT touch partialAdvance, which
-// stays gated purely on the product's own configured advance percent.
+// zoneRequiresPrepay is a COD-disabling mechanism scoped to items that offer
+// cod — NOT a blanket cart-wide override. For a cod-offering item in a forcing
+// zone, cod is disabled and the customer must instead pay at least the delivery
+// charge (or the full amount) to confirm, so those two prepay alternatives are
+// force-offered (see zoneForcesItem below). Items that never offered cod in the
+// first place (deliveryOnly-only, partialAdvance, etc.) are completely
+// unaffected by the zone flag — it neither adds nor removes any option for them,
+// so they behave identically inside or outside a forcing zone. partialAdvance
+// is never touched by the zone flag at all.
 export function assertPaymentMethodAllowed({ normalizedItems, paymentOption, zoneRequiresPrepay }) {
   for (const { product } of normalizedItems) {
     const requirement = resolveItemPaymentRequirement(product);
+
+    // The zone force only bites on an item that actually offers cod: disabling
+    // that item's cod is the whole point, and the delivery-charge/full prepay
+    // alternatives exist to give it somewhere to go. An item with no cod to
+    // disable is left exactly as its own paymentOptions configured it.
+    const zoneForcesItem = zoneRequiresPrepay && requirement.allowsCod;
 
     const allowed =
       (paymentOption === "cod" && requirement.allowsCod && !zoneRequiresPrepay) ||
@@ -47,12 +56,12 @@ export function assertPaymentMethodAllowed({ normalizedItems, paymentOption, zon
       // charge OR the full amount upfront — the customer gets a choice of
       // either, even though the product never opted into "Delivery Charge
       // Only"/"Full Payment" as business options on its own.
-      (paymentOption === "deliveryOnly" && (requirement.allowsDeliveryOnly || zoneRequiresPrepay)) ||
+      (paymentOption === "deliveryOnly" && (requirement.allowsDeliveryOnly || zoneForcesItem)) ||
       (paymentOption === "partialAdvance" && requirement.requiresAdvance) ||
-      (paymentOption === "full" && (requirement.allowsFull || zoneRequiresPrepay));
+      (paymentOption === "full" && (requirement.allowsFull || zoneForcesItem));
 
     if (!allowed) {
-      if (paymentOption === "cod" && zoneRequiresPrepay) {
+      if (paymentOption === "cod" && zoneForcesItem) {
         throw ApiError.badRequest(
           `"${product.title}" can only be ordered with Cash on Delivery, but this delivery zone requires paying the delivery charge upfront — please choose Delivery Charge Only, Partial Advance, or Full Payment instead.`
         );

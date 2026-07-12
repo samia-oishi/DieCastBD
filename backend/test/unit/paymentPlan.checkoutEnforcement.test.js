@@ -83,11 +83,12 @@ describe("assertPaymentMethodAllowed", () => {
     ).toThrow(/cannot be ordered/);
   });
 
-  // zoneRequiresPrepay is a BLANKET OVERRIDE, not a per-item safety net: once
-  // a zone forces prepay, COD is disabled for the whole cart regardless of
-  // any individual product's own paymentOptions (including the ordinary
-  // default cod+full) — the customer must pay at least the delivery charge to
-  // confirm the order. partialAdvance is untouched by this at all.
+  // zoneRequiresPrepay is a COD-disabling mechanism scoped to items that offer
+  // cod — NOT a blanket cart-wide override. For a cod-offering item in a
+  // forcing zone, cod is disabled and deliveryOnly/full are force-offered as
+  // the prepay alternatives; the customer must pay at least the delivery charge
+  // to confirm. Items that never offered cod (deliveryOnly-only, partialAdvance,
+  // etc.) are untouched by the zone flag — see the dedicated cases further down.
 
   it("rejects cod for a cod-only product when the zone forces prepay", () => {
     expect(() =>
@@ -147,7 +148,7 @@ describe("assertPaymentMethodAllowed", () => {
     ).not.toThrow();
   });
 
-  it("rejects cod for a cod+full product when the zone forces prepay — blanket override applies regardless of product config", () => {
+  it("rejects cod for a cod+full product when the zone forces prepay — the force applies because the product offers cod", () => {
     expect(() =>
       assertPaymentMethodAllowed({
         normalizedItems: [{ product: codFullProduct }],
@@ -157,7 +158,7 @@ describe("assertPaymentMethodAllowed", () => {
     ).toThrow(/requires paying the delivery charge upfront/);
   });
 
-  it("allows deliveryOnly for a cod+full product when the zone forces prepay — blanket override", () => {
+  it("allows deliveryOnly for a cod+full product when the zone forces prepay — the cod-offering item gets prepay alternatives", () => {
     expect(() =>
       assertPaymentMethodAllowed({
         normalizedItems: [{ product: codFullProduct }],
@@ -187,7 +188,7 @@ describe("assertPaymentMethodAllowed", () => {
     ).not.toThrow();
   });
 
-  it("rejects a mixed cart in a prepay zone when cod is selected — the blanket override rejects every item, not just a cod-only one", () => {
+  it("rejects a mixed cart in a prepay zone when cod is selected — both cod-offering items fail the force, not just a cod-only one", () => {
     expect(() =>
       assertPaymentMethodAllowed({
         normalizedItems: [{ product: codFullProduct }, { product: codOnlyProduct }],
@@ -197,17 +198,20 @@ describe("assertPaymentMethodAllowed", () => {
     ).toThrow(/requires paying the delivery charge upfront/);
   });
 
-  it("does not fabricate cod-availability for a partialAdvance-only product when the zone forces prepay", () => {
+  it("rejects cod for a partialAdvance-only product regardless of zone — but with the generic product-config message, since the zone force never bites on a non-cod item", () => {
+    // The product never offered cod, so cod is unavailable for the ordinary
+    // product-config reason; the zone flag is a no-op here, so the special
+    // "requires paying the delivery charge upfront" branch must NOT fire.
     expect(() =>
       assertPaymentMethodAllowed({
         normalizedItems: [{ product: advance25Product }],
         paymentOption: "cod",
         zoneRequiresPrepay: true,
       })
-    ).toThrow(/requires paying the delivery charge upfront/);
+    ).toThrow(/cannot be ordered/);
   });
 
-  it("still allows partialAdvance for a partialAdvance-only product when the zone forces prepay — the blanket override doesn't interfere with the product's own advance gating", () => {
+  it("still allows partialAdvance for a partialAdvance-only product when the zone forces prepay — the zone flag doesn't interfere with the product's own advance gating", () => {
     expect(() =>
       assertPaymentMethodAllowed({
         normalizedItems: [{ product: advance25Product }],
@@ -215,6 +219,49 @@ describe("assertPaymentMethodAllowed", () => {
         zoneRequiresPrepay: true,
       })
     ).not.toThrow();
+  });
+
+  // Zone-force scoping (decision #69): a product that never offered cod gets NO
+  // deliveryOnly/full options injected by a forcing zone — the zone flag is a
+  // complete no-op for it. This refines decision #67's over-broad blanket.
+
+  it("does NOT inject deliveryOnly for a partialAdvance-only product when the zone forces prepay", () => {
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: advance25Product }],
+        paymentOption: "deliveryOnly",
+        zoneRequiresPrepay: true,
+      })
+    ).toThrow(/cannot be ordered/);
+  });
+
+  it("does NOT inject full for a partialAdvance-only product when the zone forces prepay", () => {
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: advance25Product }],
+        paymentOption: "full",
+        zoneRequiresPrepay: true,
+      })
+    ).toThrow(/cannot be ordered/);
+  });
+
+  it("a deliveryOnly-only product behaves identically inside or outside a forcing zone — cod stays rejected, deliveryOnly stays allowed", () => {
+    for (const zoneRequiresPrepay of [false, true]) {
+      expect(() =>
+        assertPaymentMethodAllowed({
+          normalizedItems: [{ product: deliveryOnlyProduct }],
+          paymentOption: "deliveryOnly",
+          zoneRequiresPrepay,
+        })
+      ).not.toThrow();
+      expect(() =>
+        assertPaymentMethodAllowed({
+          normalizedItems: [{ product: deliveryOnlyProduct }],
+          paymentOption: "full",
+          zoneRequiresPrepay,
+        })
+      ).toThrow(/cannot be ordered/);
+    }
   });
 });
 
