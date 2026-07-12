@@ -685,3 +685,11 @@ Direct merchant correction, pasting the original requirement doc plus an explici
 **Tests:** flipped the two `paymentPlan.checkoutEnforcement.test.js` cases that encoded the now-reverted narrow behavior (cod now rejected, deliveryOnly now allowed, for a cod+full product under a forcing zone); reworded the mixed-cart test's rationale; added two new tests confirming `partialAdvance` availability is unaffected by the zone force in either direction.
 
 **Verified:** backend `npm test` 67/67 (65 prior + 2 net-new); frontend `npm run lint`/`npm run build` clean (same pre-existing warnings only).
+
+## 2026-07-13 — Checkout prepay banner generalized to product-driven COD-disablement
+
+Merchant clarified a second, independent COD-disabling source: an individual product's own admin "Payment options" toggles (COD off, e.g. `["deliveryOnly","full"]`) — "for such items, the cod will be disable and pre-payment badge will show for both inside and outside dhaka. this is a different thing from the global delivery charge in settings." The underlying availability math already disabled `cod` correctly per-item regardless of zone (no backend change needed), but the prominent amber `PrepayNotice` banner in `PaymentMethods.jsx` fired only off the zone flag. See plan.md §7 decision #68.
+
+**Frontend only:** `paymentPlanPreview.js`'s `resolvePaymentOptionAvailability` now returns `showPrepayNotice: !availability.cod` (renamed from `zoneForcesPrepay`) — true whenever `cod` is unavailable for the cart for any reason. `CheckoutPage.jsx` passes the renamed field through. `PaymentMethods.jsx`'s prop renamed `zoneRequiresPrepay` → `showPrepayNotice`, and `PrepayNotice`'s copy generalized from "this delivery zone requires..." to "Cash on Delivery isn't available for this order," branching on whether `deliveryOnly` is actually offered (`nonCodOptions`) rather than always naming it. `DeliveryOptions.jsx`'s zone-card note is untouched (legitimately zone-specific).
+
+**Verified:** backend `npm test` unchanged 67/67 (no backend files touched, sanity check only); frontend `npm run lint`/`npm run build` clean.

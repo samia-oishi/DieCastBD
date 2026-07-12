@@ -45,7 +45,13 @@ export const PAYMENT_OPTION_LABELS = {
  * "deliveryOnly"/"full" become available even for items that didn't
  * themselves opt into them. partialAdvance is untouched — gated purely on the
  * product's own configured advance percent. Mirrors the backend's
- * assertPaymentMethodAllowed. */
+ * assertPaymentMethodAllowed.
+ *
+ * The returned showPrepayNotice flag is deliberately cause-agnostic: it's true
+ * whenever "cod" ends up unavailable for the cart, whether that's because the
+ * zone forces prepay OR because one of the cart's own products is configured
+ * without "cod" in its paymentOptions (independent of which zone/city is
+ * selected) — the checkout UI shows the same prominent banner either way. */
 export function resolvePaymentOptionAvailability({ items, zoneRequiresPrepay }) {
   const requirements = items.map((item) => resolveItemPaymentRequirement(item.product));
 
@@ -73,9 +79,10 @@ export function resolvePaymentOptionAvailability({ items, zoneRequiresPrepay }) 
       : "One or more items in your order require advance or delivery-charge payment and can't be ordered with Cash on Delivery.";
   }
 
-  // Whether the zone's prepay requirement is binding — used by the checkout
-  // UI to decide whether to show the "this zone requires prepay" callout.
-  return { availability, advancePaymentPercent, codDisabledReason, zoneForcesPrepay: zoneRequiresPrepay };
+  // Whether to show the prominent "prepay required" banner — fires whenever
+  // cod ends up unavailable for the cart at all, not just when the zone is
+  // the cause (see the showPrepayNotice doc above the function).
+  return { availability, advancePaymentPercent, codDisabledReason, showPrepayNotice: !availability.cod };
 }
 
 // Preview mirror of calculateAmountPaid — same math, non-authoritative.

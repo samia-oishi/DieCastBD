@@ -60,21 +60,35 @@ function Head({ selected, logo, title, subtitle }) {
   );
 }
 
-/** Prominent, unmissable callout shown above the payment cards when the
- * selected delivery zone forces prepaying the delivery charge — tells the
- * customer exactly what to do (COD is disabled below, but this is the
- * actionable "do this instead" companion to that inline reason) rather than
- * leaving them to discover "Delivery charge only" on their own inside the
- * bKash/BanglaQR panel. Amber palette matches the zone card's own prepay tag
- * and the order-confirmation email's "balance due" callout for consistency. */
-function PrepayNotice({ shippingFee }) {
+/** Prominent, unmissable callout shown above the payment cards whenever Cash
+ * on Delivery ends up unavailable for the cart -- whether that's because the
+ * selected delivery zone forces prepay, or because one of the cart's own
+ * products is configured without cod in its payment options (independent
+ * of zone/city). Tells the customer exactly what to do (COD is disabled
+ * below, but this is the actionable "do this instead" companion to that
+ * inline reason) rather than leaving them to discover the right option on
+ * their own inside the bKash/BanglaQR panel. Amber palette matches the zone
+ * card's own prepay tag and the order-confirmation email's "balance due"
+ * callout for consistency. */
+const PREPAY_BOX_CLS = "mb-3.5 flex items-start gap-2.5 rounded-[14px] border border-[#FED7AA] bg-[#FFF7ED] px-4 py-3.5";
+const PREPAY_ICON_CLS = "mt-0.5 shrink-0 text-[#9A3412]";
+const PREPAY_TEXT_CLS = "text-[13px] leading-[1.55] text-[#9A3412]";
+const PREPAY_BOLD_CLS = "font-bold";
+
+function PrepayNotice({ shippingFee, hasDeliveryOnly }) {
   return (
-    <div className="mb-3.5 flex items-start gap-2.5 rounded-[14px] border border-[#FED7AA] bg-[#FFF7ED] px-4 py-3.5">
-      <Wallet size={18} strokeWidth={2.2} className="mt-0.5 shrink-0 text-[#9A3412]" />
-      <div className="text-[13px] leading-[1.55] text-[#9A3412]">
-        <span className="font-bold">This delivery zone requires paying the delivery charge upfront.</span>{" "}
-        Select bKash or BanglaQR below and choose <span className="font-bold">“Delivery charge only”</span> to pay
-        just {formatTaka(shippingFee)} now — the rest is collected when your order arrives.
+    <div className={PREPAY_BOX_CLS}>
+      <Wallet size={18} strokeWidth={2.2} className={PREPAY_ICON_CLS} />
+      <div className={PREPAY_TEXT_CLS}>
+        <span className={PREPAY_BOLD_CLS}>Cash on Delivery isn't available for this order.</span>{" "}
+        {hasDeliveryOnly ? (
+          <>
+            Select bKash or BanglaQR below and choose <span className={PREPAY_BOLD_CLS}>Delivery charge only</span> to pay
+            just {formatTaka(shippingFee)} now -- the rest is collected when your order arrives.
+          </>
+        ) : (
+          <>Select bKash or BanglaQR below and choose a payment option to confirm your order.</>
+        )}
       </div>
     </div>
   );
@@ -134,7 +148,7 @@ export function PaymentMethods({
   total,
   codDisabled = false,
   codDisabledReason = null,
-  zoneRequiresPrepay = false,
+  showPrepayNotice = false,
   shippingFee = 0,
   paymentOption = "full",
   onPaymentOptionChange = () => {},
@@ -150,7 +164,9 @@ export function PaymentMethods({
 
   return (
     <div className="mt-5 flex flex-col gap-3">
-      {zoneRequiresPrepay && <PrepayNotice shippingFee={shippingFee} />}
+      {showPrepayNotice && (
+        <PrepayNotice shippingFee={shippingFee} hasDeliveryOnly={nonCodOptions.some((o) => o.key === "deliveryOnly")} />
+      )}
 
       {/* COD */}
       <RadioCard
