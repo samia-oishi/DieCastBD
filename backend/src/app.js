@@ -6,6 +6,7 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 
 import { env, isProduction } from "./config/env.js";
+import { connectDB } from "./config/db.js";
 import { sanitizeInput } from "./middlewares/sanitize.js";
 import { apiLimiter } from "./middlewares/rateLimiters.js";
 import { notFoundHandler, errorHandler } from "./middlewares/errorHandler.js";
@@ -43,6 +44,24 @@ app.use("/api", apiLimiter);
 
 app.get("/health", (req, res) => sendSuccess(res, { data: { uptime: process.uptime() } }));
 
+// On Vercel the Express app itself is the serverless handler (Vercel's runtime
+// auto-detects the exported Express server), so requests never pass through
+// src/server.js — the one place that calls connectDB(). Ensure the cached
+// connection is live before any DB-backed route runs. Gated to Vercel (the
+// VERCEL env var is always set there) so local dev and tests, which manage
+// their own connection lifecycle, are untouched. Placed after /health so the
+// health check stays answerable even when the database is unreachable.
+if (process.env.VERCEL) {
+  app.use(async (req, res, next) => {
+    try {
+      await connectDB();
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
+}
+
 // Served at the root (not under /api/v1) so it can sit at diecastbd.com/sitemap.xml
 // via a Vercel rewrite — search engines expect the sitemap at the site root.
 app.get("/sitemap.xml", getSitemap);
@@ -51,3 +70,8 @@ app.use("/api/v1", router);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
+
+// Default export so Vercel's runtime can use the Express app directly as the
+// serverless handler (its "default export must be a function or server" check).
+// The named `app` export above is still what src/server.js and tests import.
+export default app;
