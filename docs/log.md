@@ -657,3 +657,11 @@ Follow-up merchant clarification on the fix above: a zone's `requiresPrepay` fla
 **Tests:** rewrote the zone/prepay block in `paymentPlan.checkoutEnforcement.test.js` — cod allowed for cod+full under a forcing zone, deliveryOnly rejected for cod+full under a forcing zone, cod-only product still blocked/force-allowed as before, plus a new mixed-cart regression case.
 
 **Verified:** backend `npm test` 63/63; frontend `npm run lint`/`npm run build` clean (same pre-existing warnings only).
+
+## 2026-07-13 — Reverted the zone-prepay pill badge on DeliveryOptions.jsx
+
+Direct merchant feedback on a screenshot of the amber "Delivery charge paid upfront" pill badge (added in the first fix above): "it's look wired notice i don't like it at all". The requirement info still needs to be visible, but the pill/background-box treatment itself was disliked, not the underlying logic (which is untouched — see plan.md §7 decision #65).
+
+**Change:** `DeliveryOptions.jsx`'s per-zone prepay note is now plain inline text (no `rounded-full`, no background fill) — a small `Wallet` icon + "Prepay delivery charge" at the same typographic weight as the eta line below the zone name, recolored `#9A3412` to match `PaymentMethods.jsx`'s existing `PrepayNotice` banner text (previously the zone card used a different, unreconciled amber pair). Purely visual/copy — no logic, validation, or test changes.
+
+**Verified:** frontend `npm run lint` clean (same pre-existing unrelated warnings only).
