@@ -5,6 +5,14 @@ function formatPrice(amount) {
   return `৳${Math.round(amount).toLocaleString("en-US")}`;
 }
 
+const PAYMENT_METHOD_LABELS = { cod: "Cash on Delivery", bkash: "bKash", banglaqr: "BanglaQR" };
+const PAYMENT_OPTION_LABELS = {
+  cod: "Cash on Delivery",
+  deliveryOnly: "Delivery charge only",
+  partialAdvance: "Partial advance",
+  full: "Full payment",
+};
+
 // Inline styles + table layout throughout — email clients (Outlook especially)
 // don't support external stylesheets or most modern CSS, so this is the
 // actually-reliable way to build transactional HTML email. A light background
@@ -80,8 +88,19 @@ function renderOrderConfirmationHtml(order, user) {
           </div>
 
           <p style="margin: 24px 0 0; font-size: 13px; color: #888;">
-            Payment method: ${order.paymentMethod === "cod" ? "Cash on Delivery" : "bKash"}
+            Payment method: ${PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}
+            ${order.paymentOption && order.paymentOption !== "cod" ? ` (${PAYMENT_OPTION_LABELS[order.paymentOption] ?? order.paymentOption})` : ""}
           </p>
+          ${
+            order.amountDue > 0
+              ? `<div style="margin-top: 12px; padding: 12px 16px; background: #fff7ed; border-radius: 8px; border: 1px solid #fed7aa;">
+                  <p style="margin: 0; font-size: 13px; color: #9a3412;">
+                    You've paid <strong>${formatPrice(order.amountPaid)}</strong> so far — the remaining
+                    <strong>${formatPrice(order.amountDue)}</strong> is due on delivery.
+                  </p>
+                </div>`
+              : ""
+          }
         </td>
       </tr>
     </table>

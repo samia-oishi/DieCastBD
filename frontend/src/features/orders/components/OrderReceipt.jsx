@@ -10,6 +10,12 @@ import { OrderTracker } from "@/components/shared/OrderTracker";
 import { useSettings } from "@/features/settings/api/useSettings";
 
 const PAYMENT_LABELS = { cod: "Cash on Delivery", bkash: "bKash", banglaqr: "BanglaQR" };
+const PAYMENT_OPTION_LABELS = {
+  cod: "Cash on Delivery",
+  deliveryOnly: "Delivery charge only",
+  partialAdvance: "Partial advance",
+  full: "Full payment",
+};
 
 function formatDate(value) {
   return new Date(value).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
@@ -44,6 +50,12 @@ function OrderItems({ order }) {
         </span>
         <span className="font-display text-[15px] font-extrabold text-ink">{formatTaka(order.total)}</span>
       </div>
+      {order.amountDue > 0 && (
+        <div className="mt-1.5 flex items-center justify-between md:hidden">
+          <span className="text-[11.5px] text-faint">Due on delivery</span>
+          <span className="text-[12.5px] font-bold text-ink">{formatTaka(order.amountDue)}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -121,6 +133,18 @@ function SummaryCard({ order, paymentLabel }) {
         <span className="text-muted-foreground">Payment</span>
         <span className="font-semibold text-ink">{paymentLabel}</span>
       </div>
+      {order.paymentOption && order.paymentOption !== "cod" && (
+        <div className="mt-[11px] flex justify-between text-[13px]">
+          <span className="text-muted-foreground">{PAYMENT_OPTION_LABELS[order.paymentOption] ?? order.paymentOption}</span>
+          <span className="font-semibold text-ink">{formatTaka(order.amountPaid)} paid</span>
+        </div>
+      )}
+      {order.amountDue > 0 && (
+        <div className="mt-[11px] flex justify-between text-[13px]">
+          <span className="text-muted-foreground">Due on delivery</span>
+          <span className="font-semibold text-ink">{formatTaka(order.amountDue)}</span>
+        </div>
+      )}
       <OrderButtons className="mt-5" />
     </div>
   );

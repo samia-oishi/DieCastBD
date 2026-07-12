@@ -621,3 +621,17 @@ The integration phase. See plan.md §7 decision #61 for the full write-up. Expli
 **Frontend:** new `checkout/lib/paymentPlanPreview.js` — a deliberately-duplicated read-only preview mirror (no shared code between the two apps) of the backend's resolution/amount math. `checkoutSchema.js` mirrors the `paymentOption` field + refine. `PaymentMethods.jsx` renders COD disabled with an inline reason when the cart/zone disallow it, and a segmented control for delivery-only/advance/full when the cart offers a real choice. `CheckoutPage.jsx` computes availability from the live cart + selected zone and keeps the form in sync via `useEffect`. `DeliveryOptions.jsx` notes when a zone requires prepay.
 
 **Verified:** backend `npm test` (57/57 across 8 files) — explicitly confirmed `order.stockBucket.test.js` still passes unmodified; 15 new table-driven tests in `paymentPlan.checkoutEnforcement.test.js` covering pure-cod/full/deliveryOnly/partialAdvance, max-percent-across-mixed-items, both directions of mixed-cart rejection, zone-forced-prepay, and an amountPaid-never-exceeds-total edge case; a `node -e` script constructing `new Order({...})` (no DB needed) confirmed the historical-backfill defaults and that explicit Phase-4 values are never overridden; a `createOrderSchema.body.safeParse(...)` script confirmed the cod+non-cod-option rejection and two acceptances. Frontend `npm run lint`/`npm run build` clean (no new warnings).
+
+## 2026-07-12 — Order/receipt/email display of payment-plan fields (Phase 5 of 5: pre-order + payment-options feature, final phase)
+
+The wrap-up phase — pure display work, no schema/validation/checkout-logic changes. See plan.md §7 decision #62 for the full write-up. Cross-references decisions #58–#61: this is where the fields those phases added actually become visible to admins and customers.
+
+**Frontend:** `admin/orders/OrderDetailPage.jsx` gains a payment-details block — payment channel label (also fixes a pre-existing bug where BanglaQR orders incorrectly displayed as "bKash"), the bKash transaction ID or BanglaQR reference, the human-readable `paymentOption` (+ `advancePaymentPercent` for partial-advance orders), and a "Paid X · Due on delivery Y" line. `orders/components/OrderReceipt.jsx` (shared by the confirmation page and the customer order-detail page) gains the same payment-option/due-on-delivery rows on both the desktop `SummaryCard` and the mobile-only inline total.
+
+**Backend:** `emails/orderConfirmation.js` gets the same payment-channel-label bug fix, appends the resolved payment option when it isn't `"cod"`, and adds an amber "paid X, Y due on delivery" block that only renders when `amountDue > 0` — a full-payment/COD order's email is unchanged.
+
+**Verified:** backend `npm test` still 57/57 (no backend logic changed; confirms the email template edit loads cleanly) plus `node --check` on the edited file; frontend `npm run lint`/`npm run build` clean (same pre-existing warnings only). No new curl/schema verification needed — no request/response contract changed, only rendering of already-flowing fields.
+
+---
+
+All 5 phases of the pre-order + payment-options feature (decisions #58–#62) are now complete: pre-order badges, per-product payment options with admin config, per-zone outside-Dhaka prepay, checkout enforcement with the `amountPaid`/`amountDue` invariant, and full display across admin/customer order views + the confirmation email.

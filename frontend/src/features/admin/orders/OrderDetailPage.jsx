@@ -14,6 +14,14 @@ import { useAdminOrder, useUpdateOrderStatusMutation } from "./api/useAdminOrder
 
 const STATUS_OPTIONS = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
 
+const PAYMENT_METHOD_LABELS = { cod: "Cash on Delivery", bkash: "bKash", banglaqr: "BanglaQR" };
+const PAYMENT_OPTION_LABELS = {
+  cod: "Cash on Delivery",
+  deliveryOnly: "Delivery charge only",
+  partialAdvance: "Partial advance",
+  full: "Full payment",
+};
+
 function formatPrice(amount) {
   return `৳${Math.round(amount).toLocaleString("en-US")}`;
 }
@@ -117,12 +125,29 @@ export function OrderDetailPage() {
               <span>{formatPrice(order.total)}</span>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {order.paymentMethod === "cod" ? "Cash on Delivery" : "bKash"}
-            {order.paymentMethod === "bkash" && order.bkashTransactionId && (
-              <> — Transaction ID: <span className="font-medium text-foreground">{order.bkashTransactionId}</span></>
+          <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground">
+            <p>
+              {PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}
+              {order.paymentMethod === "bkash" && order.bkashTransactionId && (
+                <> — Transaction ID: <span className="font-medium text-foreground">{order.bkashTransactionId}</span></>
+              )}
+              {order.paymentMethod === "banglaqr" && order.banglaQrReference && (
+                <> — Reference: <span className="font-medium text-foreground">{order.banglaQrReference}</span></>
+              )}
+            </p>
+            {order.paymentOption && (
+              <p>
+                Payment option: <span className="font-medium text-foreground">{PAYMENT_OPTION_LABELS[order.paymentOption] ?? order.paymentOption}</span>
+                {order.paymentOption === "partialAdvance" && order.advancePaymentPercent != null && ` (${order.advancePaymentPercent}%)`}
+              </p>
             )}
-          </p>
+            {(order.amountPaid > 0 || order.amountDue > 0) && (
+              <p>
+                Paid {formatPrice(order.amountPaid)}
+                {order.amountDue > 0 && <> · Due on delivery <span className="font-medium text-foreground">{formatPrice(order.amountDue)}</span></>}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-4">
