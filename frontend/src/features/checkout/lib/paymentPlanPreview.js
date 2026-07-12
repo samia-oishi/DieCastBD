@@ -32,13 +32,6 @@ export const PAYMENT_OPTION_LABELS = {
   full: "Full payment",
 };
 
-// A product with no configured alternative to plain COD at all — the only
-// case the zone's requiresPrepay flag is meant to guard against. Mirrors the
-// backend's isCodOnlyRequirement.
-function isCodOnlyRequirement(r) {
-  return r.allowsCod && !r.allowsDeliveryOnly && !r.requiresAdvance && !r.allowsFull;
-}
-
 /** For a cart's line items + the selected zone's requiresPrepay flag, works out
  * which of the 4 order-level paymentOptions are usable for the WHOLE cart
  * (every item must allow it — same rule as the backend's per-item loop, so a
@@ -46,25 +39,24 @@ function isCodOnlyRequirement(r) {
  * ends up with neither "cod" nor "partialAdvance" universally available,
  * surfacing as a rejection message rather than a silent split).
  *
- * zoneRequiresPrepay is a SAFETY NET, not a blanket override: it only forces
- * anything for an item that is itself cod-only (no deliveryOnly/partialAdvance/
- * full configured) — a product that already offers one of those alternatives,
- * including the default cod+full, is trusted to have its own payment risk
- * already handled, so the zone doesn't block its COD or need to fall back to
- * "deliveryOnly" for it. Mirrors the backend's assertPaymentMethodAllowed. */
+ * zoneRequiresPrepay is a BLANKET OVERRIDE, not a per-item safety net: if the
+ * zone requires prepay, "cod" is unavailable for the whole cart regardless of
+ * any item's own paymentOptions (including the default cod+full), and both
+ * "deliveryOnly"/"full" become available even for items that didn't
+ * themselves opt into them. partialAdvance is untouched — gated purely on the
+ * product's own configured advance percent. Mirrors the backend's
+ * assertPaymentMethodAllowed. */
 export function resolvePaymentOptionAvailability({ items, zoneRequiresPrepay }) {
   const requirements = items.map((item) => resolveItemPaymentRequirement(item.product));
-  const zoneForcesAnyItem = zoneRequiresPrepay && requirements.some(isCodOnlyRequirement);
 
   const availability = {};
   for (const option of ["cod", "deliveryOnly", "partialAdvance", "full"]) {
     availability[option] =
       requirements.length > 0 &&
       requirements.every((r) => {
-        const zoneForcesThisItem = zoneRequiresPrepay && isCodOnlyRequirement(r);
-        if (option === "cod") return r.allowsCod && !zoneForcesThisItem;
-        if (option === "deliveryOnly") return r.allowsDeliveryOnly || zoneForcesThisItem;
-        if (option === "full") return r.allowsFull || zoneForcesThisItem;
+        if (option === "cod") return r.allowsCod && !zoneRequiresPrepay;
+        if (option === "deliveryOnly") return r.allowsDeliveryOnly || zoneRequiresPrepay;
+        if (option === "full") return r.allowsFull || zoneRequiresPrepay;
         return OPTION_CHECKERS[option](r);
       });
   }
@@ -76,16 +68,14 @@ export function resolvePaymentOptionAvailability({ items, zoneRequiresPrepay }) 
 
   let codDisabledReason = null;
   if (!availability.cod) {
-    codDisabledReason = zoneForcesAnyItem
+    codDisabledReason = zoneRequiresPrepay
       ? "This delivery zone requires paying the delivery charge upfront — Cash on Delivery isn't available here."
       : "One or more items in your order require advance or delivery-charge payment and can't be ordered with Cash on Delivery.";
   }
 
-  // Whether the zone's prepay requirement is actually binding for THIS cart —
-  // used by the checkout UI to decide whether to show the "this zone requires
-  // prepay" callout (raw zoneRequiresPrepay alone would be misleading once a
-  // cart's items already have their own non-cod alternative configured).
-  return { availability, advancePaymentPercent, codDisabledReason, zoneForcesPrepay: zoneForcesAnyItem };
+  // Whether the zone's prepay requirement is binding — used by the checkout
+  // UI to decide whether to show the "this zone requires prepay" callout.
+  return { availability, advancePaymentPercent, codDisabledReason, zoneForcesPrepay: zoneRequiresPrepay };
 }
 
 // Preview mirror of calculateAmountPaid — same math, non-authoritative.

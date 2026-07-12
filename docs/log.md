@@ -675,3 +675,13 @@ Merchant feedback testing a cod-only product (`paymentOptions: ["cod"]`) shipped
 **Tests:** two new cases in `paymentPlan.checkoutEnforcement.test.js` — `full` now allowed for a cod-only product under a forcing zone, and still rejected for it when the zone does *not* force prepay.
 
 **Verified:** backend `npm test` 65/65; frontend `npm run lint`/`npm run build` clean (same pre-existing warnings only).
+
+## 2026-07-13 — Zone-requiresPrepay reverted to a blanket COD override
+
+Direct merchant correction, pasting the original requirement doc plus an explicit clarification: *"I just need to fix if in the backend Require prepaying the delivery charge before placing an order is enabled & product set on cash on delivery still customer need to pay the delivery charge for confirming order... cash on delivery will be disable & it will open next Payment option. There will be two option One is Default Pay Delivery Charge & Second is Full payment."* This directly contradicts the previous fix's cod-only-item narrowing (decision #64) — the merchant wants the zone flag to be a blanket override, not a safety net scoped to cod-only products. See plan.md §7 decision #67 (supersedes #64).
+
+**Backend + frontend mirror:** `paymentPlan.service.js` (`assertPaymentMethodAllowed`) and `paymentPlanPreview.js` (`resolvePaymentOptionAvailability`) — deleted `isCodOnlyRequirement()` and the per-item `zoneForcesThisItem`/`zoneForcesAnyItem` derivations entirely; every branch now uses the raw `zoneRequiresPrepay` flag directly and unconditionally: `cod` requires `!zoneRequiresPrepay`, `deliveryOnly`/`full` are force-allowed whenever `zoneRequiresPrepay` is true, regardless of the product's own configuration (including the ordinary default `["cod","full"]`). `partialAdvance` is completely untouched, per the merchant's explicit "don't touch anything else already built." The frontend's `zoneForcesPrepay` return field keeps its name (no `CheckoutPage.jsx` change needed) but its value is now simply the raw zone flag. `DeliveryOptions.jsx`/`PaymentMethods.jsx` needed no changes.
+
+**Tests:** flipped the two `paymentPlan.checkoutEnforcement.test.js` cases that encoded the now-reverted narrow behavior (cod now rejected, deliveryOnly now allowed, for a cod+full product under a forcing zone); reworded the mixed-cart test's rationale; added two new tests confirming `partialAdvance` availability is unaffected by the zone force in either direction.
+
+**Verified:** backend `npm test` 67/67 (65 prior + 2 net-new); frontend `npm run lint`/`npm run build` clean (same pre-existing warnings only).

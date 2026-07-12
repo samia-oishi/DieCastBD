@@ -22,43 +22,37 @@ export function resolveItemPaymentRequirement(product) {
   };
 }
 
-// A product with no configured alternative to plain COD at all — the only
-// case the zone's requiresPrepay flag is meant to guard against (see below).
-function isCodOnlyRequirement(requirement) {
-  return requirement.allowsCod && !requirement.allowsDeliveryOnly && !requirement.requiresAdvance && !requirement.allowsFull;
-}
-
 // Validates the single order-level paymentOption against every item's own
-// allowed options AND (conditionally) the destination zone's requiresPrepay
-// flag. Deliberately has no special-case "mixed cart" detection beyond the
-// per-item loop: a cart mixing a cod-only item with a partialAdvance-required
-// item is rejected no matter which of the two paymentOptions is chosen,
-// because whichever one is picked, the OTHER item in the loop below fails its
-// own check — exactly the "rejected with a message, not silently split"
-// behavior the requirement calls for.
+// allowed options AND the destination zone's requiresPrepay flag. Deliberately
+// has no special-case "mixed cart" detection beyond the per-item loop: a cart
+// mixing a cod-only item with a partialAdvance-required item is rejected no
+// matter which of the two paymentOptions is chosen, because whichever one is
+// picked, the OTHER item in the loop below fails its own check — exactly the
+// "rejected with a message, not silently split" behavior the requirement
+// calls for.
 //
-// zoneRequiresPrepay is a SAFETY NET, not a blanket override: it only forces
-// anything for an item that is itself cod-only (no deliveryOnly/partialAdvance/
-// full configured). A product that already offers one of those alternatives —
-// including the default cod+full — is trusted to have its own payment risk
-// already handled, so the zone doesn't second-guess it or block its COD.
+// zoneRequiresPrepay is a BLANKET OVERRIDE, not a per-item safety net: if the
+// destination zone requires prepay, COD is disabled for the whole order
+// regardless of any individual product's own paymentOptions (including the
+// ordinary default cod+full) — the customer must pay at least the delivery
+// charge to confirm the order. This does NOT touch partialAdvance, which
+// stays gated purely on the product's own configured advance percent.
 export function assertPaymentMethodAllowed({ normalizedItems, paymentOption, zoneRequiresPrepay }) {
   for (const { product } of normalizedItems) {
     const requirement = resolveItemPaymentRequirement(product);
-    const zoneForcesThisItem = zoneRequiresPrepay && isCodOnlyRequirement(requirement);
 
     const allowed =
-      (paymentOption === "cod" && requirement.allowsCod && !zoneForcesThisItem) ||
+      (paymentOption === "cod" && requirement.allowsCod && !zoneRequiresPrepay) ||
       // The zone-forced case is itself satisfied by paying just the delivery
       // charge OR the full amount upfront — the customer gets a choice of
-      // either, even though the cod-only product never opted into "Delivery
-      // Charge Only"/"Full Payment" as business options on its own.
-      (paymentOption === "deliveryOnly" && (requirement.allowsDeliveryOnly || zoneForcesThisItem)) ||
+      // either, even though the product never opted into "Delivery Charge
+      // Only"/"Full Payment" as business options on its own.
+      (paymentOption === "deliveryOnly" && (requirement.allowsDeliveryOnly || zoneRequiresPrepay)) ||
       (paymentOption === "partialAdvance" && requirement.requiresAdvance) ||
-      (paymentOption === "full" && (requirement.allowsFull || zoneForcesThisItem));
+      (paymentOption === "full" && (requirement.allowsFull || zoneRequiresPrepay));
 
     if (!allowed) {
-      if (paymentOption === "cod" && zoneForcesThisItem) {
+      if (paymentOption === "cod" && zoneRequiresPrepay) {
         throw ApiError.badRequest(
           `"${product.title}" can only be ordered with Cash on Delivery, but this delivery zone requires paying the delivery charge upfront — please choose Delivery Charge Only, Partial Advance, or Full Payment instead.`
         );
