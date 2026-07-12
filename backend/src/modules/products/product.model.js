@@ -56,6 +56,18 @@ const productSchema = new mongoose.Schema(
     preOrderStartDate: { type: Date, default: null },
     preOrderEndDate: { type: Date, default: null },
 
+    // Default preserves today's only behavior (COD or full payment) for every
+    // existing product — this array is purely additive. "cod" and
+    // "partialAdvance" are mutually exclusive, enforced in product.validation.js.
+    paymentOptions: {
+      type: [String],
+      enum: ["cod", "deliveryOnly", "partialAdvance", "full"],
+      default: ["cod", "full"],
+    },
+    // 1-100, required only when "partialAdvance" is in paymentOptions (see
+    // product.validation.js refine); null otherwise.
+    advancePaymentPercent: { type: Number, min: 1, max: 100, default: null },
+
     tags: [{ type: String, trim: true, lowercase: true }],
     seo: { type: seoSchema, default: () => ({}) },
 

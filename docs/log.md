@@ -585,3 +585,15 @@ First of a 5-phase plan (approved via Plan Mode) implementing merchant-requested
 **Frontend:** admin `productSchema.js`/`ProductForm.jsx` gain a "Pre-order" section (Switch + two date inputs, reusing `CouponsPage.jsx`'s existing `toDateInputValue()` convention). `ProductCard.jsx`, `WishlistCard.jsx`, `ProductDetailPage.jsx`, `FeaturedSpotlight.jsx` all render a "Pre-order" badge off `isPreOrderActive`, reusing each file's existing local `Badge` component (a new tone string, zero changes to `Badge` itself); `ProductDetailPage`'s Buy Now CTA reads "Pre-order now" when active.
 
 **Verified:** backend `npm test` (35/35 across 6 files); frontend `npm run lint` clean (4 pre-existing unrelated warnings only); frontend `npm run build` clean. All fields additive with safe defaults — no behavior change for existing products.
+
+---
+
+## 2026-07-12 — Per-product payment options (Phase 2 of 5: pre-order + payment-options feature)
+
+Second of the 5-phase plan. See plan.md §7 decision #59 for the full write-up.
+
+**Backend:** `product.model.js` gains `paymentOptions[]` (enum cod/deliveryOnly/partialAdvance/full, default `["cod","full"]`) and `advancePaymentPercent` (1-100, default `null`). `product.validation.js` extends the Phase 1 `withProductRefinements` chain with two more rules: advance percent required (1-100) when `partialAdvance` is selected, and `cod`+`partialAdvance` can never both be selected on one product. New `backend/src/modules/orders/paymentPlan.service.js` exports a pure `resolveItemPaymentRequirement(product)` — mirrors `coupon.service.js`'s shared-math pattern — created and unit-tested now, inert until Phase 4 wires it into order creation.
+
+**Frontend:** `productSchema.js` mirrors both backend refines for immediate form feedback. `ProductForm.jsx` gains a "Payment options" section: four `Switch` toggles for the option keys (reusing the existing toggle pattern, no new Checkbox primitive), the `cod` toggle disabled client-side when `partialAdvance` is checked, and a conditional advance-percent input.
+
+**Verified:** backend `npm test` (42/42 across 7 files, 7 new tests for `resolveItemPaymentRequirement`); manual Zod schema execution via `node -e` (no admin auth available in this sandbox, same limitation as decision #54) confirmed both refine rejections (cod+partialAdvance together; partialAdvance without a percent) and two acceptances (valid partialAdvance+full+15%; default `["cod","full"]` when omitted); frontend `npm run lint` clean (4 pre-existing unrelated warnings) and `npm run build` clean.

@@ -19,6 +19,13 @@ const emptyToUndefined = (value) => (value === "" ? undefined : value);
 // Same yyyy-mm-dd <-> ISO convention as CouponsPage.jsx's expiresAt field.
 const toDateInputValue = (dateString) => (dateString ? new Date(dateString).toISOString().slice(0, 10) : "");
 
+const PAYMENT_OPTIONS = [
+  { key: "cod", label: "Cash on Delivery" },
+  { key: "deliveryOnly", label: "Delivery Charge Only" },
+  { key: "partialAdvance", label: "Partial Advance Payment" },
+  { key: "full", label: "Full Payment" },
+];
+
 export function ProductForm({ product, onSubmit, isSubmitting }) {
   const navigate = useNavigate();
   const brands = useBrands();
@@ -28,6 +35,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
@@ -40,6 +48,8 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
           costPrice: product.costPrice ?? "",
           preOrderStartDate: toDateInputValue(product.preOrderStartDate),
           preOrderEndDate: toDateInputValue(product.preOrderEndDate),
+          paymentOptions: product.paymentOptions?.length ? product.paymentOptions : ["cod", "full"],
+          advancePaymentPercent: product.advancePaymentPercent ?? "",
         }
       : {
           sku: "",
@@ -49,8 +59,13 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
           status: "draft",
           stock: 0,
           price: 0,
+          paymentOptions: ["cod", "full"],
+          advancePaymentPercent: "",
         },
   });
+
+  const paymentOptions = watch("paymentOptions");
+  const hasPartialAdvance = paymentOptions?.includes("partialAdvance");
 
   const submit = (values) => {
     const payload = {
@@ -59,6 +74,9 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
       costPrice: emptyToUndefined(values.costPrice),
       preOrderStartDate: values.preOrderStartDate ? new Date(values.preOrderStartDate).toISOString() : null,
       preOrderEndDate: values.preOrderEndDate ? new Date(values.preOrderEndDate).toISOString() : null,
+      advancePaymentPercent: values.paymentOptions?.includes("partialAdvance")
+        ? emptyToUndefined(values.advancePaymentPercent)
+        : null,
     };
     onSubmit(payload, {
       onSuccess: () => {
@@ -267,6 +285,44 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
             <FieldError errors={errors.preOrderEndDate ? [errors.preOrderEndDate] : undefined} />
           </Field>
         </div>
+
+        <FieldSeparator>Payment options</FieldSeparator>
+
+        <Controller
+          control={control}
+          name="paymentOptions"
+          render={({ field }) => {
+            const selected = field.value ?? [];
+            const selectedHasPartialAdvance = selected.includes("partialAdvance");
+            const toggle = (key) => {
+              field.onChange(selected.includes(key) ? selected.filter((k) => k !== key) : [...selected, key]);
+            };
+            return (
+              <div className="flex flex-wrap gap-8">
+                {PAYMENT_OPTIONS.map(({ key, label }) => (
+                  <Field key={key} orientation="horizontal">
+                    <FieldLabel htmlFor={`paymentOption-${key}`}>{label}</FieldLabel>
+                    <Switch
+                      id={`paymentOption-${key}`}
+                      checked={selected.includes(key)}
+                      disabled={key === "cod" && selectedHasPartialAdvance}
+                      onCheckedChange={() => toggle(key)}
+                    />
+                  </Field>
+                ))}
+              </div>
+            );
+          }}
+        />
+        <FieldError errors={errors.paymentOptions ? [errors.paymentOptions] : undefined} />
+
+        {hasPartialAdvance && (
+          <Field data-invalid={!!errors.advancePaymentPercent} className="max-w-64">
+            <FieldLabel htmlFor="advancePaymentPercent">Advance payment percent (%)</FieldLabel>
+            <Input id="advancePaymentPercent" type="number" min="1" max="100" {...register("advancePaymentPercent")} />
+            <FieldError errors={errors.advancePaymentPercent ? [errors.advancePaymentPercent] : undefined} />
+          </Field>
+        )}
       </FieldGroup>
 
       <div className="flex justify-end gap-2">

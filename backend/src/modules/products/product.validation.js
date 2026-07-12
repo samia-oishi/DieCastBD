@@ -51,17 +51,37 @@ const productFields = {
   isPreOrder: z.coerce.boolean().optional(),
   preOrderStartDate: z.coerce.date().optional().nullable(),
   preOrderEndDate: z.coerce.date().optional().nullable(),
+  paymentOptions: z
+    .array(z.enum(["cod", "deliveryOnly", "partialAdvance", "full"]))
+    .min(1, "Select at least one payment option")
+    .optional()
+    .default(["cod", "full"]),
+  advancePaymentPercent: z.coerce.number().min(1).max(100).nullable().optional(),
   tags: z.array(z.string()).optional(),
 };
 
 // Cross-field rules that apply to both create and update — kept as one
-// wrapper so later phases (payment options, decision #59) can extend this
-// chain in one place instead of duplicating refines across both schemas.
+// wrapper so later phases can extend this chain in one place instead of
+// duplicating refines across both schemas.
 function withProductRefinements(schema) {
-  return schema.refine(
-    (data) => !data.preOrderStartDate || !data.preOrderEndDate || data.preOrderEndDate >= data.preOrderStartDate,
-    { message: "Pre-order end date must be on or after the start date", path: ["preOrderEndDate"] }
-  );
+  return schema
+    .refine(
+      (data) => !data.preOrderStartDate || !data.preOrderEndDate || data.preOrderEndDate >= data.preOrderStartDate,
+      { message: "Pre-order end date must be on or after the start date", path: ["preOrderEndDate"] }
+    )
+    .refine(
+      (data) =>
+        !data.paymentOptions?.includes("partialAdvance") ||
+        (data.advancePaymentPercent != null && data.advancePaymentPercent >= 1 && data.advancePaymentPercent <= 100),
+      {
+        message: "Advance payment percent (1-100) is required when Partial Advance Payment is enabled",
+        path: ["advancePaymentPercent"],
+      }
+    )
+    .refine((data) => !(data.paymentOptions?.includes("cod") && data.paymentOptions?.includes("partialAdvance")), {
+      message: "Cash on Delivery and Partial Advance Payment cannot both be enabled",
+      path: ["paymentOptions"],
+    });
 }
 
 export const createProductSchema = {
