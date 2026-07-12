@@ -167,6 +167,7 @@ export function ProductDetailPage() {
             <h1 className="mt-3 font-display text-[34px] font-extrabold leading-[1.15] tracking-[-0.015em] text-ink">{product.title}</h1>
 
             <div className="mt-3.5 flex gap-2">
+              {product.isPreOrderActive && <Badge tone="ink">Pre-order</Badge>}
               {product.isNewArrival && <Badge tone="ink">New</Badge>}
               {product.isHeroProduct && <Badge tone="outline">Collector Pick</Badge>}
               {outOfStock && <Badge tone="muted">Sold Out</Badge>}
@@ -191,7 +192,7 @@ export function ProductDetailPage() {
                   </button>
                 </div>
                 <button type="button" onClick={onBuyNow} className="mt-3 flex h-[52px] w-full items-center justify-center rounded-full bg-ink text-[15px] font-semibold text-white transition-colors hover:bg-[#2A2E1C]">
-                  Buy now — pay on delivery
+                  {product.isPreOrderActive ? "Pre-order now" : "Buy now — pay on delivery"}
                 </button>
               </>
             )}

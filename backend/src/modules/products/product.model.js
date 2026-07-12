@@ -52,6 +52,10 @@ const productSchema = new mongoose.Schema(
     isHeroProduct: { type: Boolean, default: false },
     isNewArrival: { type: Boolean, default: false },
 
+    isPreOrder: { type: Boolean, default: false },
+    preOrderStartDate: { type: Date, default: null },
+    preOrderEndDate: { type: Date, default: null },
+
     tags: [{ type: String, trim: true, lowercase: true }],
     seo: { type: seoSchema, default: () => ({}) },
 
@@ -77,6 +81,14 @@ productSchema.virtual("profitMargin").get(function () {
   const effectivePrice = this.salePrice != null && this.salePrice < this.price ? this.salePrice : this.price;
   if (!effectivePrice) return null;
   return Math.round(((effectivePrice - this.costPrice) / effectivePrice) * 100);
+});
+
+// True only while a pre-order window is actually open — auto-expires once
+// preOrderEndDate passes, with no cron/admin action needed, same "derive at
+// read time" philosophy as availableStock/profitMargin above. Badges/CTAs on
+// the frontend key off this, not the raw isPreOrder flag.
+productSchema.virtual("isPreOrderActive").get(function () {
+  return Boolean(this.isPreOrder) && (!this.preOrderEndDate || this.preOrderEndDate >= new Date());
 });
 
 productSchema.set("toJSON", { virtuals: true });

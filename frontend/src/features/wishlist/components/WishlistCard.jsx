@@ -28,7 +28,7 @@ export function WishlistCard({ product }) {
   const isAlerted = useRestockAlertStore((s) => s.isAlerted(product._id));
   const [notifyOpen, setNotifyOpen] = useState(false);
 
-  const { slug, title, brand, price, salePrice, thumbnail, isNewArrival, availableStock } = product;
+  const { slug, title, brand, price, salePrice, thumbnail, isNewArrival, isPreOrderActive, availableStock } = product;
   const onSale = salePrice != null && salePrice > 0 && salePrice < price;
   const outOfStock = availableStock <= 0;
   const effectivePrice = onSale ? salePrice : price;
@@ -99,6 +99,7 @@ export function WishlistCard({ product }) {
           )}
 
           <div className="pointer-events-none absolute left-2.5 top-2.5 flex gap-1.5 md:left-3 md:top-3">
+            {isPreOrderActive && <Badge tone="preorder">Pre-order</Badge>}
             {isNewArrival && <Badge tone="new">New</Badge>}
             {onSale && <Badge tone="sale">Sale</Badge>}
           </div>

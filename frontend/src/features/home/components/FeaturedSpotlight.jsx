@@ -22,8 +22,10 @@ function Spotlight({ product }) {
     >
       <div className="relative flex h-[190px] items-center justify-center overflow-hidden bg-brand-tint md:h-[330px]">
         {product.thumbnail?.url && <img src={cloudinaryCard(product.thumbnail.url)} alt={product.title} className="h-full w-auto max-w-none" />}
-        {product.isNewArrival && (
-          <span className="pointer-events-none absolute left-2.5 top-2.5 rounded-full bg-ink px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-white md:left-3.5 md:top-3.5 md:px-[11px] md:py-[5px] md:text-[10.5px] md:tracking-[0.07em]">NEW</span>
+        {(product.isPreOrderActive || product.isNewArrival) && (
+          <span className="pointer-events-none absolute left-2.5 top-2.5 rounded-full bg-ink px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-white md:left-3.5 md:top-3.5 md:px-[11px] md:py-[5px] md:text-[10.5px] md:tracking-[0.07em]">
+            {product.isPreOrderActive ? "Pre-order" : "NEW"}
+          </span>
         )}
         <WishlistButton product={product} className="absolute right-3 top-3 size-[34px] border-0 bg-white/[0.94] text-ink shadow-[0_1px_4px_rgba(16,18,8,0.12)] hover:bg-white" />
       </div>

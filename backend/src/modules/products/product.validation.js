@@ -48,17 +48,30 @@ const productFields = {
   isFeatured: z.coerce.boolean().optional(),
   isHeroProduct: z.coerce.boolean().optional(),
   isNewArrival: z.coerce.boolean().optional(),
+  isPreOrder: z.coerce.boolean().optional(),
+  preOrderStartDate: z.coerce.date().optional().nullable(),
+  preOrderEndDate: z.coerce.date().optional().nullable(),
   tags: z.array(z.string()).optional(),
 };
 
+// Cross-field rules that apply to both create and update — kept as one
+// wrapper so later phases (payment options, decision #59) can extend this
+// chain in one place instead of duplicating refines across both schemas.
+function withProductRefinements(schema) {
+  return schema.refine(
+    (data) => !data.preOrderStartDate || !data.preOrderEndDate || data.preOrderEndDate >= data.preOrderStartDate,
+    { message: "Pre-order end date must be on or after the start date", path: ["preOrderEndDate"] }
+  );
+}
+
 export const createProductSchema = {
-  body: z.object(productFields),
+  body: withProductRefinements(z.object(productFields)),
 };
 
 export const updateProductSchema = {
   params: z.object({ id: z.string().min(1) }),
-  body: z.object(
-    Object.fromEntries(Object.entries(productFields).map(([key, schema]) => [key, schema.optional()]))
+  body: withProductRefinements(
+    z.object(Object.fromEntries(Object.entries(productFields).map(([key, schema]) => [key, schema.optional()])))
   ),
 };
 

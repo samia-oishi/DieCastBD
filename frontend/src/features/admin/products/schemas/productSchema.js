@@ -20,4 +20,7 @@ export const productSchema = z.object({
   isFeatured: z.boolean().optional(),
   isHeroProduct: z.boolean().optional(),
   isNewArrival: z.boolean().optional(),
+  isPreOrder: z.boolean().optional(),
+  preOrderStartDate: z.string().optional().or(z.literal("")),
+  preOrderEndDate: z.string().optional().or(z.literal("")),
 });

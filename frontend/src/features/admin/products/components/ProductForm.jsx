@@ -16,6 +16,9 @@ import { ROUTES } from "@/constants/routes";
 
 const emptyToUndefined = (value) => (value === "" ? undefined : value);
 
+// Same yyyy-mm-dd <-> ISO convention as CouponsPage.jsx's expiresAt field.
+const toDateInputValue = (dateString) => (dateString ? new Date(dateString).toISOString().slice(0, 10) : "");
+
 export function ProductForm({ product, onSubmit, isSubmitting }) {
   const navigate = useNavigate();
   const brands = useBrands();
@@ -35,6 +38,8 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
           category: product.category?.map((c) => c._id ?? c) ?? [],
           salePrice: product.salePrice ?? "",
           costPrice: product.costPrice ?? "",
+          preOrderStartDate: toDateInputValue(product.preOrderStartDate),
+          preOrderEndDate: toDateInputValue(product.preOrderEndDate),
         }
       : {
           sku: "",
@@ -52,6 +57,8 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
       ...values,
       salePrice: emptyToUndefined(values.salePrice),
       costPrice: emptyToUndefined(values.costPrice),
+      preOrderStartDate: values.preOrderStartDate ? new Date(values.preOrderStartDate).toISOString() : null,
+      preOrderEndDate: values.preOrderEndDate ? new Date(values.preOrderEndDate).toISOString() : null,
     };
     onSubmit(payload, {
       onSuccess: () => {
@@ -234,6 +241,30 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
                 <Switch id="isNewArrival" checked={!!field.value} onCheckedChange={field.onChange} />
               )}
             />
+          </Field>
+        </div>
+
+        <FieldSeparator>Pre-order</FieldSeparator>
+
+        <div className="flex flex-wrap items-end gap-4">
+          <Field orientation="horizontal">
+            <FieldLabel htmlFor="isPreOrder">Pre-order product</FieldLabel>
+            <Controller
+              control={control}
+              name="isPreOrder"
+              render={({ field }) => (
+                <Switch id="isPreOrder" checked={!!field.value} onCheckedChange={field.onChange} />
+              )}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="preOrderStartDate">Pre-order start date</FieldLabel>
+            <Input id="preOrderStartDate" type="date" {...register("preOrderStartDate")} />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="preOrderEndDate">Pre-order end date (optional)</FieldLabel>
+            <Input id="preOrderEndDate" type="date" {...register("preOrderEndDate")} />
+            <FieldError errors={errors.preOrderEndDate ? [errors.preOrderEndDate] : undefined} />
           </Field>
         </div>
       </FieldGroup>
