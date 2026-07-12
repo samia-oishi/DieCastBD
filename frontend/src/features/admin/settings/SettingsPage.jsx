@@ -183,7 +183,7 @@ function SectionToggleRow({ control, name, label }) {
   );
 }
 
-function QrImageField({ control, name }) {
+function QrImageField({ control, name, emptyLabel = "No QR", uploadLabel = "Upload QR" }) {
   const uploadMutation = useUploadSettingsImageMutation();
 
   return (
@@ -196,12 +196,12 @@ function QrImageField({ control, name }) {
             <img src={field.value.url} alt="" className="size-20 rounded object-cover" />
           ) : (
             <div className="flex size-20 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
-              No QR
+              {emptyLabel}
             </div>
           )}
           <Button variant="outline" size="sm" asChild disabled={uploadMutation.isPending}>
             <label className="cursor-pointer">
-              <ImageUp /> {uploadMutation.isPending ? "Uploading…" : "Upload QR"}
+              <ImageUp /> {uploadMutation.isPending ? "Uploading…" : uploadLabel}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp,image/avif"
@@ -225,6 +225,34 @@ function QrImageField({ control, name }) {
   );
 }
 
+// Native color-picker swatch + hex text input, synced to one field. Blank
+// stays blank (renders the fallback shown as the swatch/placeholder) rather
+// than writing the fallback into the form.
+function ColorField({ control, name, fallback }) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={field.value || fallback}
+            onChange={(e) => field.onChange(e.target.value)}
+            className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent p-1"
+          />
+          <Input
+            className="max-w-[120px]"
+            placeholder={fallback}
+            value={field.value || ""}
+            onChange={(e) => field.onChange(e.target.value)}
+          />
+        </div>
+      )}
+    />
+  );
+}
+
 export function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const updateMutation = useUpdateSettingsMutation();
@@ -235,7 +263,7 @@ export function SettingsPage() {
       heroBanner: [],
       announcementBar: { text: "", isActive: false },
       whyChooseUs: [],
-      collectorPromise: { title: "", description: "" },
+      collectorPromise: { title: "", description: "", image: null, bgColor: "", textColor: "", ctaText: "", ctaLink: "" },
       testimonials: [],
       socialLinks: { facebook: "", instagram: "", whatsapp: "", youtube: "" },
       contactInfo: { email: "", phone: "", address: "" },
@@ -511,16 +539,40 @@ export function SettingsPage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Collector Promise">
+      <SectionCard title="Collector Promise" description="The dark 'Premium Shelf' promo banner between Why Choose Us and Testimonials.">
         <FieldGroup>
           <Field>
             <FieldLabel>Title</FieldLabel>
-            <Input {...register("collectorPromise.title")} />
+            <Input {...register("collectorPromise.title")} placeholder="Limited runs. Real metal. Gone fast." />
           </Field>
           <Field>
             <FieldLabel>Description</FieldLabel>
-            <Textarea rows={3} {...register("collectorPromise.description")} />
+            <Textarea rows={3} {...register("collectorPromise.description")} placeholder="Premium castings reach Bangladesh in one batch. When a piece sells through, it's retired — no reprints, no restocks." />
           </Field>
+          <Field>
+            <FieldLabel>Banner image</FieldLabel>
+            <QrImageField control={control} name="collectorPromise.image" emptyLabel="No image" uploadLabel="Upload image" />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field>
+              <FieldLabel>Background color</FieldLabel>
+              <ColorField control={control} name="collectorPromise.bgColor" fallback="#101208" />
+            </Field>
+            <Field>
+              <FieldLabel>Text color</FieldLabel>
+              <ColorField control={control} name="collectorPromise.textColor" fallback="#ffffff" />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field>
+              <FieldLabel>Button text</FieldLabel>
+              <Input {...register("collectorPromise.ctaText")} placeholder="Shop featured" />
+            </Field>
+            <Field>
+              <FieldLabel>Button link</FieldLabel>
+              <Input {...register("collectorPromise.ctaLink")} placeholder="/shop?featured=true" />
+            </Field>
+          </div>
         </FieldGroup>
       </SectionCard>
 

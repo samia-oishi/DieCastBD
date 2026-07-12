@@ -109,9 +109,7 @@ export function HomePage() {
 
       {isEnabled("featuredProducts") && <FeaturedSpotlight products={featured.data?.data} />}
 
-      {isEnabled("collectorPromise") && (
-        <PremiumShelfBanner title={settings?.collectorPromise?.title} description={settings?.collectorPromise?.description} />
-      )}
+      {isEnabled("collectorPromise") && <PremiumShelfBanner {...settings?.collectorPromise} />}
 
       {isEnabled("newArrivals") && (
         <ProductCarousel

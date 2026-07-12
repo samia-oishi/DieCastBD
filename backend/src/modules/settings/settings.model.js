@@ -84,6 +84,22 @@ const heroVariantContentSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Editable copy + look for the dark "Premium Shelf" promo banner. All fields
+// optional: blank title/description/colors fall back to the shipped design
+// (PremiumShelfBanner.jsx), blank image keeps the design's dashed placeholder.
+const collectorPromiseSchema = new mongoose.Schema(
+  {
+    title: String,
+    description: String,
+    image: imageSchema,
+    bgColor: String,
+    textColor: String,
+    ctaText: String,
+    ctaLink: String,
+  },
+  { _id: false }
+);
+
 const settingsSchema = new mongoose.Schema(
   {
     heroBanner: { type: [heroSlideSchema], default: [] },
@@ -92,10 +108,7 @@ const settingsSchema = new mongoose.Schema(
       isActive: { type: Boolean, default: false },
     },
     whyChooseUs: { type: [whyChooseItemSchema], default: [] },
-    collectorPromise: {
-      title: String,
-      description: String,
-    },
+    collectorPromise: collectorPromiseSchema,
     testimonials: { type: [testimonialSchema], default: [] },
     faqs: { type: [faqSchema], default: [] },
     socialLinks: {

@@ -44,6 +44,16 @@ const banglaQrConfig = z.object({
 
 const sectionToggle = z.object({ enabled: z.coerce.boolean().optional() });
 
+const collectorPromise = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  image: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
+  bgColor: z.string().optional(),
+  textColor: z.string().optional(),
+  ctaText: z.string().optional(),
+  ctaLink: z.string().optional(),
+});
+
 const heroVariantContent = z.object({
   badge: z.string().optional(),
   titleLine1: z.string().optional(),
@@ -107,7 +117,7 @@ export const updateSettingsSchema = {
     heroBanner: z.array(heroSlide).optional(),
     announcementBar: z.object({ text: z.string().optional(), isActive: z.coerce.boolean().optional() }).optional(),
     whyChooseUs: z.array(whyChooseItem).optional(),
-    collectorPromise: z.object({ title: z.string().optional(), description: z.string().optional() }).optional(),
+    collectorPromise: collectorPromise.optional(),
     testimonials: z.array(testimonial).optional(),
     faqs: z.array(faq).optional(),
     socialLinks: z

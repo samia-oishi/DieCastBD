@@ -1,6 +1,10 @@
-// Product card image transform per the design/HANDOFF spec: pad to a 1:1 white
-// canvas so photos of varying dimensions render consistently object-contain on
-// white with breathing room. Non-Cloudinary URLs pass through untouched.
+// Product card image transform: pad (never crop) to a 1:1 canvas. Catalog
+// photos are shots of the actual retail packaging (blister card/box) — the
+// packaging IS the product, so cropping it (c_fill) chops off real content
+// (card header, box edge). c_pad shows the full photo always; it fills
+// height with no padding for portrait/blister-shaped sources (the catalog
+// norm) and pads white — matching the card's own white background — only
+// for the rarer landscape source. Non-Cloudinary URLs pass through untouched.
 const CARD_TRANSFORM = "c_pad,b_white,ar_1:1,w_800";
 
 export function cloudinaryCard(url) {
