@@ -14,7 +14,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import logo from "@/assets/logo/logo.jpg";
+import logo from "@/assets/logo/diecastbdLight.png";
 
 const DEFAULT_HEADER_LINKS = [
   { label: "New arrivals", url: ROUTES.SHOP },
@@ -106,7 +106,7 @@ function DesktopHeader({ links, cartCount, onCartClick, user, cartActive }) {
     <header className={cn("sticky top-0 z-50 hidden border-b border-line md:block", FROST)}>
       <div className="mx-auto flex h-[74px] max-w-[1360px] items-center justify-between gap-8 px-10">
         <Link to={ROUTES.HOME} className="shrink-0">
-          <img src={logo} alt="DiecastBD" className="block h-6 w-auto" />
+          <img src={logo} alt="DiecastBD" className="block h-10 w-auto" />
         </Link>
         <nav className="flex items-center gap-[30px] text-[14.5px] font-medium text-ink-soft">
           {links.map((link) => (
@@ -185,7 +185,7 @@ function MobileAppBar({ cartCount, onCartClick }) {
             <ArrowLeft size={16} strokeWidth={2} />
           </button>
           <Link to={ROUTES.HOME}>
-            <img src={logo} alt="DiecastBD" className="block h-[18px] w-auto" />
+            <img src={logo} alt="DiecastBD" className="block h-5 w-auto" />
           </Link>
           <div className="flex gap-2">
             <Link to={ROUTES.WISHLIST} aria-label="Wishlist" className={APPBAR_CIRCLE}>
@@ -197,7 +197,7 @@ function MobileAppBar({ cartCount, onCartClick }) {
       ) : (
         <>
           <Link to={ROUTES.HOME}>
-            <img src={logo} alt="DiecastBD" className="block h-5 w-auto" />
+            <img src={logo} alt="DiecastBD" className="block h-6 w-auto" />
           </Link>
           <CartButton count={cartCount} onClick={onCartClick} className="size-[38px]" iconSize={16} />
         </>

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { useCurrentUser, useLogoutMutation } from "@/features/auth/api/useAuth";
 import { CheckoutSteps } from "./CheckoutSteps";
-import logo from "@/assets/logo/logo.jpg";
+import logo from "@/assets/logo/diecastbdLight.png";
 
 const FROST = "bg-[rgba(250,250,247,0.6)] [backdrop-filter:blur(24px)_saturate(180%)] [-webkit-backdrop-filter:blur(24px)_saturate(180%)]";
 
@@ -25,7 +25,7 @@ export function CheckoutHeader() {
       <header className={cn("sticky top-0 z-50 hidden border-b border-line md:block", FROST)}>
         <div className="mx-auto flex h-[74px] max-w-[1360px] items-center justify-between gap-8 px-10">
           <Link to={ROUTES.HOME} className="shrink-0">
-            <img src={logo} alt="DiecastBD" className="block h-6 w-auto" />
+            <img src={logo} alt="DiecastBD" className="block h-10 w-auto" />
           </Link>
 
           <CheckoutSteps />

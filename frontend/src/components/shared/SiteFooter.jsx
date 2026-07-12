@@ -4,6 +4,7 @@ import { ROUTES } from "@/constants/routes";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { NewsletterForm } from "@/features/newsletter/components/NewsletterForm";
 import { FacebookIcon, InstagramIcon, YouTubeIcon } from "@/components/shared/SocialIcons";
+import logoDark from "@/assets/logo/diecastbdDark.png";
 
 const DEFAULT_FOOTER_TEXT = "Premium diecast for serious collectors in Bangladesh.";
 const POLICY_ROUTES = new Set([ROUTES.SHIPPING_POLICY, ROUTES.REFUND_POLICY, ROUTES.PRIVACY, ROUTES.TERMS]);
@@ -53,15 +54,6 @@ function useFooterData() {
       youtube: social.youtube || SOCIAL_DEFAULTS.youtube,
     },
   };
-}
-
-function Wordmark({ size }) {
-  return (
-    <div className="font-display font-extrabold italic tracking-[-0.01em]" style={{ fontSize: size }}>
-      <span className="text-white">DIECAST</span>
-      <span className="text-brand">BD</span>
-    </div>
-  );
 }
 
 function PaymentPills({ pad = "6px 14px", size = "12px" }) {
@@ -131,7 +123,7 @@ function BigFooter() {
     <footer className="mt-7 text-[#C7C9BC] md:mt-[88px]">
       {/* Mobile */}
       <div className="rounded-t-[24px] bg-ink px-5 pb-[104px] pt-7 md:hidden">
-        <Wordmark size={20} />
+        <img src={logoDark} alt="DiecastBD" className="block h-[30px] w-auto" />
         <p className="mt-2.5 text-[12.5px] leading-[1.6] text-[#A9AC9F]">{tagline}</p>
         <NewsletterForm variant="footer" />
         <div className="mt-6 grid grid-cols-2 gap-6">
@@ -160,7 +152,7 @@ function BigFooter() {
       <div className="hidden bg-ink md:block">
         <div className="mx-auto grid max-w-[1360px] grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-11 px-10 pt-[60px]">
           <div>
-            <Wordmark size={23} />
+            <img src={logoDark} alt="DiecastBD" className="block h-[30px] w-auto" />
             <p className="mt-3.5 max-w-[280px] text-sm leading-[1.6] text-[#A9AC9F]">{tagline}</p>
             <div className="mt-5"><PaymentPills /></div>
             <div className="mt-[18px]"><Socials social={social} /></div>
