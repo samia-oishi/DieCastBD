@@ -102,8 +102,8 @@ describe("assertPaymentMethodAllowed", () => {
 
   it("allows deliveryOnly for a cod-only product when the zone forces prepay, even though the product never opted into deliveryOnly itself", () => {
     // Regression guard: a zone-forced prepay must be satisfiable by paying just
-    // the delivery charge, not force the customer up to "full" just because the
-    // product's own paymentOptions don't list "deliveryOnly".
+    // the delivery charge, even though the product's own paymentOptions don't
+    // list "deliveryOnly".
     expect(() =>
       assertPaymentMethodAllowed({
         normalizedItems: [{ product: codOnlyProduct }],
@@ -111,6 +111,31 @@ describe("assertPaymentMethodAllowed", () => {
         zoneRequiresPrepay: true,
       })
     ).not.toThrow();
+  });
+
+  it("also allows full payment for a cod-only product when the zone forces prepay — the customer gets a choice of delivery-charge-only OR full upfront, not delivery-only alone", () => {
+    // The zone force offers BOTH prepay alternatives (deliveryOnly + full) for
+    // an item the merchant configured as cod-only, so the customer can choose
+    // to fully prepay instead of only the delivery charge.
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: codOnlyProduct }],
+        paymentOption: "full",
+        zoneRequiresPrepay: true,
+      })
+    ).not.toThrow();
+  });
+
+  it("still rejects full for a cod-only product when the zone does NOT force prepay — the product itself never opted into full payment", () => {
+    // Guards against over-widening: without the zone force, a cod-only product
+    // has no "full" option of its own, so full must still be rejected.
+    expect(() =>
+      assertPaymentMethodAllowed({
+        normalizedItems: [{ product: codOnlyProduct }],
+        paymentOption: "full",
+        zoneRequiresPrepay: false,
+      })
+    ).toThrow(/cannot be ordered/);
   });
 
   it("still allows cod for a cod-only product when the zone does NOT force prepay", () => {

@@ -64,6 +64,7 @@ export function resolvePaymentOptionAvailability({ items, zoneRequiresPrepay }) 
         const zoneForcesThisItem = zoneRequiresPrepay && isCodOnlyRequirement(r);
         if (option === "cod") return r.allowsCod && !zoneForcesThisItem;
         if (option === "deliveryOnly") return r.allowsDeliveryOnly || zoneForcesThisItem;
+        if (option === "full") return r.allowsFull || zoneForcesThisItem;
         return OPTION_CHECKERS[option](r);
       });
   }

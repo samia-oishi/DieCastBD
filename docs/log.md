@@ -665,3 +665,13 @@ Direct merchant feedback on a screenshot of the amber "Delivery charge paid upfr
 **Change:** `DeliveryOptions.jsx`'s per-zone prepay note is now plain inline text (no `rounded-full`, no background fill) — a small `Wallet` icon + "Prepay delivery charge" at the same typographic weight as the eta line below the zone name, recolored `#9A3412` to match `PaymentMethods.jsx`'s existing `PrepayNotice` banner text (previously the zone card used a different, unreconciled amber pair). Purely visual/copy — no logic, validation, or test changes.
 
 **Verified:** frontend `npm run lint` clean (same pre-existing unrelated warnings only).
+
+## 2026-07-13 — Zone-forced prepay offers delivery-charge-only OR full payment
+
+Merchant feedback testing a cod-only product (`paymentOptions: ["cod"]`) shipped to the prepay-required "Outside Dhaka" zone: the payment picker offered *only* "Delivery charge only". The merchant wants two choices — pay just the delivery charge OR pay in full upfront. See plan.md §7 decision #66.
+
+**Backend + frontend mirror:** `paymentPlan.service.js` (`assertPaymentMethodAllowed`) and `paymentPlanPreview.js` (`resolvePaymentOptionAvailability`) — the `full` branch under a zone force is now `requirement.allowsFull || zoneForcesThisItem` (previously only the `deliveryOnly` branch was widened by the force). So a cod-only item in a forcing zone exposes *both* `deliveryOnly` and `full` as options, while `cod`/`partialAdvance` and the non-forcing path stay unchanged. No `CheckoutPage.jsx` change needed — `nonCodOptions` already renders every available option, so "Full payment" just appears as a second picker entry.
+
+**Tests:** two new cases in `paymentPlan.checkoutEnforcement.test.js` — `full` now allowed for a cod-only product under a forcing zone, and still rejected for it when the zone does *not* force prepay.
+
+**Verified:** backend `npm test` 65/65; frontend `npm run lint`/`npm run build` clean (same pre-existing warnings only).

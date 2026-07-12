@@ -50,12 +50,12 @@ export function assertPaymentMethodAllowed({ normalizedItems, paymentOption, zon
     const allowed =
       (paymentOption === "cod" && requirement.allowsCod && !zoneForcesThisItem) ||
       // The zone-forced case is itself satisfied by paying just the delivery
-      // charge — that's the whole point of the requirement — so "deliveryOnly"
-      // is allowed here even though the cod-only product never opted into the
-      // "Delivery Charge Only" business option on its own.
+      // charge OR the full amount upfront — the customer gets a choice of
+      // either, even though the cod-only product never opted into "Delivery
+      // Charge Only"/"Full Payment" as business options on its own.
       (paymentOption === "deliveryOnly" && (requirement.allowsDeliveryOnly || zoneForcesThisItem)) ||
       (paymentOption === "partialAdvance" && requirement.requiresAdvance) ||
-      (paymentOption === "full" && requirement.allowsFull);
+      (paymentOption === "full" && (requirement.allowsFull || zoneForcesThisItem));
 
     if (!allowed) {
       if (paymentOption === "cod" && zoneForcesThisItem) {
