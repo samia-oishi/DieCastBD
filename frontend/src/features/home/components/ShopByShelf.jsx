@@ -6,7 +6,7 @@ import { useDragScroll } from "@/hooks/useDragScroll";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
-function Tile({ href, label, image, isLogo, className }) {
+function Tile({ href, label, image, className }) {
   return (
     <Link
       to={href}
@@ -19,7 +19,7 @@ function Tile({ href, label, image, isLogo, className }) {
         <img
           src={image.url}
           alt={label}
-          className={cn("size-full", isLogo ? "object-contain p-10" : "object-cover")}
+          className="size-full object-cover"
         />
       ) : (
         <div className="size-full bg-tile" />
@@ -44,9 +44,9 @@ export function ShopByShelf({ brands, categories }) {
   const accessories = categories?.find((c) => c.slug === "accessories");
 
   const tiles = [
-    hw && { href: "/shop?brand=hot-wheels-premium", label: hw.name, image: hw.logo, isLogo: true },
-    mini && { href: "/shop?brand=mini-gt", label: mini.name, image: mini.logo, isLogo: true },
-    accessories && { href: "/shop?category=accessories", label: "Protect & display", image: accessories.image, isLogo: false },
+    hw && { href: "/shop?brand=hot-wheels-premium", label: hw.name, image: hw.logo },
+    mini && { href: "/shop?brand=mini-gt", label: mini.name, image: mini.logo },
+    accessories && { href: "/shop?category=accessories", label: "Protect & display", image: accessories.image },
   ].filter(Boolean);
 
   if (!tiles.length) return null;

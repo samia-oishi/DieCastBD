@@ -8,7 +8,7 @@ function OrderItem({ item }) {
   return (
     <div className="flex items-center gap-3">
       <div className="relative size-[52px] shrink-0 overflow-hidden rounded-[10px] bg-tile md:size-14">
-        {product.thumbnail?.url && <img src={cloudinaryCard(product.thumbnail.url)} alt="" className="size-full object-contain p-1" />}
+        {product.thumbnail?.url && <img src={cloudinaryCard(product.thumbnail.url)} alt="" className="size-full object-cover" />}
       </div>
       <div className="min-w-0 flex-1">
         <div className="line-clamp-2 text-[13px] font-semibold leading-[1.35] text-ink">{product.title}</div>

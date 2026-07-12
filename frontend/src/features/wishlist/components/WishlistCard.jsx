@@ -91,7 +91,7 @@ export function WishlistCard({ product }) {
       >
         <div className="relative h-[145px] bg-tile md:h-[230px]">
           {thumbnail?.url ? (
-            <img src={cloudinaryCard(thumbnail.url)} alt={title} className="size-full object-contain p-[5%]" />
+            <img src={cloudinaryCard(thumbnail.url)} alt={title} className="size-full object-cover" />
           ) : (
             <div className="flex size-full items-center justify-center">
               <CarFront className="size-10 text-faint/50" strokeWidth={1.25} />

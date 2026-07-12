@@ -490,3 +490,17 @@ Fixes the user-reported mobile bug ("typing inside a modal breaks the whole webs
 - **Viewport meta** — added `interactive-widget=resizes-content` to `index.html` so the layout viewport shrinks to the visible area when the keyboard opens.
 
 **Verified:** `npm run lint` (only pre-existing warnings) + `npm run build` clean; in the mobile preview (375px) the shop search input computes to `16px` (was 13.5px). All storefront inputs share the identical `text-base md:…` Tailwind pattern, so all read 16px on mobile. Frontend-only CSS — no backend/schema change, safe for the live deployment; needs a frontend rebuild/redeploy to take effect (build-time CSS).
+
+---
+
+## 2026-07-12 — Product images fill their placeholders (object-cover)
+
+User reported product photos floating inside visible whitespace/padding across the storefront (Shop-by-shelf tile, ProductCard, FeaturedSpotlight, new-arrivals thumbnails, PDP gallery) — "the image should fill the whole placeholder area." See plan.md §7 decision #53.
+
+**Root cause** — every product-image surface used `object-contain` with percentage padding (`p-[4%]`–`p-[6%]`, a couple `p-1`/`p-1.5`), which letterboxes the photo inside its box rather than filling it.
+
+**What changed** (frontend-only CSS) — switched to `object-cover` (fills, may crop edges) on: `components/shared/ProductCard.jsx`, `features/home/components/FeaturedSpotlight.jsx` (both images), `features/products/components/ProductGallery.jsx` (main + thumbnails), `features/cart/components/CartLineItem.jsx`, `features/wishlist/components/WishlistCard.jsx`, `features/checkout/components/CheckoutSummary.jsx`, `features/orders/components/OrderReceipt.jsx`, `components/shared/RestockAlertDialog.jsx` (summary), and `features/home/components/ShopByShelf.jsx` (three tiles; also dropped the now-unused `isLogo` prop). **Left `object-contain` on purpose:** the ProductGallery lightbox (full-screen zoom must show the whole piece) and the `PaymentMethods` bKash QR (cropping a QR breaks it).
+
+**Caveat flagged** — ShopByShelf tiles render `brand.logo`/`category.image`; the current catalog stores framed promo/product imagery there so cover fills correctly, but a genuinely transparent brand *wordmark* logo would crop under cover. Revisit only if that field is ever populated with a bare transparent logo.
+
+**Verified:** `npm run lint` (only pre-existing warnings) + `npm run build` clean; in the running preview all 20 home-page product images compute to `object-fit: cover` (0 `contain`) at mobile 375px and desktop. Frontend-only CSS — safe for the live deployment, needs a frontend rebuild/redeploy to take effect.

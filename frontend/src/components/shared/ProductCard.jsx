@@ -79,7 +79,7 @@ export function ProductCard({ product, variant = "grid", className }) {
       >
         <div className={cn("relative bg-white", v.img)}>
           {thumbnail?.url ? (
-            <img src={cloudinaryCard(thumbnail.url)} alt={title} className="size-full object-contain p-[5%]" />
+            <img src={cloudinaryCard(thumbnail.url)} alt={title} className="size-full object-cover" />
           ) : (
             <div className="flex size-full items-center justify-center bg-tile">
               <CarFront className="size-10 text-faint/50" strokeWidth={1.25} />

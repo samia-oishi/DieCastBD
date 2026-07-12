@@ -29,7 +29,7 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
         onClick={() => setZoomOpen(true)}
         className="relative block h-[300px] w-full cursor-zoom-in overflow-hidden rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-[24px]"
       >
-        <img src={cloudinaryCard(active.url)} alt={title} className="size-full object-contain p-[4%]" />
+        <img src={cloudinaryCard(active.url)} alt={title} className="size-full object-cover" />
         {isNew && (
           <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-ink px-2.5 py-[5px] text-[9.5px] font-bold uppercase tracking-[0.06em] text-white md:left-4 md:top-4 md:px-3 md:py-1.5 md:text-[10.5px] md:tracking-[0.07em]">
             New
@@ -50,7 +50,7 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
                 i === selected ? "border-2 border-brand" : "border border-line"
               )}
             >
-              <img src={cloudinaryCard(image.url)} alt="" className="size-full object-contain p-1.5" />
+              <img src={cloudinaryCard(image.url)} alt="" className="size-full object-cover" />
             </button>
           ))}
         </div>
