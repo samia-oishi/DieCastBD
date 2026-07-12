@@ -597,3 +597,15 @@ Second of the 5-phase plan. See plan.md §7 decision #59 for the full write-up.
 **Frontend:** `productSchema.js` mirrors both backend refines for immediate form feedback. `ProductForm.jsx` gains a "Payment options" section: four `Switch` toggles for the option keys (reusing the existing toggle pattern, no new Checkbox primitive), the `cod` toggle disabled client-side when `partialAdvance` is checked, and a conditional advance-percent input.
 
 **Verified:** backend `npm test` (42/42 across 7 files, 7 new tests for `resolveItemPaymentRequirement`); manual Zod schema execution via `node -e` (no admin auth available in this sandbox, same limitation as decision #54) confirmed both refine rejections (cod+partialAdvance together; partialAdvance without a percent) and two acceptances (valid partialAdvance+full+15%; default `["cod","full"]` when omitted); frontend `npm run lint` clean (4 pre-existing unrelated warnings) and `npm run build` clean.
+
+---
+
+## 2026-07-12 — Per-zone outside-Dhaka delivery-prepay flag (Phase 3 of 5: pre-order + payment-options feature)
+
+Third of the 5-phase plan. See plan.md §7 decision #60 for the full write-up.
+
+**Backend:** `settings.model.js`'s `shippingZoneSchema` gains `requiresPrepay: Boolean` (default `false`); `settings.validation.js`'s matching Zod `shippingZone` object gains the same field. Deliberately per-zone rather than a hardcoded "Dhaka" string match, since zone names are admin-renamable free text.
+
+**Frontend:** `SettingsPage.jsx`'s existing `shippingZones` field-array section gains a `Switch` per zone row ("Require prepaying the delivery charge before placing an order"), same toggle pattern used elsewhere on the page; `append()`'s new-zone default now includes `requiresPrepay: false`.
+
+**Verified:** backend `npm test` (42/42, unchanged — this phase is pure schema plumbing, no new logic to test); manual Zod schema execution via `node -e` (no admin auth in this sandbox) confirmed a zone with `requiresPrepay: true` parses correctly and a zone omitting it parses with the field simply absent; frontend `npm run lint` + `npm run build` clean. This field is completely dormant until Phase 4 wires it into order creation — no existing checkout behavior changes.

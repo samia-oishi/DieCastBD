@@ -30,6 +30,7 @@ const shippingZone = z.object({
   name: z.string().min(1),
   fee: z.coerce.number().min(0),
   eta: z.string().optional(),
+  requiresPrepay: z.coerce.boolean().optional(),
 });
 
 const bkashConfig = z.object({

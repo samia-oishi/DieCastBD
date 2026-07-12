@@ -709,6 +709,14 @@ export function SettingsPage() {
                   <Input type="number" {...register(`shippingZones.${index}.fee`, { required: true })} />
                 </Field>
               </div>
+              <Field orientation="horizontal" className="mt-3">
+                <FieldLabel>Require prepaying the delivery charge before placing an order</FieldLabel>
+                <Controller
+                  control={control}
+                  name={`shippingZones.${index}.requiresPrepay`}
+                  render={({ field }) => <Switch checked={!!field.value} onCheckedChange={field.onChange} />}
+                />
+              </Field>
             </div>
           ))}
           <Button
@@ -716,7 +724,7 @@ export function SettingsPage() {
             variant="outline"
             size="sm"
             className="w-fit"
-            onClick={() => shippingZones.append({ name: "", fee: 0 })}
+            onClick={() => shippingZones.append({ name: "", fee: 0, requiresPrepay: false })}
           >
             <Plus /> Add Zone
           </Button>

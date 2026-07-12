@@ -53,6 +53,13 @@ const shippingZoneSchema = new mongoose.Schema(
     // checkout — display-only, no logic depends on it. Optional so existing
     // zones without one just render no ETA line rather than a fabricated one.
     eta: String,
+    // When true, checkout must collect this zone's delivery fee upfront before
+    // the order is placed (cuts down on COD refusals for out-of-city orders).
+    // Deliberately a per-zone boolean, not a hardcoded "Dhaka" string match —
+    // zone names are admin-renamable free text (see this schema's `name`
+    // field), so string-matching would silently break if a zone is renamed.
+    // Default false — dormant until Phase 4 wires it into order creation.
+    requiresPrepay: { type: Boolean, default: false },
   },
   { _id: false }
 );
