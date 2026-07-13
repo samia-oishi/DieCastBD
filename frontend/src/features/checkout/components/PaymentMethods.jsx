@@ -129,12 +129,7 @@ export function PaymentMethods({
             </span>
           }
           title="bKash"
-          sub={
-            <>
-              <span className="md:hidden">Send Money or scan — under a minute</span>
-              <span className="hidden md:inline">Send Money or scan — done in under a minute</span>
-            </>
-          }
+          sub="Send Money or scan — under a minute"
         />
 
         <MethodRow
@@ -158,9 +153,7 @@ export function PaymentMethods({
               {isBkash ? "Pay with bKash" : "Pay with BanglaQR"}
             </span>
             <span className="text-[12.5px] text-faint">
-              {isBkash
-                ? "Scan in the bKash app, or Send Money to the number below"
-                : "Scan with any bank or MFS app that supports BanglaQR"}
+              {isBkash ? "Scan the QR, or Send Money below" : "Scan with any bank or MFS app"}
             </span>
           </div>
 
@@ -200,8 +193,8 @@ export function PaymentMethods({
 
               <p className="mt-2 text-[12.5px] leading-[1.55] text-faint">
                 {isBkash
-                  ? "Paste the Transaction ID from your bKash confirmation SMS — we match your payment instantly and reserve your piece."
-                  : "Enter the reference from your banking app receipt so we can match your payment instantly."}
+                  ? "From your bKash confirmation SMS — we'll match it instantly."
+                  : "From your bank app receipt — we'll match it instantly."}
               </p>
             </div>
           </div>

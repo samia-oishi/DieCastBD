@@ -17,7 +17,7 @@ import { checkoutSchema } from "./schemas/checkoutSchema";
 import { resolvePaymentOptionAvailability, calculateAmountPaidPreview } from "./lib/paymentPlanPreview";
 import { deriveCheckoutView } from "./lib/checkoutCopy";
 import { CheckoutSteps } from "./components/CheckoutSteps";
-import { SectionCard, FieldBox, inputCls } from "./components/parts";
+import { SectionCard, inputCls } from "./components/parts";
 import { AddressSelector } from "./components/AddressSelector";
 import { GuestAddressForm } from "./components/GuestAddressForm";
 import { DeliveryOptions } from "./components/DeliveryOptions";
@@ -131,7 +131,6 @@ export function CheckoutPage() {
     items,
     availability: paymentPlan.availability,
     nonCodOptions,
-    codDisabledReason: paymentPlan.codDisabledReason,
     total,
     paymentMethod: paymentMethodValue,
     paymentOption: paymentOptionValue,

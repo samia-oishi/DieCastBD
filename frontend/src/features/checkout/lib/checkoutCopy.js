@@ -19,15 +19,7 @@ import { resolveItemPaymentRequirement } from "./paymentPlanPreview";
  *   min  = that option's amountPaid — for partialAdvance that's
  *          round(subtotal × advancePaymentPercent / 100), clamped to total.
  */
-export function deriveCheckoutView({
-  items,
-  availability,
-  nonCodOptions,
-  codDisabledReason,
-  total,
-  paymentMethod,
-  paymentOption,
-}) {
+export function deriveCheckoutView({ items, availability, nonCodOptions, total, paymentMethod, paymentOption }) {
   const codAllowed = Boolean(availability?.cod);
 
   // The cheapest non-COD option that isn't "full" is the design's "minimum to
@@ -39,10 +31,10 @@ export function deriveCheckoutView({
   const fullOption = nonCodOptions.find((o) => o.key === "full") ?? null;
   const min = minOption ? minOption.amountPaid : total;
 
-  // The item that actually costs the customer their COD — used to name the
-  // product in the banner/locked-COD copy, exactly as the handoff asks. When the
-  // ZONE is what disabled COD (every product would have allowed it), there is no
-  // triggering product, so we keep this app's accurate zone message instead.
+  // The item that actually costs the customer their COD — named once, in the
+  // banner, exactly as the handoff asks. When the ZONE is what disabled COD
+  // (every product would have allowed it), there is no triggering product, and
+  // the copy below falls back to a zone message instead.
   const triggerProduct =
     items.find((i) => !resolveItemPaymentRequirement(i.product).allowsCod)?.product?.title ?? null;
 
@@ -64,27 +56,32 @@ export function deriveCheckoutView({
   const selectorVisible = !isCod && nonCodOptions.length > 1;
 
   const remainder = total - min;
-  const piece = triggerProduct ?? "This piece";
 
+  /* Copy rules (checkout-microcopy research): one doubt per line; state the
+   * exact problem; and don't restate what's already on screen. Every amount here
+   * is ALREADY shown in the plan cards, the split-bar legend and the summary's
+   * Pay-now/Cash-on-delivery box — so the banners carry the *reason*, and only
+   * the headline number (the advance) is repeated, because that's the one figure
+   * a customer scans for. */
   const BANNERS = {
     cod: {
-      title: "Cash on Delivery works for this whole order.",
-      body: "Nothing to pay until it reaches your door. Prefer to settle now? bKash and BanglaQR work too — your call.",
+      title: "Cash on Delivery works for this order.",
+      body: "Pay the rider when it arrives — or settle now with bKash or BanglaQR.",
     },
     delivery: {
-      title: "One small step to confirm — prepay the delivery charge.",
-      // The handoff's literal copy says "the remaining ৳{subtotal}" — that's only
-      // right when no coupon applies. We render the true remainder (total − min),
-      // which is the same number absent a discount and correct with one.
-      body: `This order ships once the ${fmt(min)} delivery charge lands. Pay it via bKash or BanglaQR, and hand the remaining ${fmt(remainder)} to the rider in cash.`,
+      title: "Prepay the delivery charge to confirm.",
+      body: "Pay it with bKash or BanglaQR. The rest is cash on delivery.",
     },
     partial: {
+      // The advance is the headline number — worth keeping in the title.
       title: `A ${fmt(min)} advance reserves your piece.`,
-      body: `${piece} is an import pre-order, so we confirm it with a part payment. Pay ${fmt(min)} now via bKash or BanglaQR — the remaining ${fmt(remainder)} is cash on delivery.`,
+      body: triggerProduct
+        ? `${triggerProduct} is a pre-order. Pay the advance now, the rest on delivery.`
+        : "This is a pre-order. Pay the advance now, the rest on delivery.",
     },
     full: {
-      title: triggerProduct ? `${triggerProduct} needs full payment to confirm.` : "This piece needs full payment to confirm.",
-      body: `Reserved imports are secured with the full ${fmt(total)} before they ship. The upside: nothing left to pay at your door.`,
+      title: "Full payment confirms this order.",
+      body: "Pay with bKash or BanglaQR — nothing left to pay at your door.",
     },
   };
 
@@ -94,24 +91,30 @@ export function deriveCheckoutView({
     min,
     payNow,
     due,
+    remainder,
     selectorVisible,
     minOption,
     fullOption,
     banner: BANNERS[rule],
 
+    // The row already carries an "UNAVAILABLE" chip, so this line only has to
+    // answer *why*. It stays rule-based rather than naming the product: the
+    // banner directly above already names it, and product titles here run to 40+
+    // characters — repeating one twice inside 100px is what made this section
+    // feel wordy.
     codSub: codAllowed
-      ? `Pay ${fmt(total)} in cash when your order arrives`
-      : triggerProduct
-        ? `Not available for this order — the ${triggerProduct} must be confirmed with a payment first`
-        : // Zone-forced prepay: no product to name, so keep this app's real reason.
-          (codDisabledReason ?? "Not available for this order"),
+      ? "Pay the rider when your order arrives."
+      : !triggerProduct
+        ? "Your delivery zone needs prepayment." // zone-forced; no product to blame
+        : rule === "partial"
+          ? "Pre-orders need an advance to confirm."
+          : rule === "delivery"
+            ? "This order needs the delivery charge prepaid."
+            : "This order must be paid in full.",
 
     // Shown instead of the two plan cards when a digital method is chosen but
     // there's nothing to choose (full is the only option).
-    staticNote:
-      rule === "full"
-        ? `Full payment of ${fmt(total)} confirms this order — nothing due on delivery.`
-        : `You're paying the full ${fmt(total)} now — nothing due on delivery.`,
+    staticNote: "You're paying in full — nothing due on delivery.",
 
     plans: {
       a: minOption && {
@@ -126,13 +129,15 @@ export function deriveCheckoutView({
       },
     },
 
+    // The button carries the amount; the sub-line answers "what happens next?"
+    // rather than repeating the split box directly above it.
     cta: {
       label: isCod ? `Place order · ${fmt(total)} due on delivery` : `Pay ${fmt(payNow)} & place order`,
       sub: isCod
-        ? "Keep the exact amount ready — our rider will call before arriving."
+        ? "Keep the cash ready — the rider will call ahead."
         : due > 0
-          ? `${fmt(due)} remains — hand it to the rider in cash when your order arrives.`
-          : "All settled — just receive and unbox.",
+          ? "The rest is cash on delivery."
+          : "Nothing left to pay on delivery.",
     },
 
     // Split bar: "now" is never thinner than 4% so it stays visible.

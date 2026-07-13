@@ -27,7 +27,6 @@ function view({ products, zoneRequiresPrepay = false, subtotal, shippingFee, pay
     items,
     availability: plan.availability,
     nonCodOptions,
-    codDisabledReason: plan.codDisabledReason,
     total,
     paymentMethod,
     paymentOption,
@@ -46,8 +45,8 @@ describe("deriveCheckoutView — the four payment rules", () => {
     expect(v.codAllowed).toBe(true);
     expect(v.payNow).toBe(0);
     expect(v.due).toBe(2060);
-    expect(v.codSub).toBe("Pay ৳2,060 in cash when your order arrives");
-    expect(v.banner.title).toBe("Cash on Delivery works for this whole order.");
+    expect(v.codSub).toBe("Pay the rider when your order arrives.");
+    expect(v.banner.title).toBe("Cash on Delivery works for this order.");
     expect(v.cta.label).toBe("Place order · ৳2,060 due on delivery");
   });
 
@@ -60,10 +59,10 @@ describe("deriveCheckoutView — the four payment rules", () => {
     expect(v.payNow).toBe(60);
     expect(v.due).toBe(2000);
     expect(v.selectorVisible).toBe(true); // deliveryOnly vs full
-    expect(v.banner.title).toBe("One small step to confirm — prepay the delivery charge.");
-    expect(v.banner.body).toContain("৳60 delivery charge lands");
-    expect(v.banner.body).toContain("remaining ৳2,000");
-    expect(v.codSub).toContain("Veilside Supra"); // names the triggering product
+    expect(v.banner.title).toBe("Prepay the delivery charge to confirm.");
+    expect(v.banner.body).toBe("Pay it with bKash or BanglaQR. The rest is cash on delivery.");
+    // The banner names the product; the locked-COD row only says why.
+    expect(v.codSub).toBe("This order needs the delivery charge prepaid.");
     expect(v.cta.label).toBe("Pay ৳60 & place order");
   });
 
@@ -76,7 +75,7 @@ describe("deriveCheckoutView — the four payment rules", () => {
     expect(v.due).toBe(1060);
     expect(v.selectorVisible).toBe(true);
     expect(v.banner.title).toBe("A ৳1,000 advance reserves your piece.");
-    expect(v.banner.body).toContain("Supra A80 is an import pre-order");
+    expect(v.banner.body).toContain("Supra A80 is a pre-order");
     expect(v.plans.a).toEqual({ key: "partialAdvance", title: "Pay ৳1,000 now", sub: "৳1,060 in cash at your door" });
     expect(v.plans.b).toEqual({ key: "full", title: "Pay ৳2,060 now", sub: "Nothing to pay on delivery" });
   });
@@ -86,7 +85,7 @@ describe("deriveCheckoutView — the four payment rules", () => {
 
     expect(v.payNow).toBe(2060);
     expect(v.due).toBe(0);
-    expect(v.cta.sub).toBe("All settled — just receive and unbox.");
+    expect(v.cta.sub).toBe("Nothing left to pay on delivery.");
   });
 
   it("full: only 'full' survives the cart intersection — no selector, static note", () => {
@@ -99,7 +98,7 @@ describe("deriveCheckoutView — the four payment rules", () => {
     expect(v.payNow).toBe(2060);
     expect(v.due).toBe(0);
     expect(v.selectorVisible).toBe(false);
-    expect(v.staticNote).toBe("Full payment of ৳2,060 confirms this order — nothing due on delivery.");
+    expect(v.staticNote).toBe("You're paying in full — nothing due on delivery.");
   });
 
   it("zone-forced prepay: COD locked by the ZONE, so the reason names the zone, not a product", () => {
@@ -115,5 +114,29 @@ describe("deriveCheckoutView — the four payment rules", () => {
   it("split bar: the 'pay now' segment never collapses below 4%", () => {
     const v = view({ products: [DELIVERY_ITEM], subtotal: 100000, shippingFee: 60, paymentMethod: "bkash", paymentOption: "deliveryOnly" });
     expect(v.barNowPct).toBe(4); // 60/100060 rounds to 0 → clamped
+  });
+
+  it("banners carry the reason, not amounts already shown in the plan cards / split bar / summary", () => {
+    // Every figure is on screen three times already. The one deliberate exception
+    // is the partial-advance headline — that number is what customers scan for.
+    const delivery = view({ products: [DELIVERY_ITEM], subtotal: 2000, shippingFee: 60, paymentMethod: "bkash", paymentOption: "deliveryOnly" });
+    const partial = view({ products: [PARTIAL_ITEM], subtotal: 2000, shippingFee: 60, paymentMethod: "bkash", paymentOption: "partialAdvance" });
+
+    expect(delivery.banner.title).not.toMatch(/৳/);
+    expect(delivery.banner.body).not.toMatch(/৳/);
+    expect(partial.banner.body).not.toMatch(/৳/);
+    expect(partial.banner.title).toMatch(/৳/); // the exception
+
+    for (const v of [delivery, partial]) {
+      expect(v.banner.title.split(" ").length).toBeLessThanOrEqual(8);
+      expect(v.banner.body.split(" ").length).toBeLessThanOrEqual(16);
+      expect(v.codSub.split(" ").length).toBeLessThanOrEqual(10);
+    }
+
+    // The blocking product is named ONCE, in the banner — not again in the
+    // locked-COD row two rows below it. Real titles run to 40+ characters.
+    expect(partial.banner.body).toContain("Supra A80");
+    expect(partial.codSub).not.toContain("Supra A80");
+    expect(delivery.codSub).not.toContain("Veilside Supra");
   });
 });
