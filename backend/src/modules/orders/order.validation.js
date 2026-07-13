@@ -44,15 +44,19 @@ export const createOrderSchema = {
       banglaQrReference: z.string().optional(),
       shippingZone: z.string().min(1, "Shipping zone is required"),
     })
-    // Manual bKash/BanglaQR flows — customer sends payment outside the app and
-    // types the resulting reference here; only required when they actually
-    // chose that method.
+    // Manual bKash/BanglaQR flows — the customer pays outside the app and types a
+    // reference here; only required when they actually chose that method. As of the
+    // checkout redesign that reference is the LAST 4 DIGITS of the number/account they
+    // paid from (the merchant matches it against their statement), which is why the
+    // messages say so. Deliberately still just "non-empty" here rather than a strict
+    // 4-digit rule: the shape is a presentation concern the client owns, and these
+    // columns also hold older orders' free-form transaction IDs.
     .refine((data) => data.paymentMethod !== "bkash" || !!data.bkashTransactionId?.trim(), {
-      message: "bKash Transaction ID is required",
+      message: "The last 4 digits of your bKash number are required",
       path: ["bkashTransactionId"],
     })
     .refine((data) => data.paymentMethod !== "banglaqr" || !!data.banglaQrReference?.trim(), {
-      message: "BanglaQR payment reference is required",
+      message: "The last 4 digits of your account number are required",
       path: ["banglaQrReference"],
     })
     // Any paymentOption other than "cod" collects money upfront via the manual

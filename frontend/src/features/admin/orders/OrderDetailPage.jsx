@@ -128,11 +128,13 @@ export function OrderDetailPage() {
           <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground">
             <p>
               {PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}
+              {/* Checkout now collects the last 4 digits of the number/account the customer
+                  paid FROM (match it against your bKash/bank statement), not a transaction ID. */}
               {order.paymentMethod === "bkash" && order.bkashTransactionId && (
-                <> — Transaction ID: <span className="font-medium text-foreground">{order.bkashTransactionId}</span></>
+                <> — paid from bKash no. ending <span className="font-medium text-foreground">{order.bkashTransactionId}</span></>
               )}
               {order.paymentMethod === "banglaqr" && order.banglaQrReference && (
-                <> — Reference: <span className="font-medium text-foreground">{order.banglaQrReference}</span></>
+                <> — paid from account ending <span className="font-medium text-foreground">{order.banglaQrReference}</span></>
               )}
             </p>
             {order.paymentOption && (

@@ -738,7 +738,7 @@ export function SettingsPage() {
 
       <SectionCard
         title="Payment — bKash"
-        description="Customers send payment manually to this number and enter the resulting Transaction ID at checkout."
+        description="Customers Send Money to this number (personal account), then enter the last 4 digits of the bKash number they paid from — match that against your statement."
       >
         <FieldGroup>
           <Field>

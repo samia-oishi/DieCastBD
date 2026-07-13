@@ -2,8 +2,31 @@ import { useEffect, useRef, useState } from "react";
 import { ShieldCheck, Lock, QrCode } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { bkashLogo, banglaQrLogo } from "@/assets/payments";
 import { OptionCard, Radio, FieldBox, inputCls } from "./parts";
 import { PaySplit } from "./PaySplit";
+
+/** Provider brand mark. Falls back to a neutral chip until the official asset is
+ * dropped into src/assets/payments/ (see the note there — we don't hand-redraw
+ * payment logos, an approximated one misrepresents the provider). */
+function PaymentLogo({ src, alt, fallback }) {
+  if (src) {
+    return (
+      <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
+        <img src={src} alt={alt} className="size-full object-contain" />
+      </span>
+    );
+  }
+  return fallback ? (
+    <span className="shrink-0 rounded-lg bg-[#E2136E] px-3 py-[5px] text-[11.5px] font-extrabold italic text-white">
+      {fallback}
+    </span>
+  ) : (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink">
+      <QrCode size={14} strokeWidth={2} />
+    </span>
+  );
+}
 
 /** 01764250814 → "01764 250 814" (display only; the raw digits are copied). */
 function formatMerchant(number) {
@@ -125,25 +148,17 @@ export function PaymentMethods({
         <MethodRow
           selected={isBkash}
           onSelect={() => onChange("bkash")}
-          chip={
-            <span className="shrink-0 rounded-lg bg-[#E2136E] px-3 py-[5px] text-[11.5px] font-extrabold italic text-white">
-              bKash
-            </span>
-          }
+          chip={<PaymentLogo src={bkashLogo} alt="bKash" fallback="bKash" />}
           title="bKash"
-          sub="Send Money or scan — under a minute"
+          sub="Send Money or scan the QR"
         />
 
         <MethodRow
           selected={isQr}
           onSelect={() => onChange("banglaqr")}
-          chip={
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink">
-              <QrCode size={14} strokeWidth={2} />
-            </span>
-          }
+          chip={<PaymentLogo src={banglaQrLogo} alt="BanglaQR" />}
           title="BanglaQR"
-          sub="Scan & pay from any bank or MFS app"
+          sub="Scan with any bank or MFS app"
         />
       </div>
 
@@ -159,6 +174,7 @@ export function PaymentMethods({
             </span>
           </div>
 
+
           <PaySplit view={view} paymentOption={paymentOption} onPaymentOptionChange={onPaymentOptionChange} />
 
           <div className="mt-4 flex flex-col gap-[18px] md:flex-row md:items-start">
@@ -172,31 +188,40 @@ export function PaymentMethods({
                 <div className="flex flex-wrap items-center gap-2.5 rounded-[12px] bg-[#FAFAF7] px-3.5 py-[11px]">
                   <span className="text-[13px] text-[#6B6E60]">or Send Money to</span>
                   <b className="text-[14.5px] font-bold tracking-[0.02em] text-ink">{formatMerchant(merchant)}</b>
+                  {/* Tells the customer to use Send Money (personal), not Payment (merchant) —
+                      picking the wrong one is the classic manual-bKash mistake. */}
+                  <span className="rounded-full bg-brand-tint px-2 py-[3px] text-[10.5px] font-bold uppercase tracking-[0.05em] text-brand-deep">
+                    Personal
+                  </span>
                   <span className="flex-1" />
                   <CopyButton value={String(merchant).replace(/\D/g, "")} />
                 </div>
               )}
 
+              {/* We ask for the last 4 digits of the number/account the customer PAID FROM
+                  — not a transaction ID. It's what the merchant actually matches against in
+                  their bKash/bank statement, and it's four digits a customer can read off
+                  their own phone instead of copying a long code out of an SMS. */}
               <FieldBox
-                label={isBkash ? "bKash Transaction ID" : "Payment reference"}
+                label={isBkash ? "Last 4 digits of your bKash number" : "Last 4 digits of your account number"}
                 error={isBkash ? errors.bkashTransactionId?.message : errors.banglaQrReference?.message}
                 className={cn(isBkash && merchant ? "mt-3" : undefined)}
               >
-                {isBkash ? (
-                  <input {...register("bkashTransactionId")} placeholder="e.g. 9HK2XXXXXX" className={inputCls} />
-                ) : (
-                  <input
-                    {...register("banglaQrReference")}
-                    placeholder="Reference from your app receipt"
-                    className={inputCls}
-                  />
-                )}
+                <input
+                  {...register(isBkash ? "bkashTransactionId" : "banglaQrReference")}
+                  key={isBkash ? "bkash-last4" : "qr-last4"}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={4}
+                  placeholder="e.g. 4821"
+                  className={inputCls}
+                />
               </FieldBox>
 
               <p className="mt-2 text-[12.5px] leading-[1.55] text-faint">
                 {isBkash
-                  ? "From your bKash confirmation SMS — we'll match it instantly."
-                  : "From your bank app receipt — we'll match it instantly."}
+                  ? "The bKash number you paid from — we'll match it to your payment."
+                  : "The account you paid from — we'll match it to your payment."}
               </p>
             </div>
           </div>
