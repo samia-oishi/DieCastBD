@@ -283,8 +283,12 @@ export function CheckoutPage() {
             </div>
           </div>
 
-          {/* RIGHT — sticky summary (desktop) */}
-          <div className="hidden md:block">
+          {/* RIGHT — sticky summary (desktop). The `sticky` MUST live on the grid
+              item itself, not on the card inside it: the grid is `items-start`, so a
+              wrapper would collapse to the card's exact height and leave the sticky
+              child nowhere to travel. Same pattern as the Shop sidebar and Cart
+              summary, and the same top-[98px] offset (clears the sticky header). */}
+          <div className="hidden md:sticky md:top-[98px] md:block">
             <CheckoutSummary variant="desktop" {...summaryProps} />
           </div>
         </div>
@@ -292,9 +296,15 @@ export function CheckoutPage() {
         {/* Mobile pay bar — same dark-glass floating shell the PDP's StickyBuyBar
             uses, so the app's bottom bars stay consistent. */}
         <div className="fixed inset-x-3 bottom-3 z-40 flex items-center gap-2 rounded-[22px] border border-white/16 bg-[rgba(13,15,7,0.92)] p-[10px] pl-4 shadow-[0_10px_30px_rgba(16,18,8,0.45)] [backdrop-filter:blur(22px)_saturate(160%)] [-webkit-backdrop-filter:blur(22px)_saturate(160%)] md:hidden">
+          {/* On COD payNow is ৳0, which is a pointless thing to headline — show
+              what's actually owed instead, and only call it a "split" when it is one. */}
           <div className="min-w-0">
-            <div className="font-display text-[17px] font-extrabold leading-tight text-white">{formatTaka(view.payNow)}</div>
-            <div className="whitespace-nowrap text-[11px] text-[#A9AC9F]">pay now · {formatTaka(total)} total</div>
+            <div className="font-display text-[17px] font-extrabold leading-tight text-white">
+              {formatTaka(view.payNow > 0 ? view.payNow : total)}
+            </div>
+            <div className="whitespace-nowrap text-[11px] text-[#A9AC9F]">
+              {view.payNow > 0 ? `pay now · ${formatTaka(total)} total` : "due on delivery"}
+            </div>
           </div>
           <button
             type="submit"

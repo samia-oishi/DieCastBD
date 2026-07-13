@@ -116,6 +116,32 @@ describe("deriveCheckoutView — the four payment rules", () => {
     expect(v.barNowPct).toBe(4); // 60/100060 rounds to 0 → clamped
   });
 
+  it("hides the banner on the COD happy path, shows it whenever COD is off the table", () => {
+    // Most products offer COD, so a banner there would fire on nearly every order.
+    const cod = view({ products: [COD_ITEM], subtotal: 2000, shippingFee: 60, paymentMethod: "cod", paymentOption: "cod" });
+    expect(cod.bannerVisible).toBe(false);
+
+    for (const products of [[DELIVERY_ITEM], [PARTIAL_ITEM], [DELIVERY_ITEM, PARTIAL_ITEM]]) {
+      const v = view({ products, subtotal: 2000, shippingFee: 60, paymentMethod: "bkash", paymentOption: "full" });
+      expect(v.bannerVisible).toBe(true);
+    }
+
+    // A zone that disables COD is "different" too, even for a COD-capable product.
+    const zoned = view({ products: [COD_ITEM], zoneRequiresPrepay: true, subtotal: 2000, shippingFee: 120, paymentMethod: "bkash", paymentOption: "deliveryOnly" });
+    expect(zoned.bannerVisible).toBe(true);
+  });
+
+  it("shows the Pay-now/Cash-on-delivery box only when the money is actually split", () => {
+    // COD → "Pay now ৳0"; full prepayment → "Cash on delivery ৳0". Both are noise.
+    const cod = view({ products: [COD_ITEM], subtotal: 2000, shippingFee: 60, paymentMethod: "cod", paymentOption: "cod" });
+    const paidInFull = view({ products: [PARTIAL_ITEM], subtotal: 2000, shippingFee: 60, paymentMethod: "bkash", paymentOption: "full" });
+    const split = view({ products: [PARTIAL_ITEM], subtotal: 2000, shippingFee: 60, paymentMethod: "bkash", paymentOption: "partialAdvance" });
+
+    expect(cod.splitVisible).toBe(false); // payNow ৳0
+    expect(paidInFull.splitVisible).toBe(false); // due ৳0
+    expect(split.splitVisible).toBe(true); // ৳1,000 now + ৳1,060 at the door
+  });
+
   it("banners carry the reason, not amounts already shown in the plan cards / split bar / summary", () => {
     // Every figure is on screen three times already. The one deliberate exception
     // is the partial-advance headline — that number is what customers scan for.

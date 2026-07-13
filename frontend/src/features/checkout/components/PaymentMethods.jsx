@@ -92,16 +92,18 @@ export function PaymentMethods({
 
   return (
     <>
-      {/* scenario banner */}
-      <div className="mt-4 flex items-start gap-3 rounded-[14px] bg-brand-tint p-4">
-        <span className="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-white text-brand-deep">
-          <ShieldCheck size={17} strokeWidth={2} />
-        </span>
-        <div className="min-w-0">
-          <div className="text-sm font-bold text-ink">{view.banner.title}</div>
-          <div className="mt-[3px] text-[13px] leading-[1.55] text-ink/70">{view.banner.body}</div>
+      {/* Scenario banner — hidden on the COD happy path (see checkoutCopy.js). */}
+      {view.bannerVisible && (
+        <div className="mt-4 flex items-start gap-3 rounded-[14px] bg-brand-tint p-4">
+          <span className="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-white text-brand-deep">
+            <ShieldCheck size={17} strokeWidth={2} />
+          </span>
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-ink">{view.banner.title}</div>
+            <div className="mt-[3px] text-[13px] leading-[1.55] text-ink/70">{view.banner.body}</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* methods */}
       <div className="mt-3.5 flex flex-col gap-2.5">

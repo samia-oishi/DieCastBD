@@ -81,7 +81,8 @@ export function CheckoutSummary({
     <div
       className={cn(
         "border border-line bg-white",
-        isMobile ? "rounded-[16px] p-4" : "sticky top-[92px] rounded-[20px] px-6 py-[22px]"
+        // The desktop card is NOT sticky itself — CheckoutPage's grid item is (see there).
+        isMobile ? "rounded-[16px] p-4" : "rounded-[20px] px-6 py-[22px]"
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -124,7 +125,8 @@ export function CheckoutSummary({
         </span>
       </div>
 
-      <SplitBox payNow={view.payNow} due={view.due} />
+      {/* Only when the money is genuinely split (see checkoutCopy.js). */}
+      {view.splitVisible && <SplitBox payNow={view.payNow} due={view.due} />}
 
       {!isMobile && (
         <>

@@ -97,6 +97,18 @@ export function deriveCheckoutView({ items, availability, nonCodOptions, total, 
     fullOption,
     banner: BANNERS[rule],
 
+    // Most products offer COD, so a banner on the happy path would appear on
+    // nearly every order and tell the customer nothing the method rows below
+    // don't already say. It earns its space only when this order is genuinely
+    // different — i.e. when COD is off the table.
+    bannerVisible: rule !== "cod",
+
+    // The summary's Pay-now / Cash-on-delivery box only means something when the
+    // money is actually split. On plain COD it would read "Pay now ৳0", and on a
+    // full prepayment "Cash on delivery ৳0" — both just restate the Total above
+    // them and the CTA below them.
+    splitVisible: payNow > 0 && due > 0,
+
     // The row already carries an "UNAVAILABLE" chip, so this line only has to
     // answer *why*. It stays rule-based rather than naming the product: the
     // banner directly above already names it, and product titles here run to 40+
