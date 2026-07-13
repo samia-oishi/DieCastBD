@@ -26,6 +26,17 @@ function formatPrice(amount) {
   return `৳${Math.round(amount).toLocaleString("en-US")}`;
 }
 
+/** An optional customer-supplied value. Renders the value, or a visible "not provided"
+ * when it's blank — so a missing field reads as "the customer left it empty", never as
+ * "this screen doesn't show it". */
+function Provided({ value }) {
+  return value ? (
+    <span className="text-foreground">{value}</span>
+  ) : (
+    <span className="italic opacity-70">not provided</span>
+  );
+}
+
 function formatDateTime(dateString) {
   return new Date(dateString).toLocaleString("en-US", {
     day: "numeric",
@@ -76,8 +87,11 @@ export function OrderDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl">{order.orderNumber}</h1>
+          {/* Guests may have no email, which used to leave a dangling " · " separator. */}
           <p className="text-sm text-muted-foreground">
-            {order.user?.name} · {order.user?.email} · Placed {formatDateTime(order.createdAt)}
+            {[order.user?.name, order.user?.email, `Placed ${formatDateTime(order.createdAt)}`]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         </div>
         <StatusChip status={order.status} />
@@ -166,6 +180,15 @@ export function OrderDetailPage() {
                 {order.shippingAddress.district && `, ${order.shippingAddress.district}`}
               </p>
               <p>{order.shippingAddress.phone}</p>
+              {/* Postal code and email are both OPTIONAL at checkout, so they render an
+                  explicit "not provided" rather than disappearing — otherwise there's no
+                  way to tell "the customer left it blank" from "we don't show it here". */}
+              <p className="mt-1">
+                Postal code: <Provided value={order.shippingAddress.postalCode} />
+              </p>
+              <p>
+                Email: <Provided value={order.user?.email} />
+              </p>
               {order.deliveryNote && <p className="mt-1">Note: {order.deliveryNote}</p>}
             </div>
           </div>

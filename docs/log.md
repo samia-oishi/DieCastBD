@@ -749,3 +749,15 @@ The rationale is operational: the merchant reconciles manual payments against th
 Worth recording *how* they got there, since it will come up again: **image attachments arrive as pixels, not as files that can be written to disk** — so the merchant's attached icons could be seen but not saved, and re-attaching them (three times) could never work. Hand-redrawing was rejected outright: an approximated payment mark misrepresents the provider. Instead the real assets were fetched and visually diffed against the merchant's images — `banglaqr.png` is the official 600×600 mark, and `bkash.png` was composed from the **official bird geometry** (the 8 origami polygons lifted verbatim from the official bKash logo SVG, whose `<path>`s are wordmark text and whose `<polygon>`s are the bird), inverted to white facets on brand crimson `#E2136E` — which is precisely what the bKash app icon is. Both shipped as PNG at the merchant's explicit request ("no svg"), at 512px against a 36px render size.
 
 **Verified:** frontend 27/27, backend 70/70, lint/build clean. End-to-end in a real browser: an old-style value (`9HK2ABCDEF`) is now rejected with "Enter the last 4 digits…", while `4821` places the order — which came back from Mongo as `bkashTransactionId: "4821", paymentOption: full, amountPaid: 2560, amountDue: 0`. Test order cancelled via `transitionOrderStatus`, stock released.
+
+### Admin order detail: surface postal code + email (2026-07-13)
+
+Merchant: *"Zip code & email address not showing shipping address… I need to see if customer fill up zip & email address here."*
+
+Not a data bug — **both values were already there**. `postalCode` is stored on the order's `shippingAddress` snapshot and the admin fetch already does `populate("user", "name email")`; the Shipping Address card just never rendered either one. Pure display fix, no backend, no schema, no functional change (as instructed).
+
+The one design decision worth noting: both fields are **optional at checkout**, so they render through a small `<Provided>` helper that prints a visible *"not provided"* when blank instead of collapsing to nothing. That's the actual ask — the merchant wants to know *whether the customer filled them in*, and a field that silently disappears when empty is indistinguishable from one the screen doesn't show.
+
+Also fixed a latent cosmetic bug spotted next door: the header line was `{name} · {email} · Placed …`, which left a dangling " · " for guests with no email; it now joins only the parts that exist.
+
+**Verified** against real orders: `DBD-20260713-8F6BE5` (the one in the merchant's screenshot) already held `postalCode: "50450"` and an email — both simply weren't drawn — while a guest order with neither exercises the "not provided" path. Frontend 27/27, lint/build clean.
