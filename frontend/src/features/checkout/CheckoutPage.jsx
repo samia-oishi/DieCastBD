@@ -185,7 +185,7 @@ export function CheckoutPage() {
     <>
       <Seo title="Checkout" />
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mx-auto w-full max-w-[1160px] px-4 pb-2 pt-[18px] md:px-9 md:pb-11 md:pt-[30px]">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mx-auto w-full max-w-[1160px] px-4 pb-24 pt-[18px] md:px-9 md:pb-11 md:pt-[30px]">
         {/* Mobile progress row — the desktop stepper lives in CheckoutHeader */}
         <CheckoutSteps className="justify-center text-[11.5px] md:hidden" />
 
@@ -290,16 +290,17 @@ export function CheckoutPage() {
           </div>
         </div>
 
-        {/* Mobile sticky pay bar */}
-        <div className="sticky bottom-0 z-30 -mx-4 mt-3 flex items-center gap-3 border-t border-line bg-white px-4 py-3 md:hidden">
+        {/* Mobile pay bar — same dark-glass floating shell the PDP's StickyBuyBar
+            uses, so the app's bottom bars stay consistent. */}
+        <div className="fixed inset-x-3 bottom-3 z-40 flex items-center gap-2 rounded-[22px] border border-white/16 bg-[rgba(13,15,7,0.92)] p-[10px] pl-4 shadow-[0_10px_30px_rgba(16,18,8,0.45)] [backdrop-filter:blur(22px)_saturate(160%)] [-webkit-backdrop-filter:blur(22px)_saturate(160%)] md:hidden">
           <div className="min-w-0">
-            <div className="font-display text-[17px] font-extrabold text-ink">{formatTaka(view.payNow)}</div>
-            <div className="whitespace-nowrap text-[11px] text-faint">pay now · {formatTaka(total)} total</div>
+            <div className="font-display text-[17px] font-extrabold leading-tight text-white">{formatTaka(view.payNow)}</div>
+            <div className="whitespace-nowrap text-[11px] text-[#A9AC9F]">pay now · {formatTaka(total)} total</div>
           </div>
           <button
             type="submit"
             disabled={createOrderMutation.isPending || hasStockIssue}
-            className="flex-1 rounded-full bg-brand px-4 py-[13px] text-center font-display text-sm font-extrabold text-ink transition-colors duration-150 hover:bg-brand-bright disabled:opacity-60"
+            className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-brand text-[13px] font-extrabold text-ink disabled:opacity-60"
           >
             {createOrderMutation.isPending ? "Placing…" : "Place order"}
           </button>
