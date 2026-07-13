@@ -2,7 +2,7 @@ import { Order } from "./order.model.js";
 import { Address } from "../addresses/address.model.js";
 import { User } from "../users/user.model.js";
 import { findOrCreateGuestUser } from "../users/user.service.js";
-import { createOrderFromCart, createOrderFromItems, transitionOrderStatus } from "./order.service.js";
+import { createOrderFromCart, createOrderFromItems, transitionOrderStatus, deleteOrders } from "./order.service.js";
 import { sendOrderConfirmationEmail } from "../../emails/orderConfirmation.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
@@ -141,4 +141,15 @@ export const updateOrderStatusAdmin = asyncHandler(async (req, res) => {
     courierName,
   });
   sendSuccess(res, { data: order, message: "Order status updated" });
+});
+
+export const deleteOrdersAdmin = asyncHandler(async (req, res) => {
+  const { ids } = req.body;
+  const { deletedCount, unitsReturnedToStock } = await deleteOrders({ orderIds: ids, actorId: req.user.id });
+
+  const stockNote = unitsReturnedToStock > 0 ? ` · ${unitsReturnedToStock} item(s) returned to stock` : "";
+  sendSuccess(res, {
+    data: { deletedCount, unitsReturnedToStock },
+    message: `${deletedCount} order(s) deleted${stockNote}`,
+  });
 });

@@ -7,6 +7,7 @@ import { Settings } from "../settings/settings.model.js";
 import { Coupon } from "../coupons/coupon.model.js";
 import { findValidCoupon, calculateDiscount } from "../coupons/coupon.service.js";
 import { assertPaymentMethodAllowed, calculateAmountPaid } from "./paymentPlan.service.js";
+import { AuditLog } from "../auditLogs/auditLog.model.js";
 import { generateOrderNumber } from "../../utils/generateOrderNumber.js";
 import { ApiError } from "../../utils/apiError.js";
 
@@ -428,4 +429,93 @@ export async function transitionOrderStatus({
   }
 
   return order;
+}
+
+/**
+ * Permanently deletes orders (admin bulk action) — "this order never happened".
+ *
+ * Deleting an order is stock-relevant, which is the whole reason this can't be a
+ * bare `deleteMany`. An order always holds exactly one of the three stock claims
+ * (see stockBucket above), and destroying the row must hand that claim back or the
+ * inventory silently rots:
+ *
+ *   reserved  (pending)                     -> release the hold. Nothing was ever
+ *                                              decremented, so only reservedStock moves.
+ *                                              Skipping this would leak the reservation
+ *                                              FOREVER — availableStock would drop with
+ *                                              no order left on the books to explain it.
+ *   committed (confirmed..delivered)        -> the sale was already decremented from
+ *                                              stock, so give the units back. We're
+ *                                              asserting the order never happened.
+ *   released  (cancelled/refunded)          -> holds no claim at all; nothing to undo.
+ *
+ * All of it — stock, logs, and the deletes — runs in ONE transaction, so a mid-flight
+ * failure can't leave stock adjusted for an order that still exists (or vice versa).
+ *
+ * The audit entry deliberately carries the FULL order snapshot in `before`: once the
+ * row is gone this is the only surviving copy of it, so it doubles as the recovery
+ * path. That's also why this doesn't use the auditLog() middleware — that helper keys
+ * off a single req.params.id and can't snapshot each order in a bulk delete.
+ */
+export async function deleteOrders({ orderIds, actorId }) {
+  const orders = await Order.find({ _id: { $in: orderIds } });
+  if (orders.length === 0) throw ApiError.notFound("No matching orders found");
+
+  const session = await mongoose.startSession();
+  let unitsReturnedToStock = 0;
+
+  try {
+    await session.withTransaction(async () => {
+      for (const order of orders) {
+        const bucket = stockBucket(order.status);
+
+        for (const item of order.items) {
+          if (bucket === "reserved") {
+            await Product.updateOne({ _id: item.product }, { $inc: { reservedStock: -item.qty } }, { session });
+          } else if (bucket === "committed") {
+            await Product.updateOne({ _id: item.product }, { $inc: { stock: item.qty } }, { session });
+          } else {
+            continue; // released: no claim on stock, nothing to give back
+          }
+
+          // referenceOrder is intentionally left null — the order it would point at is
+          // about to stop existing. The order NUMBER goes in `reason` so the stock
+          // movement stays traceable to it after the fact.
+          await InventoryLog.create(
+            [
+              {
+                product: item.product,
+                type: bucket === "reserved" ? "release" : "adjustment",
+                quantityChange: item.qty,
+                reason: `Order ${order.orderNumber} deleted (was ${order.status})`,
+                performedBy: actorId,
+              },
+            ],
+            { session }
+          );
+          unitsReturnedToStock += item.qty;
+        }
+
+        await AuditLog.create(
+          [
+            {
+              actor: actorId,
+              action: "DELETE /admin/orders",
+              entityType: "Order",
+              entityId: order._id.toString(),
+              before: order.toObject(),
+              after: null,
+            },
+          ],
+          { session }
+        );
+      }
+
+      await Order.deleteMany({ _id: { $in: orders.map((o) => o._id) } }, { session });
+    });
+  } finally {
+    session.endSession();
+  }
+
+  return { deletedCount: orders.length, unitsReturnedToStock };
 }

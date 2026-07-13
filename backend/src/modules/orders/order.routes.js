@@ -9,6 +9,7 @@ import {
   listOrdersQuerySchema,
   updateStatusSchema,
   idParamSchema,
+  deleteOrdersSchema,
 } from "./order.validation.js";
 import {
   createOrder,
@@ -17,6 +18,7 @@ import {
   listOrdersAdmin,
   getOrderAdmin,
   updateOrderStatusAdmin,
+  deleteOrdersAdmin,
 } from "./order.controller.js";
 import { Order } from "./order.model.js";
 
@@ -39,3 +41,9 @@ adminRouter.patch(
   auditLog("Order", Order),
   updateOrderStatusAdmin
 );
+
+// Bulk delete. No auditLog() middleware here on purpose — that helper keys off a
+// single req.params.id, and a bulk delete needs a separate full "before" snapshot
+// per order. deleteOrders() writes those itself, inside the same transaction (and
+// once the rows are gone, those snapshots are the only surviving copy).
+adminRouter.delete("/", validate(deleteOrdersSchema), deleteOrdersAdmin);

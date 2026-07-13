@@ -761,3 +761,17 @@ The one design decision worth noting: both fields are **optional at checkout**, 
 Also fixed a latent cosmetic bug spotted next door: the header line was `{name} · {email} · Placed …`, which left a dangling " · " for guests with no email; it now joins only the parts that exist.
 
 **Verified** against real orders: `DBD-20260713-8F6BE5` (the one in the merchant's screenshot) already held `postalCode: "50450"` and an email — both simply weren't drawn — while a guest order with neither exercises the "not provided" path. Frontend 27/27, lint/build clean.
+
+### Admin: bulk-select + permanent delete for orders (2026-07-13)
+
+Merchant wanted multi-select + delete + a confirmation modal on the admin orders list (theirs is full of test orders). Plan.md decision #74.
+
+**This is not a UI feature — orders are stock-bearing.** No delete endpoint existed, and a bare `deleteMany` would have silently corrupted inventory: it's the decision-#8/#37 three-bucket problem approached from a new direction. A **pending** order holds a `reservedStock` hold; deleting it without releasing that hold leaks the reservation *forever* — `availableStock` quietly drops with no order left on the books to explain why. A **confirmed→delivered** order has already had its units decremented from `stock`. A **cancelled/refunded** order holds no claim at all.
+
+So the semantics were put to the merchant rather than assumed. They chose **permanent delete, any status** (over "cancelled/refunded only" and soft-delete): delete means *"this order never happened"*. New `deleteOrders()` reuses the **same `stockBucket()` classifier** as `transitionOrderStatus` instead of re-deriving the rule — reserved → release the hold; committed → return the units; released → nothing to give back. Stock writes, `InventoryLog`, `AuditLog` and the `deleteMany` all run in **one transaction**, so a mid-flight failure can't adjust stock for an order that still exists.
+
+Two details worth remembering: `InventoryLog.referenceOrder` is left null (the order it would point at is about to stop existing) with the order number written into `reason` instead; and the route deliberately skips the `auditLog()` middleware — it keys off a single `req.params.id` and can't snapshot each order in a bulk delete. `deleteOrders` writes a per-order audit entry carrying the **full order document**, which after the delete is the only surviving copy and doubles as the recovery path.
+
+Frontend: `OrdersPage` gains per-row + select-all-on-page checkboxes, a "N selected · Delete" bar, and an `AlertDialog` that states the consequences plainly — *"N items will be returned to stock"* (counted only from non-released orders; including a cancelled order's units would double-credit stock) and *"this is permanent"*. Selection resets on page/filter/search change so you can't delete a row you can no longer see.
+
+**Verified:** 6 new RTL tests covering selection and the confirmation gate (including "opening the dialog must not delete" and that exactly the selected ids are sent), plus a committed real-DB regression script `backend/scripts/verify-order-delete.mjs` — it creates one order in each stock bucket, deletes all three, and asserts inventory lands exactly back on baseline: stock 12→12, reservedStock 2→2 (the pre-existing reservation from *other* orders correctly untouched), 3 units returned (1 reserved + 2 committed + 0 cancelled), and 3 recoverable audit snapshots. Frontend 33/33, backend 70/70, lint/build clean.

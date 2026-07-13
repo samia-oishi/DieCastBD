@@ -14,3 +14,10 @@ export async function updateOrderStatus(id, payload) {
   const { data } = await api.patch(`/admin/orders/${id}/status`, payload);
   return data.data;
 }
+
+/** Permanent bulk delete. The backend releases/restores each order's stock in the
+ * same transaction and returns { deletedCount, unitsReturnedToStock }. */
+export async function deleteOrders(ids) {
+  const { data } = await api.delete("/admin/orders", { data: { ids } });
+  return data;
+}

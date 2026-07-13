@@ -97,3 +97,15 @@ export const updateStatusSchema = {
 export const idParamSchema = {
   params: z.object({ id: z.string().min(1) }),
 };
+
+// Bulk delete. Capped at 100 per call: the whole batch runs in one MongoDB
+// transaction, and an unbounded list would let a single request hold a very
+// long-running transaction open.
+export const deleteOrdersSchema = {
+  body: z.object({
+    ids: z
+      .array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid order id"))
+      .min(1, "Select at least one order to delete")
+      .max(100, "You can delete at most 100 orders at a time"),
+  }),
+};
