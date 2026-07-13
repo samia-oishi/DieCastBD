@@ -79,6 +79,7 @@ export function HomePage() {
         <link rel="canonical" href={canonical("/")} />
         <meta property="og:url" content={canonical("/")} />
         <meta property="og:locale" content="en_US" />
+        <meta name="google-site-verification" content="-hHjBqUWtYFIZPNE0dU9_IpFGrDEtokHS8PvupLBwzE" />
       </Seo>
       <Helmet>
         <script type="application/ld+json">{JSON.stringify(orgJsonLd)}</script>
