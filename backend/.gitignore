@@ -6,3 +6,7 @@ npm-debug.log*
 .DS_Store
 coverage/
 dist/
+
+# Catalog backups written by scripts/catalog-diff.mjs — snapshots of live
+# product data, including costPrice. Never commit.
+backups/
