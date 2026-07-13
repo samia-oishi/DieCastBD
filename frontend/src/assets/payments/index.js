@@ -1,15 +1,11 @@
-/** Payment-provider brand marks.
+/** Payment-provider brand marks, resolved by filename so swapping an asset is a
+ * drop-in replacement (any of .png / .svg / .webp) with no code change:
  *
- * Drop the official files into this folder and they are picked up automatically —
- * no code change needed anywhere:
+ *   bkash.png     — the bKash app mark (white origami bird on brand crimson)
+ *   banglaqr.png  — the Bangla QR mark
  *
- *   src/assets/payments/bkash.svg      (or .png — the crimson origami-bird mark)
- *   src/assets/payments/banglaqr.svg   (or .png — the BANGLA QR mark)
- *
- * Until a file is present, `PaymentLogo` falls back to a plain text/icon chip so
- * checkout never renders a broken image. Brand marks are deliberately NOT
- * hand-redrawn as inline SVG here: an approximated payment logo misrepresents the
- * provider, so the real asset is the only acceptable source.
+ * Brand marks are never hand-redrawn — an approximated payment logo misrepresents
+ * the provider — so these are the real assets, not traced lookalikes.
  */
 const files = import.meta.glob("./*.{svg,png,webp}", { eager: true, query: "?url", import: "default" });
 

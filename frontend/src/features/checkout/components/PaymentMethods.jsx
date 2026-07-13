@@ -6,24 +6,11 @@ import { bkashLogo, banglaQrLogo } from "@/assets/payments";
 import { OptionCard, Radio, FieldBox, inputCls } from "./parts";
 import { PaySplit } from "./PaySplit";
 
-/** Provider brand mark. Falls back to a neutral chip until the official asset is
- * dropped into src/assets/payments/ (see the note there — we don't hand-redraw
- * payment logos, an approximated one misrepresents the provider). */
-function PaymentLogo({ src, alt, fallback }) {
-  if (src) {
-    return (
-      <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
-        <img src={src} alt={alt} className="size-full object-contain" />
-      </span>
-    );
-  }
-  return fallback ? (
-    <span className="shrink-0 rounded-lg bg-[#E2136E] px-3 py-[5px] text-[11.5px] font-extrabold italic text-white">
-      {fallback}
-    </span>
-  ) : (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink">
-      <QrCode size={14} strokeWidth={2} />
+/** Provider brand mark (src/assets/payments/). */
+function PaymentLogo({ src, alt }) {
+  return (
+    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+      <img src={src} alt={alt} className="size-full object-contain" />
     </span>
   );
 }
@@ -148,7 +135,7 @@ export function PaymentMethods({
         <MethodRow
           selected={isBkash}
           onSelect={() => onChange("bkash")}
-          chip={<PaymentLogo src={bkashLogo} alt="bKash" fallback="bKash" />}
+          chip={<PaymentLogo src={bkashLogo} alt="bKash" />}
           title="bKash"
           sub="Send Money or scan the QR"
         />
