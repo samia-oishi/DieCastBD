@@ -1,234 +1,212 @@
-import { useState } from "react";
-import { Copy, Check, QrCode, Wallet } from "lucide-react";
-import toast from "react-hot-toast";
+import { useEffect, useRef, useState } from "react";
+import { ShieldCheck, Lock, QrCode } from "lucide-react";
 
-import { formatTaka } from "@/lib/currency";
-import { RadioCard, RadioDot, FieldBox, inputCls } from "./parts";
-import { PAYMENT_OPTION_LABELS } from "../lib/paymentPlanPreview";
+import { cn } from "@/lib/utils";
+import { OptionCard, Radio, FieldBox, inputCls } from "./parts";
+import { PaySplit } from "./PaySplit";
 
-function CopyBtn({ value }) {
+/** 01764250814 → "01764 250 814" (display only; the raw digits are copied). */
+function formatMerchant(number) {
+  const d = String(number ?? "").replace(/\D/g, "");
+  return d.length === 11 ? `${d.slice(0, 5)} ${d.slice(5, 8)} ${d.slice(8)}` : (number ?? "");
+}
+
+function CopyButton({ value }) {
   const [copied, setCopied] = useState(false);
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
   return (
     <button
       type="button"
-      onClick={async () => { await navigator.clipboard.writeText(value); setCopied(true); toast.success("Copied"); setTimeout(() => setCopied(false), 1500); }}
-      className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-bold text-ink"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(value);
+        } catch {
+          /* clipboard unavailable — the number is still visible to copy by hand */
+        }
+        setCopied(true);
+        clearTimeout(timer.current);
+        timer.current = setTimeout(() => setCopied(false), 1600);
+      }}
+      className="shrink-0 rounded-full border-[1.5px] border-ink px-3.5 py-1.5 text-[12.5px] font-bold text-ink transition-colors duration-150 hover:bg-ink hover:text-white"
     >
-      {copied ? <Check size={12} strokeWidth={2.5} /> : <Copy size={12} strokeWidth={2} />} Copy
+      {copied ? "Copied!" : "Copy"}
     </button>
   );
 }
 
-function Qr({ image, caption }) {
+function QrPanelImage({ image, caption }) {
   return (
     <div className="mx-auto shrink-0 md:mx-0">
-      <div className="flex size-[148px] items-center justify-center overflow-hidden rounded-[14px] border border-line bg-white p-2.5">
-        {image?.url ? <img src={image.url} alt="Payment QR" className="size-full object-contain" /> : <QrCode className="size-14 text-faint/40" strokeWidth={1.2} />}
-      </div>
-      <div className="mx-auto mt-1.5 max-w-[148px] text-center text-[11px] text-muted-foreground">{caption}</div>
+      {image?.url ? (
+        <div className="flex size-[126px] items-center justify-center overflow-hidden rounded-[14px] border border-line bg-white p-2">
+          <img src={image.url} alt={caption} className="size-full object-contain" />
+        </div>
+      ) : (
+        <div className="flex size-[126px] flex-col items-center justify-center gap-[7px] rounded-[14px] border-[1.5px] border-dashed border-[#C9CBBE] text-faint">
+          <QrCode size={26} strokeWidth={1.6} />
+          <span className="text-[11.5px] font-semibold">{caption}</span>
+        </div>
+      )}
     </div>
   );
 }
 
-/** Expanded-panel wrapper: QR centered on top (mobile) / left (desktop), the
- * send-money/reference content beside or below it. */
-function ExpandPanel({ children }) {
+function MethodRow({ selected, locked, onSelect, chip, title, sub, lockedChip }) {
   return (
-    <div className="mt-3.5 border-t border-[#E4EDC8] pt-3.5" onClick={(e) => e.stopPropagation()}>
-      <div className="flex flex-col gap-[18px] md:flex-row md:items-start">{children}</div>
-    </div>
-  );
-}
-
-function BkashLogo() {
-  return <span className="inline-flex h-7 w-[54px] shrink-0 items-center justify-center rounded-[7px] bg-[#E2136E] text-xs font-extrabold italic text-white">bKash</span>;
-}
-function BqrLogo() {
-  return <span className="inline-flex h-7 w-[54px] shrink-0 items-center justify-center rounded-[7px] border border-line bg-white text-ink"><QrCode size={16} strokeWidth={2} /></span>;
-}
-
-function Head({ selected, logo, title, subtitle }) {
-  return (
-    <div className="flex items-start gap-3">
-      <RadioDot selected={selected} />
-      {logo}
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-bold text-ink">{title}</div>
-        <div className="mt-0.5 text-[12.5px] text-muted-foreground">{subtitle}</div>
+    <OptionCard variant="method" selected={selected} locked={locked} onSelect={onSelect}>
+      <div className="flex items-start gap-3.5">
+        <Radio selected={selected} disabled={locked} />
+        {chip}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2.5">
+            <span className="text-[14.5px] font-bold text-ink">{title}</span>
+            {lockedChip}
+          </div>
+          <div className="mt-[3px] text-[13px] leading-[1.5] text-[#6B6E60]">{sub}</div>
+        </div>
       </div>
-    </div>
+    </OptionCard>
   );
 }
 
-/** Prominent, unmissable callout shown above the payment cards whenever Cash
- * on Delivery ends up unavailable for the cart -- whether that's because the
- * selected delivery zone forces prepay, or because one of the cart's own
- * products is configured without cod in its payment options (independent
- * of zone/city). Tells the customer exactly what to do (COD is disabled
- * below, but this is the actionable "do this instead" companion to that
- * inline reason) rather than leaving them to discover the right option on
- * their own inside the bKash/BanglaQR panel. Amber palette matches the zone
- * card's own prepay tag and the order-confirmation email's "balance due"
- * callout for consistency. */
-const PREPAY_BOX_CLS = "mb-3.5 flex items-start gap-2.5 rounded-[14px] border border-[#FED7AA] bg-[#FFF7ED] px-4 py-3.5";
-const PREPAY_ICON_CLS = "mt-0.5 shrink-0 text-[#9A3412]";
-const PREPAY_TEXT_CLS = "text-[13px] leading-[1.55] text-[#9A3412]";
-const PREPAY_BOLD_CLS = "font-bold";
-
-function PrepayNotice({ shippingFee, hasDeliveryOnly }) {
-  return (
-    <div className={PREPAY_BOX_CLS}>
-      <Wallet size={18} strokeWidth={2.2} className={PREPAY_ICON_CLS} />
-      <div className={PREPAY_TEXT_CLS}>
-        <span className={PREPAY_BOLD_CLS}>Cash on Delivery isn't available for this order.</span>{" "}
-        {hasDeliveryOnly ? (
-          <>
-            Select bKash or BanglaQR below and choose <span className={PREPAY_BOLD_CLS}>Delivery charge only</span> to pay
-            just {formatTaka(shippingFee)} now -- the rest is collected when your order arrives.
-          </>
-        ) : (
-          <>Select bKash or BanglaQR below and choose a payment option to confirm your order.</>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** Segmented control for choosing which business paymentOption (delivery-only /
- * partial advance / full) to fulfil via the manual bKash/BanglaQR proof flow —
- * only rendered when the cart's items actually offer a choice. Shows the
- * preview amount-now/amount-due for each option so the customer knows what
- * they're paying before scanning the QR. */
-function PaymentOptionPicker({ options, value, onChange }) {
-  if (options.length === 0) return null;
-
-  return (
-    <div className="mb-3.5">
-      <div className="mb-2 text-[12.5px] font-semibold text-ink">How much would you like to pay now?</div>
-      <div className="flex flex-wrap gap-2">
-        {options.map((opt) => (
-          <button
-            key={opt.key}
-            type="button"
-            onClick={() => onChange(opt.key)}
-            className={`rounded-[10px] border px-3.5 py-2.5 text-left text-[12.5px] transition-colors ${
-              value === opt.key ? "border-[1.5px] border-brand bg-[#FBFDF3]" : "border-line bg-white hover:border-ink"
-            }`}
-          >
-            <div className="font-bold text-ink">{PAYMENT_OPTION_LABELS[opt.key]}</div>
-            <div className="mt-0.5 text-faint">
-              Pay {formatTaka(opt.amountPaid)} now
-              {opt.amountDue > 0 ? ` · ${formatTaka(opt.amountDue)} due on delivery` : ""}
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** Payment radio cards; the selected method expands its panel. Controlled by the
- * parent form (value + register for the txn-id / reference inputs).
- *
- * codDisabled/codDisabledReason: when the cart's items and/or the selected
- * delivery zone don't allow plain Cash on Delivery, the COD card renders
- * disabled with an inline reason instead of being selectable (per the
- * requirement's explicit "disabled or display a message" wording).
- *
- * paymentOption/onPaymentOptionChange/nonCodOptions: the business option
- * (delivery-only/advance/full) being fulfilled via bKash/BanglaQR — offered as
- * a segmented control only when the cart allows more than one. */
+/** Payment section: scenario banner → 3 method rows → detail panel (pay-plan
+ * selector + split bar + QR/reference). `view` is the derived view-model from
+ * lib/checkoutCopy.js; nothing here computes money. */
 export function PaymentMethods({
   value,
   onChange,
+  view,
   bkashConfig,
   banglaQrConfig,
   register,
   errors,
-  total,
-  codDisabled = false,
-  codDisabledReason = null,
-  showPrepayNotice = false,
-  shippingFee = 0,
-  paymentOption = "full",
-  onPaymentOptionChange = () => {},
-  nonCodOptions = [],
-  amountPaidPreview,
+  paymentOption,
+  onPaymentOptionChange,
 }) {
-  const selectedPreview = nonCodOptions.find((o) => o.key === paymentOption);
-  const payNowNote = selectedPreview
-    ? `Pay ${formatTaka(selectedPreview.amountPaid)} now${
-        selectedPreview.amountDue > 0 ? `, ${formatTaka(selectedPreview.amountDue)} due on delivery` : ""
-      }, then enter your payment reference below so we can match it instantly.`
-    : `Pay the exact total ${formatTaka(amountPaidPreview ?? total)}, then enter your payment reference below so we can match it instantly.`;
+  const isBkash = value === "bkash";
+  const isQr = value === "banglaqr";
+  const panelOpen = isBkash || isQr;
+  const merchant = bkashConfig?.merchantNumber;
 
   return (
-    <div className="mt-5 flex flex-col gap-3">
-      {showPrepayNotice && (
-        <PrepayNotice shippingFee={shippingFee} hasDeliveryOnly={nonCodOptions.some((o) => o.key === "deliveryOnly")} />
-      )}
+    <>
+      {/* scenario banner */}
+      <div className="mt-4 flex items-start gap-3 rounded-[14px] bg-brand-tint p-4">
+        <span className="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-white text-brand-deep">
+          <ShieldCheck size={17} strokeWidth={2} />
+        </span>
+        <div className="min-w-0">
+          <div className="text-sm font-bold text-ink">{view.banner.title}</div>
+          <div className="mt-[3px] text-[13px] leading-[1.55] text-ink/70">{view.banner.body}</div>
+        </div>
+      </div>
 
-      {/* COD */}
-      <RadioCard
-        selected={value === "cod"}
-        onSelect={() => !codDisabled && onChange("cod")}
-        className={codDisabled ? "cursor-not-allowed opacity-60" : undefined}
-      >
-        <div className="flex items-start gap-3">
-          <RadioDot selected={value === "cod" && !codDisabled} />
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-bold text-ink">Cash on Delivery</div>
-            <div className="mt-0.5 text-[12.5px] text-muted-foreground">
-              {codDisabled ? codDisabledReason : "Pay when it arrives — nothing now"}
+      {/* methods */}
+      <div className="mt-3.5 flex flex-col gap-2.5">
+        <MethodRow
+          selected={value === "cod"}
+          locked={!view.codAllowed}
+          onSelect={() => onChange("cod")}
+          title="Cash on Delivery"
+          sub={view.codSub}
+          lockedChip={
+            !view.codAllowed && (
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-tile px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#6B6E60]">
+                <Lock size={10} strokeWidth={2.4} /> Unavailable
+              </span>
+            )
+          }
+        />
+
+        <MethodRow
+          selected={isBkash}
+          onSelect={() => onChange("bkash")}
+          chip={
+            <span className="shrink-0 rounded-lg bg-[#E2136E] px-3 py-[5px] text-[11.5px] font-extrabold italic text-white">
+              bKash
+            </span>
+          }
+          title="bKash"
+          sub={
+            <>
+              <span className="md:hidden">Send Money or scan — under a minute</span>
+              <span className="hidden md:inline">Send Money or scan — done in under a minute</span>
+            </>
+          }
+        />
+
+        <MethodRow
+          selected={isQr}
+          onSelect={() => onChange("banglaqr")}
+          chip={
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-ink">
+              <QrCode size={14} strokeWidth={2} />
+            </span>
+          }
+          title="BanglaQR"
+          sub="Scan & pay from any bank or MFS app"
+        />
+      </div>
+
+      {/* detail panel */}
+      {panelOpen && (
+        <div className="mt-3.5 rounded-[16px] border border-line bg-white p-4 md:px-5 md:py-[18px]">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <span className="font-display text-[15px] font-bold text-ink">
+              {isBkash ? "Pay with bKash" : "Pay with BanglaQR"}
+            </span>
+            <span className="text-[12.5px] text-faint">
+              {isBkash
+                ? "Scan in the bKash app, or Send Money to the number below"
+                : "Scan with any bank or MFS app that supports BanglaQR"}
+            </span>
+          </div>
+
+          <PaySplit view={view} paymentOption={paymentOption} onPaymentOptionChange={onPaymentOptionChange} />
+
+          <div className="mt-4 flex flex-col gap-[18px] md:flex-row md:items-start">
+            <QrPanelImage
+              image={isBkash ? bkashConfig?.qrImage : banglaQrConfig?.qrImage}
+              caption={isBkash ? "bKash QR" : "BanglaQR"}
+            />
+
+            <div className="min-w-0 flex-1">
+              {isBkash && merchant && (
+                <div className="flex flex-wrap items-center gap-2.5 rounded-[12px] bg-[#FAFAF7] px-3.5 py-[11px]">
+                  <span className="text-[13px] text-[#6B6E60]">or Send Money to</span>
+                  <b className="text-[14.5px] font-bold tracking-[0.02em] text-ink">{formatMerchant(merchant)}</b>
+                  <span className="flex-1" />
+                  <CopyButton value={String(merchant).replace(/\D/g, "")} />
+                </div>
+              )}
+
+              <FieldBox
+                label={isBkash ? "bKash Transaction ID" : "Payment reference"}
+                error={isBkash ? errors.bkashTransactionId?.message : errors.banglaQrReference?.message}
+                className={cn(isBkash && merchant ? "mt-3" : undefined)}
+              >
+                {isBkash ? (
+                  <input {...register("bkashTransactionId")} placeholder="e.g. 9HK2XXXXXX" className={inputCls} />
+                ) : (
+                  <input
+                    {...register("banglaQrReference")}
+                    placeholder="Reference from your app receipt"
+                    className={inputCls}
+                  />
+                )}
+              </FieldBox>
+
+              <p className="mt-2 text-[12.5px] leading-[1.55] text-faint">
+                {isBkash
+                  ? "Paste the Transaction ID from your bKash confirmation SMS — we match your payment instantly and reserve your piece."
+                  : "Enter the reference from your banking app receipt so we can match your payment instantly."}
+              </p>
             </div>
           </div>
         </div>
-      </RadioCard>
-
-      {/* bKash */}
-      <RadioCard selected={value === "bkash"} onSelect={() => onChange("bkash")}>
-        <Head selected={value === "bkash"} logo={<BkashLogo />} title="bKash" subtitle={value === "bkash" ? "Scan the QR or Send Money, then enter your Transaction ID" : "Scan the QR or Send Money"} />
-        {value === "bkash" && (
-          <ExpandPanel>
-            <Qr image={bkashConfig?.qrImage} caption="Scan with the bKash app" />
-            <div className="w-full md:min-w-[240px] md:flex-1">
-              <PaymentOptionPicker options={nonCodOptions} value={paymentOption} onChange={onPaymentOptionChange} />
-              {bkashConfig?.merchantNumber && (
-                <div className="flex items-center gap-2.5 rounded-[12px] border border-line bg-white px-4 py-3">
-                  <span className="text-[13px] text-muted-foreground">or Send Money to</span>
-                  <span className="text-[14.5px] font-extrabold tracking-[0.03em] text-ink">{bkashConfig.merchantNumber}</span>
-                  <CopyBtn value={bkashConfig.merchantNumber} />
-                </div>
-              )}
-              <div className="mt-3 rounded-[12px] border border-line bg-white px-4 py-3 text-[12.5px] leading-[1.6] text-ink-soft">
-                {payNowNote}
-              </div>
-              <FieldBox label="bKash Transaction ID" error={errors.bkashTransactionId?.message} className="mt-3">
-                <input {...register("bkashTransactionId")} placeholder="e.g. 9HK2XXXXXX" className={`${inputCls} bg-white`} />
-              </FieldBox>
-            </div>
-          </ExpandPanel>
-        )}
-      </RadioCard>
-
-      {/* BanglaQR */}
-      <RadioCard selected={value === "banglaqr"} onSelect={() => onChange("banglaqr")}>
-        <Head selected={value === "banglaqr"} logo={<BqrLogo />} title="BanglaQR" subtitle="Scan & pay from any bank or MFS app" />
-        {value === "banglaqr" && (
-          <ExpandPanel>
-            <Qr image={banglaQrConfig?.qrImage} caption="Scan from any bank or MFS app" />
-            <div className="w-full md:min-w-[240px] md:flex-1">
-              <PaymentOptionPicker options={nonCodOptions} value={paymentOption} onChange={onPaymentOptionChange} />
-              <div className="rounded-[12px] border border-line bg-white px-4 py-3 text-[12.5px] leading-[1.6] text-ink-soft">
-                {payNowNote}
-              </div>
-              <FieldBox label="Payment reference" error={errors.banglaQrReference?.message} className="mt-3">
-                <input {...register("banglaQrReference")} placeholder="e.g. TXN-XXXXXXXX" className={`${inputCls} bg-white`} />
-              </FieldBox>
-            </div>
-          </ExpandPanel>
-        )}
-      </RadioCard>
-    </div>
+      )}
+    </>
   );
 }

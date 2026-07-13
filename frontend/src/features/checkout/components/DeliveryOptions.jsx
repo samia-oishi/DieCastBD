@@ -1,33 +1,28 @@
-import { Wallet } from "lucide-react";
-
 import { formatTaka } from "@/lib/currency";
-import { RadioCard, RadioDot } from "./parts";
+import { OptionCard, Radio } from "./parts";
 
-/** Delivery-zone radio cards from settings.shippingZones (name, fee, eta?). Zones
- * with requiresPrepay get a small inline amber note under the eta line — same
- * plain-text treatment as the eta copy (no pill/background box), just recolored
- * so it reads as a requirement rather than another badge competing for attention. */
+/** Delivery-zone cards from settings.shippingZones (name · fee · eta). Stacked
+ * on mobile, two-up on desktop. */
 export function DeliveryOptions({ zones, value, onChange }) {
   return (
-    <div className="mt-5 grid gap-3.5 md:grid-cols-2">
-      {zones.map((zone) => (
-        <RadioCard key={zone.name} selected={value === zone.name} onSelect={() => onChange(zone.name)}>
-          <div className="flex items-start gap-3">
-            <RadioDot selected={value === zone.name} />
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-ink">{zone.name}</div>
-              {zone.eta && <div className="mt-0.5 text-[12.5px] text-muted-foreground">{zone.eta}</div>}
-              {zone.requiresPrepay && (
-                <div className="mt-1 flex items-center gap-1 text-[11.5px] font-semibold text-[#9A3412]">
-                  <Wallet size={11} strokeWidth={2.5} className="shrink-0" />
-                  Prepay delivery charge
+    <div className="mt-3.5 grid gap-2.5 md:mt-4 md:grid-cols-2 md:gap-3">
+      {zones.map((zone) => {
+        const selected = value === zone.name;
+        return (
+          <OptionCard key={zone.name} variant="zone" selected={selected} onSelect={() => onChange(zone.name)}>
+            <div className="flex items-start gap-3">
+              <Radio selected={selected} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[14.5px] font-bold text-ink">{zone.name}</span>
+                  <span className="text-sm font-bold text-ink">{formatTaka(zone.fee)}</span>
                 </div>
-              )}
+                {zone.eta && <div className="mt-[3px] text-[12.5px] text-[#6B6E60]">{zone.eta}</div>}
+              </div>
             </div>
-            <span className="shrink-0 text-sm font-bold text-ink">{zone.fee > 0 ? formatTaka(zone.fee) : "Free"}</span>
-          </div>
-        </RadioCard>
-      ))}
+          </OptionCard>
+        );
+      })}
     </div>
   );
 }

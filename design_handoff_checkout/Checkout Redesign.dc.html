@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="design_doc_mode" content="canvas">
+<style>
+body{margin:0;background:#EDECE5;font-family:'Instrument Sans',system-ui,sans-serif;color:#101208;-webkit-font-smoothing:antialiased}
+a{color:#101208}a:hover{color:#5F7A10}
+input,textarea{font-family:'Instrument Sans',system-ui,sans-serif;color:#101208}
+input::placeholder,textarea::placeholder{color:#A2A499}
+input:focus,textarea:focus{outline:2px solid #A8CD2F;outline-offset:-1px}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#101208;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 'Instrument Sans',system-ui,sans-serif;color:#101208}
+.dv-note{font:400 12px/1.5 'Instrument Sans',system-ui,sans-serif;color:rgba(16,18,8,.55);max-width:760px;margin:0 0 22px}
+.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(16,18,8,.08);color:#101208;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'Instrument Sans',system-ui,sans-serif;color:rgba(16,18,8,.55)}
+.dv-card{max-width:100%;background:#FAFAF7;border:1px solid rgba(16,18,8,.1);border-radius:12px;box-shadow:0 1px 3px rgba(16,18,8,.06);overflow:hidden}
+.dv-opt:target .dv-oid{background:#5F7A10;color:#fff}
+.dv-next{margin:22px 0 0;font:12px/1.5 'Instrument Sans',system-ui,sans-serif;color:rgba(16,18,8,.5)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Checkout redesign — clearer partial payment</span></div>
+<p class="dv-note">Assumptions: payment requirement comes per product from the backend — use the <b>Tweaks panel</b> (paymentRule: cod / delivery / partial / full) to preview every scenario on this same page. The pay-now choice is now two plain-language cards + a split bar, and the order summary always shows exactly what's paid now vs. handed to the rider. Fully interactive: methods, delivery zone, plan, copy button.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Desktop · pay-now selector as amount cards + split bar</div>
+<div class="dv-card" style="width:1240px" data-screen-label="1a Checkout desktop">
+
+  <!-- header -->
+  <div style="background:#fff;border-bottom:1px solid #E7E8E0;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 32px;height:64px">
+    <div style="font-family:'Archivo',sans-serif;font-weight:800;font-style:italic;font-size:19px;letter-spacing:-0.02em">DIECAST<span style="color:#5F7A10">BD</span></div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600">
+      <span style="width:22px;height:22px;border-radius:999px;background:#A8CD2F;color:#101208;display:inline-flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+      <span style="color:#6B6E60">Cart</span>
+      <span style="width:26px;height:1px;background:#E7E8E0"></span>
+      <span style="width:22px;height:22px;border-radius:999px;background:#101208;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px">2</span>
+      <span>Checkout</span>
+      <span style="width:26px;height:1px;background:#E7E8E0"></span>
+      <span style="width:22px;height:22px;border-radius:999px;border:1.5px solid #E7E8E0;color:#A2A499;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;box-sizing:border-box">3</span>
+      <span style="color:#A2A499">Done</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span style="font-size:13.5px;color:#6B6E60">Samia · 01533 434 824</span>
+      <span style="border:1px solid #E7E8E0;background:#fff;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#A8CD2F">Sign out</span>
+    </div>
+  </div>
+
+  <!-- body -->
+  <div style="padding:30px 36px 44px">
+    <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:30px;letter-spacing:-0.015em;margin:0">Checkout</h1>
+    <p style="font-size:14.5px;color:#6B6E60;margin:6px 0 0">Address, delivery, then how you'd like to pay — two minutes, tops.</p>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:26px;align-items:start;margin-top:24px">
+
+      <!-- LEFT -->
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+
+        <!-- address -->
+        <div style="background:#fff;border:1px solid #E7E8E0;border-radius:20px;padding:22px 26px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="width:24px;height:24px;border-radius:999px;background:#101208;color:#fff;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">1</span>
+            <span style="font-family:'Archivo',sans-serif;font-size:17px;font-weight:700">Shipping address</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+            <div style="border:1.5px solid #A8CD2F;background:rgba(168,205,47,.07);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start">
+              <span style="width:18px;height:18px;border-radius:999px;border:5.5px solid #101208;background:#A8CD2F;box-sizing:border-box;flex:none;margin-top:1px"></span>
+              <div style="min-width:0">
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14.5px;font-weight:700">Samia Rahman</span><span style="background:#EFF5DC;color:#4F6B0B;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:999px">HOME</span></div>
+                <div style="font-size:13px;color:#6B6E60;margin-top:3px">01533 434 824</div>
+                <div style="font-size:13px;color:#6B6E60;line-height:1.5;margin-top:2px">123 West Dhanmondi, Chattogram 1207</div>
+              </div>
+            </div>
+            <div style="border:1.5px dashed #C9CBBE;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;color:#6B6E60;font-size:13.5px;font-weight:600;cursor:pointer;min-height:88px;transition:border-color .15s ease,color .15s ease" style-hover="border-color:#A8CD2F;color:#101208">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+              Add a new address
+            </div>
+          </div>
+        </div>
+
+        <!-- delivery -->
+        <div style="background:#fff;border:1px solid #E7E8E0;border-radius:20px;padding:22px 26px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="width:24px;height:24px;border-radius:999px;background:#101208;color:#fff;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">2</span>
+              <span style="font-family:'Archivo',sans-serif;font-size:17px;font-weight:700">Delivery</span>
+            </div>
+            <span style="font-size:12.5px;color:#8A8D80">Tracked door-to-door, nationwide</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+            <div style="{{ zoneInStyle }}" onClick="{{ pickInside }}">
+              <span style="{{ zoneInRadio }}"></span>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:14.5px;font-weight:700">Inside Dhaka</span><span style="font-size:14px;font-weight:700">৳60</span></div>
+                <div style="font-size:12.5px;color:#6B6E60;margin-top:3px">At your door in 24–48 hours</div>
+              </div>
+            </div>
+            <div style="{{ zoneOutStyle }}" onClick="{{ pickOutside }}">
+              <span style="{{ zoneOutRadio }}"></span>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:14.5px;font-weight:700">Outside Dhaka</span><span style="font-size:14px;font-weight:700">৳120</span></div>
+                <div style="font-size:12.5px;color:#6B6E60;margin-top:3px">2–4 days, fully tracked</div>
+              </div>
+            </div>
+          </div>
+          <textarea rows="2" placeholder="Anything for the rider? Landmark, preferred time…" style="width:100%;box-sizing:border-box;margin-top:12px;border:1px solid #E7E8E0;border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.5;resize:vertical;background:#fff"></textarea>
+        </div>
+
+        <!-- payment -->
+        <div style="background:#fff;border:1px solid #E7E8E0;border-radius:20px;padding:22px 26px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="width:24px;height:24px;border-radius:999px;background:#101208;color:#fff;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">3</span>
+              <span style="font-family:'Archivo',sans-serif;font-size:17px;font-weight:700">Payment</span>
+            </div>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#8A8D80"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4F6B0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.7v5.6c0 4.6-3.1 7.6-7 8.9-3.9-1.3-7-4.3-7-8.9V5.7L12 3z"></path><path d="M9 11.8l2.1 2.1 4-4.2"></path></svg>Payments matched instantly</span>
+          </div>
+
+          <!-- scenario banner -->
+          <div style="display:flex;gap:12px;background:#EFF5DC;border-radius:14px;padding:14px 16px;margin-top:16px;align-items:flex-start">
+            <span style="width:34px;height:34px;border-radius:999px;background:#fff;color:#4F6B0B;display:inline-flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.7v5.6c0 4.6-3.1 7.6-7 8.9-3.9-1.3-7-4.3-7-8.9V5.7L12 3z"></path><path d="M9 11.8l2.1 2.1 4-4.2"></path></svg></span>
+            <div style="min-width:0">
+              <div style="font-size:14px;font-weight:700">{{ bannerTitle }}</div>
+              <div style="font-size:13px;line-height:1.55;color:rgba(16,18,8,.7);margin-top:3px">{{ bannerBody }}</div>
+            </div>
+          </div>
+
+          <!-- methods -->
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
+            <div style="{{ codStyle }}" onClick="{{ pickCod }}">
+              <span style="{{ codRadio }}"></span>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                  <span style="font-size:14.5px;font-weight:700">Cash on Delivery</span>
+                  <sc-if value="{{ codLocked }}" hint-placeholder-val="{{ true }}">
+                    <span style="background:#F1F2EA;color:#6B6E60;font-size:10.5px;font-weight:700;letter-spacing:.05em;padding:4px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:5px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>UNAVAILABLE</span>
+                  </sc-if>
+                </div>
+                <div style="font-size:13px;color:#6B6E60;line-height:1.5;margin-top:3px">{{ codSub }}</div>
+              </div>
+            </div>
+            <div style="{{ bkashStyle }}" onClick="{{ pickBkash }}">
+              <span style="{{ bkashRadio }}"></span>
+              <span style="background:#E2136E;color:#fff;font-size:11.5px;font-weight:800;font-style:italic;padding:5px 12px;border-radius:8px;flex:none">bKash</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700">bKash</div>
+                <div style="font-size:13px;color:#6B6E60;margin-top:3px">Send Money or scan — done in under a minute</div>
+              </div>
+            </div>
+            <div style="{{ qrStyle }}" onClick="{{ pickQr }}">
+              <span style="{{ qrRadio }}"></span>
+              <span style="width:28px;height:28px;border:1px solid #E7E8E0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex:none;background:#fff"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="3" height="3"></rect><rect x="18" y="18" width="3" height="3"></rect></svg></span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700">BanglaQR</div>
+                <div style="font-size:13px;color:#6B6E60;margin-top:3px">Scan &amp; pay from any bank or MFS app</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- payment details panel -->
+          <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px solid #E7E8E0;border-radius:16px;background:#fff;padding:18px 20px;margin-top:14px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <span style="font-family:'Archivo',sans-serif;font-size:15px;font-weight:700">{{ payPanelTitle }}</span>
+              <span style="font-size:12.5px;color:#8A8D80">{{ panelHint }}</span>
+            </div>
+
+            <sc-if value="{{ selectorVisible }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8A8D80;margin-top:16px">What are you paying now?</div>
+            <div style="display:flex;gap:10px;margin-top:8px">
+              <div style="{{ planAStyle }}" onClick="{{ pickAdvance }}">
+                <span style="background:#A8CD2F;color:#101208;font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:999px">MINIMUM TO CONFIRM</span>
+                <div style="font-family:'Archivo',sans-serif;font-size:16px;font-weight:800;margin-top:9px">{{ planATitle }}</div>
+                <div style="font-size:12.5px;color:#6B6E60;margin-top:3px">{{ planASub }}</div>
+              </div>
+              <div style="{{ planBStyle }}" onClick="{{ pickFull }}">
+                <span style="background:#F1F2EA;color:#3A3D33;font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:999px">NOTHING DUE LATER</span>
+                <div style="font-family:'Archivo',sans-serif;font-size:16px;font-weight:800;margin-top:9px">{{ planBTitle }}</div>
+                <div style="font-size:12.5px;color:#6B6E60;margin-top:3px">{{ planBSub }}</div>
+              </div>
+            </div>
+            </sc-if>
+
+            <sc-if value="{{ staticNoteOn }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FAFAF7;border-radius:10px;padding:10px 14px;font-size:13.5px;font-weight:600;margin-top:14px">{{ staticNote }}</div>
+            </sc-if>
+
+            <!-- split bar -->
+            <div style="display:flex;gap:3px;height:8px;margin-top:16px">
+              <div style="{{ barNowStyle }}"></div>
+              <div style="{{ barDueStyle }}"></div>
+            </div>
+            <div style="display:flex;gap:16px;margin-top:8px;font-size:12.5px;color:#6B6E60;flex-wrap:wrap">
+              <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:#A8CD2F"></span>Pay now&nbsp;<b style="color:#101208">{{ payNowStr }}</b></span>
+              <sc-if value="{{ dueOn }}" hint-placeholder-val="{{ true }}">
+              <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:#D8DACC"></span>Cash on delivery&nbsp;<b style="color:#101208">{{ dueStr }}</b></span>
+              </sc-if>
+            </div>
+
+            <div style="display:flex;gap:18px;margin-top:16px">
+              <div style="width:126px;height:126px;flex:none;border:1.5px dashed #C9CBBE;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#8A8D80">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="3" height="3"></rect><rect x="18" y="18" width="3" height="3"></rect></svg>
+                <span style="font-size:11.5px;font-weight:600">{{ qrCaption }}</span>
+              </div>
+              <div style="flex:1;min-width:0">
+                <sc-if value="{{ isBkash }}" hint-placeholder-val="{{ true }}">
+                <div style="background:#FAFAF7;border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <span style="font-size:13px;color:#6B6E60">or Send Money to</span>
+                  <b style="font-size:14.5px;letter-spacing:.02em">01764 250 814</b>
+                  <span style="flex:1"></span>
+                  <span onClick="{{ copyNum }}" style="border:1.5px solid #101208;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:700;cursor:pointer;transition:background .15s ease" style-hover="background:#101208;color:#fff">{{ copyLabel }}</span>
+                </div>
+                </sc-if>
+                <div style="font-size:12.5px;font-weight:700;margin-top:12px">{{ refLabel }}</div>
+                <input placeholder="{{ refPlaceholder }}" style="width:100%;box-sizing:border-box;margin-top:6px;border:1px solid #E7E8E0;border-radius:12px;padding:12px 14px;font-size:14px;background:#fff">
+                <div style="font-size:12.5px;color:#8A8D80;line-height:1.55;margin-top:8px">{{ refHelp }}</div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <!-- RIGHT: summary -->
+      <div style="position:sticky;top:20px;background:#fff;border:1px solid #E7E8E0;border-radius:20px;padding:22px 24px">
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-family:'Archivo',sans-serif;font-size:17px;font-weight:700">Your order</span><span style="font-size:12px;font-weight:600;color:#6B6E60;background:#F1F2EA;border-radius:999px;padding:4px 11px">1 item</span></div>
+        <div style="display:flex;gap:12px;align-items:center;margin-top:16px">
+          <span style="width:56px;height:56px;border-radius:12px;background:#F1F2EA;color:#8A8D80;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none">1:64</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#8A8D80;font-weight:600">MINI GT</div>
+            <div style="font-size:13.5px;font-weight:600;line-height:1.35;margin-top:2px">Toyota Supra A80 Top Secret GT-300</div>
+            <div style="font-size:12.5px;color:#8A8D80;margin-top:2px">Qty 1</div>
+          </div>
+          <span style="font-size:14px;font-weight:700">৳2,000</span>
+        </div>
+        <div style="height:1px;background:#EFEFE9;margin:16px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:13.5px"><span style="color:#6B6E60">Subtotal</span><span style="font-weight:600">{{ subtotalStr }}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-top:9px"><span style="color:#6B6E60">Shipping · {{ zoneLabel }}</span><span style="font-weight:600">{{ shippingStr }}</span></div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <input placeholder="Coupon code" style="flex:1;min-width:0;border:1px solid #E7E8E0;border-radius:999px;padding:9px 16px;font-size:13px;background:#fff">
+          <span style="border:1.5px solid #101208;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s ease" style-hover="background:#101208;color:#fff">Apply</span>
+        </div>
+        <div style="height:1px;background:#EFEFE9;margin:16px 0"></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:15px;font-weight:700">Total</span><span style="font-family:'Archivo',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.01em">{{ totalStr }}</span></div>
+        <div style="background:#FAFAF7;border-radius:14px;padding:13px 15px;margin-top:14px">
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:999px;background:#A8CD2F;flex:none"></span><span style="font-size:13px;font-weight:600;color:#3A3D33;flex:1">Pay now</span><b style="font-size:14px">{{ payNowStr }}</b></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="width:8px;height:8px;border-radius:999px;background:#D8DACC;flex:none"></span><span style="font-size:13px;font-weight:600;color:#3A3D33;flex:1">Cash on delivery</span><b style="font-size:14px">{{ dueStr }}</b></div>
+        </div>
+        <div style="background:#A8CD2F;color:#101208;border-radius:999px;padding:15px 20px;text-align:center;font-family:'Archivo',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:16px;transition:background .15s ease" style-hover="background:#B9DC4B">{{ ctaLabel }}</div>
+        <div style="font-size:12.5px;color:#8A8D80;text-align:center;line-height:1.55;margin-top:10px">{{ ctaSub }}</div>
+        <div style="height:1px;background:#EFEFE9;margin:16px 0 12px"></div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:#6B6E60"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4F6B0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.7v5.6c0 4.6-3.1 7.6-7 8.9-3.9-1.3-7-4.3-7-8.9V5.7L12 3z"></path><path d="M9 11.8l2.1 2.1 4-4.2"></path></svg>Hand-verified authentic · Collector-grade packing</div>
+        <div style="font-size:11.5px;color:#A2A499;text-align:center;margin-top:10px">By placing this order you agree to our <a href="#t1" style="color:#6B6E60">Terms</a> &amp; <a href="#t1" style="color:#6B6E60">Refund Policy</a>.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Mobile · same system, sticky pay bar</div>
+<div class="dv-card" style="width:390px;position:relative" data-screen-label="1b Checkout mobile">
+
+  <div style="background:#fff;border-bottom:1px solid #E7E8E0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:54px">
+    <div style="font-family:'Archivo',sans-serif;font-weight:800;font-style:italic;font-size:16px;letter-spacing:-0.02em">DIECAST<span style="color:#5F7A10">BD</span></div>
+    <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#6B6E60">
+      <span style="width:7px;height:7px;border-radius:999px;background:#A8CD2F"></span>
+      <span style="width:7px;height:7px;border-radius:999px;background:#101208"></span>
+      <span style="width:7px;height:7px;border-radius:999px;background:#E7E8E0"></span>
+      <span style="margin-left:3px;color:#101208">Checkout</span>
+    </div>
+  </div>
+
+  <div style="padding:18px 16px 8px">
+    <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.015em;margin:0">Checkout</h1>
+    <p style="font-size:13px;color:#6B6E60;margin:4px 0 0">Address, delivery, then how you'd like to pay.</p>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+
+      <!-- address -->
+      <div style="background:#fff;border:1px solid #E7E8E0;border-radius:16px;padding:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:22px;height:22px;border-radius:999px;background:#101208;color:#fff;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">1</span>
+            <span style="font-family:'Archivo',sans-serif;font-size:15px;font-weight:700">Deliver to</span>
+          </div>
+          <span style="border:1px solid #E7E8E0;border-radius:999px;padding:5px 13px;font-size:12px;font-weight:600;cursor:pointer;transition:border-color .15s ease" style-hover="border-color:#A8CD2F">Change</span>
+        </div>
+        <div style="border:1.5px solid #A8CD2F;background:rgba(168,205,47,.07);border-radius:12px;padding:12px 14px;margin-top:12px">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13.5px;font-weight:700">Samia Rahman</span><span style="background:#EFF5DC;color:#4F6B0B;font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:999px">HOME</span></div>
+          <div style="font-size:12.5px;color:#6B6E60;line-height:1.5;margin-top:3px">01533 434 824 · 123 West Dhanmondi, Chattogram 1207</div>
+        </div>
+      </div>
+
+      <!-- delivery -->
+      <div style="background:#fff;border:1px solid #E7E8E0;border-radius:16px;padding:16px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:22px;height:22px;border-radius:999px;background:#101208;color:#fff;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">2</span>
+          <span style="font-family:'Archivo',sans-serif;font-size:15px;font-weight:700">Delivery</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          <div style="{{ zoneInStyle }}" onClick="{{ pickInside }}">
+            <span style="{{ zoneInRadio }}"></span>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:13.5px;font-weight:700">Inside Dhaka</span><span style="font-size:13.5px;font-weight:700">৳60</span></div>
+              <div style="font-size:12px;color:#6B6E60;margin-top:2px">At your door in 24–48 hours</div>
+            </div>
+          </div>
+          <div style="{{ zoneOutStyle }}" onClick="{{ pickOutside }}">
+            <span style="{{ zoneOutRadio }}"></span>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:13.5px;font-weight:700">Outside Dhaka</span><span style="font-size:13.5px;font-weight:700">৳120</span></div>
+              <div style="font-size:12px;color:#6B6E60;margin-top:2px">2–4 days, fully tracked</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- payment -->
+      <div style="background:#fff;border:1px solid #E7E8E0;border-radius:16px;padding:16px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:22px;height:22px;border-radius:999px;background:#101208;color:#fff;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">3</span>
+          <span style="font-family:'Archivo',sans-serif;font-size:15px;font-weight:700">Payment</span>
+        </div>
+
+        <div style="display:flex;gap:10px;background:#EFF5DC;border-radius:12px;padding:12px 13px;margin-top:12px;align-items:flex-start">
+          <svg style="flex:none;margin-top:1px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F6B0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.7v5.6c0 4.6-3.1 7.6-7 8.9-3.9-1.3-7-4.3-7-8.9V5.7L12 3z"></path><path d="M9 11.8l2.1 2.1 4-4.2"></path></svg>
+          <div style="min-width:0">
+            <div style="font-size:13px;font-weight:700">{{ bannerTitle }}</div>
+            <div style="font-size:12px;line-height:1.5;color:rgba(16,18,8,.7);margin-top:2px">{{ bannerBody }}</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          <div style="{{ codStyle }}" onClick="{{ pickCod }}">
+            <span style="{{ codRadio }}"></span>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <span style="font-size:13.5px;font-weight:700">Cash on Delivery</span>
+                <sc-if value="{{ codLocked }}" hint-placeholder-val="{{ true }}">
+                  <span style="background:#F1F2EA;color:#6B6E60;font-size:9.5px;font-weight:700;letter-spacing:.05em;padding:3px 8px;border-radius:999px">UNAVAILABLE</span>
+                </sc-if>
+              </div>
+              <div style="font-size:12px;color:#6B6E60;line-height:1.5;margin-top:2px">{{ codSub }}</div>
+            </div>
+          </div>
+          <div style="{{ bkashStyle }}" onClick="{{ pickBkash }}">
+            <span style="{{ bkashRadio }}"></span>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13.5px;font-weight:700">bKash</span><span style="background:#E2136E;color:#fff;font-size:10px;font-weight:800;font-style:italic;padding:3px 9px;border-radius:6px">bKash</span></div>
+              <div style="font-size:12px;color:#6B6E60;margin-top:2px">Send Money or scan — under a minute</div>
+            </div>
+          </div>
+          <div style="{{ qrStyle }}" onClick="{{ pickQr }}">
+            <span style="{{ qrRadio }}"></span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13.5px;font-weight:700">BanglaQR</div>
+              <div style="font-size:12px;color:#6B6E60;margin-top:2px">Scan &amp; pay from any bank or MFS app</div>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+        <div style="border:1px solid #E7E8E0;border-radius:14px;background:#fff;padding:14px;margin-top:12px">
+          <div style="font-family:'Archivo',sans-serif;font-size:14px;font-weight:700">{{ payPanelTitle }}</div>
+          <div style="font-size:12px;color:#8A8D80;margin-top:2px">{{ panelHint }}</div>
+
+          <sc-if value="{{ selectorVisible }}" hint-placeholder-val="{{ true }}">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8A8D80;margin-top:14px">What are you paying now?</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:7px">
+            <div style="{{ planAStyle }}" onClick="{{ pickAdvance }}">
+              <span style="background:#A8CD2F;color:#101208;font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 8px;border-radius:999px">MINIMUM TO CONFIRM</span>
+              <div style="font-family:'Archivo',sans-serif;font-size:15px;font-weight:800;margin-top:7px">{{ planATitle }}</div>
+              <div style="font-size:12px;color:#6B6E60;margin-top:2px">{{ planASub }}</div>
+            </div>
+            <div style="{{ planBStyle }}" onClick="{{ pickFull }}">
+              <span style="background:#F1F2EA;color:#3A3D33;font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 8px;border-radius:999px">NOTHING DUE LATER</span>
+              <div style="font-family:'Archivo',sans-serif;font-size:15px;font-weight:800;margin-top:7px">{{ planBTitle }}</div>
+              <div style="font-size:12px;color:#6B6E60;margin-top:2px">{{ planBSub }}</div>
+            </div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ staticNoteOn }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#FAFAF7;border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-top:12px">{{ staticNote }}</div>
+          </sc-if>
+
+          <div style="display:flex;gap:3px;height:7px;margin-top:14px">
+            <div style="{{ barNowStyle }}"></div>
+            <div style="{{ barDueStyle }}"></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:7px;font-size:11.5px;color:#6B6E60;flex-wrap:wrap">
+            <span style="display:inline-flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:999px;background:#A8CD2F"></span>Pay now&nbsp;<b style="color:#101208">{{ payNowStr }}</b></span>
+            <sc-if value="{{ dueOn }}" hint-placeholder-val="{{ true }}">
+            <span style="display:inline-flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:999px;background:#D8DACC"></span>On delivery&nbsp;<b style="color:#101208">{{ dueStr }}</b></span>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ isBkash }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#FAFAF7;border-radius:11px;padding:10px 12px;display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <span style="font-size:12px;color:#6B6E60">Send Money to</span>
+            <b style="font-size:13.5px;letter-spacing:.02em">01764 250 814</b>
+            <span style="flex:1"></span>
+            <span onClick="{{ copyNum }}" style="border:1.5px solid #101208;border-radius:999px;padding:4px 12px;font-size:11.5px;font-weight:700;cursor:pointer">{{ copyLabel }}</span>
+          </div>
+          </sc-if>
+          <div style="font-size:12px;font-weight:700;margin-top:11px">{{ refLabel }}</div>
+          <input placeholder="{{ refPlaceholder }}" style="width:100%;box-sizing:border-box;margin-top:5px;border:1px solid #E7E8E0;border-radius:11px;padding:11px 13px;font-size:13.5px;background:#fff">
+          <div style="font-size:11.5px;color:#8A8D80;line-height:1.5;margin-top:6px">{{ refHelp }}</div>
+        </div>
+        </sc-if>
+      </div>
+
+      <!-- summary -->
+      <div style="background:#fff;border:1px solid #E7E8E0;border-radius:16px;padding:16px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="width:44px;height:44px;border-radius:10px;background:#F1F2EA;color:#8A8D80;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none">1:64</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12.5px;font-weight:600;line-height:1.35">MINI GT Toyota Supra A80 Top Secret</div>
+            <div style="font-size:11.5px;color:#8A8D80;margin-top:1px">Qty 1</div>
+          </div>
+          <span style="font-size:13px;font-weight:700">৳2,000</span>
+        </div>
+        <div style="height:1px;background:#EFEFE9;margin:12px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:#6B6E60">Subtotal</span><span style="font-weight:600">{{ subtotalStr }}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:7px"><span style="color:#6B6E60">Shipping · {{ zoneLabel }}</span><span style="font-weight:600">{{ shippingStr }}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px"><span style="font-size:13.5px;font-weight:700">Total</span><span style="font-family:'Archivo',sans-serif;font-size:19px;font-weight:800">{{ totalStr }}</span></div>
+        <div style="background:#FAFAF7;border-radius:11px;padding:11px 12px;margin-top:11px">
+          <div style="display:flex;align-items:center;gap:7px"><span style="width:7px;height:7px;border-radius:999px;background:#A8CD2F;flex:none"></span><span style="font-size:12px;font-weight:600;color:#3A3D33;flex:1">Pay now</span><b style="font-size:12.5px">{{ payNowStr }}</b></div>
+          <div style="display:flex;align-items:center;gap:7px;margin-top:6px"><span style="width:7px;height:7px;border-radius:999px;background:#D8DACC;flex:none"></span><span style="font-size:12px;font-weight:600;color:#3A3D33;flex:1">Cash on delivery</span><b style="font-size:12.5px">{{ dueStr }}</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- sticky pay bar -->
+  <div style="position:sticky;bottom:0;background:#fff;border-top:1px solid #E7E8E0;padding:12px 16px;display:flex;align-items:center;gap:12px">
+    <div style="min-width:0">
+      <div style="font-family:'Archivo',sans-serif;font-size:17px;font-weight:800">{{ payNowStr }}</div>
+      <div style="font-size:11px;color:#8A8D80;white-space:nowrap">pay now · {{ totalStr }} total</div>
+    </div>
+    <div style="flex:1;background:#A8CD2F;color:#101208;border-radius:999px;padding:13px 16px;text-align:center;font-family:'Archivo',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:background .15s ease" style-hover="background:#B9DC4B">Place order</div>
+  </div>
+
+</div>
+</div>
+</div>
+<p class="dv-next">Try next: "add a mobile version" · "show a variant where the plan choice lives in the order summary" · "make the banner darker / bolder"</p>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1340,&quot;height&quot;:1200},&quot;paymentRule&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cod&quot;,&quot;delivery&quot;,&quot;partial&quot;,&quot;full&quot;],&quot;default&quot;:&quot;partial&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scenario&quot;},&quot;advanceAmount&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:1000,&quot;min&quot;:100,&quot;max&quot;:2000,&quot;step&quot;:50,&quot;unit&quot;:&quot;৳&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Scenario&quot;}}">
+class Component extends DCLogic {
+  state = { method: 'bkash', plan: 'advance', zone: 'inside', copied: false };
+
+  renderVals() {
+    const fmt = (n) => '৳' + n.toLocaleString('en-IN');
+    const rule = this.props.paymentRule ?? 'partial'; // cod | delivery | partial | full
+    const advance = this.props.advanceAmount ?? 1000;
+    const subtotal = 2000;
+    const shipping = this.state.zone === 'inside' ? 60 : 120;
+    const total = subtotal + shipping;
+    const codAllowed = rule === 'cod';
+    const method = (!codAllowed && this.state.method === 'cod') ? 'bkash' : this.state.method;
+    const min = rule === 'delivery' ? shipping : rule === 'partial' ? Math.min(advance, total) : total;
+    const selectorVisible = method !== 'cod' && (rule === 'delivery' || rule === 'partial');
+    const plan = selectorVisible ? this.state.plan : 'full';
+    const payNow = method === 'cod' ? 0 : (plan === 'full' ? total : min);
+    const due = total - payNow;
+
+    const banners = {
+      cod: { t: 'Cash on Delivery works for this whole order.', b: 'Nothing to pay until it reaches your door. Prefer to settle now? bKash and BanglaQR work too — your call.' },
+      delivery: { t: 'One small step to confirm — prepay the delivery charge.', b: 'This order ships once the ' + fmt(shipping) + ' delivery charge lands. Pay it via bKash or BanglaQR, and hand the remaining ' + fmt(subtotal) + ' to the rider in cash.' },
+      partial: { t: 'A ' + fmt(min) + ' advance reserves your piece.', b: 'The Supra A80 is an import pre-order, so we confirm it with a part payment. Pay ' + fmt(min) + ' now via bKash or BanglaQR — the remaining ' + fmt(total - min) + ' is cash on delivery.' },
+      full: { t: 'This piece needs full payment to confirm.', b: 'Reserved imports are secured with the full ' + fmt(total) + ' before they ship. The upside: nothing left to pay at your door.' }
+    };
+    const bn = banners[rule] || banners.partial;
+
+    const mCard = (on) => ({
+      border: on ? '1.5px solid #A8CD2F' : '1px solid #E7E8E0',
+      background: on ? 'rgba(168,205,47,.07)' : '#fff',
+      borderRadius: 16, padding: '15px 18px', cursor: 'pointer',
+      display: 'flex', gap: 14, alignItems: 'flex-start', transition: 'border-color .15s ease'
+    });
+    const codStyle = codAllowed ? mCard(method === 'cod') : {
+      border: '1px dashed #DEDFD6', background: '#FAFAF7', borderRadius: 16,
+      padding: '15px 18px', cursor: 'not-allowed', display: 'flex', gap: 14, alignItems: 'flex-start'
+    };
+    const radio = (on, dis) => ({
+      width: 18, height: 18, borderRadius: 999, boxSizing: 'border-box', flex: 'none', marginTop: 1,
+      border: on ? '5.5px solid #101208' : '1.5px solid ' + (dis ? '#DEDFD6' : '#C9CBBE'),
+      background: on ? '#A8CD2F' : '#fff'
+    });
+    const zCard = (on) => ({
+      border: on ? '1.5px solid #A8CD2F' : '1px solid #E7E8E0',
+      background: on ? 'rgba(168,205,47,.07)' : '#fff',
+      borderRadius: 14, padding: '13px 16px', cursor: 'pointer',
+      display: 'flex', gap: 12, alignItems: 'flex-start', transition: 'border-color .15s ease'
+    });
+    const pCard = (on) => ({
+      flex: 1, minWidth: 0,
+      border: on ? '2px solid #101208' : '1px solid #E7E8E0',
+      background: on ? '#FAFAF7' : '#fff',
+      borderRadius: 14, padding: '13px 15px', cursor: 'pointer', transition: 'border-color .15s ease'
+    });
+
+    const pct = Math.max(4, Math.round(payNow / total * 100));
+
+    return {
+      bannerTitle: bn.t,
+      bannerBody: bn.b,
+      codStyle,
+      codRadio: radio(method === 'cod', !codAllowed),
+      codLocked: !codAllowed,
+      codSub: codAllowed
+        ? 'Pay ' + fmt(total) + ' in cash when your order arrives'
+        : 'Not available for this order — the Supra A80 must be confirmed with a payment first',
+      pickCod: () => { if (codAllowed) this.setState({ method: 'cod' }); },
+      bkashStyle: mCard(method === 'bkash'),
+      bkashRadio: radio(method === 'bkash', false),
+      pickBkash: () => this.setState({ method: 'bkash' }),
+      qrStyle: mCard(method === 'qr'),
+      qrRadio: radio(method === 'qr', false),
+      pickQr: () => this.setState({ method: 'qr' }),
+      panelOpen: method !== 'cod',
+      payPanelTitle: method === 'bkash' ? 'Pay with bKash' : 'Pay with BanglaQR',
+      panelHint: method === 'bkash' ? 'Scan in the bKash app, or Send Money to the number below' : 'Scan with any bank or MFS app that supports BanglaQR',
+      selectorVisible,
+      planAStyle: pCard(plan === 'advance'),
+      planBStyle: pCard(plan === 'full'),
+      pickAdvance: () => this.setState({ plan: 'advance' }),
+      pickFull: () => this.setState({ plan: 'full' }),
+      planATitle: 'Pay ' + fmt(min) + ' now',
+      planASub: fmt(total - min) + ' in cash at your door',
+      planBTitle: 'Pay ' + fmt(total) + ' now',
+      planBSub: 'Nothing to pay on delivery',
+      staticNoteOn: method !== 'cod' && !selectorVisible,
+      staticNote: rule === 'full'
+        ? 'Full payment of ' + fmt(total) + ' confirms this order — nothing due on delivery.'
+        : 'You\'re paying the full ' + fmt(total) + ' now — nothing due on delivery.',
+      barNowStyle: { width: pct + '%', background: '#A8CD2F', borderRadius: 99, transition: 'width .25s ease' },
+      barDueStyle: { flex: 1, background: '#E3E4DA', borderRadius: 99, display: due > 0 ? 'block' : 'none' },
+      dueOn: due > 0,
+      isBkash: method === 'bkash',
+      qrCaption: method === 'bkash' ? 'bKash QR' : 'BanglaQR',
+      copyNum: () => {
+        try { navigator.clipboard.writeText('01764250814'); } catch (e) {}
+        this.setState({ copied: true });
+        clearTimeout(this._ct);
+        this._ct = setTimeout(() => this.setState({ copied: false }), 1600);
+      },
+      copyLabel: this.state.copied ? 'Copied!' : 'Copy',
+      refLabel: method === 'bkash' ? 'bKash Transaction ID' : 'Payment reference',
+      refPlaceholder: method === 'bkash' ? 'e.g. 9HK2XXXXXX' : 'Reference from your app receipt',
+      refHelp: method === 'bkash'
+        ? 'Paste the Transaction ID from your bKash confirmation SMS — we match your payment instantly and reserve your piece.'
+        : 'Enter the reference from your banking app receipt so we can match your payment instantly.',
+      zoneInStyle: zCard(this.state.zone === 'inside'),
+      zoneOutStyle: zCard(this.state.zone === 'outside'),
+      zoneInRadio: radio(this.state.zone === 'inside', false),
+      zoneOutRadio: radio(this.state.zone === 'outside', false),
+      pickInside: () => this.setState({ zone: 'inside' }),
+      pickOutside: () => this.setState({ zone: 'outside' }),
+      zoneLabel: this.state.zone === 'inside' ? 'Inside Dhaka' : 'Outside Dhaka',
+      subtotalStr: fmt(subtotal),
+      shippingStr: fmt(shipping),
+      totalStr: fmt(total),
+      payNowStr: fmt(payNow),
+      dueStr: fmt(due),
+      ctaLabel: method === 'cod' ? 'Place order · ' + fmt(total) + ' due on delivery' : 'Pay ' + fmt(payNow) + ' & place order',
+      ctaSub: method === 'cod'
+        ? 'Keep the exact amount ready — our rider will call before arriving.'
+        : (due > 0 ? fmt(due) + ' remains — hand it to the rider in cash when your order arrives.' : 'All settled — just receive and unbox.')
+    };
+  }
+}
+</script>
+</body>
+</html>

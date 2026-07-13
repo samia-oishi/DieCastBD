@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Helmet } from "react-helmet-async";
-import { Minus, Plus, ShoppingBag, Share2 } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Share2, Bell, Check } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { canonical } from "@/lib/siteUrl";
@@ -17,6 +17,8 @@ import { Container } from "@/components/shared/Container";
 import { useCart } from "@/features/cart/api/useCart";
 import { useAddToCart } from "@/features/cart/api/useAddToCart";
 import { WishlistButton } from "@/features/wishlist/components/WishlistButton";
+import { RestockAlertDialog } from "@/components/shared/RestockAlertDialog";
+import { useRestockAlertStore } from "@/stores/restockAlertStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { useProduct, useRelatedProducts } from "./api/useProducts";
 import { ProductGallery } from "./components/ProductGallery";
@@ -64,6 +66,8 @@ export function ProductDetailPage() {
   const { items } = useCart();
   const addToCart = useAddToCart();
   const [qty, setQty] = useState(1);
+  const [notifyOpen, setNotifyOpen] = useState(false);
+  const isAlerted = useRestockAlertStore((s) => (product ? s.isAlerted(product._id) : false));
 
   useEffect(() => {
     if (product) addRecentlyViewed(product);
@@ -127,6 +131,24 @@ export function ProductDetailPage() {
     </>
   );
 
+  // Out-of-stock CTA — collects a back-in-stock alert signup, mirroring the
+  // ProductCard "Notify me" pattern (same RestockAlertDialog + store). Flips to
+  // a confirmed state once the visitor has subscribed to this product.
+  const NotifyButton = ({ className }) => (
+    <button
+      type="button"
+      onClick={isAlerted ? undefined : () => setNotifyOpen(true)}
+      className={cn(
+        "flex items-center justify-center gap-2.5 rounded-full border-[1.5px] font-bold transition-colors",
+        isAlerted ? "cursor-default border-brand text-brand-deep" : "border-ink text-ink hover:bg-ink hover:text-white",
+        className
+      )}
+    >
+      {isAlerted ? <Check size={17} strokeWidth={2.2} /> : <Bell size={16} strokeWidth={1.9} />}
+      {isAlerted ? "We'll alert you when it's back" : "Notify me when available"}
+    </button>
+  );
+
   return (
     <>
       <Seo title={product.seo?.title ? product.seo.title : `${product.title} — Buy in Bangladesh`} noTemplate={!!product.seo?.title} description={product.seo?.description || `Buy the ${product.title} in Bangladesh at DiecastBD. ${product.description?.slice(0, 100) ?? ""}`.slice(0, 160)}>
@@ -175,7 +197,9 @@ export function ProductDetailPage() {
 
             <div className="mt-5"><PriceBlock size="lg" /></div>
 
-            {!outOfStock && (
+            {outOfStock ? (
+              <NotifyButton className="mt-6 h-[52px] w-full text-[15px]" />
+            ) : (
               <>
                 <div className="mt-6 flex gap-3">
                   <div className="flex h-[52px] items-center rounded-full border border-line bg-white">
@@ -220,6 +244,7 @@ export function ProductDetailPage() {
           <div className="text-[10.5px] font-bold uppercase tracking-[0.1em] text-faint">{kicker}</div>
           <h1 className="mt-2 font-display text-[23px] font-extrabold leading-[1.2] tracking-[-0.01em] text-ink">{product.title}</h1>
           <div className="mt-3"><PriceBlock size="sm" /></div>
+          {outOfStock && <NotifyButton className="mt-4 h-12 w-full text-[14px]" />}
           {product.description && <p className="mt-3.5 text-[13.5px] leading-[1.65] text-ink-soft">{product.description}</p>}
         </div>
         <ReassuranceCard className="mx-4 mt-[18px]" />
@@ -235,6 +260,10 @@ export function ProductDetailPage() {
       )}
 
       <StickyBuyBar qty={qty} onQty={setQty} max={maxQty} onAdd={onAdd} onBuyNow={onBuyNow} outOfStock={outOfStock} />
+
+      {outOfStock && (
+        <RestockAlertDialog product={product} open={notifyOpen} onOpenChange={setNotifyOpen} />
+      )}
     </>
   );
 }

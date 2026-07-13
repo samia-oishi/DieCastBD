@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Navigate, Link, useLocation, useNavigate } from "react-router";
+import { ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { Seo } from "@/components/shared/Seo";
@@ -14,8 +15,9 @@ import { useCreateOrderMutation } from "@/features/orders/api/useOrders";
 import { useCartStore } from "@/stores/cartStore";
 import { checkoutSchema } from "./schemas/checkoutSchema";
 import { resolvePaymentOptionAvailability, calculateAmountPaidPreview } from "./lib/paymentPlanPreview";
+import { deriveCheckoutView } from "./lib/checkoutCopy";
 import { CheckoutSteps } from "./components/CheckoutSteps";
-import { NumberedCard, FieldBox, inputCls } from "./components/parts";
+import { SectionCard, FieldBox, inputCls } from "./components/parts";
 import { AddressSelector } from "./components/AddressSelector";
 import { GuestAddressForm } from "./components/GuestAddressForm";
 import { DeliveryOptions } from "./components/DeliveryOptions";
@@ -58,6 +60,9 @@ export function CheckoutPage() {
 
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [guestData, setGuestData] = useState(null);
+  // Mobile-only: the address list starts collapsed to the chosen address (a
+  // "Change" pill reveals the rest). Purely presentational.
+  const [addressExpanded, setAddressExpanded] = useState(false);
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(checkoutSchema),
@@ -120,6 +125,18 @@ export function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethodValue, codDisabled, nonCodOptions.map((o) => o.key).join(","), paymentOptionValue]);
 
+  // The redesign's view-model (rule / min / payNow / due + copy), derived purely
+  // from the availability above — no money is invented here.
+  const view = deriveCheckoutView({
+    items,
+    availability: paymentPlan.availability,
+    nonCodOptions,
+    codDisabledReason: paymentPlan.codDisabledReason,
+    total,
+    paymentMethod: paymentMethodValue,
+    paymentOption: paymentOptionValue,
+  });
+
   if (!cartLoading && items.length === 0 && !createOrderMutation.isSuccess) {
     return <Navigate to={ROUTES.CART} replace />;
   }
@@ -157,55 +174,91 @@ export function CheckoutPage() {
   };
 
   const summaryProps = {
-    items, subtotal, shipping, discount, total, coupon,
+    items, subtotal, shipping, discount, total, coupon, view,
     onApplyCoupon: setCoupon, onRemoveCoupon: clearCoupon,
     isPending: createOrderMutation.isPending, disabled: hasStockIssue,
   };
+
+  const addressCollapsed = Boolean(user && selectedAddress && !addressExpanded);
 
   return (
     <>
       <Seo title="Checkout" />
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mx-auto w-full max-w-[1160px] px-4 pb-28 pt-5 md:px-10 md:pb-10 md:pt-10">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mx-auto w-full max-w-[1160px] px-4 pb-2 pt-[18px] md:px-9 md:pb-11 md:pt-[30px]">
         {/* Mobile progress row — the desktop stepper lives in CheckoutHeader */}
         <CheckoutSteps className="justify-center text-[11.5px] md:hidden" />
-        {/* Title — desktop only; on mobile it sits in the app bar */}
-        <h1 className="hidden font-display text-[34px] font-extrabold tracking-[-0.02em] text-ink md:block">Checkout</h1>
-        <p className="mt-2 hidden text-[14.5px] text-muted-foreground md:block">Almost there — delivery details, then pick how you pay.</p>
 
-        {/* Mobile: order summary on top */}
-        <div className="mt-5 md:hidden">
-          <CheckoutSummary variant="mobile" {...summaryProps} />
-        </div>
+        <h1 className="mt-3 font-display text-[22px] font-extrabold tracking-[-0.015em] text-ink md:mt-0 md:text-[30px]">Checkout</h1>
+        <p className="mt-1 text-[13px] text-[#6B6E60] md:mt-1.5 md:text-[14.5px]">
+          <span className="md:hidden">Address, delivery, then how you'd like to pay.</span>
+          <span className="hidden md:inline">Address, delivery, then how you'd like to pay — two minutes, tops.</span>
+        </p>
 
-        <div className="mt-5 grid items-start gap-8 md:mt-7 md:grid-cols-[1.55fr_1fr]">
-          <div className="flex flex-col gap-[18px]">
+        <div className="mt-3.5 grid items-start gap-3 md:mt-6 md:grid-cols-[minmax(0,1fr)_372px] md:gap-[26px]">
+          {/* LEFT — the three section cards */}
+          <div className="flex min-w-0 flex-col gap-3 md:gap-[18px]">
             {!user && (
-              <div className="flex items-center justify-between gap-4 rounded-[16px] border border-brand-soft-border bg-brand-soft px-[18px] py-3.5">
-                <div className="text-[13.5px] text-ink-soft"><span className="font-bold text-ink">Have an account?</span> Sign in for saved addresses and order history.</div>
-                <Link to={`${ROUTES.LOGIN}?redirect=/checkout`} className="shrink-0 rounded-full bg-ink px-[18px] py-2.5 text-[13px] font-semibold text-white">Sign in</Link>
+              <div className="flex items-center justify-between gap-3 rounded-[16px] border border-brand-soft-border bg-brand-soft px-4 py-3 md:rounded-[20px] md:px-[26px]">
+                <div className="text-[13px] text-ink-soft md:text-[13.5px]">
+                  <span className="font-bold text-ink">Have an account?</span> Sign in for saved addresses.
+                </div>
+                <Link to={`${ROUTES.LOGIN}?redirect=/checkout`} className="shrink-0 rounded-full bg-ink px-4 py-2 text-[12.5px] font-semibold text-white">
+                  Sign in
+                </Link>
               </div>
             )}
 
-            <NumberedCard n="1" title="Shipping address">
+            <SectionCard
+              n="1"
+              title={<><span className="md:hidden">Deliver to</span><span className="hidden md:inline">Shipping address</span></>}
+              aside={
+                addressCollapsed && (
+                  <button
+                    type="button"
+                    onClick={() => setAddressExpanded(true)}
+                    className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink transition-colors duration-150 hover:border-brand md:hidden"
+                  >
+                    Change
+                  </button>
+                )
+              }
+            >
               {user ? (
                 <AddressSelector
                   selectedId={selectedAddress?._id}
-                  onSelect={(address) => setSelectedAddress(address)}
+                  onSelect={(address) => { setSelectedAddress(address); setAddressExpanded(false); }}
+                  collapsed={addressCollapsed}
                 />
               ) : (
                 <GuestAddressForm onChange={setGuestData} />
               )}
-            </NumberedCard>
+            </SectionCard>
 
-            <NumberedCard n="2" title="Delivery">
+            <SectionCard
+              n="2"
+              title="Delivery"
+              aside={<span className="hidden text-[12.5px] text-faint md:inline">Tracked door-to-door, nationwide</span>}
+            >
               <DeliveryOptions zones={shippingZones} value={selectedZone} onChange={(z) => setValue("shippingZone", z)} />
-              <FieldBox label="Delivery note" hint="(optional)" className="mt-4">
-                <textarea {...register("deliveryNote")} rows={2} placeholder="Landmark, preferred time…" className={inputCls} />
-              </FieldBox>
-            </NumberedCard>
+              <textarea
+                {...register("deliveryNote")}
+                rows={2}
+                placeholder="Anything for the rider? Landmark, preferred time…"
+                className={`${inputCls} mt-3 resize-y`}
+              />
+            </SectionCard>
 
-            <NumberedCard n="3" title="Payment">
+            <SectionCard
+              n="3"
+              title="Payment"
+              aside={
+                <span className="hidden items-center gap-1.5 text-[12.5px] text-faint md:inline-flex">
+                  <ShieldCheck size={13} strokeWidth={2} className="text-brand-deep" />
+                  Payments matched instantly
+                </span>
+              }
+            >
               <Controller
                 control={control}
                 name="paymentMethod"
@@ -213,37 +266,41 @@ export function CheckoutPage() {
                   <PaymentMethods
                     value={field.value}
                     onChange={field.onChange}
+                    view={view}
                     bkashConfig={settings?.bkashConfig}
                     banglaQrConfig={settings?.banglaQrConfig}
                     register={register}
                     errors={errors}
-                    total={total}
-                    codDisabled={codDisabled}
-                    codDisabledReason={paymentPlan.codDisabledReason}
-                    showPrepayNotice={paymentPlan.showPrepayNotice}
-                    shippingFee={shippingFee}
                     paymentOption={paymentOptionValue}
                     onPaymentOptionChange={(key) => setValue("paymentOption", key)}
-                    nonCodOptions={nonCodOptions}
                   />
                 )}
               />
-            </NumberedCard>
+            </SectionCard>
+
+            {/* Mobile: summary sits after payment, per the design's order */}
+            <div className="md:hidden">
+              <CheckoutSummary variant="mobile" {...summaryProps} />
+            </div>
           </div>
 
-          {/* Desktop summary */}
+          {/* RIGHT — sticky summary (desktop) */}
           <div className="hidden md:block">
             <CheckoutSummary variant="desktop" {...summaryProps} />
           </div>
         </div>
 
-        {/* Mobile sticky place-order bar */}
-        <div className="fixed inset-x-3 bottom-3 z-40 flex items-center gap-3 rounded-[22px] border border-white/16 bg-[rgba(13,15,7,0.92)] py-[10px] pl-5 pr-3 shadow-[0_10px_30px_rgba(16,18,8,0.45)] [backdrop-filter:blur(22px)_saturate(160%)] [-webkit-backdrop-filter:blur(22px)_saturate(160%)] md:hidden">
-          <div>
-            <div className="text-[10px] font-semibold tracking-[0.06em] text-faint">TOTAL</div>
-            <div className="font-display text-[18px] font-extrabold text-white">{formatTaka(total)}</div>
+        {/* Mobile sticky pay bar */}
+        <div className="sticky bottom-0 z-30 -mx-4 mt-3 flex items-center gap-3 border-t border-line bg-white px-4 py-3 md:hidden">
+          <div className="min-w-0">
+            <div className="font-display text-[17px] font-extrabold text-ink">{formatTaka(view.payNow)}</div>
+            <div className="whitespace-nowrap text-[11px] text-faint">pay now · {formatTaka(total)} total</div>
           </div>
-          <button type="submit" disabled={createOrderMutation.isPending || hasStockIssue} className="flex h-12 flex-1 items-center justify-center rounded-full bg-brand text-sm font-extrabold text-ink disabled:opacity-60">
+          <button
+            type="submit"
+            disabled={createOrderMutation.isPending || hasStockIssue}
+            className="flex-1 rounded-full bg-brand px-4 py-[13px] text-center font-display text-sm font-extrabold text-ink transition-colors duration-150 hover:bg-brand-bright disabled:opacity-60"
+          >
             {createOrderMutation.isPending ? "Placing…" : "Place order"}
           </button>
         </div>
