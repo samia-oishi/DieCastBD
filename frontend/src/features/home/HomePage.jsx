@@ -95,7 +95,7 @@ export function HomePage() {
         />
       )}
 
-      {isEnabled("brandsStrip") && <ShopByShelf brands={brands} categories={categories} />}
+      {isEnabled("brandsStrip") && <ShopByShelf tiles={settings?.shopByShelf} brands={brands} categories={categories} />}
 
       {isEnabled("collectorPicks") && (
         <ProductCarousel

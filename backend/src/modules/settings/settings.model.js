@@ -72,6 +72,23 @@ const navLinkSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// A single "Shop by shelf" tile (the homepage "Brands Strip" section). Fully
+// admin-defined — image, label, and link are all editable, so the section is no
+// longer hardcoded to the two brands + accessories category. Array position is
+// the display order. `link` is a free-text path (e.g. /shop?brand=mini-gt), not
+// a brand/category reference, so a tile can point anywhere. When shopByShelf is
+// empty the storefront falls back to the legacy brand/category derivation, so an
+// un-migrated document keeps rendering today's tiles until an admin configures
+// its own.
+const shelfTileSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true },
+    link: { type: String, required: true },
+    image: imageSchema,
+  },
+  { _id: false }
+);
+
 // Editable copy for a single hero visual style. Every field is optional: when a
 // field is blank the storefront falls back to that variant's shipped design
 // copy (HeroSection.jsx DEFAULTS), so an un-edited/un-migrated document renders
@@ -115,6 +132,10 @@ const settingsSchema = new mongoose.Schema(
       isActive: { type: Boolean, default: false },
     },
     whyChooseUs: { type: [whyChooseItemSchema], default: [] },
+    // Homepage "Shop by shelf" tiles (the section toggled by
+    // homepageSections.brandsStrip). Empty by default → storefront falls back to
+    // the legacy brand/category tiles; once populated it fully replaces them.
+    shopByShelf: { type: [shelfTileSchema], default: [] },
     collectorPromise: collectorPromiseSchema,
     testimonials: { type: [testimonialSchema], default: [] },
     faqs: { type: [faqSchema], default: [] },

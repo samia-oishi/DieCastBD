@@ -263,6 +263,7 @@ export function SettingsPage() {
       heroBanner: [],
       announcementBar: { text: "", isActive: false },
       whyChooseUs: [],
+      shopByShelf: [],
       collectorPromise: { title: "", description: "", image: null, bgColor: "", textColor: "", ctaText: "", ctaLink: "" },
       testimonials: [],
       socialLinks: { facebook: "", instagram: "", whatsapp: "", youtube: "" },
@@ -297,6 +298,7 @@ export function SettingsPage() {
   });
 
   const heroBanner = useFieldArray({ control, name: "heroBanner" });
+  const shopByShelf = useFieldArray({ control, name: "shopByShelf" });
   const whyChooseUs = useFieldArray({ control, name: "whyChooseUs" });
   const testimonials = useFieldArray({ control, name: "testimonials" });
   const faqs = useFieldArray({ control, name: "faqs" });
@@ -480,6 +482,43 @@ export function SettingsPage() {
           {HOMEPAGE_SECTIONS.map(({ key, label }) => (
             <SectionToggleRow key={key} control={control} name={`homepageSections.${key}.enabled`} label={label} />
           ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Shop by Shelf"
+        description="The tile row on the homepage (shown/hidden by the 'Brands Strip' toggle above). Each tile has its own image, label, and link — add as many as you like; they appear in the order listed. Leave this empty to keep the default Hot Wheels / MINI GT / accessories tiles."
+      >
+        <div className="flex flex-col gap-4">
+          {shopByShelf.fields.map((field, index) => (
+            <div key={field.id} className="rounded-lg border border-border p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <QrImageField control={control} name={`shopByShelf.${index}.image`} emptyLabel="No image" uploadLabel="Upload image" />
+                <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove tile" onClick={() => shopByShelf.remove(index)}>
+                  <Trash2 />
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field>
+                  <FieldLabel>Label</FieldLabel>
+                  <Input {...register(`shopByShelf.${index}.label`, { required: true })} placeholder="Hot Wheels Premium" />
+                </Field>
+                <Field>
+                  <FieldLabel>Link</FieldLabel>
+                  <Input {...register(`shopByShelf.${index}.link`, { required: true })} placeholder="/shop?brand=hot-wheels-premium" />
+                </Field>
+              </div>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() => shopByShelf.append({ label: "", link: "", image: null })}
+          >
+            <Plus /> Add Tile
+          </Button>
         </div>
       </SectionCard>
 

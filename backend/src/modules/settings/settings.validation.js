@@ -72,6 +72,12 @@ const navLink = z.object({
   url: z.string().min(1),
 });
 
+const shelfTile = z.object({
+  label: z.string().min(1),
+  link: z.string().min(1),
+  image: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
+});
+
 const navigation = z.object({
   headerLinks: z.array(navLink).optional(),
   footerLinks: z.array(navLink).optional(),
@@ -118,6 +124,7 @@ export const updateSettingsSchema = {
     heroBanner: z.array(heroSlide).optional(),
     announcementBar: z.object({ text: z.string().optional(), isActive: z.coerce.boolean().optional() }).optional(),
     whyChooseUs: z.array(whyChooseItem).optional(),
+    shopByShelf: z.array(shelfTile).optional(),
     collectorPromise: collectorPromise.optional(),
     testimonials: z.array(testimonial).optional(),
     faqs: z.array(faq).optional(),
