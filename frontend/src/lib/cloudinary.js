@@ -11,7 +11,7 @@
 // background color, so the browser does any letterboxing at the CSS layer
 // (transparent, no baked-in bars) instead of Cloudinary baking it into the
 // image. Non-Cloudinary URLs pass through untouched.
-const CARD_TRANSFORM = "c_limit,w_800";
+const CARD_TRANSFORM = "c_limit,w_800,f_auto,q_auto";
 
 export function cloudinaryCard(url) {
   if (!url || typeof url !== "string") return url;
