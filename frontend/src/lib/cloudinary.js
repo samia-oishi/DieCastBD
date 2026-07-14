@@ -43,3 +43,13 @@ const THUMB_TRANSFORM = "c_limit,w_200,f_auto,q_auto";
 export function cloudinaryThumb(url) {
   return withTransform(url, THUMB_TRANSFORM);
 }
+
+// Product-detail hover magnifier + full-screen dialog: the region under the
+// cursor is shown ~2.5x, so it needs more detail than the 800px card cap to
+// stay sharp. Fetched only when the shopper hovers/opens the image, never in
+// the catalog grid, so the PDP's initial main image stays the lighter w_800.
+const ZOOM_TRANSFORM = "c_limit,w_1600,f_auto,q_auto";
+
+export function cloudinaryZoom(url) {
+  return withTransform(url, ZOOM_TRANSFORM);
+}

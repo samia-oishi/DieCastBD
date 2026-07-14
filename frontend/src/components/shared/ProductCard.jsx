@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
 import { Plus, CarFront } from "lucide-react";
 
@@ -48,10 +48,63 @@ export function ProductCard({ product, variant = "grid", className }) {
   const isAlerted = useRestockAlertStore((s) => s.isAlerted(product._id));
   const [notifyOpen, setNotifyOpen] = useState(false);
 
-  const { slug, title, brand, price, salePrice, thumbnail, isNewArrival, isPreOrderActive, availableStock } = product;
+  const { slug, title, brand, price, salePrice, thumbnail, gallery, isNewArrival, isPreOrderActive, availableStock } = product;
   const onSale = salePrice != null && salePrice < price;
   const outOfStock = availableStock <= 0;
   const effectivePrice = onSale ? salePrice : price;
+
+  // The product's distinct images (thumbnail first), de-duped by Cloudinary id so
+  // a product with only one real photo never counts as "multiple" and never
+  // cycles — even if that photo is repeated as both thumbnail and a gallery entry.
+  const images = useMemo(() => {
+    const seen = new Set();
+    return [thumbnail, ...(gallery ?? [])].filter((im) => {
+      const key = im?.cloudinaryId ?? im?.url;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [thumbnail, gallery]);
+  const hasMultiple = images.length > 1;
+
+  // Desktop hover slideshow: slide horizontally (new image in from the right)
+  // every 1s, only while hovered and only when there's more than one image. A
+  // clone of the first image is appended so the loop back to the start slides in
+  // the same direction seamlessly (transition briefly disabled for the reset).
+  const slides = useMemo(() => (hasMultiple ? [...images, images[0]] : images), [images, hasMultiple]);
+  const [hovering, setHovering] = useState(false);
+  const [step, setStep] = useState(0);
+  const [snapping, setSnapping] = useState(false);
+
+  useEffect(() => {
+    if (!hovering || !hasMultiple) return;
+    const id = setInterval(() => setStep((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [hovering, hasMultiple]);
+
+  // Reset to the first image whenever the hover ends.
+  useEffect(() => {
+    if (!hovering) {
+      setStep(0);
+      setSnapping(false);
+    }
+  }, [hovering]);
+
+  // After the seamless snap back to the start, re-enable the transition next frame.
+  useEffect(() => {
+    if (!snapping) return;
+    const r = requestAnimationFrame(() => requestAnimationFrame(() => setSnapping(false)));
+    return () => cancelAnimationFrame(r);
+  }, [snapping]);
+
+  // When the slide onto the appended clone finishes, jump back to the real first
+  // image with the transition off — invisible because the clone is identical.
+  const onSlideEnd = () => {
+    if (step >= images.length) {
+      setSnapping(true);
+      setStep(0);
+    }
+  };
 
   const stop = (e) => e.stopPropagation();
   const goToProduct = () => navigate(`/products/${slug}`);
@@ -70,6 +123,8 @@ export function ProductCard({ product, variant = "grid", className }) {
     <>
       <div
         onClick={goToProduct}
+        onPointerEnter={(e) => { if (e.pointerType === "mouse") setHovering(true); }}
+        onPointerLeave={() => setHovering(false)}
         className={cn(
           // Hover lift/shadow is desktop-only — on touch it sticks after a tap.
           "group flex h-full w-full cursor-pointer flex-col overflow-hidden border border-line bg-white transition-[box-shadow,transform] duration-[180ms] ease-out md:hover:-translate-y-0.5 md:hover:shadow-[0_12px_32px_rgba(16,18,8,0.1)]",
@@ -78,8 +133,27 @@ export function ProductCard({ product, variant = "grid", className }) {
         )}
       >
         <div className={cn("relative flex items-center justify-center overflow-hidden bg-white", v.img)}>
-          {thumbnail?.url ? (
-            <img src={cloudinaryCard(thumbnail.url)} alt={title} loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
+          {images.length > 0 ? (
+            <>
+              <img src={cloudinaryCard(images[0].url)} alt={title} loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
+              {/* Hover slideshow: a horizontal track that slides one image every
+                  1s. The frames mount (and thus load) only while hovering. */}
+              {hovering && hasMultiple && (
+                <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                  <div
+                    onTransitionEnd={onSlideEnd}
+                    className={cn("flex h-full w-full", snapping ? "" : "transition-transform duration-500 ease-out")}
+                    style={{ transform: `translateX(-${step * 100}%)` }}
+                  >
+                    {slides.map((im, i) => (
+                      <div key={i} className="flex h-full w-full shrink-0 items-center justify-center bg-white">
+                        <img src={cloudinaryCard(im.url)} alt="" aria-hidden loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex size-full items-center justify-center bg-tile">
               <CarFront className="size-10 text-faint/50" strokeWidth={1.25} />

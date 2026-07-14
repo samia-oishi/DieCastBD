@@ -824,6 +824,24 @@ Merchant wanted editorial control over the big attention-grabbing card in the ho
 
 ---
 
+### Product-detail hover magnifier (2026-07-14)
+
+Merchant wanted the familiar "hover the product image → see a zoomed view of wherever the mouse is." Plan.md decision #79. Chose an **in-place magnifier** (zoom within the image frame) over a side-panel style because the PDP is two columns (sticky gallery + details) and a panel would cover the details.
+
+`ProductGallery` gained a `MainImage` sub-component: on `pointerenter` (mouse only — `e.pointerType === "mouse"`, so touch is excluded) it measures the *displayed* image box (the image is `h-full w-auto`, centred and letterboxed inside the container, so the overlay must track the image box, not the container) and renders a `pointer-events-none` overlay sized to that box. The overlay is a div with `background-image` = new `cloudinaryZoom` (w_1600) tier, `background-size: 250%`, and `background-position` set from the cursor's position within the box — the textbook percentage-magnifier, which stays aligned precisely because the overlay box == the on-screen image box. Touch taps fall through to the existing full-screen dialog (also upgraded to `cloudinaryZoom`). Kept the base PDP image on `cloudinaryCard` (w_800) so LCP is unchanged; the heavier w_1600 loads only on hover/open.
+
+Verified in a real browser (Playwright + CDP), not by inspection: hovering the upper-left of an R32 showed the overlay with the w_1600 source at 250%, the `background-position` moving from 40.7%/29.9% to 57.5%/72.1% as the cursor moved, the overlay measured 991×518 (the image box, not the full container), zero console errors, and a screenshot confirmed the magnified crop is sharp with the details column and "New" badge undisturbed. Frontend build + lint clean.
+
+---
+
+### Product-card hover slideshow (2026-07-14)
+
+Merchant wanted product cards to cycle through the product's images (every 2s, looping) on hover, only if it has more than one image and only while hovered. Plan.md decision #80. `ProductCard` builds `images = [thumbnail, ...gallery]` (the list endpoint already returns both; 24/32 products have gallery images). A `pointerenter` gated to `pointerType === "mouse"` sets a hovering flag; a `useEffect` then runs a 2000ms `setInterval` advancing the image index modulo the count, cleaned up on `pointerleave`/unmount, with the index reset to 0 (primary) when hover ends. Only active when `images.length > 1`; touch taps just navigate as before.
+
+Perf-preserving rendering: rather than stacking every image up-front (which would make the shop grid fetch N images per card and undo the perf pass), the extra frames are rendered **only while hovering** — so the initial grid still loads one thumbnail per card, and the cycle images load on first hover. They cross-fade via absolutely-positioned `opacity` layers (`transition-opacity duration-500`) centred on the same image box as the base thumbnail. Verified in a real browser (Playwright): a 2-image card cycled A→B at 2s and back to A at 4s (looping), the overlays unmounted and reset to the primary image on mouse-leave, single-image cards never cycle, and there were no console errors. Frontend build + lint clean.
+
+---
+
 ### Shop filters: Featured + New arrivals added, In-stock fixed (2026-07-14)
 
 Merchant asked to add the Featured and New-arrivals flags as shop-page filters, and said the in-stock filter "does not work." Plan.md decision #78.
