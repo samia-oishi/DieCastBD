@@ -78,6 +78,15 @@ const shelfTile = z.object({
   image: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
 });
 
+const featuredSpotlight = z.object({
+  productSlug: z.string().optional(),
+  image: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
+  badge: z.string().optional(),
+  brandLine: z.string().optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+});
+
 const navigation = z.object({
   headerLinks: z.array(navLink).optional(),
   footerLinks: z.array(navLink).optional(),
@@ -125,6 +134,9 @@ export const updateSettingsSchema = {
     announcementBar: z.object({ text: z.string().optional(), isActive: z.coerce.boolean().optional() }).optional(),
     whyChooseUs: z.array(whyChooseItem).optional(),
     shopByShelf: z.array(shelfTile).optional(),
+    shopByShelfHeading: z.string().optional(),
+    shopByShelfSubtitle: z.string().optional(),
+    featuredSpotlight: featuredSpotlight.optional(),
     collectorPromise: collectorPromise.optional(),
     testimonials: z.array(testimonial).optional(),
     faqs: z.array(faq).optional(),

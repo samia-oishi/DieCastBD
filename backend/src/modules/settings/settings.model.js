@@ -89,6 +89,26 @@ const shelfTileSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Per-card overrides for the homepage "Featured products" spotlight (the big
+// card). `productSlug` picks which product fills it (blank → the first featured
+// product, i.e. today's behavior). The remaining fields override only how that
+// product is DISPLAYED in this one card — they never touch the product itself
+// (its real title/image/etc. stay intact everywhere else). Blank → the product's
+// real value. Price is intentionally not overridable, so the card can't show a
+// price the product doesn't actually sell at; Add-to-cart/wishlist/link stay
+// bound to the real product.
+const featuredSpotlightSchema = new mongoose.Schema(
+  {
+    productSlug: String,
+    image: imageSchema,
+    badge: String,
+    brandLine: String,
+    title: String,
+    description: String,
+  },
+  { _id: false }
+);
+
 // Editable copy for a single hero visual style. Every field is optional: when a
 // field is blank the storefront falls back to that variant's shipped design
 // copy (HeroSection.jsx DEFAULTS), so an un-edited/un-migrated document renders
@@ -136,6 +156,14 @@ const settingsSchema = new mongoose.Schema(
     // homepageSections.brandsStrip). Empty by default → storefront falls back to
     // the legacy brand/category tiles; once populated it fully replaces them.
     shopByShelf: { type: [shelfTileSchema], default: [] },
+    // Editable heading/subtitle for that section. Blank → storefront falls back
+    // to its shipped default copy (ShopByShelf.jsx), so an un-edited document
+    // renders exactly as before.
+    shopByShelfHeading: String,
+    shopByShelfSubtitle: String,
+    // Overrides for the "Featured products" big spotlight card (display-only, see
+    // schema above). Absent → the card renders the first featured product as-is.
+    featuredSpotlight: featuredSpotlightSchema,
     collectorPromise: collectorPromiseSchema,
     testimonials: { type: [testimonialSchema], default: [] },
     faqs: { type: [faqSchema], default: [] },

@@ -5,7 +5,7 @@ import { ROUTES } from "@/constants/routes";
 import { Seo } from "@/components/shared/Seo";
 import { ProductCarousel } from "@/components/shared/ProductCarousel";
 import { useSettings } from "@/features/settings/api/useSettings";
-import { useProducts } from "@/features/products/api/useProducts";
+import { useProducts, useProduct } from "@/features/products/api/useProducts";
 import { useBrands } from "@/features/brands/api/useBrands";
 import { useCategories } from "@/features/categories/api/useCategories";
 import { HeroSection } from "./components/HeroSection";
@@ -30,6 +30,9 @@ export function HomePage() {
   const featured = useProducts({ featured: true, limit: 4 });
   const newArrivals = useProducts({ newArrival: true, limit: 8, sort: "newest" });
   const collectorPicks = useProducts({ hero: true, limit: 8 });
+  // Admin can pin a specific product to the Featured spotlight card; resolve it
+  // (with brand + all fields) via the same by-slug endpoint the PDP uses.
+  const spotlightProduct = useProduct(settings?.featuredSpotlight?.productSlug);
 
   const sections = settings?.homepageSections;
   const isEnabled = (key) => sections?.[key]?.enabled ?? true;
@@ -95,7 +98,15 @@ export function HomePage() {
         />
       )}
 
-      {isEnabled("brandsStrip") && <ShopByShelf tiles={settings?.shopByShelf} brands={brands} categories={categories} />}
+      {isEnabled("brandsStrip") && (
+        <ShopByShelf
+          tiles={settings?.shopByShelf}
+          heading={settings?.shopByShelfHeading}
+          subtitle={settings?.shopByShelfSubtitle}
+          brands={brands}
+          categories={categories}
+        />
+      )}
 
       {isEnabled("collectorPicks") && (
         <ProductCarousel
@@ -108,7 +119,13 @@ export function HomePage() {
         />
       )}
 
-      {isEnabled("featuredProducts") && <FeaturedSpotlight products={featured.data?.data} />}
+      {isEnabled("featuredProducts") && (
+        <FeaturedSpotlight
+          products={featured.data?.data}
+          spotlightConfig={settings?.featuredSpotlight}
+          spotlightProduct={spotlightProduct.data}
+        />
+      )}
 
       {isEnabled("collectorPromise") && <PremiumShelfBanner {...settings?.collectorPromise} />}
 

@@ -42,7 +42,10 @@ function Tile({ href, label, image, className }) {
  * falls back to the legacy derivation (the two brands + an accessories tile) so
  * the section never goes blank on an un-migrated document. Mobile: horizontal
  * snap row of 210px tiles; desktop: 380px grid. */
-export function ShopByShelf({ tiles: configuredTiles, brands, categories }) {
+const DEFAULT_HEADING = "Shop by shelf";
+const DEFAULT_SUBTITLE = "Two brands we trust — and the gear that keeps them mint.";
+
+export function ShopByShelf({ tiles: configuredTiles, heading, subtitle, brands, categories }) {
   const { ref, dragProps } = useDragScroll();
 
   // Legacy fallback — only used while Settings → Shop by Shelf is empty.
@@ -65,10 +68,10 @@ export function ShopByShelf({ tiles: configuredTiles, brands, categories }) {
     <section className="pt-6 md:pt-[76px]">
       <Container>
         <div className="flex items-baseline justify-between">
-          <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink md:text-[30px]">Shop by shelf</h2>
+          <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink md:text-[30px]">{heading?.trim() || DEFAULT_HEADING}</h2>
           <Link to={ROUTES.SHOP} className="text-[12.5px] font-semibold text-brand-deep md:hidden">View all</Link>
         </div>
-        <p className="mt-1.5 hidden text-[14.5px] text-muted-foreground md:mt-[7px] md:block">Two brands we trust — and the gear that keeps them mint.</p>
+        <p className="mt-1.5 hidden text-[14.5px] text-muted-foreground md:mt-[7px] md:block">{subtitle?.trim() || DEFAULT_SUBTITLE}</p>
       </Container>
 
       {/* Mobile: horizontal drag row */}
