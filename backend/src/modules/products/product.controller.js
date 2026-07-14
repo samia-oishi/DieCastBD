@@ -60,7 +60,12 @@ async function buildPublicFilter({
     if (minPrice != null) filter.price.$gte = minPrice;
     if (maxPrice != null) filter.price.$lte = maxPrice;
   }
-  if (inStock) filter.stock = { $gt: 0 };
+  // "In stock" must mean AVAILABLE stock (stock − reservedStock), matching the
+  // storefront's own out-of-stock rule (ProductCard: availableStock <= 0). Raw
+  // `stock > 0` would wrongly keep a fully-reserved item that the card shows as
+  // "Out of stock". availableStock is a virtual (not stored), so filter via
+  // $expr; $ifNull guards any legacy doc missing reservedStock.
+  if (inStock) filter.$expr = { $gt: [{ $subtract: ["$stock", { $ifNull: ["$reservedStock", 0] }] }, 0] };
   if (featured) filter.isFeatured = true;
   if (hero) filter.isHeroProduct = true;
   if (newArrival) filter.isNewArrival = true;

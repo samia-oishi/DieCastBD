@@ -821,3 +821,15 @@ Merchant wanted editorial control over the big attention-grabbing card in the ho
 **Admin.** New "Featured Spotlight" card in Settings: a product dropdown (populated from `useProducts({ limit: 100 })`, with a "First featured product (default)" sentinel option because Radix Select can't carry an empty string value), an image-override upload (reusing `QrImageField`), and badge / brand-line / title / description inputs — each labeled as an override with the product's real value as the fallback.
 
 **Verified** against the running site: with nothing configured the section renders exactly as before — the first featured product (LB-Kaido R32) in the big card with its real brand/image and 3 row cards, zero non-auth console errors. The override path is left for the merchant to exercise in admin (identical save/round-trip mechanism to the shopByShelf tiles, already proven end-to-end this session) rather than writing test data into the shared production settings document. Backend 70/70, frontend build + lint clean.
+
+---
+
+### Shop filters: Featured + New arrivals added, In-stock fixed (2026-07-14)
+
+Merchant asked to add the Featured and New-arrivals flags as shop-page filters, and said the in-stock filter "does not work." Plan.md decision #78.
+
+**In-stock — diagnosed before touching it.** Reproduced in a real browser: toggling "In stock only" *does* work mechanically — the URL becomes `?inStock=true`, a fresh `/products?inStock=true` request fires, the switch shows checked, no JS errors. It looked broken only because **all 32 catalog products are currently in stock**, so the result set doesn't change. While there, found a genuine latent bug worth fixing: the backend filtered raw `stock > 0`, but the storefront's own out-of-stock rule (`ProductCard`) is `availableStock <= 0`, i.e. `stock − reservedStock`. So a fully-reserved product would show "Out of stock" on its card yet still appear under "In stock only." Changed `buildPublicFilter` to filter available stock via `$expr` (`$subtract` of stock and `$ifNull` reservedStock, `$gt 0`), since availableStock is a computed virtual and can't be matched as a stored field. No regression: `inStock=true` still returns all 32 (all genuinely available).
+
+**Featured / New arrivals.** Backend already accepted `featured` and `newArrival` on the list endpoint (the homepage carousels use them), so this was purely frontend: `useShopFilters` now reads both from the URL and includes them in `activeFilterCount`; `FilterSidebar` got two Switch rows next to "In stock only", so they show in both the desktop sidebar and the mobile filter sheet. Verified in-browser against live data: Featured narrows the grid from 24→6 (matching `featured=true` count of 6), and enabling New arrivals as well ANDs correctly (`?featured=true&newArrival=true`), no errors.
+
+Backend 70/70, frontend build + lint clean.

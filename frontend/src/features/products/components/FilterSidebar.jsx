@@ -117,9 +117,19 @@ export function FilterSidebar({ filters, updateFilters, clearFilters, activeFilt
         </div>
       )}
 
-      <div className="mt-6 flex items-center justify-between border-t border-line-soft pt-5">
-        <span className="text-[13.5px] font-semibold text-ink">In stock only</span>
-        <Switch checked={!!filters.inStock} onCheckedChange={(checked) => updateFilters({ inStock: checked || undefined })} />
+      <div className="mt-6 flex flex-col gap-4 border-t border-line-soft pt-5">
+        <div className="flex items-center justify-between">
+          <span className="text-[13.5px] font-semibold text-ink">In stock only</span>
+          <Switch checked={!!filters.inStock} onCheckedChange={(checked) => updateFilters({ inStock: checked || undefined })} />
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[13.5px] font-semibold text-ink">Featured</span>
+          <Switch checked={!!filters.featured} onCheckedChange={(checked) => updateFilters({ featured: checked || undefined })} />
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[13.5px] font-semibold text-ink">New arrivals</span>
+          <Switch checked={!!filters.newArrival} onCheckedChange={(checked) => updateFilters({ newArrival: checked || undefined })} />
+        </div>
       </div>
     </div>
   );
