@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { NavLink, Outlet, Link } from "react-router";
+import "@/styles/admin-fonts.css";
 import {
   LayoutDashboard,
   Package,

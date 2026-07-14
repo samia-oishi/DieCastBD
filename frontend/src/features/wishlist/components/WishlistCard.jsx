@@ -91,7 +91,7 @@ export function WishlistCard({ product }) {
       >
         <div className="relative flex h-[145px] items-center justify-center overflow-hidden bg-tile md:h-[230px]">
           {thumbnail?.url ? (
-            <img src={cloudinaryCard(thumbnail.url)} alt={title} className="h-full w-auto max-w-none" />
+            <img src={cloudinaryCard(thumbnail.url)} alt={title} loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
           ) : (
             <div className="flex size-full items-center justify-center">
               <CarFront className="size-10 text-faint/50" strokeWidth={1.25} />

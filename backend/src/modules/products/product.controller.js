@@ -14,6 +14,26 @@ const SORT_MAP = {
   "title-asc": { title: 1 },
 };
 
+// .lean() skips Mongoose's virtual getters entirely (there's no native
+// "lean + virtuals" option — that only exists via the separate
+// mongoose-lean-virtuals plugin, which isn't installed here), so public reads
+// that use .lean() for the hydration-overhead savings must recompute these by
+// hand. Mirrors product.model.js's availableStock/profitMargin/isPreOrderActive
+// getters exactly — keep in sync if those change. costPrice is select:false
+// and never re-selected on these public routes, so it's always undefined here
+// and profitMargin always resolves to null, same as before this change.
+function withComputedVirtuals(p) {
+  p.availableStock = p.stock - p.reservedStock;
+  if (p.costPrice == null || !p.price) {
+    p.profitMargin = null;
+  } else {
+    const effectivePrice = p.salePrice != null && p.salePrice < p.price ? p.salePrice : p.price;
+    p.profitMargin = effectivePrice ? Math.round(((effectivePrice - p.costPrice) / effectivePrice) * 100) : null;
+  }
+  p.isPreOrderActive = Boolean(p.isPreOrder) && (!p.preOrderEndDate || p.preOrderEndDate >= new Date());
+  return p;
+}
+
 async function buildPublicFilter({
   brand,
   category,
@@ -28,14 +48,12 @@ async function buildPublicFilter({
 }) {
   const filter = { status: "active", isDeleted: false };
 
-  if (brand) {
-    const brandDoc = await Brand.findOne({ slug: brand });
-    filter.brand = brandDoc?._id ?? null; // null slug match => intentionally empty result set
-  }
-  if (category) {
-    const categoryDoc = await Category.findOne({ slug: category });
-    filter.category = categoryDoc?._id ?? null;
-  }
+  const [brandDoc, categoryDoc] = await Promise.all([
+    brand ? Brand.findOne({ slug: brand }) : Promise.resolve(undefined),
+    category ? Category.findOne({ slug: category }) : Promise.resolve(undefined),
+  ]);
+  if (brand) filter.brand = brandDoc?._id ?? null; // null slug match => intentionally empty result set
+  if (category) filter.category = categoryDoc?._id ?? null;
   if (series) filter.series = series;
   if (minPrice != null || maxPrice != null) {
     filter.price = {};
@@ -95,12 +113,13 @@ export const listProducts = asyncHandler(async (req, res) => {
       .skip(skip)
       .limit(limit)
       .populate("brand", "name slug")
-      .populate("category", "name slug"),
+      .populate("category", "name slug")
+      .lean(),
     Product.countDocuments(filter),
   ]);
 
   sendSuccess(res, {
-    data: items,
+    data: items.map(withComputedVirtuals),
     meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 });
@@ -128,13 +147,16 @@ export const getFilterOptions = asyncHandler(async (req, res) => {
 export const getProductBySlug = asyncHandler(async (req, res) => {
   const product = await Product.findOne({ slug: req.params.slug, status: "active", isDeleted: false })
     .populate("brand", "name slug")
-    .populate("category", "name slug");
+    .populate("category", "name slug")
+    .lean();
   if (!product) throw ApiError.notFound("Product not found");
-  sendSuccess(res, { data: product });
+  sendSuccess(res, { data: withComputedVirtuals(product) });
 });
 
 export const getRelatedProducts = asyncHandler(async (req, res) => {
-  const product = await Product.findOne({ slug: req.params.slug });
+  // Internal-only lookup — its output is never sent to the client, only
+  // ._id/.brand/.category are read below, so no virtuals are needed here.
+  const product = await Product.findOne({ slug: req.params.slug }).lean();
   if (!product) throw ApiError.notFound("Product not found");
 
   const related = await Product.find({
@@ -144,9 +166,10 @@ export const getRelatedProducts = asyncHandler(async (req, res) => {
     $or: [{ brand: product.brand }, { category: { $in: product.category } }],
   })
     .limit(8)
-    .populate("brand", "name slug");
+    .populate("brand", "name slug")
+    .lean();
 
-  sendSuccess(res, { data: related });
+  sendSuccess(res, { data: related.map(withComputedVirtuals) });
 });
 
 export const listProductsAdmin = asyncHandler(async (req, res) => {

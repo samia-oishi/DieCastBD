@@ -17,7 +17,7 @@ function ProductSummary({ product }) {
     <div className="mt-[18px] flex items-center gap-3.5 rounded-[16px] border border-line-soft bg-paper p-3">
       <div className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-line-soft bg-white">
         {product.thumbnail?.url && (
-          <img src={cloudinaryCard(product.thumbnail.url)} alt="" className="h-full w-auto max-w-none" />
+          <img src={cloudinaryCard(product.thumbnail.url)} alt="" loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
         )}
       </div>
       <div className="min-w-0 flex-1">

@@ -3,12 +3,13 @@ import { ArrowRight } from "lucide-react";
 
 import { Container } from "@/components/shared/Container";
 import { ROUTES } from "@/constants/routes";
+import { cloudinaryCard } from "@/lib/cloudinary";
 import { cn } from "@/lib/utils";
 
 function BannerImage({ image, className }) {
   return image?.url ? (
     <div className={cn("relative overflow-hidden rounded-[14px] md:rounded-[20px]", className)}>
-      <img src={image.url} alt="" className="size-full object-cover" />
+      <img src={cloudinaryCard(image.url)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
     </div>
   ) : (
     <div className={cn("relative rounded-[14px] border-[1.5px] border-dashed border-white/25 bg-white/5 md:rounded-[20px]", className)} />

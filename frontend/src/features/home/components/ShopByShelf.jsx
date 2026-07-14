@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Container } from "@/components/shared/Container";
 import { useDragScroll } from "@/hooks/useDragScroll";
 import { ROUTES } from "@/constants/routes";
+import { cloudinaryCard } from "@/lib/cloudinary";
 import { cn } from "@/lib/utils";
 
 function Tile({ href, label, image, className }) {
@@ -17,8 +18,10 @@ function Tile({ href, label, image, className }) {
     >
       {image?.url ? (
         <img
-          src={image.url}
+          src={cloudinaryCard(image.url)}
           alt={label}
+          loading="lazy"
+          decoding="async"
           className="size-full object-cover"
         />
       ) : (

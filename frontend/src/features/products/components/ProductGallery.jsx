@@ -29,7 +29,7 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
         onClick={() => setZoomOpen(true)}
         className="relative flex h-[300px] w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-[24px]"
       >
-        <img src={cloudinaryCard(active.url)} alt={title} className="h-full w-auto max-w-none" />
+        <img src={cloudinaryCard(active.url)} alt={title} loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
         {isNew && (
           <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-ink px-2.5 py-[5px] text-[9.5px] font-bold uppercase tracking-[0.06em] text-white md:left-4 md:top-4 md:px-3 md:py-1.5 md:text-[10.5px] md:tracking-[0.07em]">
             New
@@ -50,7 +50,7 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
                 i === selected ? "border-2 border-brand" : "border border-line"
               )}
             >
-              <img src={cloudinaryCard(image.url)} alt="" className="h-full w-auto max-w-none" />
+              <img src={cloudinaryCard(image.url)} alt="" loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
             </button>
           ))}
         </div>
@@ -59,7 +59,7 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
       <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
         <DialogContent className="max-w-3xl border-none bg-transparent p-0 shadow-none" showCloseButton={false}>
           <DialogTitle className="sr-only">{title}</DialogTitle>
-          <img src={active.url} alt={title} className="h-auto max-h-[85vh] w-full rounded-[16px] bg-white object-contain" />
+          <img src={cloudinaryCard(active.url)} alt={title} loading="lazy" decoding="async" className="h-auto max-h-[85vh] w-full rounded-[16px] bg-white object-contain" />
         </DialogContent>
       </Dialog>
     </div>

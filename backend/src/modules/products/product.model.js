@@ -111,5 +111,9 @@ productSchema.index({ title: "text", description: "text", tags: "text" });
 productSchema.index({ isFeatured: 1 });
 productSchema.index({ isHeroProduct: 1 });
 productSchema.index({ status: 1, isDeleted: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ series: 1 });
+productSchema.index({ isNewArrival: 1 });
+productSchema.index({ createdAt: -1 });
 
 export const Product = mongoose.model("Product", productSchema);
