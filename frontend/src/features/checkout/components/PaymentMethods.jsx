@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ShieldCheck, Lock, QrCode } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { cloudinaryThumb } from "@/lib/cloudinary";
 import { bkashLogo, banglaQrLogo } from "@/assets/payments";
 import { OptionCard, Radio, FieldBox, inputCls } from "./parts";
 import { PaySplit } from "./PaySplit";
@@ -51,7 +52,7 @@ function QrPanelImage({ image, caption }) {
     <div className="mx-auto shrink-0 md:mx-0">
       {image?.url ? (
         <div className="flex size-[126px] items-center justify-center overflow-hidden rounded-[14px] border border-line bg-white p-2">
-          <img src={image.url} alt={caption} className="size-full object-contain" />
+          <img src={cloudinaryThumb(image.url)} alt={caption} loading="lazy" decoding="async" className="size-full object-contain" />
         </div>
       ) : (
         <div className="flex size-[126px] flex-col items-center justify-center gap-[7px] rounded-[14px] border-[1.5px] border-dashed border-[#C9CBBE] text-faint">

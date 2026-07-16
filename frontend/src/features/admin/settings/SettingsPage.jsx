@@ -12,6 +12,7 @@ import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { ICON_MAP } from "@/features/home/components/WhyChooseUsSection";
 import { useSettings } from "@/features/settings/api/useSettings";
+import { useProducts } from "@/features/products/api/useProducts";
 import { useUpdateSettingsMutation, useUploadSettingsImageMutation } from "./api/useAdminSettings";
 
 const ICON_NAMES = Object.keys(ICON_MAP);
@@ -255,6 +256,8 @@ function ColorField({ control, name, fallback }) {
 
 export function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
+  const { data: productsResp } = useProducts({ limit: 100 });
+  const productList = productsResp?.data ?? [];
   const updateMutation = useUpdateSettingsMutation();
 
   const { register, control, handleSubmit } = useForm({
@@ -263,6 +266,10 @@ export function SettingsPage() {
       heroBanner: [],
       announcementBar: { text: "", isActive: false },
       whyChooseUs: [],
+      shopByShelf: [],
+      shopByShelfHeading: "",
+      shopByShelfSubtitle: "",
+      featuredSpotlight: { productSlug: "", image: null, badge: "", brandLine: "", title: "", description: "" },
       collectorPromise: { title: "", description: "", image: null, bgColor: "", textColor: "", ctaText: "", ctaLink: "" },
       testimonials: [],
       socialLinks: { facebook: "", instagram: "", whatsapp: "", youtube: "" },
@@ -297,6 +304,7 @@ export function SettingsPage() {
   });
 
   const heroBanner = useFieldArray({ control, name: "heroBanner" });
+  const shopByShelf = useFieldArray({ control, name: "shopByShelf" });
   const whyChooseUs = useFieldArray({ control, name: "whyChooseUs" });
   const testimonials = useFieldArray({ control, name: "testimonials" });
   const faqs = useFieldArray({ control, name: "faqs" });
@@ -481,6 +489,105 @@ export function SettingsPage() {
             <SectionToggleRow key={key} control={control} name={`homepageSections.${key}.enabled`} label={label} />
           ))}
         </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Shop by Shelf"
+        description="The tile row on the homepage (shown/hidden by the 'Brands Strip' toggle above). Each tile has its own image, label, and link — add as many as you like; they appear in the order listed. Leave the tiles empty to keep the default Hot Wheels / MINI GT / accessories tiles."
+      >
+        <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Field>
+            <FieldLabel>Section heading</FieldLabel>
+            <Input {...register("shopByShelfHeading")} placeholder="Shop by shelf" />
+          </Field>
+          <Field>
+            <FieldLabel>Section subtitle</FieldLabel>
+            <Input {...register("shopByShelfSubtitle")} placeholder="Two brands we trust — and the gear that keeps them mint." />
+          </Field>
+        </div>
+        <div className="flex flex-col gap-4">
+          {shopByShelf.fields.map((field, index) => (
+            <div key={field.id} className="rounded-lg border border-border p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <QrImageField control={control} name={`shopByShelf.${index}.image`} emptyLabel="No image" uploadLabel="Upload image" />
+                <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove tile" onClick={() => shopByShelf.remove(index)}>
+                  <Trash2 />
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field>
+                  <FieldLabel>Label</FieldLabel>
+                  <Input {...register(`shopByShelf.${index}.label`, { required: true })} placeholder="Hot Wheels Premium" />
+                </Field>
+                <Field>
+                  <FieldLabel>Link</FieldLabel>
+                  <Input {...register(`shopByShelf.${index}.link`, { required: true })} placeholder="/shop?brand=hot-wheels-premium" />
+                </Field>
+              </div>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() => shopByShelf.append({ label: "", link: "", image: null })}
+          >
+            <Plus /> Add Tile
+          </Button>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Featured Spotlight"
+        description="The big card in the homepage 'Featured products' section. Pick which product it features, then optionally override how it's shown in this card only — the overrides never change the product itself (its real title, image, and price stay the same everywhere else). Leave the product on 'First featured product' to keep the automatic behavior; leave any override blank to use the product's real value. Add to cart, wishlist, price, and the click-through always stay tied to the real product."
+      >
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Spotlight product</FieldLabel>
+            <Controller
+              control={control}
+              name="featuredSpotlight.productSlug"
+              render={({ field }) => (
+                <Select key={field.value || "none"} value={field.value || "__none__"} onValueChange={(v) => field.onChange(v === "__none__" ? "" : v)}>
+                  <SelectTrigger className="max-w-md">
+                    <SelectValue placeholder="First featured product (default)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">First featured product (default)</SelectItem>
+                    {productList.map((p) => (
+                      <SelectItem key={p.slug} value={p.slug}>
+                        {p.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Image override</FieldLabel>
+            <QrImageField control={control} name="featuredSpotlight.image" emptyLabel="No override" uploadLabel="Upload image" />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field>
+              <FieldLabel>Badge override</FieldLabel>
+              <Input {...register("featuredSpotlight.badge")} placeholder="NEW" />
+            </Field>
+            <Field>
+              <FieldLabel>Brand line override</FieldLabel>
+              <Input {...register("featuredSpotlight.brandLine")} placeholder="Hot Wheels Premium" />
+            </Field>
+          </div>
+          <Field>
+            <FieldLabel>Title override</FieldLabel>
+            <Input {...register("featuredSpotlight.title")} placeholder="Product title shown on the card" />
+          </Field>
+          <Field>
+            <FieldLabel>Description override</FieldLabel>
+            <Textarea rows={2} {...register("featuredSpotlight.description")} placeholder="Short description shown on the card (desktop)" />
+          </Field>
+        </FieldGroup>
       </SectionCard>
 
       <SectionCard title="Why Choose Us" description="Homepage trust-signal grid.">

@@ -17,6 +17,8 @@ export function useShopFilters() {
       minPrice: searchParams.get("minPrice") ?? undefined,
       maxPrice: searchParams.get("maxPrice") ?? undefined,
       inStock: searchParams.get("inStock") === "true" ? true : undefined,
+      featured: searchParams.get("featured") === "true" ? true : undefined,
+      newArrival: searchParams.get("newArrival") === "true" ? true : undefined,
       sort: searchParams.get("sort") ?? DEFAULT_SORT,
       q: searchParams.get("q") ?? undefined,
       page: Number(searchParams.get("page") ?? 1),
@@ -47,7 +49,7 @@ export function useShopFilters() {
 
   const clearFilters = () => setSearchParams(new URLSearchParams(), { replace: true });
 
-  const activeFilterCount = ["brand", "category", "series", "minPrice", "maxPrice", "inStock"].filter(
+  const activeFilterCount = ["brand", "category", "series", "minPrice", "maxPrice", "inStock", "featured", "newArrival"].filter(
     (key) => filters[key] !== undefined
   ).length;
 

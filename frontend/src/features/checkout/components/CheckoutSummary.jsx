@@ -3,7 +3,7 @@ import { Link } from "react-router";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
-import { cloudinaryCard } from "@/lib/cloudinary";
+import { cloudinaryThumb } from "@/lib/cloudinary";
 import { ROUTES } from "@/constants/routes";
 import { CouponRow } from "@/features/cart/components/CouponRow";
 
@@ -13,7 +13,7 @@ function OrderItem({ item }) {
     <div className="flex items-center gap-3">
       <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-tile">
         {product.thumbnail?.url ? (
-          <img src={cloudinaryCard(product.thumbnail.url)} alt="" className="h-full w-auto max-w-none" />
+          <img src={cloudinaryThumb(product.thumbnail.url)} alt="" loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
         ) : (
           <span className="text-[10px] font-bold text-faint">1:64</span>
         )}

@@ -3,6 +3,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
 import { formatTaka } from "@/lib/currency";
+import { cloudinaryHero } from "@/lib/cloudinary";
 import { cn } from "@/lib/utils";
 
 // Shipped design copy for each hero style. This is the real, live content — an
@@ -72,7 +73,16 @@ function resolveCopy(variant, content) {
 
 function HeroImage({ image, className, radius = "rounded-[16px] md:rounded-[24px]" }) {
   if (image?.url) {
-    return <img src={image.url} alt="" className={cn("size-full object-cover", radius, className)} />;
+    return (
+      <img
+        src={cloudinaryHero(image.url)}
+        alt=""
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
+        className={cn("size-full object-cover", radius, className)}
+      />
+    );
   }
   return (
     <div className={cn("flex size-full items-center justify-center border border-dashed border-black/15 bg-black/[0.03] text-xs text-faint", radius, className)}>

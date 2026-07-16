@@ -3,7 +3,7 @@ import { MapPin } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
-import { cloudinaryCard } from "@/lib/cloudinary";
+import { cloudinaryThumb } from "@/lib/cloudinary";
 import { ROUTES } from "@/constants/routes";
 import { StatusChip } from "@/components/shared/StatusChip";
 import { OrderTracker } from "@/components/shared/OrderTracker";
@@ -32,7 +32,7 @@ function OrderItems({ order }) {
             className={cn("flex items-center gap-2.5 md:gap-3.5", i > 0 && "mt-3 border-t border-tile pt-3 md:mt-3.5 md:pt-3.5")}
           >
             <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-tile md:h-[58px] md:w-16 md:rounded-[12px]">
-              {item.thumbnail?.url && <img src={cloudinaryCard(item.thumbnail.url)} alt="" className="h-full w-auto max-w-none" />}
+              {item.thumbnail?.url && <img src={cloudinaryThumb(item.thumbnail.url)} alt="" loading="lazy" decoding="async" className="h-full w-auto max-w-none" />}
             </div>
             <div className="min-w-0 flex-1">
               <div className="line-clamp-2 text-[12.5px] font-semibold leading-[1.3] text-ink md:text-sm">{item.title}</div>

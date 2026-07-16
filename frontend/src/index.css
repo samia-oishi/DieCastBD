@@ -3,12 +3,16 @@
 @import "shadcn/tailwind.css";
 
 /* Storefront fonts (redesign): Archivo = display/headings/prices/wordmark (700/800
-   + italic accents), Instrument Sans = body. Admin keeps Geist via the admin theme
-   scope below, so Geist stays imported. */
+   + italic accents), Instrument Sans = body. Geist (admin-only) is intentionally
+   NOT imported here — every visitor loads this file, and Geist's woff2 files are
+   dead weight for the storefront majority who never see /admin. It's imported
+   from styles/admin-fonts.css instead, pulled in only by AdminLayout.jsx (itself
+   a lazy route chunk), so it downloads only when /admin is actually visited. The
+   [data-theme="diecastbd-admin"] font-variable scope below still lives here —
+   it's a few bytes of CSS custom properties, not a font download. */
 @import "@fontsource-variable/archivo";
 @import "@fontsource-variable/archivo/wght-italic.css";
 @import "@fontsource-variable/instrument-sans";
-@import "@fontsource-variable/geist";
 
 /* Two DaisyUI themes so the DaisyUI-only components (Rating/Steps/Loading) match
    whichever scope renders them: `diecastbd` is the light storefront default;

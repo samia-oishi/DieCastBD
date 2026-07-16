@@ -1,13 +1,13 @@
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router";
 
 import { PublicLayout } from "./layouts/PublicLayout";
 import { AuthLayout } from "./layouts/AuthLayout";
-import { AdminLayout } from "./layouts/AdminLayout";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
 import { UnauthorizedPage } from "@/components/shared/UnauthorizedPage";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { RequireRole } from "@/components/shared/RequireRole";
+import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { ROLES } from "@/constants/routes";
 
 // Every page is code-split so a storefront visitor never downloads the admin
@@ -55,6 +55,13 @@ const AdminNewsletterPage = page(() => import("@/features/admin/newsletter/Newsl
 const AdminPagesPage = page(() => import("@/features/admin/pages/PagesPage"), "PagesPage");
 const AdminPageFormPage = page(() => import("@/features/admin/pages/PageFormPage"), "PageFormPage");
 
+// Unlike PublicLayout/AuthLayout (eager — every visitor needs them), AdminLayout
+// is gated behind RequireRole and every one of its child pages is already
+// lazy — only the shell itself wasn't. Lazy-loading it too keeps its
+// admin-only weight (including the Geist font, see styles/admin-fonts.css)
+// off the critical path for the storefront majority.
+const AdminLayout = page(() => import("./layouts/AdminLayout"), "AdminLayout");
+
 export const router = createBrowserRouter([
   {
     element: <PublicLayout />,
@@ -101,7 +108,11 @@ export const router = createBrowserRouter([
     element: <RequireRole roles={[ROLES.ADMIN, ROLES.STAFF]} />,
     children: [
       {
-        element: <AdminLayout />,
+        element: (
+          <Suspense fallback={<FullPageLoader />}>
+            <AdminLayout />
+          </Suspense>
+        ),
         children: [
           { index: true, element: <DashboardPage /> },
           { path: "products", element: <ProductsPage /> },

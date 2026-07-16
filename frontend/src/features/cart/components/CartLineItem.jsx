@@ -3,14 +3,14 @@ import { Minus, Plus, X, CarFront, TriangleAlert } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
-import { cloudinaryCard } from "@/lib/cloudinary";
+import { cloudinaryThumb } from "@/lib/cloudinary";
 import { useCart } from "../api/useCart";
 
 function Thumb({ product, className }) {
   return (
     <Link to={`/products/${product.slug}`} className={cn("relative flex shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-tile md:rounded-[14px]", className)}>
       {product.thumbnail?.url ? (
-        <img src={cloudinaryCard(product.thumbnail.url)} alt={product.title} className="h-full w-auto max-w-none" />
+        <img src={cloudinaryThumb(product.thumbnail.url)} alt={product.title} loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
       ) : (
         <div className="flex size-full items-center justify-center"><CarFront className="size-6 text-faint/40" strokeWidth={1.25} /></div>
       )}

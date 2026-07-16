@@ -19,6 +19,7 @@ import * as restockAlertRoutes from "../modules/restockAlerts/restockAlert.route
 import cronRoutes from "../modules/cron/cron.routes.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
+import { cacheControl } from "../middlewares/cacheControl.js";
 
 const router = Router();
 const requireAdmin = [authenticate, authorize("admin", "staff")];
@@ -26,11 +27,14 @@ const requireAdmin = [authenticate, authorize("admin", "staff")];
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes.customerRouter);
 
-router.use("/brands", brandRoutes.publicRouter);
-router.use("/categories", categoryRoutes.publicRouter);
-router.use("/products", productRoutes.publicRouter);
+// Public catalog reads change infrequently (admin-managed) — short cache
+// windows let browsers/CDN skip a DB round trip on repeat views. Products get
+// a shorter TTL since price/stock changes there matter more to a shopper.
+router.use("/brands", cacheControl(300), brandRoutes.publicRouter);
+router.use("/categories", cacheControl(300), categoryRoutes.publicRouter);
+router.use("/products", cacheControl(60), productRoutes.publicRouter);
 router.use("/products", restockAlertRoutes.publicRouter);
-router.use("/settings", settingsRoutes.publicRouter);
+router.use("/settings", cacheControl(300), settingsRoutes.publicRouter);
 router.use("/newsletter", newsletterRoutes.publicRouter);
 router.use("/contact", contactRoutes);
 router.use("/wishlist", wishlistRoutes);
