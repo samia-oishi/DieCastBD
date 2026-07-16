@@ -2,46 +2,24 @@
 // Source of truth: 'Daily Workspace/Diecast/HW-Purchase-List-Jul2026.xlsx' + DiecastBD-Website-Import.csv
 //
 // costPrice = TRUE LANDED COST per unit:
-//   (¥ paid × 18.746) + (weight_kg × ৳900 air freight) + ৳30 delivery packaging
-//   where 18.746 = ৳18.20/¥ FX + 3% payment/agent markup.
+//   (yuan x 18.746) + (weight_kg x 900 air freight) + 30 delivery packaging
+//   where 18.746 = 18.20/yuan FX + 3% payment/agent markup.
 //
-// price     = retail (anchor) price, set against the cheapest live BD listing per SKU.
-// salePrice = null on purpose. It is the price a RETAIL customer actually pays at
-//   checkout, so it must never hold the wholesale figure — that would hand every
-//   walk-in buyer the shop-to-shop price. Set it only while running a drop/promo.
-//   Suggested drop prices live in the 'Sale/Drop ৳' column of the inventory sheet.
+// price     = retail (17 Jul re-priced against live BD competitors: CTG + HWsBD live).
+// salePrice = pre-set fallback discount to activate on slow movers. null where none
+//   (Cyberpunk Quadra: one-of-one trophy item, no sale price, no wholesale).
 //
-// stock: protectors are counted PER PIECE (12 + 10 + 10 = 32 pcs), not per pack.
+// stock: protectors are counted PER PIECE (12 + 10 + 10 = 32 pcs).
 
 export const brands = [
-  {
-    key: "hot-wheels-premium",
-    name: "Hot Wheels Premium",
-    description: "Mattel's collector-grade diecast line — Car Culture, Boulevard, Pop Culture, F1 Gold Label, and licensed collaborations.",
-  },
-  {
-    key: "mini-gt",
-    name: "MINI GT",
-    description: "TSM Models' premium 1:64 diecast line, known for JDM tuner cars and museum-quality detailing.",
-  },
+  { key: "hot-wheels-premium", name: "Hot Wheels Premium", description: "Mattel's collector-grade diecast line — Car Culture, Boulevard, Pop Culture, F1 Gold Label, and licensed collaborations." },
+  { key: "mini-gt", name: "MINI GT", description: "TSM Models' premium 1:64 diecast line, known for JDM tuner cars and museum-quality detailing." },
 ];
 
 export const categories = [
-  {
-    key: "premium-singles",
-    name: "Premium Singles",
-    description: "Individually cased collector diecast — the core of the range.",
-  },
-  {
-    key: "multi-packs",
-    name: "Multi-Packs",
-    description: "Sealed multi-car sets, sold as a set or broken for singles.",
-  },
-  {
-    key: "accessories",
-    name: "Accessories",
-    description: "Protective cases and display accessories for carded and boxed diecast.",
-  },
+  { key: "premium-singles", name: "Premium Singles", description: "Individually cased collector diecast — the core of the range." },
+  { key: "multi-packs", name: "Multi-Packs", description: "Sealed multi-car sets, sold as a set or broken for singles." },
+  { key: "accessories", name: "Accessories", description: "Protective cases and display accessories for carded and boxed diecast." },
 ];
 
 export const products = [
@@ -60,9 +38,9 @@ export const products = [
     features: ["Sealed 5-car Ferrari set", "Officially licensed Ferrari liveries", "Collectible sealed packaging"],
     tags: ["ferrari", "5-pack", "sealed", "multi-pack", "gift"],
     specifications: { Weight: "380 g" },
-    price: 3200,
-    salePrice: null,
-    costPrice: 2053,   // landed: ¥89.66 → FX ৳1681 + freight ৳342 + pack ৳30
+    price: 2890,
+    salePrice: 2590,
+    costPrice: 2053,
     stock: 4,
     isFeatured: true,
     isHeroProduct: true,
@@ -83,9 +61,9 @@ export const products = [
     features: ["Sealed 5-car F1 grid set", "5 official F1 team liveries", "Great gift for F1 fans"],
     tags: ["f1", "formula 1", "5-pack", "sealed", "multi-pack", "gift"],
     specifications: { Weight: "380 g" },
-    price: 2200,
-    salePrice: null,
-    costPrice: 1368,   // landed: ¥53.16 → FX ৳996 + freight ৳342 + pack ৳30
+    price: 2090,
+    salePrice: 1880,
+    costPrice: 1368,
     stock: 2,
     isFeatured: false,
     isHeroProduct: false,
@@ -106,9 +84,9 @@ export const products = [
     features: ["Gold Label premium series", "Metal body & metal base", "Real Riders rubber tyres", "Lewis Hamilton's Ferrari debut car"],
     tags: ["f1", "formula 1", "ferrari", "hamilton", "gold label", "bd exclusive"],
     specifications: { Weight: "135 g" },
-    price: 2500,
-    salePrice: null,
-    costPrice: 1464,   // landed: ¥70.03 → FX ৳1313 + freight ৳122 + pack ৳30
+    price: 2790,
+    salePrice: 2510,
+    costPrice: 1464,
     stock: 3,
     isFeatured: true,
     isHeroProduct: true,
@@ -129,9 +107,9 @@ export const products = [
     features: ["Gold Label premium series", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["f1", "formula 1", "racing bulls", "vcarb", "gold label", "bd exclusive"],
     specifications: { Weight: "135 g" },
-    price: 1600,
-    salePrice: null,
-    costPrice: 894,   // landed: ¥39.60 → FX ৳742 + freight ৳122 + pack ৳30
+    price: 1690,
+    salePrice: 1520,
+    costPrice: 894,
     stock: 2,
     isFeatured: false,
     isHeroProduct: false,
@@ -149,15 +127,15 @@ export const products = [
     material: "Diecast metal body, metal base, Real Riders rubber tyres",
     color: "Black / orange",
     description: "Officially licensed Cyberpunk 2077 Quadra Turbo-R V-Tech on premium Pop Culture card art. Metal/metal construction, Real Riders. Crosses over to gamers, not just car collectors.",
-    features: ["Officially licensed Cyberpunk 2077", "Metal body & metal base", "Real Riders rubber tyres", "Premium Pop Culture card art"],
-    tags: ["pop culture", "cyberpunk", "gaming", "bd exclusive"],
+    features: ["Officially licensed Cyberpunk 2077", "Metal body & metal base", "Real Riders rubber tyres", "One-of-one in Bangladesh"],
+    tags: ["pop culture", "cyberpunk", "gaming", "bd exclusive", "rare"],
     specifications: { Weight: "135 g" },
-    price: 2200,
+    price: 3490,
     salePrice: null,
-    costPrice: 1426,   // landed: ¥68.00 → FX ৳1275 + freight ৳122 + pack ৳30
+    costPrice: 1426,
     stock: 1,
     isFeatured: true,
-    isHeroProduct: false,
+    isHeroProduct: true,
     isNewArrival: true,
   },
   {
@@ -175,17 +153,17 @@ export const products = [
     features: ["Officially licensed Stranger Things", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["pop culture", "stranger things", "bmw", "netflix"],
     specifications: { Weight: "135 g" },
-    price: 2000,
-    salePrice: null,
-    costPrice: 1257,   // landed: ¥58.97 → FX ৳1106 + freight ৳122 + pack ৳30
+    price: 2390,
+    salePrice: 2150,
+    costPrice: 1257,
     stock: 1,
-    isFeatured: false,
+    isFeatured: true,
     isHeroProduct: false,
     isNewArrival: true,
   },
   {
     sku: "HWCC-001",
-    title: "Hot Wheels Car Culture — Ferrari 250 GTO (Vintage Racing Club 4/5)",
+    title: "Hot Wheels Car Culture — Ferrari 250 GTO (Vintage Racing Club)",
     brandKey: "hot-wheels-premium",
     categoryKey: "premium-singles",
     series: "Car Culture — Vintage Racing Club",
@@ -198,9 +176,9 @@ export const products = [
     features: ["Car Culture premium series", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["car culture", "ferrari", "250 gto", "vintage racing", "classic"],
     specifications: { Weight: "135 g" },
-    price: 1800,
-    salePrice: null,
-    costPrice: 1029,   // landed: ¥46.80 → FX ৳877 + freight ৳122 + pack ৳30
+    price: 2090,
+    salePrice: 1880,
+    costPrice: 1029,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -208,7 +186,7 @@ export const products = [
   },
   {
     sku: "HWCC-002",
-    title: "Hot Wheels Car Culture — Porsche 917K (Vintage Racing Club 2/5)",
+    title: "Hot Wheels Car Culture — Porsche 917K (Vintage Racing Club)",
     brandKey: "hot-wheels-premium",
     categoryKey: "premium-singles",
     series: "Car Culture — Vintage Racing Club",
@@ -221,9 +199,9 @@ export const products = [
     features: ["Car Culture premium series", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["car culture", "porsche", "917k", "le mans", "vintage racing"],
     specifications: { Weight: "135 g" },
-    price: 1800,
-    salePrice: null,
-    costPrice: 1068,   // landed: ¥48.90 → FX ৳917 + freight ৳122 + pack ৳30
+    price: 1530,
+    salePrice: 1340,
+    costPrice: 1068,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -244,9 +222,9 @@ export const products = [
     features: ["Boulevard premium series", "Pandem widebody kit", "HKS racing livery", "Real Riders rubber tyres"],
     tags: ["jdm", "nissan", "skyline", "r32", "gt-r", "pandem", "hks", "boulevard", "godzilla"],
     specifications: { Weight: "135 g" },
-    price: 1800,
-    salePrice: null,
-    costPrice: 1003,   // landed: ¥45.45 → FX ৳852 + freight ৳122 + pack ৳30
+    price: 1620,
+    salePrice: 1430,
+    costPrice: 1003,
     stock: 2,
     isFeatured: true,
     isHeroProduct: false,
@@ -254,7 +232,7 @@ export const products = [
   },
   {
     sku: "HWCC-004",
-    title: "Hot Wheels Car Culture — BMW M3 E46 (Power Trip 1/5)",
+    title: "Hot Wheels Car Culture — BMW M3 E46 (Power Trip)",
     brandKey: "hot-wheels-premium",
     categoryKey: "premium-singles",
     series: "Car Culture — Power Trip",
@@ -267,9 +245,9 @@ export const products = [
     features: ["Car Culture premium series", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["car culture", "bmw", "m3", "e46", "power trip"],
     specifications: { Weight: "135 g" },
-    price: 1700,
-    salePrice: null,
-    costPrice: 937,   // landed: ¥41.90 → FX ৳786 + freight ৳122 + pack ৳30
+    price: 2190,
+    salePrice: 1970,
+    costPrice: 937,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -277,7 +255,7 @@ export const products = [
   },
   {
     sku: "HWCC-005",
-    title: "Hot Wheels Car Culture — Nissan Skyline GT-R R32 Pandem, Yellow (Ronin Run II 1/5)",
+    title: "Hot Wheels Car Culture — Nissan Skyline GT-R R32 Pandem, Yellow (Ronin Run II)",
     brandKey: "hot-wheels-premium",
     categoryKey: "premium-singles",
     series: "Car Culture — Ronin Run II",
@@ -291,8 +269,8 @@ export const products = [
     tags: ["jdm", "nissan", "skyline", "r32", "gt-r", "pandem", "ronin run", "godzilla"],
     specifications: { Weight: "135 g" },
     price: 1800,
-    salePrice: null,
-    costPrice: 993,   // landed: ¥44.90 → FX ৳842 + freight ৳122 + pack ৳30
+    salePrice: 1620,
+    costPrice: 993,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -300,7 +278,7 @@ export const products = [
   },
   {
     sku: "HWCC-006",
-    title: "Hot Wheels Car Culture — Mad Mike Mazda RX-3 Wagon + Trailer (Ronin Run II 3/5)",
+    title: "Hot Wheels Car Culture — Mad Mike Mazda RX-3 Wagon + Trailer (Ronin Run II)",
     brandKey: "hot-wheels-premium",
     categoryKey: "premium-singles",
     series: "Car Culture — Ronin Run II",
@@ -314,8 +292,8 @@ export const products = [
     tags: ["jdm", "mazda", "rx-3", "mad mike", "rotary", "ronin run", "bd exclusive"],
     specifications: { Weight: "135 g" },
     price: 1600,
-    salePrice: null,
-    costPrice: 910,   // landed: ¥40.45 → FX ৳758 + freight ৳122 + pack ৳30
+    salePrice: 1440,
+    costPrice: 910,
     stock: 2,
     isFeatured: false,
     isHeroProduct: false,
@@ -323,7 +301,7 @@ export const products = [
   },
   {
     sku: "HWCC-007",
-    title: "Hot Wheels Car Culture — Ferrari Testarossa (Modern Classics 2/5, 10th Anniversary)",
+    title: "Hot Wheels Car Culture — Ferrari Testarossa (Modern Classics, 10th Anniversary)",
     brandKey: "hot-wheels-premium",
     categoryKey: "premium-singles",
     series: "Car Culture — Modern Classics (10th Anniversary)",
@@ -336,17 +314,17 @@ export const products = [
     features: ["Car Culture 10th Anniversary", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["car culture", "ferrari", "testarossa", "modern classics", "80s"],
     specifications: { Weight: "135 g" },
-    price: 1600,
-    salePrice: null,
-    costPrice: 911,   // landed: ¥40.50 → FX ৳759 + freight ৳122 + pack ৳30
+    price: 1890,
+    salePrice: 1630,
+    costPrice: 911,
     stock: 2,
-    isFeatured: true,
+    isFeatured: false,
     isHeroProduct: false,
     isNewArrival: true,
   },
   {
     sku: "HWCC-008",
-    title: "Hot Wheels Car Culture — Nissan Skyline 2000GT-R LBWK (Japan Historics 1/5)",
+    title: "Hot Wheels Car Culture — Nissan Skyline 2000GT-R LBWK (Japan Historics)",
     brandKey: "hot-wheels-premium",
     categoryKey: "premium-singles",
     series: "Car Culture — Japan Historics 5 (Gold Label)",
@@ -359,9 +337,9 @@ export const products = [
     features: ["Gold Label premium series", "Liberty Walk widebody", "Real Riders rubber tyres"],
     tags: ["jdm", "nissan", "skyline", "hakosuka", "lbwk", "liberty walk", "gold label"],
     specifications: { Weight: "135 g" },
-    price: 1400,
-    salePrice: null,
-    costPrice: 691,   // landed: ¥28.80 → FX ৳540 + freight ৳122 + pack ৳30
+    price: 1550,
+    salePrice: 1400,
+    costPrice: 691,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -369,7 +347,7 @@ export const products = [
   },
   {
     sku: "HWCC-009",
-    title: "Hot Wheels Car Culture — LB-Kaido Works Nissan Skyline GT-R R32 (Aero Styles 1/5)",
+    title: "Hot Wheels Car Culture — LB-Kaido Works Nissan Skyline GT-R R32 (Aero Styles)",
     brandKey: "hot-wheels-premium",
     categoryKey: "premium-singles",
     series: "Car Culture — Aero Styles",
@@ -382,9 +360,9 @@ export const products = [
     features: ["Aero Styles premium series", "LB-Kaido Works widebody", "Real Riders rubber tyres"],
     tags: ["jdm", "nissan", "skyline", "r32", "gt-r", "lbwk", "kaido works", "aero styles", "godzilla"],
     specifications: { Weight: "135 g" },
-    price: 2000,
-    salePrice: null,
-    costPrice: 1114,   // landed: ¥51.34 → FX ৳962 + freight ৳122 + pack ৳30
+    price: 2390,
+    salePrice: 2150,
+    costPrice: 1114,
     stock: 3,
     isFeatured: true,
     isHeroProduct: true,
@@ -405,9 +383,9 @@ export const products = [
     features: ["Aero Styles premium series", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["car culture", "audi", "a4", "dtm", "aero styles", "motorsport"],
     specifications: { Weight: "135 g" },
-    price: 1600,
-    salePrice: null,
-    costPrice: 1120,   // landed: ¥51.66 → FX ৳968 + freight ৳122 + pack ৳30
+    price: 1790,
+    salePrice: 1610,
+    costPrice: 1120,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -428,9 +406,9 @@ export const products = [
     features: ["Aero Styles premium series", "LB Super Silhouette widebody", "Real Riders rubber tyres"],
     tags: ["jdm", "nissan", "silvia", "s15", "lbwk", "liberty walk", "aero styles"],
     specifications: { Weight: "135 g" },
-    price: 1900,
-    salePrice: null,
-    costPrice: 1120,   // landed: ¥51.66 → FX ৳968 + freight ৳122 + pack ৳30
+    price: 2090,
+    salePrice: 1880,
+    costPrice: 1120,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -451,9 +429,9 @@ export const products = [
     features: ["Aero Styles premium series", "GT3 race aero", "Real Riders rubber tyres"],
     tags: ["lexus", "rc f", "gt3", "aero styles", "motorsport"],
     specifications: { Weight: "135 g" },
-    price: 1600,
-    salePrice: null,
-    costPrice: 1120,   // landed: ¥51.66 → FX ৳968 + freight ৳122 + pack ৳30
+    price: 2190,
+    salePrice: 1970,
+    costPrice: 1120,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -474,9 +452,9 @@ export const products = [
     features: ["Aero Styles premium series", "Custom widebody aero", "Real Riders rubber tyres"],
     tags: ["chevy", "nova", "muscle", "aero styles", "custom"],
     specifications: { Weight: "135 g" },
-    price: 1500,
-    salePrice: null,
-    costPrice: 1120,   // landed: ¥51.66 → FX ৳968 + freight ৳122 + pack ৳30
+    price: 1890,
+    salePrice: 1700,
+    costPrice: 1120,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -498,8 +476,8 @@ export const products = [
     tags: ["fast and furious", "jdm", "nissan", "silvia", "s13", "tokyo drift", "bd exclusive"],
     specifications: { Weight: "120 g" },
     price: 1200,
-    salePrice: null,
-    costPrice: 637,   // landed: ¥26.64 → FX ৳499 + freight ৳108 + pack ৳30
+    salePrice: 1080,
+    costPrice: 637,
     stock: 2,
     isFeatured: false,
     isHeroProduct: false,
@@ -520,9 +498,9 @@ export const products = [
     features: ["Fast & Furious premium", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["fast and furious", "jdm", "mazda", "rx-7", "rotary"],
     specifications: { Weight: "120 g" },
-    price: 1100,
-    salePrice: null,
-    costPrice: 607,   // landed: ¥25.00 → FX ৳469 + freight ৳108 + pack ৳30
+    price: 1350,
+    salePrice: 1220,
+    costPrice: 607,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -543,9 +521,9 @@ export const products = [
     features: ["Fast & Furious premium", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["fast and furious", "mercedes", "500 sel", "classic"],
     specifications: { Weight: "135 g" },
-    price: 1400,
-    salePrice: null,
-    costPrice: 929,   // landed: ¥41.50 → FX ৳778 + freight ৳122 + pack ৳30
+    price: 1350,
+    salePrice: 1220,
+    costPrice: 929,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -567,8 +545,8 @@ export const products = [
     tags: ["fast and furious", "jdm", "honda", "civic", "eg", "bd exclusive"],
     specifications: { Weight: "120 g" },
     price: 1200,
-    salePrice: null,
-    costPrice: 625,   // landed: ¥26.00 → FX ৳487 + freight ৳108 + pack ৳30
+    salePrice: 1080,
+    costPrice: 625,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -576,7 +554,7 @@ export const products = [
   },
   {
     sku: "HWFF-005",
-    title: "Hot Wheels Fast & Furious — 2021 Toyota GR Supra (5/5)",
+    title: "Hot Wheels Fast & Furious — 2021 Toyota GR Supra",
     brandKey: "hot-wheels-premium",
     categoryKey: "premium-singles",
     series: "Fast & Furious Premium",
@@ -589,9 +567,9 @@ export const products = [
     features: ["Fast & Furious premium", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["fast and furious", "jdm", "toyota", "supra", "gr supra"],
     specifications: { Weight: "135 g" },
-    price: 1500,
-    salePrice: null,
-    costPrice: 909,   // landed: ¥40.40 → FX ৳757 + freight ৳122 + pack ৳30
+    price: 1490,
+    salePrice: 1340,
+    costPrice: 909,
     stock: 2,
     isFeatured: false,
     isHeroProduct: false,
@@ -612,9 +590,9 @@ export const products = [
     features: ["TSM Models premium build", "Rubber tyres", "Fully detailed interior", "Collector display box"],
     tags: ["jdm", "mazda", "rx-7", "re amemiya", "rotary", "mini gt", "tsm"],
     specifications: { Weight: "125 g" },
-    price: 2400,
-    salePrice: null,
-    costPrice: 1582,   // landed: ¥76.80 → FX ৳1440 + freight ৳112 + pack ৳30
+    price: 2250,
+    salePrice: 2030,
+    costPrice: 1582,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -635,9 +613,9 @@ export const products = [
     features: ["TSM Models premium build", "LB Super Silhouette widebody", "Rubber tyres", "Collector display box"],
     tags: ["jdm", "nissan", "silvia", "s15", "lbwk", "liberty walk", "mini gt", "tsm"],
     specifications: { Weight: "125 g" },
-    price: 2400,
-    salePrice: null,
-    costPrice: 1547,   // landed: ¥74.90 → FX ৳1404 + freight ৳112 + pack ৳30
+    price: 2190,
+    salePrice: 1970,
+    costPrice: 1547,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -658,9 +636,9 @@ export const products = [
     features: ["TSM Models premium build", "VeilSide Combat widebody", "Rubber tyres", "Collector display box"],
     tags: ["jdm", "toyota", "supra", "veilside", "mini gt", "tsm", "bd exclusive"],
     specifications: { Weight: "125 g" },
-    price: 2400,
-    salePrice: null,
-    costPrice: 1577,   // landed: ¥76.50 → FX ৳1434 + freight ৳112 + pack ৳30
+    price: 2590,
+    salePrice: 2330,
+    costPrice: 1577,
     stock: 1,
     isFeatured: true,
     isHeroProduct: false,
@@ -681,9 +659,9 @@ export const products = [
     features: ["TSM Models premium build", "Top Secret GT-300 livery", "Rubber tyres", "Collector display box"],
     tags: ["jdm", "toyota", "supra", "top secret", "mini gt", "tsm", "bd exclusive"],
     specifications: { Weight: "125 g" },
-    price: 2600,
-    salePrice: null,
-    costPrice: 1765,   // landed: ¥86.53 → FX ৳1622 + freight ৳112 + pack ৳30
+    price: 2750,
+    salePrice: 2480,
+    costPrice: 1765,
     stock: 2,
     isFeatured: true,
     isHeroProduct: true,
@@ -704,9 +682,9 @@ export const products = [
     features: ["TSM Models premium build", "Blister card packaging", "Rubber tyres"],
     tags: ["jdm", "mazda", "rx-7", "re amemiya", "rotary", "mini gt", "tsm", "bd exclusive"],
     specifications: { Weight: "125 g" },
-    price: 2400,
-    salePrice: null,
-    costPrice: 1553,   // landed: ¥75.24 → FX ৳1410 + freight ৳112 + pack ৳30
+    price: 2440,
+    salePrice: 2200,
+    costPrice: 1553,
     stock: 1,
     isFeatured: false,
     isHeroProduct: false,
@@ -728,8 +706,8 @@ export const products = [
     tags: ["accessory", "protector", "blister", "display"],
     specifications: { Weight: "34 g" },
     price: 200,
-    salePrice: null,
-    costPrice: 68,   // landed: ¥2.02 → FX ৳38 + freight ৳31 + pack ৳0
+    salePrice: 180,
+    costPrice: 68,
     stock: 12,
     isFeatured: false,
     isHeroProduct: false,
@@ -750,9 +728,9 @@ export const products = [
     features: ["Sold per piece", "Foldable PVC display case", "Hangable or free-standing"],
     tags: ["accessory", "protector", "pvc", "display"],
     specifications: { Weight: "35 g" },
-    price: 200,
-    salePrice: null,
-    costPrice: 79,   // landed: ¥2.51 → FX ৳47 + freight ৳32 + pack ৳0
+    price: 220,
+    salePrice: 200,
+    costPrice: 79,
     stock: 10,
     isFeatured: false,
     isHeroProduct: false,
@@ -770,12 +748,12 @@ export const products = [
     material: "PET plastic",
     color: "Clear",
     description: "Second-generation top-opening protector shell (19 × 14.8 × 5 cm) — easy access, rigid protection for premium cards. Sold per piece.",
-    features: ["Sold per piece", "Top-opening design", "Rigid 19 × 14.8 × 5 cm shell"],
+    features: ["Sold per piece", "Top-opening design", "Rigid 19 x 14.8 x 5 cm shell"],
     tags: ["accessory", "protector", "display"],
     specifications: { Weight: "40 g" },
     price: 200,
-    salePrice: null,
-    costPrice: 70,   // landed: ¥1.82 → FX ৳34 + freight ৳36 + pack ৳0
+    salePrice: 180,
+    costPrice: 70,
     stock: 10,
     isFeatured: false,
     isHeroProduct: false,
