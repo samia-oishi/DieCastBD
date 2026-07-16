@@ -245,7 +245,7 @@ export const products = [
     features: ["Car Culture premium series", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["car culture", "bmw", "m3", "e46", "power trip"],
     specifications: { Weight: "135 g" },
-    price: 2190,
+    price: 1690,
     salePrice: null,
     costPrice: 937,
     stock: 1,
