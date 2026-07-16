@@ -19,8 +19,10 @@ import { Product } from "../src/modules/products/product.model.js";
 import { products as incoming } from "../src/seeds/data/catalog.data.js";
 
 const FIELDS = [
+  // salePrice intentionally excluded: the generator omits it, so the seed never
+  // changes it (owner manages sale prices manually).
   "title", "series", "modelNumber", "manufacturer", "scale", "material", "color",
-  "description", "price", "salePrice", "costPrice", "stock",
+  "description", "price", "costPrice", "stock",
 ];
 
 const args = process.argv.slice(2);
