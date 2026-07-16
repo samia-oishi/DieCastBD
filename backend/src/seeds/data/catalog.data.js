@@ -268,7 +268,7 @@ export const products = [
     features: ["Car Culture premium series", "Pandem widebody kit", "Real Riders rubber tyres"],
     tags: ["jdm", "nissan", "skyline", "r32", "gt-r", "pandem", "ronin run", "godzilla"],
     specifications: { Weight: "135 g" },
-    price: 1800,
+    price: 1750,
     salePrice: null,
     costPrice: 993,
     stock: 1,
