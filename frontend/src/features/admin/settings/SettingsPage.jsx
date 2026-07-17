@@ -426,6 +426,7 @@ export function SettingsPage() {
                         <SelectItem value="slash">/ Slash</SelectItem>
                         <SelectItem value="diamond">◆ Diamond</SelectItem>
                         <SelectItem value="star">✦ Star</SelectItem>
+                        <SelectItem value="none">No separator</SelectItem>
                       </SelectContent>
                     </Select>
                   )}

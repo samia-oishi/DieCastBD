@@ -14,6 +14,7 @@ import { ROUTES } from "@/constants/routes";
 const SEPARATOR_GLYPHS = { pipe: "|", slash: "/", diamond: "◆", star: "✦" };
 
 function Separator({ style: sepStyle, color }) {
+  if (sepStyle === "none") return null; // messages separated by whitespace only
   if (sepStyle === "dot" || !SEPARATOR_GLYPHS[sepStyle]) {
     return <span className="size-1 shrink-0 rounded-full bg-brand" style={color ? { backgroundColor: color } : undefined} aria-hidden />;
   }
@@ -86,7 +87,9 @@ function MarqueeBar({ bar, messages, visibility, style }) {
               <span
                 key={i}
                 ref={half === 0 && i === 0 ? runRef : undefined}
-                className="flex items-center gap-3.5 pr-3.5"
+                // With no separator the gap IS the separation — widen it so
+                // messages don't read as one run-on line.
+                className={cn("flex items-center", bar.separatorStyle === "none" ? "gap-7 pr-7" : "gap-3.5 pr-3.5")}
                 aria-hidden={(half > 0 || i > 0) || undefined}
               >
                 <Segments bar={bar} messages={messages} />
@@ -115,7 +118,11 @@ function Bar({ bar, device, visibility }) {
 
   return (
     <div
-      className={cn("items-center justify-center gap-3.5 overflow-hidden bg-ink px-5 py-[9px] text-center text-[12.5px] font-medium text-[#DDDFD2]", visibility)}
+      className={cn(
+        "items-center justify-center overflow-hidden bg-ink px-5 py-[9px] text-center text-[12.5px] font-medium text-[#DDDFD2]",
+        bar.separatorStyle === "none" ? "gap-7" : "gap-3.5",
+        visibility
+      )}
       style={style}
     >
       <Segments bar={bar} messages={messages} />

@@ -98,6 +98,30 @@ describe("AnnouncementBar", () => {
     expect(sep).toHaveStyle({ color: "#FF0000" });
   });
 
+  it("separatorStyle 'none' renders messages with no separator at all", () => {
+    renderAt(
+      "/",
+      NEW_BAR({
+        separatorStyle: "none",
+        desktop: {
+          isActive: true,
+          autoScroll: false,
+          messages: [
+            { icon: "", text: "One" },
+            { icon: "", text: "Two" },
+          ],
+        },
+      })
+    );
+    const bar = screen.getByText("One").closest("div[class]");
+    // no dot span, no glyph — only the two message texts
+    expect(bar.querySelector(".rounded-full")).toBeNull();
+    for (const glyph of ["|", "/", "◆", "✦"]) {
+      expect(screen.queryByText(glyph)).toBeNull();
+    }
+    expect(screen.getByText("Two")).toBeInTheDocument();
+  });
+
   it("autoScroll renders the marquee track with the admin's duration and a duplicated run", () => {
     renderAt(
       "/",

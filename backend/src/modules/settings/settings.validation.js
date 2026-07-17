@@ -160,7 +160,7 @@ export const updateSettingsSchema = {
         textColor: hexOrEmpty,
         iconColor: hexOrEmpty,
         separatorColor: hexOrEmpty,
-        separatorStyle: z.enum(["dot", "pipe", "slash", "diamond", "star"]).optional(),
+        separatorStyle: z.enum(["dot", "pipe", "slash", "diamond", "star", "none"]).optional(),
         showOnAllPages: z.coerce.boolean().optional(),
         scrollSpeed: z.coerce.number().min(5).max(120).optional(),
         desktop: announcementDevice,

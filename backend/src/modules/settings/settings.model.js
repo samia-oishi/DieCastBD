@@ -176,7 +176,7 @@ const settingsSchema = new mongoose.Schema(
       textColor: { type: String, default: "" },
       iconColor: { type: String, default: "" },
       separatorColor: { type: String, default: "" },
-      separatorStyle: { type: String, enum: ["dot", "pipe", "slash", "diamond", "star"], default: "dot" },
+      separatorStyle: { type: String, enum: ["dot", "pipe", "slash", "diamond", "star", "none"], default: "dot" },
       showOnAllPages: { type: Boolean, default: false },
       scrollSpeed: { type: Number, default: 20, min: 5, max: 120 },
       desktop: { type: announcementDeviceSchema, default: () => ({}) },
