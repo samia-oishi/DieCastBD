@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
 
 import { cn } from "@/lib/utils";
@@ -41,10 +42,64 @@ function Segments({ bar, messages }) {
 }
 
 /** One rendered bar (desktop or mobile variant — `visibility` supplies the
- * breakpoint classes). Marquee mode renders the segment run twice and slides it
- * by -50%, so the loop is seamless; the trailing separator between the two
- * copies keeps the rhythm. Pauses on hover; disabled entirely for
+ * breakpoint classes). Pauses on hover; disabled entirely for
  * prefers-reduced-motion (see index.css). */
+
+/** Marquee variant. The loop is seamless only if the track is EXACTLY two
+ * identical halves (translateX(-50%) must land on a pixel-identical frame), and
+ * the bar only looks continuous if one half is at least as wide as the bar — so
+ * the message run is tiled `copies` times per half, measured against the
+ * container (and re-measured on resize / after fonts load). All spacing lives
+ * INSIDE each copy (gap + trailing pr, no gaps between copies/halves): a gap on
+ * the track would make -50% miss by half a gap and visibly jump every loop.
+ * Duration scales with `copies` so the admin's scrollSpeed stays "seconds for
+ * the message run to pass" — the same visual velocity on every screen width. */
+function MarqueeBar({ bar, messages, visibility, style }) {
+  const containerRef = useRef(null);
+  const runRef = useRef(null);
+  const [copies, setCopies] = useState(1);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const containerW = containerRef.current?.offsetWidth ?? 0;
+      const runW = runRef.current?.offsetWidth ?? 0;
+      if (containerW && runW) setCopies(Math.max(1, Math.ceil(containerW / runW)));
+    };
+    measure();
+    // Fonts load after first paint and change the run width.
+    document.fonts?.ready?.then(measure).catch(() => {});
+    if (typeof ResizeObserver === "undefined" || !containerRef.current) return undefined;
+    const ro = new ResizeObserver(measure);
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [messages]);
+
+  return (
+    <div ref={containerRef} className={cn("overflow-hidden bg-ink py-[9px] text-[12.5px] font-medium text-[#DDDFD2]", visibility)} style={style}>
+      <div
+        className="announce-marquee flex w-max items-center"
+        style={{ "--marquee-duration": `${(bar.scrollSpeed || 20) * copies}s` }}
+      >
+        {[0, 1].map((half) => (
+          <span key={half} className="flex items-center">
+            {Array.from({ length: copies }, (_, i) => (
+              <span
+                key={i}
+                ref={half === 0 && i === 0 ? runRef : undefined}
+                className="flex items-center gap-3.5 pr-3.5"
+                aria-hidden={(half > 0 || i > 0) || undefined}
+              >
+                <Segments bar={bar} messages={messages} />
+                <Separator style={bar.separatorStyle} color={bar.separatorColor} />
+              </span>
+            ))}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Bar({ bar, device, visibility }) {
   const messages = (device?.messages ?? []).filter((m) => m.text?.trim());
   if (!device?.isActive || messages.length === 0) return null;
@@ -55,21 +110,7 @@ function Bar({ bar, device, visibility }) {
   };
 
   if (device.autoScroll) {
-    return (
-      <div className={cn("overflow-hidden bg-ink py-[9px] text-[12.5px] font-medium text-[#DDDFD2]", visibility)} style={style}>
-        <div
-          className="announce-marquee flex w-max items-center gap-3.5"
-          style={{ "--marquee-duration": `${bar.scrollSpeed || 20}s` }}
-        >
-          {[0, 1].map((copy) => (
-            <span key={copy} className="flex items-center gap-3.5 pr-3.5" aria-hidden={copy === 1 || undefined}>
-              <Segments bar={bar} messages={messages} />
-              <Separator style={bar.separatorStyle} color={bar.separatorColor} />
-            </span>
-          ))}
-        </div>
-      </div>
-    );
+    return <MarqueeBar bar={bar} messages={messages} visibility={visibility} style={style} />;
   }
 
   return (
