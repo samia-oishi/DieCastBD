@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
-import { ICON_MAP } from "@/features/home/components/WhyChooseUsSection";
+import { ICON_MAP } from "@/components/shared/settingsIcons";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { useProducts } from "@/features/products/api/useProducts";
 import { useUpdateSettingsMutation, useUploadSettingsImageMutation } from "./api/useAdminSettings";
@@ -264,7 +264,19 @@ export function SettingsPage() {
     values: settings,
     defaultValues: {
       heroBanner: [],
-      announcementBar: { text: "", isActive: false },
+      // PATCH /admin/settings replaces the whole subtree, so every field must
+      // exist here or it would be dropped on save.
+      announcementBar: {
+        bgColor: "",
+        textColor: "",
+        iconColor: "",
+        separatorColor: "",
+        separatorStyle: "dot",
+        showOnAllPages: false,
+        scrollSpeed: 20,
+        desktop: { isActive: false, autoScroll: false, messages: [] },
+        mobile: { isActive: false, autoScroll: false, messages: [] },
+      },
       whyChooseUs: [],
       shopByShelf: [],
       shopByShelfHeading: "",
@@ -311,6 +323,8 @@ export function SettingsPage() {
   const shippingZones = useFieldArray({ control, name: "shippingZones" });
   const headerLinks = useFieldArray({ control, name: "navigation.headerLinks" });
   const footerLinks = useFieldArray({ control, name: "navigation.footerLinks" });
+  const announceDesktopMsgs = useFieldArray({ control, name: "announcementBar.desktop.messages" });
+  const announceMobileMsgs = useFieldArray({ control, name: "announcementBar.mobile.messages" });
 
   if (isLoading) return <FullPageLoader />;
 
@@ -375,23 +389,139 @@ export function SettingsPage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Announcement Bar">
-        <FieldGroup>
-          <Field>
-            <FieldLabel>Text</FieldLabel>
-            <Input {...register("announcementBar.text")} placeholder="e.g. Free shipping on orders over ৳5,000" />
-          </Field>
-          <Controller
-            control={control}
-            name="announcementBar.isActive"
-            render={({ field }) => (
-              <label className="flex w-fit items-center gap-2 text-sm text-muted-foreground">
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
-                Show announcement bar
-              </label>
-            )}
-          />
-        </FieldGroup>
+      <SectionCard
+        title="Announcement Bar"
+        description="The strip above the header. Desktop and mobile carry separate messages — turning a device off hides its bar completely."
+      >
+        <div className="flex flex-col gap-4">
+          <div className="rounded-lg border border-border p-4">
+            <p className="mb-3 text-sm font-medium">Style</p>
+            <div className="flex flex-wrap gap-4">
+              {[
+                ["Background", "announcementBar.bgColor", "#101208"],
+                ["Text", "announcementBar.textColor", "#DDDFD2"],
+                ["Icons", "announcementBar.iconColor", "#A8CD2F"],
+                ["Separators", "announcementBar.separatorColor", "#A8CD2F"],
+              ].map(([label, name, fallback]) => (
+                <Field key={name} className="w-fit">
+                  <FieldLabel>{label}</FieldLabel>
+                  <ColorField control={control} name={name} fallback={fallback} />
+                </Field>
+              ))}
+            </div>
+            <div className="mt-3 grid max-w-md grid-cols-2 gap-3">
+              <Field>
+                <FieldLabel>Separator style</FieldLabel>
+                <Controller
+                  control={control}
+                  name="announcementBar.separatorStyle"
+                  render={({ field }) => (
+                    <Select value={field.value || "dot"} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dot">• Dot</SelectItem>
+                        <SelectItem value="pipe">| Pipe</SelectItem>
+                        <SelectItem value="slash">/ Slash</SelectItem>
+                        <SelectItem value="diamond">◆ Diamond</SelectItem>
+                        <SelectItem value="star">✦ Star</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </Field>
+              <Field>
+                <FieldLabel>Scroll speed (sec/loop)</FieldLabel>
+                <Input type="number" min={5} max={120} {...register("announcementBar.scrollSpeed")} />
+              </Field>
+            </div>
+            <Controller
+              control={control}
+              name="announcementBar.showOnAllPages"
+              render={({ field }) => (
+                <label className="mt-3 flex w-fit items-center gap-2 text-sm text-muted-foreground">
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  Show on all pages (off = home page only)
+                </label>
+              )}
+            />
+          </div>
+
+          {[
+            ["Desktop", "announcementBar.desktop", announceDesktopMsgs],
+            ["Mobile", "announcementBar.mobile", announceMobileMsgs],
+          ].map(([label, base, msgs]) => (
+            <div key={base} className="rounded-lg border border-border p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-medium">{label} messages</p>
+                <div className="flex items-center gap-4">
+                  <Controller
+                    control={control}
+                    name={`${base}.autoScroll`}
+                    render={({ field }) => (
+                      <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        Auto-scroll
+                      </label>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name={`${base}.isActive`}
+                    render={({ field }) => (
+                      <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        Show on {label.toLowerCase()}
+                      </label>
+                    )}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                {msgs.fields.map((field, index) => (
+                  <div key={field.id} className="flex items-start gap-2">
+                    <Controller
+                      control={control}
+                      name={`${base}.messages.${index}.icon`}
+                      render={({ field: iconField }) => (
+                        // Radix Select forbids a "" item value, so "none" is the
+                        // sentinel for "no icon" and maps back to "" in the form.
+                        <Select
+                          value={iconField.value || "none"}
+                          onValueChange={(v) => iconField.onChange(v === "none" ? "" : v)}
+                        >
+                          <SelectTrigger className="w-[150px] shrink-0">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No icon</SelectItem>
+                            {ICON_NAMES.map((name) => (
+                              <SelectItem key={name} value={name}>
+                                {name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    <Input
+                      {...register(`${base}.messages.${index}.text`)}
+                      maxLength={120}
+                      placeholder="e.g. Free shipping on orders over ৳5,000"
+                    />
+                    <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove message" onClick={() => msgs.remove(index)}>
+                      <Trash2 />
+                    </Button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => msgs.append({ icon: "", text: "" })}>
+                  <Plus /> Add Message
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
       </SectionCard>
 
       <SectionCard title="Homepage Sections" description="Show or hide sections on the homepage, and control the hero carousel's autoplay.">

@@ -144,12 +144,43 @@ const collectorPromiseSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// One announcement segment. `icon` is an optional lucide icon name (resolved
+// against the storefront's shared icon map — unknown names render no icon).
+const announcementMessageSchema = new mongoose.Schema(
+  {
+    icon: { type: String, default: "" },
+    text: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+// Per-device announcement config — desktop and mobile carry independent
+// message lists and toggles, so the merchant can run different copy on each.
+const announcementDeviceSchema = new mongoose.Schema(
+  {
+    isActive: { type: Boolean, default: false },
+    autoScroll: { type: Boolean, default: false },
+    messages: { type: [announcementMessageSchema], default: [] },
+  },
+  { _id: false }
+);
+
 const settingsSchema = new mongoose.Schema(
   {
     heroBanner: { type: [heroSlideSchema], default: [] },
+    // Fully data-driven announcement bar (no hardcoded storefront fallback —
+    // OFF genuinely hides it). Blank colors fall back to the shipped design
+    // (ink bar, #DDDFD2 text, brand separators/icons) in AnnouncementBar.jsx.
     announcementBar: {
-      text: String,
-      isActive: { type: Boolean, default: false },
+      bgColor: { type: String, default: "" },
+      textColor: { type: String, default: "" },
+      iconColor: { type: String, default: "" },
+      separatorColor: { type: String, default: "" },
+      separatorStyle: { type: String, enum: ["dot", "pipe", "slash", "diamond", "star"], default: "dot" },
+      showOnAllPages: { type: Boolean, default: false },
+      scrollSpeed: { type: Number, default: 20, min: 5, max: 120 },
+      desktop: { type: announcementDeviceSchema, default: () => ({}) },
+      mobile: { type: announcementDeviceSchema, default: () => ({}) },
     },
     whyChooseUs: { type: [whyChooseItemSchema], default: [] },
     // Homepage "Shop by shelf" tiles (the section toggled by

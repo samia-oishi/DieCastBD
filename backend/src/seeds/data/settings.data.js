@@ -24,9 +24,27 @@ export const settingsSeed = {
       ctaLink: "/shop?brand=mini-gt",
     },
   ],
+  // Desktop seeds the redesign's three shipped lines as REAL editable messages
+  // (per the redesign-content convention) so a fresh install matches the design;
+  // the storefront has no hardcoded fallback anymore — OFF genuinely hides it.
   announcementBar: {
-    text: "",
-    isActive: false,
+    bgColor: "",
+    textColor: "",
+    iconColor: "",
+    separatorColor: "",
+    separatorStyle: "dot",
+    showOnAllPages: false,
+    scrollSpeed: 20,
+    desktop: {
+      isActive: true,
+      autoScroll: false,
+      messages: [
+        { icon: "", text: "100% authentic — every piece hand-verified" },
+        { icon: "", text: "Collector-grade packaging" },
+        { icon: "", text: "COD · bKash · BanglaQR" },
+      ],
+    },
+    mobile: { isActive: false, autoScroll: false, messages: [] },
   },
   whyChooseUs: [
     {

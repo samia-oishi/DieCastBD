@@ -269,3 +269,23 @@
     border-radius: 2px;
   }
 }
+
+/* Announcement-bar marquee (Settings → Announcement bar → auto-scroll). The
+   track holds TWO copies of the segment run, so sliding by -50% loops
+   seamlessly. Duration comes from the admin's scrollSpeed via a CSS var. */
+@keyframes announce-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.announce-marquee {
+  animation: announce-marquee var(--marquee-duration, 20s) linear infinite;
+}
+.announce-marquee:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .announce-marquee {
+    animation: none;
+  }
+}

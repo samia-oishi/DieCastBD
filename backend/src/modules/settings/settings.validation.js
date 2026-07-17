@@ -128,10 +128,45 @@ const homepageSections = z.object({
   newsletter: sectionToggle.optional(),
 });
 
+// Hex color or blank ("" = fall back to the shipped design color).
+const hexOrEmpty = z
+  .string()
+  .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Must be a hex color like #A8CD2F")
+  .or(z.literal(""))
+  .optional();
+
+const announcementDevice = z
+  .object({
+    isActive: z.coerce.boolean().optional(),
+    autoScroll: z.coerce.boolean().optional(),
+    messages: z
+      .array(
+        z.object({
+          icon: z.string().max(40).optional(),
+          text: z.string().max(120, "Keep each announcement under 120 characters").optional(),
+        })
+      )
+      .max(8, "At most 8 messages per device")
+      .optional(),
+  })
+  .optional();
+
 export const updateSettingsSchema = {
   body: z.object({
     heroBanner: z.array(heroSlide).optional(),
-    announcementBar: z.object({ text: z.string().optional(), isActive: z.coerce.boolean().optional() }).optional(),
+    announcementBar: z
+      .object({
+        bgColor: hexOrEmpty,
+        textColor: hexOrEmpty,
+        iconColor: hexOrEmpty,
+        separatorColor: hexOrEmpty,
+        separatorStyle: z.enum(["dot", "pipe", "slash", "diamond", "star"]).optional(),
+        showOnAllPages: z.coerce.boolean().optional(),
+        scrollSpeed: z.coerce.number().min(5).max(120).optional(),
+        desktop: announcementDevice,
+        mobile: announcementDevice,
+      })
+      .optional(),
     whyChooseUs: z.array(whyChooseItem).optional(),
     shopByShelf: z.array(shelfTile).optional(),
     shopByShelfHeading: z.string().optional(),

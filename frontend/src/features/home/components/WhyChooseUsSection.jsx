@@ -1,12 +1,8 @@
-import { ShieldCheck, Package, Truck, Sparkles, Award, Clock, Heart, Star } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Container } from "@/components/shared/Container";
-
-// Explicit map (not `import * as Icons`) so bundlers can tree-shake — the full
-// lucide-react set is 1000+ icons and importing all of it bloats the bundle for
-// no benefit, since WebsiteSettings can only reasonably reference a curated set.
-// Exported so the admin Settings editor offers exactly this allow-list, not a
-// name that would silently fall back to Sparkles on the live homepage.
-export const ICON_MAP = { ShieldCheck, Package, Truck, Sparkles, Award, Clock, Heart, Star };
+// The curated icon allow-list now lives in a shared module (the announcement
+// bar and the admin Settings editor use it too).
+import { ICON_MAP } from "@/components/shared/settingsIcons";
 
 export function WhyChooseUsSection({ items }) {
   if (!items?.length) return null;
