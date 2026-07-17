@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
-import { Plus, CarFront } from "lucide-react";
+import { Plus, CarFront, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
@@ -67,44 +67,37 @@ export function ProductCard({ product, variant = "grid", className }) {
   }, [thumbnail, gallery]);
   const hasMultiple = images.length > 1;
 
-  // Desktop hover slideshow: slide horizontally (new image in from the right)
-  // every 1s, only while hovered and only when there's more than one image. A
-  // clone of the first image is appended so the loop back to the start slides in
-  // the same direction seamlessly (transition briefly disabled for the reset).
-  const slides = useMemo(() => (hasMultiple ? [...images, images[0]] : images), [images, hasMultiple]);
+  // Desktop hover gallery: manual prev/next arrows (no auto-play — merchant
+  // replaced the earlier 1s slideshow with explicit navigation). `hovering` is
+  // only ever set for mouse pointers, so none of this engages on touch; the
+  // arrows are additionally `hidden md:flex` as a second mobile guard.
   const [hovering, setHovering] = useState(false);
-  const [step, setStep] = useState(0);
-  const [snapping, setSnapping] = useState(false);
+  const [index, setIndex] = useState(0);
 
+  // Back to the thumbnail whenever the hover ends, so cards always rest on image 1.
   useEffect(() => {
-    if (!hovering || !hasMultiple) return;
-    const id = setInterval(() => setStep((s) => s + 1), 1000);
-    return () => clearInterval(id);
-  }, [hovering, hasMultiple]);
-
-  // Reset to the first image whenever the hover ends.
-  useEffect(() => {
-    if (!hovering) {
-      setStep(0);
-      setSnapping(false);
-    }
+    if (!hovering) setIndex(0);
   }, [hovering]);
 
-  // After the seamless snap back to the start, re-enable the transition next frame.
-  useEffect(() => {
-    if (!snapping) return;
-    const r = requestAnimationFrame(() => requestAnimationFrame(() => setSnapping(false)));
-    return () => cancelAnimationFrame(r);
-  }, [snapping]);
-
-  // When the slide onto the appended clone finishes, jump back to the real first
-  // image with the transition off — invisible because the clone is identical.
-  const onSlideEnd = () => {
-    if (step >= images.length) {
-      setSnapping(true);
-      setStep(0);
-    }
+  // Clamped, not wrap-around: the dimmed arrow at either end is what tells the
+  // customer they've seen every photo. Disabled buttons also swallow the click,
+  // so a tap on a dimmed arrow can't fall through to the card and open the PDP.
+  const goPrev = (e) => {
+    e.stopPropagation();
+    setIndex((i) => Math.max(0, i - 1));
   };
+  const goNext = (e) => {
+    e.stopPropagation();
+    setIndex((i) => Math.min(images.length - 1, i + 1));
+  };
+
+  // Shared shell for both nav arrows: round glass (frosted, like the site
+  // header), desktop-only (`hidden md:flex`), fading in with the hover. The
+  // `:disabled` opacity intentionally outranks the hover opacity-100.
+  const arrowCls = cn(
+    "absolute top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/60 bg-white/55 text-ink shadow-[0_2px_10px_rgba(16,18,8,0.16)] [backdrop-filter:blur(10px)_saturate(160%)] [-webkit-backdrop-filter:blur(10px)_saturate(160%)] transition-[opacity,background-color] duration-200 hover:bg-white/90 disabled:opacity-35 disabled:hover:bg-white/55 md:flex",
+    hovering ? "opacity-100" : "pointer-events-none opacity-0"
+  );
 
   const stop = (e) => e.stopPropagation();
   const goToProduct = () => navigate(`/products/${slug}`);
@@ -136,22 +129,48 @@ export function ProductCard({ product, variant = "grid", className }) {
           {images.length > 0 ? (
             <>
               <img src={cloudinaryCard(images[0].url)} alt={title} loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
-              {/* Hover slideshow: a horizontal track that slides one image every
-                  1s. The frames mount (and thus load) only while hovering. */}
+              {/* Hover gallery: an arrow-driven horizontal track. The frames mount
+                  (and thus load) only while hovering, so grids stay cheap. */}
               {hovering && hasMultiple && (
                 <div className="pointer-events-none absolute inset-0 overflow-hidden">
                   <div
-                    onTransitionEnd={onSlideEnd}
-                    className={cn("flex h-full w-full", snapping ? "" : "transition-transform duration-500 ease-out")}
-                    style={{ transform: `translateX(-${step * 100}%)` }}
+                    className="flex h-full w-full transition-transform duration-300 ease-out"
+                    style={{ transform: `translateX(-${index * 100}%)` }}
                   >
-                    {slides.map((im, i) => (
+                    {images.map((im, i) => (
                       <div key={i} className="flex h-full w-full shrink-0 items-center justify-center bg-white">
                         <img src={cloudinaryCard(im.url)} alt="" aria-hidden loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
                       </div>
                     ))}
                   </div>
                 </div>
+              )}
+              {/* Prev/next — round glass buttons, desktop-hover only. tabIndex -1:
+                  these are a mouse affordance; keyboard/touch users get the full
+                  gallery on the PDP itself. */}
+              {hasMultiple && (
+                <>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label="Previous image"
+                    onClick={goPrev}
+                    disabled={index === 0}
+                    className={cn(arrowCls, "left-2")}
+                  >
+                    <ChevronLeft size={15} strokeWidth={2.2} />
+                  </button>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label="Next image"
+                    onClick={goNext}
+                    disabled={index === images.length - 1}
+                    className={cn(arrowCls, "right-2")}
+                  >
+                    <ChevronRight size={15} strokeWidth={2.2} />
+                  </button>
+                </>
               )}
             </>
           ) : (

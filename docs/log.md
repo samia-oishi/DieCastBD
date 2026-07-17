@@ -851,3 +851,11 @@ Merchant asked to add the Featured and New-arrivals flags as shop-page filters, 
 **Featured / New arrivals.** Backend already accepted `featured` and `newArrival` on the list endpoint (the homepage carousels use them), so this was purely frontend: `useShopFilters` now reads both from the URL and includes them in `activeFilterCount`; `FilterSidebar` got two Switch rows next to "In stock only", so they show in both the desktop sidebar and the mobile filter sheet. Verified in-browser against live data: Featured narrows the grid from 24→6 (matching `featured=true` count of 6), and enabling New arrivals as well ANDs correctly (`?featured=true&newArrival=true`), no errors.
 
 Backend 70/70, frontend build + lint clean.
+
+### ProductCard: hover slideshow → manual glass nav arrows (2026-07-13)
+
+Merchant changed the shipped card behavior: instead of the 1s auto-slideshow on hover, hovering now reveals two round glassmorphism prev/next buttons to step through a product's images — desktop only (plan.md decision #75).
+
+The interval/clone/snap machinery is gone; a plain `index` drives the same lazily-mounted track (frames still mount only while hovering, so grids stay cheap). Arrows use the site header's frost idiom, are **clamped rather than wrap-around** (the dimmed end-arrow is what says "no more photos", and a `disabled` button swallows the click so it can't fall through and open the PDP), fade with hover, and are `tabIndex={-1}` — a mouse affordance; touch/keyboard users get the PDP gallery. Mobile is doubly guarded: `hovering` was already mouse-pointer-only, plus `hidden md:flex`.
+
+**Verified live** (Playwright): 1440px — arrows appear on hover, prev starts disabled, next translates the track −100% and flips disabled states, no arrow click (enabled or disabled) navigates to the PDP; 390px w/ touch — arrows are `display:none`. Frontend 33/33, lint/build clean.
