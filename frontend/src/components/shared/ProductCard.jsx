@@ -92,12 +92,13 @@ export function ProductCard({ product, variant = "grid", className }) {
   };
 
   // Shared shell for both nav arrows: round glass (frosted, like the site
-  // header), desktop-only (`hidden md:flex`), fading in with the hover. The
-  // `:disabled` opacity intentionally outranks the hover opacity-100.
-  const arrowCls = cn(
-    "absolute top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/60 bg-white/55 text-ink shadow-[0_2px_10px_rgba(16,18,8,0.16)] [backdrop-filter:blur(10px)_saturate(160%)] [-webkit-backdrop-filter:blur(10px)_saturate(160%)] transition-[opacity,background-color] duration-200 hover:bg-white/90 disabled:opacity-35 disabled:hover:bg-white/55 md:flex",
-    hovering ? "opacity-100" : "pointer-events-none opacity-0"
-  );
+  // header), desktop-only (`hidden md:flex`). Visibility is pure CSS — fade in
+  // while the pointer is over the IMAGE area (`group/img`), not the whole card,
+  // so the title/price zone stays clean and no JS state can leave them stuck
+  // visible. The disabled end-arrow dims via colors (icon + fill), not
+  // `disabled:opacity-*` — the group-hover opacity-100 would out-specify it.
+  const arrowCls =
+    "pointer-events-none absolute top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/60 bg-white/55 text-ink opacity-0 shadow-[0_2px_10px_rgba(16,18,8,0.16)] [backdrop-filter:blur(10px)_saturate(160%)] [-webkit-backdrop-filter:blur(10px)_saturate(160%)] transition-[opacity,background-color] duration-200 hover:bg-white/90 disabled:bg-white/40 disabled:text-ink/30 disabled:hover:bg-white/40 md:flex md:group-hover/img:pointer-events-auto md:group-hover/img:opacity-100";
 
   const stop = (e) => e.stopPropagation();
   const goToProduct = () => navigate(`/products/${slug}`);
@@ -125,7 +126,7 @@ export function ProductCard({ product, variant = "grid", className }) {
           className
         )}
       >
-        <div className={cn("relative flex items-center justify-center overflow-hidden bg-white", v.img)}>
+        <div className={cn("group/img relative flex items-center justify-center overflow-hidden bg-white", v.img)}>
           {images.length > 0 ? (
             <>
               <img src={cloudinaryCard(images[0].url)} alt={title} loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
@@ -137,8 +138,11 @@ export function ProductCard({ product, variant = "grid", className }) {
                     className="flex h-full w-full transition-transform duration-300 ease-out"
                     style={{ transform: `translateX(-${index * 100}%)` }}
                   >
+                    {/* overflow-hidden per frame: these photos are wider than the
+                        card (h-full + max-w-none center-crop), and without it each
+                        slide's sides bleed into the neighbouring frame. */}
                     {images.map((im, i) => (
-                      <div key={i} className="flex h-full w-full shrink-0 items-center justify-center bg-white">
+                      <div key={i} className="flex h-full w-full shrink-0 items-center justify-center overflow-hidden bg-white">
                         <img src={cloudinaryCard(im.url)} alt="" aria-hidden loading="lazy" decoding="async" className="h-full w-auto max-w-none" />
                       </div>
                     ))}
