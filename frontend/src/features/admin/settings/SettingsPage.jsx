@@ -98,7 +98,7 @@ function hasDirtyFields(node) {
 /** Desktop rail — sticky card, hairline-divided groups, ink pill for active. */
 function SettingsRail({ active, onChange }) {
   return (
-      <nav className="sticky top-6 h-fit w-[212px] shrink-0 overflow-hidden rounded-[18px] border border-line bg-white">
+      <nav className="w-[212px] shrink-0 overflow-hidden rounded-[18px] border border-line bg-white">
         {SECTION_GROUPS.map((group, i) => (
           <div key={group.label} className={cn("p-2.5", i > 0 && "border-t border-line-soft")}>
             <div className="px-2.5 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-[0.07em] text-faint">
@@ -445,7 +445,7 @@ export function SettingsPage() {
       <SettingsChips active={activeSection} onChange={setActiveSection} />
 
       <div className="flex items-start gap-[18px]">
-        <div className="hidden lg:block">
+        <div className="sticky top-6 hidden self-start lg:block">
           <SettingsRail active={activeSection} onChange={setActiveSection} />
         </div>
 
