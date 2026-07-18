@@ -7,6 +7,10 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const ZOOM = 2.5;
 
+/** Dark pill controls used inside the image viewer — visible over any photo. */
+const VIEWER_BTN =
+  "flex size-10 items-center justify-center rounded-full bg-[rgba(16,18,8,0.55)] text-white backdrop-blur transition-colors hover:bg-[rgba(16,18,8,0.75)]";
+
 /** True only for devices that genuinely hover with a precise pointer.
  *
  * The pointerType guard alone isn't enough: a hybrid laptop or a phone in
@@ -58,7 +62,7 @@ function MainImage({ image, title, isNew, onOpen }) {
   const zoomReady = usePreloadedImage(hasHover ? zoomSrc : null);
 
   const onEnter = (e) => {
-    if (!hasHover || e.pointerType !== "mouse") return;
+    if (e.pointerType !== "mouse") return;
     const c = containerRef.current?.getBoundingClientRect();
     const r = imgRef.current?.getBoundingClientRect();
     if (!c || !r) return;
@@ -69,7 +73,7 @@ function MainImage({ image, title, isNew, onOpen }) {
 
   const onMove = (e) => {
     const r = rectRef.current;
-    if (!hasHover || e.pointerType !== "mouse" || !r) return;
+    if (e.pointerType !== "mouse" || !r) return;
     const x = Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100));
     const y = Math.min(100, Math.max(0, ((e.clientY - r.top) / r.height) * 100));
     setPos({ x, y });
@@ -80,9 +84,12 @@ function MainImage({ image, title, isNew, onOpen }) {
       ref={containerRef}
       type="button"
       onClick={onOpen}
-      onPointerEnter={onEnter}
-      onPointerMove={onMove}
-      onPointerLeave={() => setHovering(false)}
+      // The magnifier is desktop-only. Handlers simply aren't attached on
+      // non-hover devices — there is nothing for a stray synthetic mouse
+      // event to trigger.
+      onPointerEnter={hasHover ? onEnter : undefined}
+      onPointerMove={hasHover ? onMove : undefined}
+      onPointerLeave={hasHover ? () => setHovering(false) : undefined}
       aria-label={`View ${title} full screen`}
       className={cn(
         "relative flex h-[300px] w-full items-center justify-center overflow-hidden rounded-[20px] border border-line bg-white md:h-[520px] md:rounded-[24px]",
@@ -91,10 +98,14 @@ function MainImage({ image, title, isNew, onOpen }) {
     >
       <img ref={imgRef} src={cloudinaryCard(image.url)} alt={title} decoding="async" className="h-full w-auto max-w-none" />
 
-      {hovering && zoomReady && box && (
+      {/* Belt and braces on top of the JS gates: the media query hides the
+          overlay at the CSS level on any device that can't hover, so even an
+          unforeseen synthetic mouse event can't leave a zoomed image stuck on
+          screen — which is exactly what happened on a real iPhone. */}
+      {hasHover && hovering && zoomReady && box && (
         <div
           aria-hidden
-          className="pointer-events-none absolute bg-white bg-no-repeat"
+          className="pointer-events-none absolute bg-white bg-no-repeat [@media(hover:none)]:hidden"
           style={{
             left: box.left,
             top: box.top,
@@ -116,9 +127,10 @@ function MainImage({ image, title, isNew, onOpen }) {
   );
 }
 
-/** Full-screen viewer. Fits the image to the screen by default and toggles to
- * 100% actual pixels, which is what "see it at full size" means — the old
- * dialog capped at 768px wide and could never show the real thing. */
+/** Image viewer as a standard centred dialog: the page stays visible behind the
+ * scrim, tapping outside the image closes it (Radix default once the content
+ * no longer covers the screen), and the close pill stays. One tap on the image
+ * toggles actual 1:1 pixels inside a pannable scroll area. */
 function Lightbox({ images, index, onIndex, title, open, onClose }) {
   const [actualSize, setActualSize] = useState(false);
   const image = images[index];
@@ -139,50 +151,46 @@ function Lightbox({ images, index, onIndex, title, open, onClose }) {
 
   if (!image) return null;
 
+  const src = cloudinaryFull(image.url);
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      {/* Width overridden at BOTH breakpoints — shadcn caps base and sm:, and
+          tailwind-merge only dedupes within a variant (the AdminModal lesson). */}
       <DialogContent
         showCloseButton={false}
-        style={{ width: "100vw", maxWidth: "none" }}
-        className="h-[100dvh] gap-0 border-none bg-[rgba(16,18,8,0.96)] p-0 shadow-none sm:rounded-none"
+        className="w-auto max-w-none gap-0 overflow-hidden rounded-[18px] border-none bg-white p-0 shadow-[0_24px_70px_rgba(16,18,8,0.45)] sm:max-w-none"
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>
 
-        {/* Controls sit above the image and are 44px targets for thumbs. */}
-        <div className="absolute right-3 top-3 z-20 flex gap-2">
+        <div className="absolute right-2 top-2 z-20 flex gap-1.5">
           <button
             type="button"
             onClick={() => setActualSize((v) => !v)}
             aria-label={actualSize ? "Fit to screen" : "View actual size"}
-            className="flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20"
+            className={VIEWER_BTN}
           >
             {actualSize ? <ZoomOut size={18} strokeWidth={1.9} /> : <ZoomIn size={18} strokeWidth={1.9} />}
           </button>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20"
-          >
+          <button type="button" onClick={onClose} aria-label="Close" className={VIEWER_BTN}>
             <X size={18} strokeWidth={2} />
           </button>
         </div>
 
-        {/* In actual-size mode the wrapper scrolls in both axes so the image can
-            be panned; fit mode centres it with no scrollbars. */}
-        <div className={cn("flex h-full w-full", actualSize ? "overflow-auto" : "items-center justify-center overflow-hidden p-4 pt-16")}>
+        {actualSize ? (
+          // 1:1 pixels; the wrapper pans in both axes when the image outgrows it.
+          <div className="max-h-[85vh] max-w-[calc(100vw-24px)] overflow-auto overscroll-contain sm:max-w-[min(92vw,1100px)]">
+            <img src={src} alt={title} decoding="async" onClick={() => setActualSize(false)} className="max-w-none cursor-zoom-out" />
+          </div>
+        ) : (
           <img
-            src={cloudinaryFull(image.url)}
+            src={src}
             alt={title}
             decoding="async"
-            onClick={() => setActualSize((v) => !v)}
-            className={cn(
-              actualSize
-                ? "m-auto max-w-none cursor-zoom-out"
-                : "max-h-full max-w-full cursor-zoom-in object-contain"
-            )}
+            onClick={() => setActualSize(true)}
+            className="block h-auto max-h-[80vh] w-auto max-w-[calc(100vw-24px)] cursor-zoom-in sm:max-w-[min(92vw,1100px)]"
           />
-        </div>
+        )}
 
         {images.length > 1 && (
           <>
@@ -190,7 +198,7 @@ function Lightbox({ images, index, onIndex, title, open, onClose }) {
               type="button"
               onClick={() => onIndex((index - 1 + images.length) % images.length)}
               aria-label="Previous image"
-              className="absolute left-2 top-1/2 z-20 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20"
+              className={cn(VIEWER_BTN, "absolute left-2 top-1/2 z-20 -translate-y-1/2")}
             >
               <ChevronLeft size={20} strokeWidth={2} />
             </button>
@@ -198,11 +206,11 @@ function Lightbox({ images, index, onIndex, title, open, onClose }) {
               type="button"
               onClick={() => onIndex((index + 1) % images.length)}
               aria-label="Next image"
-              className="absolute right-2 top-1/2 z-20 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20"
+              className={cn(VIEWER_BTN, "absolute right-2 top-1/2 z-20 -translate-y-1/2")}
             >
               <ChevronRight size={20} strokeWidth={2} />
             </button>
-            <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-[12px] font-semibold text-white backdrop-blur">
+            <div className="absolute bottom-2.5 left-1/2 z-20 -translate-x-1/2 rounded-full bg-[rgba(16,18,8,0.55)] px-3 py-1 text-[12px] font-semibold text-white backdrop-blur">
               {index + 1} / {images.length}
             </div>
           </>
@@ -213,8 +221,10 @@ function Lightbox({ images, index, onIndex, title, open, onClose }) {
 }
 
 /** Sticky gallery: main image (hover to magnify on desktop, tap/click for the
- * full-screen viewer) + thumbnail strip, matching DiecastBD Product Details.dc.html. */
-export function ProductGallery({ thumbnail, gallery, title, isNew }) {
+ * dialog viewer) + thumbnail strip, matching DiecastBD Product Details.dc.html.
+ * `actions` renders floating over the image's top-right corner — the mobile PDP
+ * puts wishlist/share there, matching the storefront product cards. */
+export function ProductGallery({ thumbnail, gallery, title, isNew, actions }) {
   const images = [thumbnail, ...(gallery ?? [])].filter(Boolean);
   const [selected, setSelected] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -231,7 +241,12 @@ export function ProductGallery({ thumbnail, gallery, title, isNew }) {
 
   return (
     <div className="md:sticky md:top-[98px]">
-      <MainImage image={images[index]} title={title} isNew={isNew} onOpen={() => setZoomOpen(true)} />
+      <div className="relative">
+        <MainImage image={images[index]} title={title} isNew={isNew} onOpen={() => setZoomOpen(true)} />
+        {/* Siblings of the image button, not children — taps here must never
+            fall through and open the viewer. */}
+        {actions && <div className="absolute right-3 top-3 z-10 flex gap-2">{actions}</div>}
+      </div>
 
       {images.length > 1 && (
         <div className="mt-2.5 flex gap-2.5 overflow-x-auto md:mt-3.5 md:gap-3">

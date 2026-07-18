@@ -28,6 +28,8 @@ import { StickyBuyBar } from "./components/StickyBuyBar";
 import { isOnSale } from "@/lib/pricing";
 
 const CIRCLE_BTN = "flex size-10 items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:border-brand";
+// Over-the-photo variant: solid white with a soft shadow so it reads on any image.
+const FLOAT_BTN = "flex size-10 items-center justify-center rounded-full border border-line bg-white text-ink shadow-[0_4px_14px_rgba(16,18,8,0.14)]";
 
 function Badge({ tone, children }) {
   const styles = {
@@ -245,19 +247,21 @@ export function ProductDetailPage() {
       {/* ---------- Mobile ---------- */}
       <div className="pb-24 md:hidden">
         <div className="mx-4 mt-3">
-          <ProductGallery thumbnail={product.thumbnail} gallery={product.gallery} title={product.title} isNew={product.isNewArrival} />
+          <ProductGallery
+            thumbnail={product.thumbnail}
+            gallery={product.gallery}
+            title={product.title}
+            isNew={product.isNewArrival}
+            actions={
+              <>
+                <WishlistButton product={product} className={FLOAT_BTN} />
+                <ShareCircle title={product.title} className={FLOAT_BTN} />
+              </>
+            }
+          />
         </div>
         <div className="mx-4 mt-[18px]">
-          {/* Wishlist + share live on the kicker row here, same as desktop —
-              they were desktop-only before, so mobile had no way to share at
-              all, which is the majority of this store's traffic. */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1 text-[10.5px] font-bold uppercase tracking-[0.1em] text-faint">{kicker}</div>
-            <div className="-mt-1.5 flex shrink-0 gap-2">
-              <WishlistButton product={product} className={cn(CIRCLE_BTN, "border")} />
-              <ShareCircle title={product.title} />
-            </div>
-          </div>
+          <div className="text-[10.5px] font-bold uppercase tracking-[0.1em] text-faint">{kicker}</div>
           <h1 className="mt-2 font-display text-[23px] font-extrabold leading-[1.2] tracking-[-0.01em] text-ink">{product.title}</h1>
           <div className="mt-3"><PriceBlock size="sm" /></div>
           {outOfStock && <NotifyButton className="mt-4 h-12 w-full text-[14px]" />}
