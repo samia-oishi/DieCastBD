@@ -19,3 +19,8 @@ export async function updatePage(id, payload) {
   const { data } = await api.patch(`/admin/pages/${id}`, payload);
   return data.data;
 }
+
+export async function deletePage(id) {
+  const { data } = await api.delete(`/admin/pages/${id}`);
+  return data;
+}

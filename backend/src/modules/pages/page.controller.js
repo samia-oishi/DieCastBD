@@ -92,3 +92,26 @@ export const updatePage = asyncHandler(async (req, res) => {
   if (!page) throw ApiError.notFound("Page not found");
   sendSuccess(res, { data: page, message: "Page updated" });
 });
+
+/** Pages the storefront routes to directly.
+ *
+ * `/terms-conditions` and friends are hardcoded routes with footer links, so
+ * deleting one wouldn't just remove content — it would turn a linked page into
+ * a 404. The merchant can empty them instead, which is what an unpublished or
+ * blank policy page already renders.
+ */
+const SYSTEM_PAGE_SLUGS = new Set(["terms-conditions", "privacy-policy", "refund-policy", "shipping-policy"]);
+
+export const deletePage = asyncHandler(async (req, res) => {
+  const page = await Page.findById(req.params.id);
+  if (!page) throw ApiError.notFound("Page not found");
+
+  if (SYSTEM_PAGE_SLUGS.has(page.slug)) {
+    throw ApiError.conflict(
+      "The storefront links to this page from its footer — unpublish or clear it instead of deleting it"
+    );
+  }
+
+  await page.deleteOne();
+  sendSuccess(res, { message: `${page.title} deleted` });
+});

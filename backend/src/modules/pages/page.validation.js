@@ -19,7 +19,7 @@ export const createPageSchema = {
 };
 
 export const updatePageSchema = {
-  params: z.object({ id: z.string().min(1) }),
+  params: z.object({ id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid page id") }),
   body: z.object({
     title: z.string().min(1).optional(),
     content: z.string().optional(),
@@ -31,7 +31,10 @@ export const updatePageSchema = {
 };
 
 export const idParamSchema = {
-  params: z.object({ id: z.string().min(1) }),
+  // Must be a real ObjectId, not just any non-empty string: a malformed id used
+  // to reach Mongoose and throw a CastError, which surfaced as a 500 instead of
+  // a 400. Applies to GET/PATCH/DELETE, all of which share this schema.
+  params: z.object({ id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid page id") }),
 };
 
 export const slugParamSchema = {

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAdminPages, getAdminPage, createPage, updatePage } from "./pagesAdminApi";
+import { listAdminPages, getAdminPage, createPage, updatePage, deletePage } from "./pagesAdminApi";
 
 export function useAdminPages() {
   return useQuery({
@@ -28,6 +28,14 @@ export function useUpdatePageMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, payload }) => updatePage(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "pages"] }),
+  });
+}
+
+export function useDeletePageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deletePage,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "pages"] }),
   });
 }
