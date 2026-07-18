@@ -332,7 +332,17 @@ export function SettingsPage() {
     toast.promise(updateMutation.mutateAsync(values), {
       loading: "Saving...",
       success: "Settings saved",
-      error: (err) => err.response?.data?.message ?? "Could not save settings",
+      // The API sends per-field messages in `errors` ({ section: [msgs] }) —
+      // name the failing section instead of a bare "Validation failed".
+      error: (err) => {
+        const fieldErrors = err.response?.data?.errors;
+        const first = fieldErrors && Object.entries(fieldErrors)[0];
+        if (first) {
+          const [section, msgs] = first;
+          return `${section}: ${Array.isArray(msgs) ? msgs[0] : msgs}`;
+        }
+        return err.response?.data?.message ?? "Could not save settings";
+      },
     });
   };
 

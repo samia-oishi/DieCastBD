@@ -1,5 +1,26 @@
 import { z } from "zod";
 
+// Hex color or blank ("" = fall back to the shipped design color). Forgiving of
+// how people actually type hex: whitespace is trimmed and a missing leading "#"
+// is added, so "A8CD2F" saves instead of failing validation.
+const hexOrEmpty = z.preprocess(
+  (v) => {
+    if (typeof v !== "string") return v;
+    const t = v.trim();
+    return /^([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(t) ? `#${t}` : t;
+  },
+  z
+    .string()
+    .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Must be a hex color like #A8CD2F")
+    .or(z.literal(""))
+    .optional()
+);
+
+// A number input the admin may clear: "" means "not set", not zero — without
+// this, clearing the field coerces to 0 and trips the min() bound.
+const optionalNumber = (schema) => z.preprocess((v) => (v === "" || v == null ? undefined : v), schema.optional());
+
+
 const heroSlide = z.object({
   title: z.string().min(1),
   subtitle: z.string().optional(),
@@ -98,7 +119,9 @@ const homepageSections = z.object({
     .object({
       enabled: z.coerce.boolean().optional(),
       autoplay: z.coerce.boolean().optional(),
-      autoplayInterval: z.coerce.number().min(1).max(60).optional(),
+      // Same clearable-number treatment as scrollSpeed (an emptied input is
+      // "not set", not 0 — 0 would trip min(1)).
+      autoplayInterval: optionalNumber(z.coerce.number().min(1).max(60)),
       variant: z.enum(["lime-showroom", "dark-spotlight", "photo-fullbleed"]).optional(),
       highlightCard: z
         .object({
@@ -128,13 +151,6 @@ const homepageSections = z.object({
   newsletter: sectionToggle.optional(),
 });
 
-// Hex color or blank ("" = fall back to the shipped design color).
-const hexOrEmpty = z
-  .string()
-  .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Must be a hex color like #A8CD2F")
-  .or(z.literal(""))
-  .optional();
-
 const announcementDevice = z
   .object({
     isActive: z.coerce.boolean().optional(),
@@ -162,7 +178,7 @@ export const updateSettingsSchema = {
         separatorColor: hexOrEmpty,
         separatorStyle: z.enum(["dot", "pipe", "slash", "diamond", "star", "none"]).optional(),
         showOnAllPages: z.coerce.boolean().optional(),
-        scrollSpeed: z.coerce.number().min(5).max(120).optional(),
+        scrollSpeed: optionalNumber(z.coerce.number().min(5, "Scroll speed must be 5–120 seconds").max(120, "Scroll speed must be 5–120 seconds")),
         desktop: announcementDevice,
         mobile: announcementDevice,
       })
