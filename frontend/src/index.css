@@ -205,3 +205,32 @@
     animation: none;
   }
 }
+
+/* Print: when the admin invoice sheet is on screen, printing shows ONLY it
+   (full width, exact colors) and nothing else of the app. Classic
+   hide-everything / reveal-one-element approach via visibility. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .admin-invoice,
+  .admin-invoice * {
+    visibility: visible;
+  }
+  .admin-invoice {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    width: 100%;
+    max-width: none;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .admin-invoice-hide {
+    display: none !important;
+  }
+  @page {
+    margin: 16mm;
+  }
+}

@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Trash2 } from "lucide-react";
-import toast from "react-hot-toast";
+import { Trash2, ChevronRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { formatTaka } from "@/lib/currency";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,22 +18,28 @@ import {
 import { Pagination } from "@/components/shared/Pagination";
 import { StatusChip } from "@/components/shared/StatusChip";
 import { useDebounce } from "@/hooks/useDebounce";
+import { AdminPageHeader } from "@/features/admin/shell/AdminPageHeader";
+import { AdminSearch } from "@/features/admin/shell/AdminSearch";
+import { FilterChips } from "@/features/admin/shell/FilterChips";
+import { BulkBar } from "@/features/admin/shell/BulkBar";
+import { AdminButton } from "@/features/admin/shell/AdminButton";
+import { adminToast } from "@/features/admin/shell/adminToast";
 import { useAdminOrders, useDeleteOrdersMutation } from "./api/useAdminOrders";
+import { useOrderStatusCounts } from "./api/useOrderStatusCounts";
 
-const STATUS_OPTIONS = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
-
-// Mirrors the backend's stockBucket() "released" set (order.service.js). Used ONLY to
-// preview how many units a delete will hand back — the backend recomputes this itself
-// and its number is the one that's authoritative (we report it back from the response).
+// Mirrors the backend's stockBucket() "released" set (order.service.js) — used
+// only to preview how many units a delete hands back; the backend recomputes the
+// authoritative number and we report it from the response.
 const RELEASED_STATUSES = ["cancelled", "refunded"];
+const STATUSES = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
 
-function formatPrice(amount) {
-  return `৳${Math.round(amount).toLocaleString("en-US")}`;
-}
+const GRID = "md:grid-cols-[auto_1.3fr_1.7fr_1fr_0.9fr_128px_28px]";
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 }
+
+const CHECKBOX_CLS = "size-5 rounded-[6px] border-[1.5px] border-[#C9CBBE] data-[state=checked]:border-brand";
 
 export function OrdersPage() {
   const [page, setPage] = useState(1);
@@ -52,21 +55,21 @@ export function OrdersPage() {
     status: status === "all" ? undefined : status,
     q: debouncedSearch || undefined,
   });
+  const counts = useOrderStatusCounts();
   const deleteMutation = useDeleteOrdersMutation();
 
   const orders = data?.data ?? [];
   const meta = data?.meta;
-
   const selected = orders.filter((o) => selectedIds.includes(o._id));
 
-  // Only live orders (pending = reserved, confirmed..delivered = committed) still hold
-  // a claim on inventory; cancelled/refunded hold none, so they give nothing back.
+  // Only live orders (pending = reserved, confirmed..delivered = committed) still
+  // hold inventory; cancelled/refunded hold none, so they give nothing back.
   const unitsReturning = selected
     .filter((o) => !RELEASED_STATUSES.includes(o.status))
     .reduce((sum, o) => sum + o.items.reduce((n, i) => n + i.qty, 0), 0);
 
-  // Selection is per-page and resets whenever the visible set changes, so you can
-  // never delete a row you've scrolled away from and can no longer see.
+  // Selection is per-page and resets when the visible set changes — you can never
+  // delete a row you've scrolled away from.
   const resetTo = (fn) => (value) => {
     fn(value);
     setPage(1);
@@ -77,119 +80,121 @@ export function OrdersPage() {
   const someOnPageSelected = orders.some((o) => selectedIds.includes(o._id));
 
   const toggleAll = () => setSelectedIds(allOnPageSelected ? [] : orders.map((o) => o._id));
-  const toggleOne = (id) =>
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const toggleOne = (id) => setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const onDelete = () => {
     deleteMutation.mutate(selectedIds, {
       onSuccess: (res) => {
-        toast.success(res?.message ?? "Orders deleted");
+        adminToast(res?.message ?? "Orders deleted");
         setSelectedIds([]);
         setConfirmOpen(false);
       },
-      onError: (err) => toast.error(err.response?.data?.message ?? "Could not delete orders"),
+      onError: (err) => adminToast(err.response?.data?.message ?? "Could not delete orders"),
     });
   };
 
-  return (
-    <div className="flex flex-col gap-4">
-      <h1 className="font-heading text-2xl">Orders</h1>
+  const chips = [
+    { value: "all", label: "All", count: counts.all },
+    ...STATUSES.map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1), count: counts[s] })),
+  ];
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Input
-          placeholder="Search order number..."
+  return (
+    <div className="flex flex-col gap-[18px]">
+      <AdminPageHeader eyebrow={meta ? `${meta.total} order${meta.total === 1 ? "" : "s"}` : "Orders"} title="Orders" />
+
+      <div className="flex flex-col gap-3">
+        <AdminSearch
           value={search}
           onChange={(e) => resetTo(setSearch)(e.target.value)}
-          className="max-w-xs"
+          placeholder="Search by order id, customer, phone or email…"
+          className="max-w-md"
         />
-        <Select value={status} onValueChange={resetTo(setStatus)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s} value={s} className="capitalize">
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {selectedIds.length > 0 && (
-          <div className="ml-auto flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{selectedIds.length} selected</span>
-            <Button variant="destructive" size="sm" onClick={() => setConfirmOpen(true)}>
-              <Trash2 /> Delete
-            </Button>
-          </div>
-        )}
+        <FilterChips chips={chips} value={status} onChange={resetTo(setStatus)} />
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-10">
-              <Checkbox
-                checked={allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false}
-                onCheckedChange={toggleAll}
-                disabled={orders.length === 0}
-                aria-label="Select all orders on this page"
-              />
-            </TableHead>
-            <TableHead>Order</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Total</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading && (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                Loading...
-              </TableCell>
-            </TableRow>
-          )}
+      <section className="overflow-x-auto rounded-[18px] border border-line bg-white">
+        <div className="min-w-[720px]">
+          {/* header (desktop) */}
+          <div className={cn("hidden items-center gap-4 border-b border-line-soft px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.07em] text-faint md:grid", GRID)}>
+            <Checkbox
+              className={CHECKBOX_CLS}
+              checked={allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false}
+              onCheckedChange={toggleAll}
+              disabled={orders.length === 0}
+              aria-label="Select all orders on this page"
+            />
+            <span>Order</span>
+            <span>Customer</span>
+            <span>Date</span>
+            <span>Total</span>
+            <span>Status</span>
+            <span />
+          </div>
+
+          {isLoading && <p className="px-5 py-10 text-center text-[13.5px] text-faint">Loading…</p>}
           {!isLoading && orders.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                No orders found.
-              </TableCell>
-            </TableRow>
+            <p className="px-5 py-10 text-center text-[13.5px] text-faint">No orders match — try a different search or status.</p>
           )}
-          {orders.map((order) => (
-            <TableRow key={order._id} data-state={selectedIds.includes(order._id) ? "selected" : undefined}>
-              <TableCell>
+
+          {orders.map((o) => {
+            const isSel = selectedIds.includes(o._id);
+            return (
+              <div
+                key={o._id}
+                className={cn(
+                  "grid grid-cols-[auto_1fr] items-center gap-3 border-t border-line-soft px-4 py-3 transition-colors first:border-t-0 hover:bg-[#FCFCF9] md:gap-4 md:px-5",
+                  GRID,
+                  isSel && "bg-[#FBFDF3]"
+                )}
+              >
                 <Checkbox
-                  checked={selectedIds.includes(order._id)}
-                  onCheckedChange={() => toggleOne(order._id)}
-                  aria-label={`Select order ${order.orderNumber}`}
+                  className={cn(CHECKBOX_CLS, "relative z-10")}
+                  checked={isSel}
+                  onCheckedChange={() => toggleOne(o._id)}
+                  aria-label={`Select order ${o.orderNumber}`}
                 />
-              </TableCell>
-              <TableCell>
-                <Link to={order._id} className="font-mono text-xs hover:text-primary">
-                  {order.orderNumber}
+
+                {/* desktop cells */}
+                <div className="hidden md:contents">
+                  <Link to={o._id} className="truncate font-display text-[13px] font-bold text-ink hover:text-brand-deep">
+                    {o.orderNumber}
+                  </Link>
+                  <div className="min-w-0">
+                    <div className="truncate text-[13px] text-ink">{o.user?.name || "Guest"}</div>
+                    <div className="truncate text-[11.5px] text-faint">{o.phone || o.user?.email || "—"}</div>
+                  </div>
+                  <div className="text-[12.5px] text-ink-soft">{formatDate(o.createdAt)}</div>
+                  <div className="text-[13px] font-bold text-ink">{formatTaka(o.total)}</div>
+                  <div><StatusChip status={o.status} size="sm" /></div>
+                  <Link to={o._id} className="flex justify-end text-faint hover:text-ink">
+                    <ChevronRight size={18} strokeWidth={2} />
+                  </Link>
+                </div>
+
+                {/* mobile card */}
+                <Link to={o._id} className="flex items-center gap-3 md:hidden">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-display text-[13px] font-bold text-ink">{o.orderNumber}</div>
+                    <div className="truncate text-[12px] text-faint">
+                      {(o.user?.name || "Guest")} · {formatDate(o.createdAt)}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="text-[13px] font-bold text-ink">{formatTaka(o.total)}</span>
+                    <StatusChip status={o.status} size="sm" />
+                  </div>
                 </Link>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {/* Guests can have no email — don't render an empty "()". */}
-                {order.user?.name}
-                {order.user?.email && <span className="text-xs"> ({order.user.email})</span>}
-              </TableCell>
-              <TableCell className="text-muted-foreground">{formatDate(order.createdAt)}</TableCell>
-              <TableCell>{formatPrice(order.total)}</TableCell>
-              <TableCell>
-                <StatusChip status={order.status} />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {meta && meta.totalPages > 1 && (
-        <div className="mt-4 flex justify-center">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[12.5px] text-faint">
+            Showing {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
+          </span>
           <Pagination
             page={meta.page}
             totalPages={meta.totalPages}
@@ -201,6 +206,12 @@ export function OrdersPage() {
         </div>
       )}
 
+      <BulkBar count={selectedIds.length}>
+        <AdminButton variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>
+          <Trash2 size={15} strokeWidth={2.2} /> Delete
+        </AdminButton>
+      </BulkBar>
+
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -211,29 +222,21 @@ export function OrdersPage() {
               <div className="space-y-3">
                 <div className="max-h-48 overflow-y-auto rounded-md border border-border">
                   {selected.map((o) => (
-                    <div
-                      key={o._id}
-                      className="flex items-center justify-between gap-3 border-b border-border px-3 py-2 text-xs last:border-b-0"
-                    >
+                    <div key={o._id} className="flex items-center justify-between gap-3 border-b border-border px-3 py-2 text-xs last:border-b-0">
                       <span className="font-mono">{o.orderNumber}</span>
                       <span className="flex items-center gap-2">
-                        <StatusChip status={o.status} />
-                        <span className="tabular-nums">{formatPrice(o.total)}</span>
+                        <StatusChip status={o.status} size="sm" />
+                        <span className="tabular-nums">{formatTaka(o.total)}</span>
                       </span>
                     </div>
                   ))}
                 </div>
-
-                {/* The consequences, stated plainly — this is irreversible and it moves stock. */}
                 {unitsReturning > 0 && (
                   <p className="text-foreground">
                     {unitsReturning} item{unitsReturning === 1 ? "" : "s"} will be returned to stock.
                   </p>
                 )}
-                <p>
-                  This is permanent. These orders will be removed from revenue reports and can&apos;t be
-                  recovered from here.
-                </p>
+                <p>This is permanent. These orders will be removed from revenue reports and can&apos;t be recovered from here.</p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -241,15 +244,13 @@ export function OrdersPage() {
             <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
-                e.preventDefault(); // keep the dialog open until the request resolves
+                e.preventDefault();
                 onDelete();
               }}
               disabled={deleteMutation.isPending}
               className="bg-destructive text-white hover:bg-destructive/90"
             >
-              {deleteMutation.isPending
-                ? "Deleting…"
-                : `Delete ${selectedIds.length} order${selectedIds.length === 1 ? "" : "s"}`}
+              {deleteMutation.isPending ? "Deleting…" : `Delete ${selectedIds.length} order${selectedIds.length === 1 ? "" : "s"}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

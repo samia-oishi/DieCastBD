@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -13,6 +13,12 @@ const deleteMutate = vi.fn();
 vi.mock("./api/useAdminOrders", () => ({
   useAdminOrders: () => ({ data: { data: ORDERS, meta: { page: 1, limit: 20, total: 3, totalPages: 1 } }, isLoading: false }),
   useDeleteOrdersMutation: () => ({ mutate: deleteMutate, isPending: false }),
+}));
+
+// The list now shows per-status filter chips fed by their own count hook; stub it
+// so the test stays focused on selection + delete behaviour (no real queries fire).
+vi.mock("./api/useOrderStatusCounts", () => ({
+  useOrderStatusCounts: () => ({ all: 3, pending: 1, confirmed: 1, packed: 0, shipped: 0, delivered: 0, cancelled: 1, refunded: 0 }),
 }));
 
 // pending = reserved (1 unit), confirmed = committed (2 units) → 3 units come back.
@@ -44,7 +50,9 @@ describe("OrdersPage — bulk select & delete", () => {
     expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByLabelText("Select order DBD-1"));
-    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    // The bulk bar shows a lime count badge + "selected" and the Delete action.
+    const bar = screen.getByText("selected").closest("div");
+    expect(within(bar).getByText("1")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
   });
 
@@ -53,10 +61,11 @@ describe("OrdersPage — bulk select & delete", () => {
     const selectAll = screen.getByLabelText("Select all orders on this page");
 
     await userEvent.click(selectAll);
-    expect(screen.getByText("3 selected")).toBeInTheDocument();
+    const bar = screen.getByText("selected").closest("div");
+    expect(within(bar).getByText("3")).toBeInTheDocument();
 
     await userEvent.click(selectAll);
-    expect(screen.queryByText(/selected/)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("selected")).not.toBeInTheDocument());
   });
 
   it("the confirmation counts ONLY the units that actually return to stock", async () => {

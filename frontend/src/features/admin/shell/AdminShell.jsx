@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { useCurrentUser } from "@/features/auth/api/useAuth";
+import logo from "@/assets/logo/diecastbdLight.png";
 import { ADMIN_NAV } from "./adminNav";
 
 const FROST =
@@ -19,11 +20,7 @@ function initials(name, email) {
 }
 
 function Logo() {
-  return (
-    <span className="font-display text-[18px] font-extrabold tracking-[-0.01em] text-ink">
-      DiecastBD<span className="text-brand">.</span>
-    </span>
-  );
+  return <img src={logo} alt="DiecastBD" className="block h-[26px] w-auto" />;
 }
 
 function AdminPill() {
