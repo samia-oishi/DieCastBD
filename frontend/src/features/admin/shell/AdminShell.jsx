@@ -19,19 +19,11 @@ function initials(name, email) {
   return ((parts[0]?.[0] ?? "D") + (parts[1]?.[0] ?? parts[0]?.[1] ?? "B")).toUpperCase();
 }
 
-// The wordmark is a wide image (~6.9:1), so it's sized by WIDTH to fit the 232px
-// sidebar next to the ADMIN pill: 192px inner − pill (~52) − gap (8) ≈ 124px.
-// Height then lands ~18px, matching the design's 18px wordmark.
+// The wordmark is a wide image (~6.9:1), so it's sized by WIDTH. With the ADMIN
+// pill removed the full 192px sidebar inner width is available; 156px leaves a
+// comfortable margin and renders ~23px tall.
 function Logo() {
-  return <img src={logo} alt="DiecastBD" className="block h-auto w-[124px] max-w-full shrink object-contain" />;
-}
-
-function AdminPill() {
-  return (
-    <span className="shrink-0 rounded-full border border-brand-soft-border bg-brand-tint px-2 py-[3px] text-[9.5px] font-bold uppercase tracking-[0.08em] text-brand-deep">
-      Admin
-    </span>
-  );
+  return <img src={logo} alt="DiecastBD" className="block h-auto w-[156px] max-w-full object-contain" />;
 }
 
 /** One nav item. Icon color tracks active state (olive when active, faint idle). */
@@ -106,7 +98,6 @@ export function AdminShell() {
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[232px] flex-col border-r border-line bg-white md:flex">
         <div className="flex min-w-0 items-center gap-2 px-5 pb-4 pt-[22px]">
           <Logo />
-          <AdminPill />
         </div>
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-1.5">
           {ADMIN_NAV.map((item) => (
@@ -161,7 +152,6 @@ export function AdminShell() {
               <div className="flex items-center justify-between px-5 pb-4 pt-[18px]">
                 <div className="flex items-center gap-2">
                   <Logo />
-                  <AdminPill />
                 </div>
                 <button
                   type="button"
