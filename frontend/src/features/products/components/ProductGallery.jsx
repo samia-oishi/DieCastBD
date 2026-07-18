@@ -100,7 +100,20 @@ function MainImage({ image, title, isNew, onOpen }) {
         hasHover && "cursor-zoom-in"
       )}
     >
-      <img ref={imgRef} src={cloudinaryCard(image.url)} alt={title} decoding="async" className="h-full w-auto max-w-none" />
+      {/* The PDP hero renders up to ~780 CSS px — on a retina screen that's
+          ~1560 device px, so the catalogue's w_800 card source was upscaled
+          almost 2x and looked soft. srcSet lets high-DPI screens pull the
+          w_1600 zoom source (already preloaded for the magnifier) while
+          low-DPI screens keep the lighter 800. */}
+      <img
+        ref={imgRef}
+        src={cloudinaryCard(image.url)}
+        srcSet={`${cloudinaryCard(image.url)} 800w, ${cloudinaryZoom(image.url)} 1600w`}
+        sizes="(min-width: 768px) 780px, 90vw"
+        alt={title}
+        decoding="async"
+        className="h-full w-auto max-w-none"
+      />
 
       {/* Belt and braces on top of the JS gates: the media query hides the
           overlay at the CSS level on any device that can't hover, so even an
