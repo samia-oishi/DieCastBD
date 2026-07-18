@@ -21,13 +21,11 @@ Docs updated: `docs/plan.md` §7 decisions **#82–88** + "Admin light redesign:
 - `@fontsource-variable/geist` removed from `frontend/package.json`.
 - QA sweep: all 12 screens × 1440/390/320 — h1 present, zero console errors, no horizontal overflow.
 
-## Next task (merchant asked for this explicitly)
+## Pages blocks — DONE (was the "next task", completed same session)
 
-**Build Pages blocks full functionality.** Phase 10 shipped the builder UI only — blocks live in component state and an amber notice on the page says so. Still to do:
-1. Backend: `blocks: [{ type, ...fields }]` on the `Page` model (Mixed/array), create+update validation, controller passthrough. Watch the sanitize step — page `content` is sanitized server-side before persist; block text needs equivalent treatment.
-2. Frontend admin: remove the amber notice, wire `blocks` into the RHF form (currently `useState` in `PageFormPage.jsx`), include in save payload.
-3. Storefront: render blocks on `PageView`. Eight types — heading, text (markdown), image, carousel (Images|Products, reuse existing Embla), products grid (featured or picked slugs, 2/3/4 cols, optional prices), button, offer banner (3 themes), divider. Honour `width: Full|Half` (two halves sit side by side on desktop).
-4. Block JSON contract is already fixed in `frontend/src/features/admin/pages/blockTypes.js` — `create()` returns every field a type can hold. Page shape: `{ title, slug, status, seoTitle, seoDesc, blocks: [] }`.
+Blocks now persist and render end to end. `blocks[]` on the Page model + Zod discriminated union (`backend/src/modules/pages/page.blocks.js`), admin form wiring, `BlockRenderer` on the storefront, merchant pages at `/<slug>`. Image and carousel-slide blocks upload to Cloudinary via the existing `POST /admin/settings/upload-image`. See `docs/plan.md` #89.
+
+**Known gap, flagged not filled: there is no DELETE route for pages.** The admin can create pages but never remove them — test pages had to be deleted straight from the database. This is the obvious next piece of work (route + controller + validation + confirm dialog in the admin list, mirroring the coupon delete pattern).
 
 ## Gotchas carried forward
 

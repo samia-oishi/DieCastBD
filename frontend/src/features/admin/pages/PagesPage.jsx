@@ -6,6 +6,13 @@ import { AdminPageHeader } from "@/features/admin/shell/AdminPageHeader";
 import { AdminButton } from "@/features/admin/shell/AdminButton";
 import { useAdminPages } from "./api/useAdminPages";
 
+/** The design's "N blocks" line. Real now that blocks persist — it was omitted
+ * while the builder was UI-only rather than shown as a fabricated zero. */
+function blockCount(page) {
+  const n = page.blocks?.length ?? 0;
+  return `${n} block${n === 1 ? "" : "s"}`;
+}
+
 function formatDate(dateString) {
   return dateString ? new Date(dateString).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "—";
 }
@@ -47,7 +54,7 @@ export function PagesPage() {
             <span className="min-w-0 flex-1">
               <span className="block text-[13px] font-bold text-ink">{page.title}</span>
               <span className="mt-px block truncate text-[11.5px] text-faint">
-                /{page.slug} · updated {formatDate(page.updatedAt)}
+                /{page.slug} · {blockCount(page)} · updated {formatDate(page.updatedAt)}
               </span>
             </span>
             <span

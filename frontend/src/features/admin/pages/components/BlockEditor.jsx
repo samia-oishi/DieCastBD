@@ -1,10 +1,12 @@
-import { Image as ImageIcon, Plus } from "lucide-react";
+import { Image as ImageIcon, Plus, ImageUp, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { adminInputCls, adminTextareaCls } from "@/features/admin/shell/adminFieldCls";
 import { OFFER_THEMES, hasWidth } from "../blockTypes";
 import { ProductPicker } from "./ProductPicker";
+import { adminToast } from "@/features/admin/shell/adminToast";
+import { useUploadSettingsImageMutation } from "@/features/admin/settings/api/useAdminSettings";
 
 function Label({ children, hint }) {
   return (
@@ -58,6 +60,58 @@ function Select({ value, onChange, options, className }) {
   );
 }
 
+
+/** Cloudinary upload for image-bearing blocks.
+ *
+ * Reuses `POST /admin/settings/upload-image` — it is a generic image upload,
+ * not settings-specific, and adding a second endpoint that does the same thing
+ * is how two upload paths drift apart. Blocks store the URL string, so a hand-
+ * typed URL still works for images already hosted elsewhere.
+ */
+function ImageUpload({ value, onChange, size = 68, label = "Upload image" }) {
+  const uploadMutation = useUploadSettingsImageMutation();
+
+  const onFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const uploaded = await uploadMutation.mutateAsync(file);
+      onChange(uploaded.url);
+    } catch {
+      adminToast("Upload failed");
+    } finally {
+      e.target.value = "";
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        style={{ width: size, height: size }}
+        className="flex shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-dashed border-[#DEDFD6] bg-white text-faint"
+      >
+        {value ? <img src={value} alt="" className="h-full w-full object-cover" /> : <ImageIcon size={20} strokeWidth={1.6} />}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-white px-3.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-ink hover:text-ink">
+          <ImageUp size={13} strokeWidth={1.9} />
+          {uploadMutation.isPending ? "Uploading…" : label}
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/avif" className="hidden" onChange={onFile} />
+        </label>
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="inline-flex h-9 items-center gap-1 rounded-full px-2.5 text-[12.5px] font-semibold text-faint transition-colors hover:text-[#B3261E]"
+          >
+            <X size={13} strokeWidth={2.2} /> Remove
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** The expanded body of one block. `set(patch)` merges into the block. */
 export function BlockEditor({ block, set }) {
   const field = (key) => ({ value: block[key] ?? "", onChange: (e) => set({ [key]: e.target.value }) });
@@ -86,14 +140,9 @@ export function BlockEditor({ block, set }) {
 
       {block.type === "image" && (
         <>
-          <div className="flex items-center gap-3">
-            <div className="flex size-[68px] shrink-0 items-center justify-center rounded-[12px] border border-dashed border-[#DEDFD6] bg-white text-faint">
-              <ImageIcon size={20} strokeWidth={1.6} />
-            </div>
-            <label className="block flex-1">
-              <Label hint="(paste a URL — uploads arrive with the block backend)">Image URL</Label>
-              <input {...field("url")} placeholder="https://…" className={adminInputCls} />
-            </label>
+          <div>
+            <Label>Image</Label>
+            <ImageUpload value={block.url} onChange={(url) => set({ url })} />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block">
@@ -121,28 +170,23 @@ export function BlockEditor({ block, set }) {
             </div>
           ) : (
             <div>
-              <Label hint="(image URLs, one slide each)">Slides</Label>
-              <div className="flex flex-col gap-2">
+              <Label>Slides</Label>
+              <div className="flex flex-col gap-2.5">
                 {(block.slides ?? []).map((slide, i) => (
-                  <div key={i} className="flex gap-2">
-                    <input
-                      value={slide}
-                      onChange={(e) => {
-                        const slides = [...block.slides];
-                        slides[i] = e.target.value;
-                        set({ slides });
-                      }}
-                      placeholder="https://…"
-                      className={adminInputCls}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => set({ slides: block.slides.filter((_, j) => j !== i) })}
-                      className="shrink-0 rounded-[10px] border border-line px-3 text-[12px] font-semibold text-faint hover:border-[#F0C9C5] hover:bg-[#FDF6F5] hover:text-[#B3261E]"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                  <ImageUpload
+                    key={i}
+                    value={slide}
+                    size={56}
+                    label={slide ? "Replace" : "Upload slide"}
+                    onChange={(url) => {
+                      // An emptied slide is removed rather than left as a blank
+                      // tile the storefront would have to filter out.
+                      const slides = url
+                        ? block.slides.map((s, j) => (j === i ? url : s))
+                        : block.slides.filter((_, j) => j !== i);
+                      set({ slides });
+                    }}
+                  />
                 ))}
                 <button
                   type="button"

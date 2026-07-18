@@ -256,7 +256,7 @@ The admin was the last dark surface in the app. It's now light, sharing the stor
     been charged ৳0. Now `frontend/src/lib/pricing.js` + `backend/src/utils/pricing.js`
     define one rule — a sale price counts only when `> 0 && < price` — and 14 hand-copied
     call sites use it. The data was cleaned and the boundary normalises `0 → null`.
-86. **Blocks-based Pages builder ships UI-only, and says so.** Eight block types, native
+86. **Blocks-based Pages builder ships UI-only, and says so.** *(Superseded by #89 — blocks persist and render now; kept for the reasoning behind the honest-notice approach.)* Eight block types, native
     HTML5 drag-and-drop (no `@dnd-kit` in this project; the brief bars new libraries) with
     arrow buttons as the touch/keyboard path. Blocks live in component state — the API has
     no field for them yet — so an amber notice above the canvas states plainly what saves
