@@ -53,3 +53,13 @@ const ZOOM_TRANSFORM = "c_limit,w_1600,f_auto,q_auto";
 export function cloudinaryZoom(url) {
   return withTransform(url, ZOOM_TRANSFORM);
 }
+
+// The full-screen viewer's "actual size" mode shows real pixels, so it must not
+// be resized at all — only format/quality optimised. cloudinaryZoom caps at
+// w_1600, which is right for the hover magnifier but means the viewer could
+// never actually reach 100% of the original.
+const FULL_TRANSFORM = "f_auto,q_auto";
+
+export function cloudinaryFull(url) {
+  return withTransform(url, FULL_TRANSFORM);
+}
