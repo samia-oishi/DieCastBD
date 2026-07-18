@@ -1,5 +1,6 @@
 import sanitizeHtml from "sanitize-html";
 import { Page } from "./page.model.js";
+import { Product } from "../products/product.model.js";
 import { slugify } from "../../utils/slugify.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
@@ -19,10 +20,44 @@ function sanitizePageContent(html) {
   return sanitizeHtml(html ?? "", { allowedTags: ALLOWED_TAGS, allowedAttributes: ALLOWED_ATTRIBUTES });
 }
 
+/** Products referenced by a page's blocks, resolved server-side.
+ *
+ * Product and carousel blocks store slugs, not embedded product data — so a
+ * price edit shows up on every page that features the product instead of
+ * freezing at whatever it was when the block was built. Resolving here keeps a
+ * public page one request rather than making the browser fetch the catalogue
+ * and filter it client-side.
+ */
+async function resolveBlockProducts(blocks = []) {
+  const slugs = new Set();
+  let wantsFeatured = false;
+
+  for (const block of blocks) {
+    if (block?.type === "products" && block.featured) wantsFeatured = true;
+    if (block?.type === "products" || block?.type === "carousel") {
+      for (const slug of block.picked ?? []) slugs.add(slug);
+    }
+  }
+  if (!slugs.size && !wantsFeatured) return [];
+
+  const query = wantsFeatured
+    ? { $or: [{ slug: { $in: [...slugs] } }, { isFeatured: true }] }
+    : { slug: { $in: [...slugs] } };
+
+  // Only active products — a block must not resurrect something the merchant
+  // drafted or archived after building the page.
+  return Product.find({ ...query, status: "active" })
+    .select("slug title thumbnail price salePrice stock reservedStock isPreOrder preOrderEndDate isFeatured brand")
+    .populate("brand", "name slug")
+    .lean();
+}
+
 export const getPageBySlug = asyncHandler(async (req, res) => {
-  const page = await Page.findOne({ slug: req.params.slug, isPublished: true });
+  const page = await Page.findOne({ slug: req.params.slug, isPublished: true }).lean();
   if (!page) throw ApiError.notFound("Page not found");
-  sendSuccess(res, { data: page });
+
+  const products = await resolveBlockProducts(page.blocks);
+  sendSuccess(res, { data: { ...page, blockProducts: products } });
 });
 
 export const listPagesAdmin = asyncHandler(async (req, res) => {
@@ -37,14 +72,14 @@ export const getPageAdmin = asyncHandler(async (req, res) => {
 });
 
 export const createPage = asyncHandler(async (req, res) => {
-  const { title, content, tldr, seo, isPublished } = req.body;
+  const { title, content, tldr, blocks, seo, isPublished } = req.body;
   const slug = slugify(title);
 
   if (await Page.exists({ slug })) {
     throw ApiError.conflict("A page with this title already exists");
   }
 
-  const page = await Page.create({ title, slug, content: sanitizePageContent(content), tldr, seo, isPublished });
+  const page = await Page.create({ title, slug, content: sanitizePageContent(content), tldr, blocks, seo, isPublished });
   sendSuccess(res, { data: page, status: 201, message: "Page created" });
 });
 

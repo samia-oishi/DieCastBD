@@ -37,6 +37,7 @@ const AboutPage = page(() => import("@/features/about-contact/AboutPage"), "Abou
 const ContactPage = page(() => import("@/features/about-contact/ContactPage"), "ContactPage");
 const FaqPage = page(() => import("@/features/about-contact/FaqPage"), "FaqPage");
 const PageView = page(() => import("@/features/pages/PageView"), "PageView");
+const CmsPage = page(() => import("@/features/pages/CmsPage"), "CmsPage");
 
 const DashboardPage = page(() => import("@/features/admin/dashboard/DashboardPage"), "DashboardPage");
 const ProductsPage = page(() => import("@/features/admin/products/ProductsPage"), "ProductsPage");
@@ -92,6 +93,10 @@ export const router = createBrowserRouter([
           { path: "/orders/:orderNumber", element: <OrderDetailPage /> },
         ],
       },
+      // Merchant-built CMS pages, LAST inside the public layout so every real
+      // route above wins the match. An unknown slug 404s exactly as before —
+      // the page query fails and CmsPage renders NotFoundPage.
+      { path: "/:slug", element: <CmsPage /> },
     ],
   },
   {

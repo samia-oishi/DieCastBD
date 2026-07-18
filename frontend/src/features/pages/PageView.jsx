@@ -7,6 +7,7 @@ import { ROUTES } from "@/constants/routes";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
 import { usePage } from "./api/usePages";
+import { BlockRenderer } from "./components/BlockRenderer";
 
 // The 4 flat policy routes, in the design's switcher order.
 const POLICIES = [
@@ -77,9 +78,13 @@ export function PageView({ slug }) {
           </div>
         )}
 
+        {/* Blocks first, then the rich-text body — a page can use either or both,
+            and the block builder is where new pages are laid out. */}
+        <BlockRenderer blocks={page.blocks} products={page.blockProducts} className="mt-8" />
+
         {hasContent ? (
           <div className={cn("mt-8", PROSE)} dangerouslySetInnerHTML={{ __html: page.content }} />
-        ) : (
+        ) : (page.blocks ?? []).length > 0 ? null : (
           <p className="mt-8 text-[14.5px] leading-[1.7] text-muted-foreground">
             This policy hasn't been published yet. Reach out via our{" "}
             <Link to={ROUTES.CONTACT} className="font-semibold text-brand-deep">contact page</Link> and we'll help directly.

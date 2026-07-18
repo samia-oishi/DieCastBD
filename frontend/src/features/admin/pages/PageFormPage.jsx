@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronLeft, ChevronDown, Info } from "lucide-react";
+import { ChevronLeft, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
@@ -17,12 +17,13 @@ import { BlockCanvas } from "./components/BlockCanvas";
 import { pageSchema } from "./schemas/pageSchema";
 import { useAdminPage, useCreatePageMutation, useUpdatePageMutation } from "./api/useAdminPages";
 
-const BLANK = { title: "", content: "", seo: { title: "", description: "" }, isPublished: false };
+const BLANK = { title: "", content: "", blocks: [], seo: { title: "", description: "" }, isPublished: false };
 
 function toFormValues(page) {
   return {
     title: page.title ?? "",
     content: page.content ?? "",
+    blocks: page.blocks ?? [],
     seo: { title: page.seo?.title ?? "", description: page.seo?.description ?? "" },
     isPublished: !!page.isPublished,
   };
@@ -37,9 +38,6 @@ export function PageFormPage() {
   const createMutation = useCreatePageMutation();
   const updateMutation = useUpdatePageMutation();
 
-  // Blocks live in component state only — the API has no field for them yet.
-  // See the notice rendered above the canvas; this is deliberate, not a bug.
-  const [blocks, setBlocks] = useState([]);
   const [legacyOpen, setLegacyOpen] = useState(false);
 
   const {
@@ -131,17 +129,16 @@ export function PageFormPage() {
         </div>
       </SectionPanel>
 
-      {/* An honest label beats a builder that silently drops your work. */}
-      <div className="flex items-start gap-2.5 rounded-[14px] border border-[#F2E4C0] bg-[#FDF8EC] px-4 py-3">
-        <Info size={15} strokeWidth={2} className="mt-px shrink-0 text-[#B45309]" />
-        <p className="text-[12.5px] leading-[1.55] text-[#7A5B12]">
-          <strong className="font-bold">Blocks are a preview.</strong> You can lay a page out here, but blocks are not saved
-          yet — storing and rendering them needs the backend work that comes next. Title, status, SEO and the page content
-          below <em>do</em> save. For live policy pages, edit the content section.
-        </p>
-      </div>
-
-      <BlockCanvas blocks={blocks} onChange={setBlocks} />
+      <Controller
+        control={control}
+        name="blocks"
+        render={({ field }) => (
+          <BlockCanvas
+            blocks={field.value ?? []}
+            onChange={(next) => field.onChange(next)}
+          />
+        )}
+      />
 
       {/* The Tiptap editor still owns every page that's live today, so it stays
           — folded away, since new pages are meant to be built from blocks. */}

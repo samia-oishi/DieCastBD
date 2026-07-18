@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { blocksSchema } from "./page.blocks.js";
 
 const seo = z.object({
   title: z.string().optional(),
@@ -11,6 +12,7 @@ export const createPageSchema = {
     title: z.string().min(1, "Title is required"),
     content: z.string().optional(),
     tldr: z.string().optional(),
+    blocks: blocksSchema.optional(),
     seo: seo.optional(),
     isPublished: z.coerce.boolean().optional(),
   }),
@@ -22,6 +24,7 @@ export const updatePageSchema = {
     title: z.string().min(1).optional(),
     content: z.string().optional(),
     tldr: z.string().optional(),
+    blocks: blocksSchema.optional(),
     seo: seo.optional(),
     isPublished: z.coerce.boolean().optional(),
   }),

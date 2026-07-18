@@ -42,7 +42,10 @@ function Badge({ children, tone }) {
   );
 }
 
-export function ProductCard({ product, variant = "grid", className }) {
+/** `hidePrice` is opt-in for the Pages block builder's "Show prices & buy
+ * button" toggle — a promo page may want a browsable grid without price noise.
+ * Defaults false everywhere else, so existing usage is unchanged. */
+export function ProductCard({ product, variant = "grid", hidePrice = false, className }) {
   const v = VARIANTS[variant] ?? VARIANTS.grid;
   const navigate = useNavigate();
   const addToCart = useAddToCart();
@@ -233,18 +236,22 @@ export function ProductCard({ product, variant = "grid", className }) {
               </>
             ) : (
               <>
-                <div className="flex items-baseline gap-1.5 md:gap-2">
-                  <span className={cn("font-bold text-ink", v.price)}>{formatTaka(effectivePrice)}</span>
-                  {onSale && <span className="text-[11px] text-faint line-through md:text-[13px]">{formatTaka(price)}</span>}
-                </div>
-                <button
-                  type="button"
-                  onClick={quickAdd}
-                  aria-label={`Add ${title} to cart`}
-                  className={cn("flex shrink-0 items-center justify-center rounded-full bg-ink text-white transition-colors hover:bg-[#5F7A10]", v.addBtn)}
-                >
-                  <Plus size={13} strokeWidth={2.2} />
-                </button>
+                {!hidePrice && (
+                  <div className="flex items-baseline gap-1.5 md:gap-2">
+                    <span className={cn("font-bold text-ink", v.price)}>{formatTaka(effectivePrice)}</span>
+                    {onSale && <span className="text-[11px] text-faint line-through md:text-[13px]">{formatTaka(price)}</span>}
+                  </div>
+                )}
+                {!hidePrice && (
+                  <button
+                    type="button"
+                    onClick={quickAdd}
+                    aria-label={`Add ${title} to cart`}
+                    className={cn("flex shrink-0 items-center justify-center rounded-full bg-ink text-white transition-colors hover:bg-[#5F7A10]", v.addBtn)}
+                  >
+                    <Plus size={13} strokeWidth={2.2} />
+                  </button>
+                )}
               </>
             )}
           </div>

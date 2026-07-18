@@ -20,6 +20,11 @@ const pageSchema = new mongoose.Schema(
     // Optional "the short version" summary shown as a TL;DR card above the body
     // (policy pages). Plain text, newline-separated bullet lines.
     tldr: { type: String, default: "" },
+    // Block-built page body. Structured data, not markup — the storefront
+    // renders each block as React elements, so unlike `content` there is no
+    // HTML to sanitize. Shape is validated by Zod at the API boundary
+    // (page.blocks.js); Mixed here keeps the eight block shapes in one array.
+    blocks: { type: [mongoose.Schema.Types.Mixed], default: [] },
     seo: { type: seoSchema, default: () => ({}) },
     isPublished: { type: Boolean, default: false },
   },
