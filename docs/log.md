@@ -891,3 +891,39 @@ Merchant flagged the hero settings as scattered and full of unused things (plan.
 Now: one admin **"Hero"** card (show toggle · style select · single image upload · highlight card · per-style copy), "Homepage Sections" reduced to the pure toggle list, `HeroSlideImage` deleted (the generic `QrImageField` uploader covers the hero image), `heroBanner`/`heroSlideSchema`/autoplay fields removed from model + validation + seed, and the image moved to `homepageSections.hero.image`. `HomePage.jsx` keeps a `heroBanner[0].image` legacy fallback so an unmigrated production DB keeps its hero through the deploy window — **prod needs the same one-off `$set`/`$unset` migration at deploy time**. Dev DB migrated directly (never re-seed).
 
 **Verified:** backend 70/70, frontend 41/41, lint/build clean; the migrated settings doc replays clean through the new Zod schema (whole-object admin saves can't reject); live Playwright shows the home hero rendering the exact same Cloudinary asset with the highlight card intact.
+
+---
+
+## Admin Dashboard Light Redesign (Phases 0–12)
+
+The admin was the last dark surface left after the storefront went light. Rebuilt all 12 screens against `design_handoff_admin_light_redesign/` — one commit per screen, on `main`, three merchant review stops. Architecture decisions are recorded in `docs/plan.md` §7 (#82–88); this is the chronological account.
+
+**Phase 0 — De-theme.** Deleted the `[data-theme="diecastbd-admin"]` CSS scope, the DaisyUI admin theme block, `admin-fonts.css` + its import, the `data-theme` attribute, and `scripts/verify-theme-split.mjs` (the guard that existed to keep admin dark). Admin immediately rendered on `:root` light tokens — every screen functional, unstyled. Storefront untouched, confirmed by test suite + spot-check.
+
+**Phase 1 — Shared shell.** `src/features/admin/shell/`: 232px white sidebar, frosted 56px mobile bar with a framer-motion drawer, page header, section panel, button system, modal, thumb, search, filter chips, save bar, bulk bar, toast, and shared field classes. Two shadcn specificity traps solved here and reused everywhere after: `Select` ships `data-[size=default]:h-8` (so selects were 32px beside 44px inputs until overridden in the same variant), and `DialogContent` caps width at both base and `sm:` — tailwind-merge only dedupes within a variant, so modal width is set inline.
+
+**Phase 2 — Dashboard.** KPI cards with deltas, restyled revenue chart (lime gradient, peak dot, 7/30/90 chips, best-day pill), recent orders, low stock, pipeline counts. "Top products" omitted — analytics doesn't provide it and inventing it was not on the table.
+
+**Phase 3 — Orders.** List with status chips + counts, bulk delete preserved verbatim (including aria-labels, so `OrdersPage.test.jsx` kept passing), detail with stepper/items/status/address/history, and a print-isolated invoice modal. A JSX comment placed between `return (` and the root element broke the route entirely — Vite couldn't serve it — and my build check had run *before* that edit. Since then every change is verified by loading the page, not just building.
+
+**Phase 4 — Products.** List per prototype plus a merchant-requested photo column after the checkbox; two-column form with SKU auto-generate, live profit/margin, and a rebuilt photo grid. Backend gained bulk status + bulk delete; `listProductsAdmin` was fixed to honour `status` and `q` (the search box had been inert). Found and fixed a live ৳0 bug: two products with `salePrice: 0` slipping through `?? ` and `!= null` guards — now one shared `pricing.js` rule on both sides, 14 call sites converted.
+
+**Phase 5 — Inventory.** KPI tiles, toggle pills, availability colouring, and the three existing dialogs restyled (adjust gains an "After saving: N in stock" preview). Verified with a real ±3 adjust and restore.
+
+**Phase 6 — Brands & Categories.** Shared `SimpleCatalogManager` restyled: logo tile with initials fallback, read-only slug preview, product counts linking through to a filtered Products list.
+
+**Phase 7 — Customers.** Chips (All / Registered / Guests / Admins & staff), role pills, and a detail page with stat cards, profile, recent orders, active toggle and role select — both guarded against acting on yourself.
+
+**Phase 8 — Coupons.** Copy-to-clipboard code chips, expiry pills, and a modal with a live plain-English preview built from the same helper the rows use. The list rendered nothing at first: this endpoint returns the full `{success, data}` envelope while the paginated admin hooks unwrap it, so `.filter` was being called on an object. Verified by reading the clipboard back, not by trusting the toast.
+
+**Phase 9 — Newsletter & Reports.** Newsletter got a remove button and a new `DELETE /admin/newsletter/subscribers/:id` (hard delete, so a removed subscriber can sign up again); CSV export now quotes fields, since an address containing a comma shifted the columns. Reports got range chips, KPI cards, and a share bar measured against the period's best day rather than its total. Caught before commit: the controller threw `ApiError` without importing it, so a missing subscriber would have crashed instead of 404ing — only visible by actually calling the endpoint. Verified 400/404/200 and a real subscriber count going 2 → 1.
+
+**Phase 10 — Pages block builder.** Eight block types, native HTML5 drag-and-drop with arrow buttons as the touch/keyboard path, product picker fed from the real catalogue, live offer-banner preview. Blocks are **not persisted** — the API has no field for them — so an amber notice states exactly what saves and what doesn't rather than losing the merchant's work silently. Tiptap stays in a collapsed section because it still owns every live page. Slug renders read-only since the server derives it from the title. `slugify` moved to `lib/slug.js` rather than being typed a second time.
+
+**Phase 11 — Settings.** 1000 lines of continuous scroll became a 12-item sticky rail in 4 groups, one group at a time, cards declaring their rail item via context. RHF wiring deliberately untouched. Two bugs found by loading the page: swapping the header imports dropped the still-used `Button` import (a runtime ReferenceError past a clean build), and the save bar wouldn't retract after saving — instrumentation showed `isDirty: true` with an **empty** `dirtyFields`, a known consequence of a server-fed `values` prop, so the bar now reads `dirtyFields`.
+
+**Phase 12 — Cleanup & QA.** Removed `@fontsource-variable/geist`; grep audit found no remaining dark tokens, `data-theme`, or Geist references. Playwright sweep of all 12 screens at 1440 / 390 / 320: h1 present, zero console errors, no horizontal overflow anywhere. The sweep exposed mobile product rows overflowing their card — `grid-cols-[auto_1fr]` can't shrink below its content because `1fr` implies `min-width: auto`; rows now use `minmax(0,1fr)`, and table `min-w` is scoped to `md:` so mobile uses the stacked row instead of scrolling. Docs updated: `docs/style-guide.md` §9 rewritten (admin is light now), `docs/plan.md` §7 #82–88.
+
+Two production DB migrations remain outstanding from earlier settings work, to run at deploy time: the announcement-bar `$set` for the new shape, and hero `$set hero.image` / `$unset heroBanner` + autoplay fields.
+
+Next: persisting and rendering Pages blocks end to end (backend model/validation/API + storefront rendering), which Phase 10 deliberately left as UI-only.

@@ -220,6 +220,83 @@ All 11 phases shipped, hard-stop-per-page, each verified with Playwright screens
 
 ---
 
+### Admin dashboard light redesign (from `design_handoff_admin_light_redesign/`)
+
+The admin was the last dark surface in the app. It's now light, sharing the storefront's
+`:root` palette and Archivo/Instrument Sans — the theme split from decision #42 is
+**gone**, not inverted. All 12 screens rebuilt against the handoff (Phases 0–12, on
+`main`, one commit per screen). Decisions:
+
+82. **The dark admin theme was deleted outright, not re-skinned.** Removed the
+    `[data-theme="diecastbd-admin"]` scope in `index.css`, the DaisyUI `diecastbd-admin`
+    block, `src/styles/admin-fonts.css` + its import, the `data-theme` attribute in
+    `AdminLayout`, and `@fontsource-variable/geist` from `package.json`.
+    `scripts/verify-theme-split.mjs` — the Playwright guard whose whole purpose was
+    keeping admin dark — was deleted too, since this redesign inverts its premise.
+    Deleting the scope is safe precisely because nothing else referenced it: admin fell
+    back to `:root` light tokens and every screen stayed functional while unstyled.
+83. **A shared `admin/shell/` kit came before any screen.** `AdminShell`, `AdminPageHeader`,
+    `SectionPanel`, `AdminButton`, `AdminModal`, `AdminThumb`, `AdminSearch`,
+    `FilterChips`, `SaveBar`, `BulkBar`, `KpiCard`, `adminToast`, `adminFieldCls`. The
+    field classes are load-bearing: shadcn's `Select` ships `data-[size=default]:h-8`,
+    which out-specifies a plain `h-11`, so selects rendered 32px next to 44px inputs
+    until `adminSelectCls` overrode the same variant. Same class of problem in
+    `AdminModal`, where shadcn caps width at **both** the base and `sm:` breakpoints —
+    tailwind-merge only dedupes within a variant, so the width is set inline.
+84. **Two small backend endpoints were added, nothing more.** `PATCH /admin/products/bulk-status`
+    and `DELETE /admin/products` (bulk soft-delete, per-product AuditLog rows following
+    the `deleteOrders` precedent from #74, ids ≤100), plus
+    `DELETE /admin/newsletter/subscribers/:id` (hard delete — the unique-email index lets
+    a removed subscriber sign up again, which a soft-deleted row would block). Also fixed
+    `listProductsAdmin`, which had been silently ignoring `status` and `q`: the admin
+    product search box did nothing at all before this.
+85. **Effective-price math moved into a shared module — a live ৳0 bug.** Two active
+    products carried `salePrice: 0`, and both existing guards were wrong: `salePrice ?? price`
+    (`0 ?? 200 === 0`) and `salePrice != null` (`0 != null` is true). Customers could have
+    been charged ৳0. Now `frontend/src/lib/pricing.js` + `backend/src/utils/pricing.js`
+    define one rule — a sale price counts only when `> 0 && < price` — and 14 hand-copied
+    call sites use it. The data was cleaned and the boundary normalises `0 → null`.
+86. **Blocks-based Pages builder ships UI-only, and says so.** Eight block types, native
+    HTML5 drag-and-drop (no `@dnd-kit` in this project; the brief bars new libraries) with
+    arrow buttons as the touch/keyboard path. Blocks live in component state — the API has
+    no field for them yet — so an amber notice above the canvas states plainly what saves
+    and what doesn't rather than letting the merchant lose work silently. The Tiptap editor
+    stays in a collapsed section because it still owns every page live today. Block JSON
+    shape is `{ type, ...fields }`, page is `{ title, slug, status, seoTitle, seoDesc, blocks[] }`.
+87. **Settings groups by context, not by scroll position.** 16 cards behind a 12-item
+    sticky rail in 4 groups (card variant), one group visible at a time; cards declare
+    their rail item and read the active one from context. The single-`useForm` /
+    `values` / complete-`defaultValues` / whole-object-PATCH wiring is untouched — PATCH
+    replaces the whole subtree, so a field missing from `defaultValues` is a field
+    deleted on save. The save bar reads **`dirtyFields`, not `isDirty`**: with a
+    server-fed `values` prop, `isDirty` stays true after a successful save (with an empty
+    `dirtyFields`), leaving the bar permanently armed.
+88. **Merchant-requested departures from the prototype**, all deliberate: a product photo
+    column immediately after the checkbox in the Products list (the design has no
+    thumbnail); the real site logo wherever the design used a `"DiecastBD."` wordmark, sized
+    by width and with the ADMIN pill removed (sizing by height overflowed the 232px
+    sidebar); and list thumbnails filling 100% of tile height like the storefront product
+    card (`h-full w-auto max-w-none` in `AdminThumb`) rather than letterboxing under
+    `object-contain`.
+
+---
+
+## Admin light redesign: complete
+
+All 12 screens shipped on `main`, one commit each, verified at 1440 / 390 / 320 with a
+Playwright sweep (h1 present, zero console errors, no horizontal overflow on any screen
+at any width) plus real round trips against the dev DB for every stateful flow: bulk
+product status and bulk delete, stock adjust with restore, product save with restore,
+coupon create + clipboard copy read back, subscriber delete (400/404/200 + count 2→1),
+page save through a reload, and a settings save that left all 19 keys and every nested
+array intact. Two bugs the build could not have caught were found by loading pages: a
+dropped `Button` import (runtime ReferenceError, build clean) and the mobile product rows
+overflowing because `grid-cols-[auto_1fr]` won't shrink below its content — `1fr` implies
+`min-width:auto`, so rows need `minmax(0,1fr)`. Deferred by agreement: persisting and
+rendering Pages blocks (backend + storefront), which is the next piece of work.
+
+---
+
 ## Production deployment — Vercel (both apps)
 
 Full runbook + env vars + DNS + troubleshooting table in `docs/DEPLOYMENT.md`. This decision records the load-bearing choices.

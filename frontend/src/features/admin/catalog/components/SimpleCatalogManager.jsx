@@ -154,7 +154,7 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
       />
 
       <section className="overflow-x-auto rounded-[18px] border border-line bg-white">
-        <div className="min-w-[780px]">
+        <div className="md:min-w-[780px]">
           <div className={cn("hidden items-center gap-3 border-b border-line-soft px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.07em] text-faint md:grid", GRID)}>
             <span />
             <span>Name</span>

@@ -186,35 +186,50 @@ short line, optional CTA.
 
 ---
 
-## 9 · Admin dashboard (dark) tokens
+## 9 · Admin dashboard (light) tokens
 
-Everything under `/admin`. Font: **Geist** for all roles. Radius base `0.5rem` (use
-shadcn named radii here — `rounded-lg` cards, `rounded-md` fields). Compact density,
-shadcn/ui components as-is.
+Everything under `/admin`. The admin ran a separate dark theme until the light
+redesign (`design_handoff_admin_light_redesign/`); it now shares the storefront's
+`:root` palette and fonts — **Archivo** for display/headings, **Instrument Sans** for
+body. There is no `data-theme` scope and no Geist. As on the storefront, use explicit
+`rounded-[Npx]` for design radii; the named Tailwind radii are rescaled by `index.css`
+and belong to shadcn primitives.
 
-| Token | Value |
-|---|---|
-| background | `#0a0a0a` |
-| card / popover | `#141414` |
-| secondary / accent surface | `#1f1f1f` |
-| muted surface | `#1a1a1a` |
-| foreground | `#fafafa` |
-| muted-foreground | `#a1a1aa` |
-| **primary (lime)** | `#a3e635` on `#0a0a0a` |
-| border | `oklch(1 0 0 / 10%)` (white @ 10%) |
-| input border | white @ 15% |
-| ring | `#a3e635` |
-| destructive | `#ef4444` |
-| warning | `#fbbf24` |
-| info | `#38bdf8` |
-| sidebar | `#0d0d0d`, active item `#1a1a1a`, accent `#a3e635` |
-| charts | `#a3e635 → #84cc16 → #65a30d → #4d7c0f → #3f6212` |
+| Token | Value | Used for |
+|---|---|---|
+| paper (page bg) | `#FAFAF7` | admin canvas |
+| white | `#ffffff` | cards, sidebar, rows |
+| ink | `#101208` | primary text, active pills |
+| ink-soft | `#3A3D33` | nav labels, secondary text |
+| body text | `#6B6E60` | descriptions |
+| faint | `#8A8D80` | meta, column headers, icons |
+| line | `#E7E8E0` | card + control borders |
+| line-soft | `#EFEFE9` | table hairlines |
+| tile | `#F1F2EA` | icon tiles, hover, muted chips |
+| row hover | `#FCFCF9` | table row hover, editor bodies |
+| **brand (lime)** | `#A8CD2F` | primary buttons, active accents |
+| brand-bright | `#B9DC4B` | primary hover |
+| brand-glow | `#EFF5DC` | active nav, selected chips |
+| brand-deep | `#4F6B0B` | links, active nav icon |
+| danger | `#E5484D` (text `#B3261E`, tint `#FDF6F5`) | destructive |
+| warning | `#B45309` on `#FDF8EC` | low stock, caveats |
+| info/staff | `#0E7490` on `#E6F4F7` | staff role pill |
+| dark glass | `rgba(13,15,7,0.94)`, border white/16 | save bar, bulk bar, toast |
 
-Admin patterns: page = `h1` Geist 24px + top-right primary action; content in
-`SectionCard`s (`#141414`, 1px white/10 border, title + muted description); tables with
-muted headers and hover rows; repeatable rows = bordered box + trash icon + "Add"
-outline button; toggles = shadcn Switch; status via the same StatusChip; destructive
-flows always confirm via AlertDialog listing consequences.
+Shared shell (`src/features/admin/shell/`): `AdminShell` (232px white sidebar, frosted
+56px mobile bar + framer drawer), `AdminPageHeader` (10.5px uppercase eyebrow + Archivo
+800 h1), `SectionPanel` (white `rounded-[18px]`, 22px pad), `AdminButton`
+(primary/outline/ghost/danger/glass pills), `AdminModal`, `AdminThumb`, `AdminSearch`,
+`FilterChips`, `SaveBar`, `BulkBar`, `adminToast`, `adminFieldCls` (44px controls,
+`rounded-[12px]`, lime focus ring — use these everywhere so control heights match).
+
+Admin patterns: page = eyebrow + h1 + right-aligned actions; lists = `rounded-[18px]`
+white card, 10px uppercase `#8A8D80` headers, `#EFEFE9` hairlines, hover `#FCFCF9`,
+`overflow-x-auto` with the min-width scoped to `md:` so mobile uses the stacked row
+(`md:contents` / `md:hidden` — never `useMediaQuery`, jsdom has no `matchMedia`); grid
+rows use `minmax(0,1fr)`, since a bare `1fr` won't shrink below its content; forms =
+`SectionPanel` + `SaveBar` armed from RHF dirty state; destructive flows confirm via
+AlertDialog naming the actual consequence.
 
 ---
 

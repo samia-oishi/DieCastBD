@@ -42,7 +42,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    /* Fonts resolve to runtime vars so the admin scope can swap them back to Geist. */
+    /* Fonts resolve to runtime vars (a leftover indirection from when the
+       admin scope swapped in its own family; admin is now light and shares these). */
     --font-sans: var(--body-font);
     --font-heading: var(--display-font);
     --font-display: var(--display-font);

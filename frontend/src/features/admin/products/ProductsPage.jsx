@@ -161,7 +161,7 @@ export function ProductsPage() {
       </div>
 
       <section className="overflow-x-auto rounded-[18px] border border-line bg-white">
-        <div className="min-w-[940px]">
+        <div className="md:min-w-[940px]">
           <div className={cn("hidden items-center gap-3 border-b border-line-soft px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.07em] text-faint md:grid", GRID)}>
             <Checkbox
               className={CHECKBOX_CLS}
@@ -197,7 +197,7 @@ export function ProductsPage() {
               <div
                 key={p._id}
                 className={cn(
-                  "relative grid grid-cols-[auto_1fr] items-center gap-3 border-b border-line-soft px-4 py-3.5 transition-colors last:border-b-0 hover:bg-[#FCFCF9] md:px-5 md:py-[13px]",
+                  "relative grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-b border-line-soft px-4 py-3.5 transition-colors last:border-b-0 hover:bg-[#FCFCF9] md:px-5 md:py-[13px]",
                   GRID,
                   isSel && "bg-[#FBFDF3]"
                 )}
