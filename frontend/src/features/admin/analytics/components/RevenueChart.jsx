@@ -29,7 +29,7 @@ export function RevenueChart({ data }) {
       data.map((d, i) => {
         const x = PAD_LEFT + (data.length === 1 ? plotWidth / 2 : (i / (data.length - 1)) * plotWidth);
         const y = PAD_TOP + plotHeight - (d.revenue / maxRevenue) * plotHeight;
-        return { ...d, x, y };
+        return { ...d, x, y, index: i };
       }),
     [data, maxRevenue, plotWidth, plotHeight]
   );
@@ -38,6 +38,12 @@ export function RevenueChart({ data }) {
   const areaPath = `${linePath} L${points.at(-1)?.x ?? 0},${PAD_TOP + plotHeight} L${points[0]?.x ?? 0},${PAD_TOP + plotHeight} Z`;
 
   const labelStep = Math.max(1, Math.ceil(points.length / 6));
+
+  // Peak (best) day — the highest-revenue point gets an emphasized dot and a pill.
+  const peak = useMemo(
+    () => points.reduce((best, p) => (p.revenue > (best?.revenue ?? -1) ? p : best), null),
+    [points]
+  );
 
   function handleMove(e) {
     if (!svgRef.current || points.length === 0) return;
@@ -76,8 +82,8 @@ export function RevenueChart({ data }) {
       >
         <defs>
           <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--chart-1)" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="var(--chart-1)" stopOpacity="0" />
+            <stop offset="0%" stopColor="#A8CD2F" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#A8CD2F" stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
@@ -88,30 +94,42 @@ export function RevenueChart({ data }) {
             x2={WIDTH - PAD_RIGHT}
             y1={PAD_TOP + plotHeight * (1 - frac)}
             y2={PAD_TOP + plotHeight * (1 - frac)}
-            stroke="var(--border)"
+            stroke="#EFEFE9"
             strokeWidth="1"
           />
         ))}
 
         <path d={areaPath} fill="url(#revenueFill)" stroke="none" />
-        <path d={linePath} fill="none" stroke="var(--chart-1)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        <path d={linePath} fill="none" stroke="#7FA31C" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
 
         {points.map(
           (p, i) =>
             i % labelStep === 0 && (
-              <text key={p.date} x={p.x} y={HEIGHT - 8} textAnchor="middle" className="fill-muted-foreground text-[10px]">
+              <text key={p.date} x={p.x} y={HEIGHT - 8} textAnchor="middle" className="fill-faint text-[10px]">
                 {formatDateShort(p.date)}
               </text>
             )
         )}
 
+        {/* Peak day — ink dot with a white ring (hidden while hovering that same point). */}
+        {peak && peak.index !== hoverIndex && (
+          <circle cx={peak.x} cy={peak.y} r="4.5" fill="#101208" stroke="#fff" strokeWidth="2.5" />
+        )}
+
         {hovered && (
           <>
-            <line x1={hovered.x} x2={hovered.x} y1={PAD_TOP} y2={PAD_TOP + plotHeight} stroke="var(--border)" strokeWidth="1" />
-            <circle cx={hovered.x} cy={hovered.y} r="4" fill="var(--chart-1)" stroke="var(--card)" strokeWidth="2" />
+            <line x1={hovered.x} x2={hovered.x} y1={PAD_TOP} y2={PAD_TOP + plotHeight} stroke="#DEDFD6" strokeWidth="1" />
+            <circle cx={hovered.x} cy={hovered.y} r="4" fill="#7FA31C" stroke="#fff" strokeWidth="2" />
           </>
         )}
       </svg>
+
+      {/* Best-day pill — anchored top-right of the plot. */}
+      {peak && data.length > 1 && (
+        <div className="pointer-events-none absolute right-0 top-0 rounded-full border border-brand-soft-border bg-brand-tint px-2.5 py-1 text-[10.5px] font-bold text-brand-deep">
+          Best day · {formatDateShort(peak.date)} · {formatPrice(peak.revenue)}
+        </div>
+      )}
 
       {hovered && (
         <div
