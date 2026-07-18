@@ -34,7 +34,12 @@ router.use("/brands", cacheControl(300), brandRoutes.publicRouter);
 router.use("/categories", cacheControl(300), categoryRoutes.publicRouter);
 router.use("/products", cacheControl(60), productRoutes.publicRouter);
 router.use("/products", restockAlertRoutes.publicRouter);
-router.use("/settings", cacheControl(300), settingsRoutes.publicRouter);
+// Settings is the one "catalog" doc the merchant edits and immediately checks:
+// a blind 5-minute max-age meant a saved hero style visibly reverted in the
+// admin (the refetch after PATCH was served from the browser's HTTP cache) and
+// the storefront showed the old hero for up to 5 minutes. no-cache keeps the
+// ETag revalidation (304s are cheap) but always confirms freshness.
+router.use("/settings", (req, res, next) => { res.set("Cache-Control", "no-cache"); next(); }, settingsRoutes.publicRouter);
 router.use("/newsletter", newsletterRoutes.publicRouter);
 router.use("/contact", contactRoutes);
 router.use("/wishlist", wishlistRoutes);

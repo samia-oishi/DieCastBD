@@ -15,9 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { ICON_MAP } from "@/components/shared/settingsIcons";
-import { useSettings } from "@/features/settings/api/useSettings";
 import { useProducts } from "@/features/products/api/useProducts";
-import { useUpdateSettingsMutation, useUploadSettingsImageMutation } from "./api/useAdminSettings";
+import { useAdminSettingsQuery, useUpdateSettingsMutation, useUploadSettingsImageMutation } from "./api/useAdminSettings";
 
 const ICON_NAMES = Object.keys(ICON_MAP);
 
@@ -453,7 +452,7 @@ const SEPARATOR_CHARS = { dot: "·", pipe: "|", slash: "/", diamond: "◆", star
 /* ============================== page =============================== */
 
 export function SettingsPage() {
-  const { data: settings, isLoading } = useSettings();
+  const { data: settings, isLoading } = useAdminSettingsQuery();
   const { data: productsResp } = useProducts({ limit: 100 });
   const productList = productsResp?.data ?? [];
   const updateMutation = useUpdateSettingsMutation();
