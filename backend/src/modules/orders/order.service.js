@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { effectivePrice } from "../../utils/pricing.js";
 import { Cart } from "../cart/cart.model.js";
 import { Product } from "../products/product.model.js";
 import { Order } from "./order.model.js";
@@ -39,7 +40,7 @@ async function reserveStockForItems(normalizedItems, session) {
     // Effective selling price — mirror the model's rule (product.model.js): a
     // salePrice only applies when it's a real discount below the list price, so
     // a stray salePrice of 0 can never turn a paid product into a free order.
-    const price = product.salePrice != null && product.salePrice < product.price ? product.salePrice : product.price;
+    const price = effectivePrice(product);
 
     // Atomic compare-and-reserve — if stock dropped since the item was last viewed,
     // this condition fails and the whole transaction rolls back automatically.

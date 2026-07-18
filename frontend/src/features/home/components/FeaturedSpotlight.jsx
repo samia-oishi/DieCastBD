@@ -9,12 +9,13 @@ import { formatTaka } from "@/lib/currency";
 import { cloudinaryCard } from "@/lib/cloudinary";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
+import { effectivePrice } from "@/lib/pricing";
 
 function Spotlight({ product, overrides }) {
   const navigate = useNavigate();
   const addToCart = useAddToCart();
   const add = (product, e) => { e?.stopPropagation(); addToCart(product, 1); };
-  const price = product.salePrice ?? product.price;
+  const price = effectivePrice(product);
 
   // Display-only overrides for this one card; blank falls back to the product's
   // real value, so the product itself is never altered. Add-to-cart, wishlist,
@@ -57,7 +58,7 @@ function RowCard({ product, className }) {
   const navigate = useNavigate();
   const addToCart = useAddToCart();
   const add = (product, e) => { e?.stopPropagation(); addToCart(product, 1); };
-  const price = product.salePrice ?? product.price;
+  const price = effectivePrice(product);
   return (
     <div
       onClick={() => navigate(`/products/${product.slug}`)}

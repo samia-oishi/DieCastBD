@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
 import { cloudinaryThumb } from "@/lib/cloudinary";
 import { useCart } from "../api/useCart";
+import { isOnSale } from "@/lib/pricing";
 
 function Thumb({ product, className }) {
   return (
@@ -39,7 +40,7 @@ function QtyPill({ qty, max, onChange, size = "md" }) {
 // more than one, plus the total line saving so the discount is clear. `qty`
 // makes the Save reflect the whole line, not a single unit.
 function PriceStatus({ product, qty, stockIssue }) {
-  const onSale = product.salePrice != null && product.salePrice < product.price;
+  const onSale = isOnSale(product);
   const effective = onSale ? product.salePrice : product.price;
   const totalSave = (product.price - effective) * qty;
   return (
@@ -60,7 +61,7 @@ function PriceStatus({ product, qty, stockIssue }) {
 }
 
 function MobilePrice({ product, qty }) {
-  const onSale = product.salePrice != null && product.salePrice < product.price;
+  const onSale = isOnSale(product);
   const effective = onSale ? product.salePrice : product.price;
   const totalSave = (product.price - effective) * qty;
   return (

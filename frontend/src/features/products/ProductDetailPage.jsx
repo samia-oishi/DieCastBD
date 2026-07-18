@@ -25,6 +25,7 @@ import { ProductGallery } from "./components/ProductGallery";
 import { ProductSpecs } from "./components/ProductSpecs";
 import { ReassuranceCard } from "./components/ReassuranceCard";
 import { StickyBuyBar } from "./components/StickyBuyBar";
+import { isOnSale } from "@/lib/pricing";
 
 const CIRCLE_BTN = "flex size-10 items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:border-brand";
 
@@ -78,7 +79,7 @@ export function ProductDetailPage() {
   if (isLoading) return <FullPageLoader />;
   if (isError || !product) return <NotFoundPage />;
 
-  const onSale = product.salePrice != null && product.salePrice < product.price;
+  const onSale = isOnSale(product);
   const price = onSale ? product.salePrice : product.price;
   const outOfStock = product.availableStock <= 0;
   const inCartQty = items.find((i) => i.product._id === product._id)?.qty ?? 0;

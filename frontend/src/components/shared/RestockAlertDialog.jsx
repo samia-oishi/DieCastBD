@@ -10,9 +10,10 @@ import { formatTaka } from "@/lib/currency";
 import { cloudinaryCard } from "@/lib/cloudinary";
 import { restockAlertSchema } from "@/features/products/schemas/restockAlertSchema";
 import { useRestockAlertMutation } from "@/features/products/api/useRestockAlertMutation";
+import { effectivePrice } from "@/lib/pricing";
 
 function ProductSummary({ product }) {
-  const price = product.salePrice ?? product.price;
+  const price = effectivePrice(product);
   return (
     <div className="mt-[18px] flex items-center gap-3.5 rounded-[16px] border border-line-soft bg-paper p-3">
       <div className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-line-soft bg-white">

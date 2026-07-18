@@ -25,6 +25,7 @@ import { AdminButton } from "@/features/admin/shell/AdminButton";
 import { AdminThumb } from "@/features/admin/shell/AdminThumb";
 import { adminToast } from "@/features/admin/shell/adminToast";
 import { useAdminProducts, useBulkProductStatusMutation, useBulkDeleteProductsMutation } from "./api/useProducts";
+import { effectivePrice } from "@/lib/pricing";
 
 // Photo column sits right after the checkbox (merchant request — the design's
 // prototype had no thumbnail, but scanning a catalogue by picture is faster).
@@ -39,9 +40,7 @@ const STATUS_PILL = {
 
 /** Effective selling price — mirrors the model's rule (a salePrice only counts
  * when it's a real discount below list), so the list can't show a bogus sale. */
-function effectivePrice(p) {
-  return p.salePrice != null && p.salePrice < p.price ? p.salePrice : p.price;
-}
+
 
 
 export function ProductsPage() {

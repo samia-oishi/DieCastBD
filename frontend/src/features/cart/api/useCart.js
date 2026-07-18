@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/features/auth/api/useAuth";
 import { useCartStore } from "@/stores/cartStore";
 import { getCart, addCartItem, updateCartItem, removeCartItem } from "./cartApi";
+import { effectivePrice } from "@/lib/pricing";
 
 export const cartKey = ["cart"];
 
@@ -47,7 +48,7 @@ export function useCart() {
   }
 
   const items = guestItems.map((i) => {
-    const price = i.product.salePrice ?? i.product.price;
+    const price = effectivePrice(i.product);
     return {
       product: i.product,
       qty: i.qty,

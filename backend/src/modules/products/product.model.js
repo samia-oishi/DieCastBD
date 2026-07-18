@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { effectivePrice } from "../../utils/pricing.js";
 
 const imageSchema = new mongoose.Schema(
   {
@@ -90,9 +91,9 @@ productSchema.virtual("availableStock").get(function () {
 // explicitly .select("+costPrice").
 productSchema.virtual("profitMargin").get(function () {
   if (this.costPrice == null || !this.price) return null;
-  const effectivePrice = this.salePrice != null && this.salePrice < this.price ? this.salePrice : this.price;
-  if (!effectivePrice) return null;
-  return Math.round(((effectivePrice - this.costPrice) / effectivePrice) * 100);
+  const effective = effectivePrice(this);
+  if (!effective) return null;
+  return Math.round(((effective - this.costPrice) / effective) * 100);
 });
 
 // True only while a pre-order window is actually open — auto-expires once

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
-import { Wand2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
@@ -13,6 +12,9 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useBrands } from "@/features/admin/catalog/api/useBrands";
 import { useCategories } from "@/features/admin/catalog/api/useCategories";
 import { SectionPanel } from "@/features/admin/shell/SectionPanel";
+import { adminInputCls, adminTextareaCls } from "@/features/admin/shell/adminFieldCls";
+import { effectivePrice } from "@/lib/pricing";
+import { ProductPhotos } from "./ProductPhotos";
 import { SaveBar } from "@/features/admin/shell/SaveBar";
 import { adminToast } from "@/features/admin/shell/adminToast";
 import { listAdminProducts } from "../api/productApi";
@@ -23,16 +25,16 @@ const emptyToUndefined = (value) => (value === "" ? undefined : value);
 const toDateInputValue = (dateString) => (dateString ? new Date(dateString).toISOString().slice(0, 10) : "");
 
 const PAYMENT_OPTIONS = [
-  { key: "cod", label: "Cash on Delivery", hint: "Pay the rider on delivery." },
-  { key: "deliveryOnly", label: "Delivery Charge Only", hint: "Prepay shipping, rest on delivery." },
-  { key: "partialAdvance", label: "Partial Advance Payment", hint: "A % of the order upfront." },
-  { key: "full", label: "Full Payment", hint: "Whole order paid upfront." },
+  { key: "cod", label: "Cash on Delivery" },
+  { key: "deliveryOnly", label: "Delivery Charge Only" },
+  { key: "partialAdvance", label: "Partial Advance Payment" },
+  { key: "full", label: "Full Payment" },
 ];
 
 const MERCH_TOGGLES = [
-  { name: "isFeatured", label: "Featured", hint: "Shows in the homepage Featured row." },
-  { name: "isHeroProduct", label: "Hero product", hint: "Eligible for the homepage hero card." },
-  { name: "isNewArrival", label: "New arrival", hint: "Adds the NEW badge and lists under New arrivals." },
+  { name: "isFeatured", label: "Featured", hint: "Shows in the homepage Featured row" },
+  { name: "isHeroProduct", label: "Hero product", hint: "Eligible for the hero highlight card" },
+  { name: "isNewArrival", label: "New arrival", hint: "Badged and listed under New Arrivals" },
 ];
 
 // EVERY registered field must appear here. RHF derives `isDirty` by comparing
@@ -135,15 +137,14 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
   const hasPartialAdvance = paymentOptions?.includes("partialAdvance");
   const isPreOrder = watch("isPreOrder");
 
-  // Live profit/margin — mirrors the list's rule (a salePrice only counts when
-  // it's a real discount below list price).
+  // Live profit/margin — same shared rule as everywhere else (lib/pricing), so a
+  // stray sale price of 0 can't show a ৳0 product here either.
   const price = Number(watch("price")) || 0;
   const salePrice = Number(watch("salePrice")) || 0;
   const costPrice = Number(watch("costPrice")) || 0;
-  const effective = salePrice > 0 && salePrice < price ? salePrice : price;
+  const effective = effectivePrice({ price, salePrice });
   const profit = effective - costPrice;
   const margin = effective > 0 ? Math.round((profit / effective) * 100) : 0;
-  const showProfit = costPrice > 0 && effective > 0;
 
   /** Suggest the next SKU: brand initials + the next free number for that prefix.
    * Uses the real product list (search now filters on SKU), so it won't collide
@@ -214,21 +215,21 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
           <SectionPanel title="Basics" bodyClassName="pt-3">
             <div className="flex flex-col gap-3">
               <L label="Title" error={errors.title}>
-                <Input {...register("title")} placeholder="MINI GT #1106 Mazda RX-7…" />
+                <Input className={adminInputCls} {...register("title")} placeholder="e.g. MINI GT #1106 Mazda RX-7 RE Amemiya — Silver" />
               </L>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <L label="SKU" error={errors.sku}>
                   <div className="flex gap-2">
-                    <Input {...register("sku")} placeholder="MGT-001" className="min-w-0" />
+                    <Input className={cn(adminInputCls, "min-w-0")} {...register("sku")} placeholder="MGT-0000" />
                     <button
                       type="button"
                       onClick={autoSku}
                       disabled={skuBusy}
-                      title="Suggest the next SKU from the brand"
-                      className="flex h-9 shrink-0 items-center gap-1.5 rounded-[10px] border border-line px-3 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-ink hover:text-ink disabled:opacity-50"
+                      title="Generate from brand"
+                      className="h-11 shrink-0 rounded-[12px] border border-line bg-white px-3.5 text-[12px] font-bold text-ink-soft transition-colors hover:border-ink disabled:opacity-50"
                     >
-                      <Wand2 size={14} strokeWidth={2} /> {skuBusy ? "…" : "Auto"}
+                      {skuBusy ? "…" : "Auto"}
                     </button>
                   </div>
                 </L>
@@ -238,7 +239,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
                     name="status"
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger className={adminInputCls}><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="draft">Draft</SelectItem>
                           <SelectItem value="active">Active</SelectItem>
@@ -257,7 +258,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
                     name="brand"
                     render={({ field }) => (
                       <Select value={field.value || undefined} onValueChange={field.onChange}>
-                        <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
+                        <SelectTrigger className={adminInputCls}><SelectValue placeholder="Select brand" /></SelectTrigger>
                         <SelectContent>
                           {brands.list.data?.map((b) => (
                             <SelectItem key={b._id} value={b._id}>{b.name}</SelectItem>
@@ -276,7 +277,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
                         value={field.value?.[0] || undefined}
                         onValueChange={(v) => field.onChange(v ? [v] : [])}
                       >
-                        <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                        <SelectTrigger className={adminInputCls}><SelectValue placeholder="Select category" /></SelectTrigger>
                         <SelectContent>
                           {categories.list.data?.map((c) => (
                             <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>
@@ -289,19 +290,21 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
               </div>
 
               <L label="Description">
-                <Textarea rows={4} {...register("description")} />
+                <Textarea rows={4} className={adminTextareaCls} {...register("description")} placeholder="What makes this piece worth collecting?" />
               </L>
             </div>
           </SectionPanel>
 
+          <ProductPhotos product={product} />
+
           <SectionPanel title="Collector details" bodyClassName="pt-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <L label="Series"><Input {...register("series")} /></L>
-              <L label="Model number"><Input {...register("modelNumber")} /></L>
-              <L label="Manufacturer"><Input {...register("manufacturer")} /></L>
-              <L label="Scale"><Input placeholder="1:64" {...register("scale")} /></L>
-              <L label="Material"><Input {...register("material")} /></L>
-              <L label="Color"><Input {...register("color")} /></L>
+              <L label="Series"><Input className={adminInputCls} {...register("series")} /></L>
+              <L label="Model number"><Input className={adminInputCls} {...register("modelNumber")} /></L>
+              <L label="Manufacturer"><Input className={adminInputCls} {...register("manufacturer")} placeholder="TSM / Mattel" /></L>
+              <L label="Scale"><Input className={adminInputCls} {...register("scale")} placeholder="1:64" /></L>
+              <L label="Material"><Input className={adminInputCls} {...register("material")} placeholder="Diecast metal" /></L>
+              <L label="Color"><Input className={adminInputCls} {...register("color")} placeholder="Silver" /></L>
             </div>
           </SectionPanel>
         </div>
@@ -311,39 +314,40 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
           <SectionPanel title="Pricing & stock" bodyClassName="pt-3">
             <div className="grid grid-cols-2 gap-3">
               <L label="Price (৳)" error={errors.price}>
-                <Input type="number" step="1" {...register("price")} />
+                <Input type="number" step="1" className={adminInputCls} {...register("price")} />
               </L>
               <L label="Sale price (৳)" error={errors.salePrice}>
-                <Input type="number" step="1" {...register("salePrice")} />
+                <Input type="number" step="1" className={adminInputCls} placeholder="Optional" {...register("salePrice")} />
               </L>
               <L label="Cost price (৳)" error={errors.costPrice}>
-                <Input type="number" step="1" {...register("costPrice")} />
+                <Input type="number" step="1" className={adminInputCls} {...register("costPrice")} />
               </L>
               <L label="Stock" error={errors.stock}>
-                <Input type="number" {...register("stock")} />
+                <Input type="number" className={adminInputCls} {...register("stock")} />
               </L>
             </div>
 
-            {/* live profit calculator */}
-            {showProfit && (
-              <div
-                className={cn(
-                  "mt-3 rounded-[12px] border p-3 text-[12.5px]",
-                  profit < 0 ? "border-[#F0C9C5] bg-[#FDF6F5]" : "border-brand-soft-border bg-brand-soft"
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={profit < 0 ? "text-danger" : "text-ink-soft"}>Profit per unit</span>
-                  <span className={cn("font-display font-bold", profit < 0 ? "text-danger" : "text-brand-deep")}>
-                    {formatTaka(profit)} · {margin}%
-                  </span>
+            {/* Profit box — always on, updates as you type (prototype). Value is
+                ink, red when negative. */}
+            <div className="mt-3.5 rounded-[12px] border border-brand-soft-border bg-brand-tint px-3.5 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-brand-deep">Profit per unit</div>
+                  <div className={cn("mt-0.5 font-display text-[18px] font-extrabold", profit < 0 ? "text-danger" : "text-ink")}>
+                    {formatTaka(profit)}
+                  </div>
                 </div>
-                <div className="mt-0.5 text-[11.5px] text-faint">
-                  {effective < price ? `Sale price ${formatTaka(effective)} − cost ${formatTaka(costPrice)}` : `Price ${formatTaka(price)} − cost ${formatTaka(costPrice)}`}
-                  {profit < 0 && " · selling below cost"}
+                <div className="text-right">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-brand-deep">Margin</div>
+                  <div className={cn("mt-0.5 font-display text-[18px] font-extrabold", profit < 0 ? "text-danger" : "text-ink")}>
+                    {effective > 0 ? `${margin}%` : "—"}
+                  </div>
                 </div>
               </div>
-            )}
+              <p className="mt-2 text-[11.5px] leading-[1.5] text-faint">
+                Calculated from {effective < price && effective > 0 ? "the sale price" : "the price"} minus cost — updates as you type.
+              </p>
+            </div>
           </SectionPanel>
 
           <SectionPanel title="Merchandising" bodyClassName="pt-1">
@@ -367,8 +371,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
               name="isPreOrder"
               render={({ field }) => (
                 <ToggleRow
-                  label="Pre-order product"
-                  hint="Sell before stock arrives."
+                  label="Sell before the batch lands"
                   checked={!!field.value}
                   onChange={field.onChange}
                 />
@@ -376,15 +379,15 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
             />
             {isPreOrder && (
               <div className="mt-2 grid grid-cols-2 gap-3 border-t border-line-soft pt-3">
-                <L label="Starts"><Input type="date" {...register("preOrderStartDate")} /></L>
-                <L label="Ends (optional)" error={errors.preOrderEndDate}>
-                  <Input type="date" {...register("preOrderEndDate")} />
+                <L label="Start date"><Input type="date" className={adminInputCls} {...register("preOrderStartDate")} /></L>
+                <L label="End date (optional)" error={errors.preOrderEndDate}>
+                  <Input type="date" className={adminInputCls} {...register("preOrderEndDate")} />
                 </L>
               </div>
             )}
           </SectionPanel>
 
-          <SectionPanel title="Payment options" bodyClassName="pt-1">
+          <SectionPanel title="Payment options" description="Which checkout methods this product allows." bodyClassName="pt-1">
             <Controller
               control={control}
               name="paymentOptions"
@@ -415,7 +418,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
             {hasPartialAdvance && (
               <div className="mt-3 border-t border-line-soft pt-3">
                 <L label="Advance payment percent (%)" error={errors.advancePaymentPercent}>
-                  <Input type="number" min="1" max="100" {...register("advancePaymentPercent")} />
+                  <Input type="number" min="1" max="100" className={adminInputCls} {...register("advancePaymentPercent")} />
                 </L>
               </div>
             )}

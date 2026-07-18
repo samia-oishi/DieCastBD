@@ -1,5 +1,6 @@
 import { getResendClient } from "./resendClient.js";
 import { env } from "../config/env.js";
+import { effectivePrice } from "../utils/pricing.js";
 
 function formatPrice(amount) {
   return `৳${Math.round(amount).toLocaleString("en-US")}`;
@@ -8,7 +9,7 @@ function formatPrice(amount) {
 // Same inline-styles/table-layout/light-background reasoning as
 // orderConfirmation.js — see that file's comment for why.
 function renderRestockAlertHtml(product) {
-  const price = product.salePrice ?? product.price;
+  const price = effectivePrice(product);
   const productUrl = `${env.CLIENT_URL}/products/${product.slug}`;
 
   return `

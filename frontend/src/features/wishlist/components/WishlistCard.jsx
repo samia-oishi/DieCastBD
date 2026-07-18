@@ -9,6 +9,7 @@ import { useAddToCart } from "@/features/cart/api/useAddToCart";
 import { RestockAlertDialog } from "@/components/shared/RestockAlertDialog";
 import { useRestockAlertStore } from "@/stores/restockAlertStore";
 import { useToggleWishlistMutation } from "../api/useWishlist";
+import { isOnSale } from "@/lib/pricing";
 
 function Badge({ children, tone }) {
   const cls = tone === "sale" ? "bg-brand text-ink" : "bg-ink text-white";
@@ -29,7 +30,7 @@ export function WishlistCard({ product }) {
   const [notifyOpen, setNotifyOpen] = useState(false);
 
   const { slug, title, brand, price, salePrice, thumbnail, isNewArrival, isPreOrderActive, availableStock } = product;
-  const onSale = salePrice != null && salePrice > 0 && salePrice < price;
+  const onSale = isOnSale(product);
   const outOfStock = availableStock <= 0;
   const effectivePrice = onSale ? salePrice : price;
 

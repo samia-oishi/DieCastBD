@@ -3,9 +3,7 @@ import { ChevronLeft } from "lucide-react";
 
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { AdminPageHeader } from "@/features/admin/shell/AdminPageHeader";
-import { SectionPanel } from "@/features/admin/shell/SectionPanel";
 import { ProductForm } from "./components/ProductForm";
-import { ProductImageManager } from "./components/ProductImageManager";
 import { useAdminProduct, useCreateProductMutation, useUpdateProductMutation } from "./api/useProducts";
 
 export function ProductFormPage() {
@@ -33,14 +31,6 @@ export function ProductFormPage() {
         eyebrow={isEditing ? product?.sku : "Catalogue"}
         title={isEditing ? "Edit product" : "New product"}
       />
-
-      {/* Photos only exist once the product does — uploads post to /:id/thumbnail
-          and /:id/gallery, so on create this panel appears after the first save. */}
-      {isEditing && product && (
-        <SectionPanel title="Photos" description="First image is the cover shown across the storefront." bodyClassName="pt-3">
-          <ProductImageManager product={product} />
-        </SectionPanel>
-      )}
 
       <ProductForm
         product={product}

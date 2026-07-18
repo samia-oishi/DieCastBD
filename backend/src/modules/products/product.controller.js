@@ -1,4 +1,5 @@
 import { Product } from "./product.model.js";
+import { effectivePrice } from "../../utils/pricing.js";
 import { Brand } from "../brands/brand.model.js";
 import { Category } from "../categories/category.model.js";
 import { slugify } from "../../utils/slugify.js";
@@ -28,8 +29,8 @@ function withComputedVirtuals(p) {
   if (p.costPrice == null || !p.price) {
     p.profitMargin = null;
   } else {
-    const effectivePrice = p.salePrice != null && p.salePrice < p.price ? p.salePrice : p.price;
-    p.profitMargin = effectivePrice ? Math.round(((effectivePrice - p.costPrice) / effectivePrice) * 100) : null;
+    const effective = effectivePrice(p);
+    p.profitMargin = effective ? Math.round(((effective - p.costPrice) / effective) * 100) : null;
   }
   p.isPreOrderActive = Boolean(p.isPreOrder) && (!p.preOrderEndDate || p.preOrderEndDate >= new Date());
   return p;

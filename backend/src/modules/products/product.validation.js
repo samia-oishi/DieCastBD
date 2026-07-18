@@ -63,7 +63,12 @@ const productFields = {
   features: z.array(z.string()).optional(),
   specifications: z.record(z.string(), z.string()).optional(),
   price: z.coerce.number().min(0, "Price must be positive"),
-  salePrice: z.coerce.number().min(0).nullable().optional(),
+  // A sale price of 0 means "no sale", not "free" — normalise it to null at the
+  // boundary so a blank/zeroed field can never persist as a ৳0 discount.
+  salePrice: z.preprocess(
+    (v) => (v === "" || v === 0 || v === "0" ? null : v),
+    z.coerce.number().min(0).nullable().optional()
+  ),
   costPrice: z.coerce.number().min(0).optional(),
   stock: z.coerce.number().int().min(0).optional().default(0),
   status: z.enum(["draft", "active", "archived"]).optional(),

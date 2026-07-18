@@ -23,9 +23,10 @@ import { GuestAddressForm } from "./components/GuestAddressForm";
 import { DeliveryOptions } from "./components/DeliveryOptions";
 import { PaymentMethods } from "./components/PaymentMethods";
 import { CheckoutSummary } from "./components/CheckoutSummary";
+import { effectivePrice } from "@/lib/pricing";
 
 function toBuyNowLineItem({ product, qty }) {
-  const price = product.salePrice ?? product.price;
+  const price = effectivePrice(product);
   return {
     product,
     qty,

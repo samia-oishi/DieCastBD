@@ -3,6 +3,7 @@ import { Product } from "../products/product.model.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+import { effectivePrice } from "../../utils/pricing.js";
 
 async function getOrCreateCart(userId) {
   let cart = await Cart.findOne({ user: userId });
@@ -36,7 +37,7 @@ async function serializeCart(cart) {
     .map((item) => {
       const product = item.product;
       const availableStock = product.stock - product.reservedStock;
-      const currentPrice = product.salePrice ?? product.price;
+      const currentPrice = effectivePrice(product);
       return {
         product,
         qty: item.qty,
@@ -73,7 +74,7 @@ export const addItem = asyncHandler(async (req, res) => {
     );
   }
 
-  const price = product.salePrice ?? product.price;
+  const price = effectivePrice(product);
   if (existing) {
     existing.qty = requestedQty;
     existing.priceSnapshot = price;
@@ -126,7 +127,7 @@ export const mergeCart = asyncHandler(async (req, res) => {
 
     if (mergedQty <= 0) continue;
 
-    const price = product.salePrice ?? product.price;
+    const price = effectivePrice(product);
     if (existing) {
       existing.qty = mergedQty;
       existing.priceSnapshot = price;

@@ -9,6 +9,7 @@ import { useAddToCart } from "@/features/cart/api/useAddToCart";
 import { WishlistButton } from "@/features/wishlist/components/WishlistButton";
 import { RestockAlertDialog } from "@/components/shared/RestockAlertDialog";
 import { useRestockAlertStore } from "@/stores/restockAlertStore";
+import { isOnSale } from "@/lib/pricing";
 
 // Per-variant, per-breakpoint sizing read directly from the design markup.
 const VARIANTS = {
@@ -49,7 +50,7 @@ export function ProductCard({ product, variant = "grid", className }) {
   const [notifyOpen, setNotifyOpen] = useState(false);
 
   const { slug, title, brand, price, salePrice, thumbnail, gallery, isNewArrival, isPreOrderActive, availableStock } = product;
-  const onSale = salePrice != null && salePrice < price;
+  const onSale = isOnSale(product);
   const outOfStock = availableStock <= 0;
   const effectivePrice = onSale ? salePrice : price;
 
