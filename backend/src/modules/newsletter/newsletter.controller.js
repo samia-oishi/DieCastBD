@@ -1,4 +1,5 @@
 import { NewsletterSubscriber } from "./newsletter.model.js";
+import { ApiError } from "../../utils/apiError.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -28,4 +29,13 @@ export const listSubscribersAdmin = asyncHandler(async (req, res) => {
   ]);
 
   sendSuccess(res, { data: items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+});
+
+export const deleteSubscriberAdmin = asyncHandler(async (req, res) => {
+  // Hard delete, not a flag flip: an admin removing someone from the list means
+  // "they're gone", and the model's unique email index lets them resubscribe
+  // later without colliding with a soft-deleted row.
+  const subscriber = await NewsletterSubscriber.findByIdAndDelete(req.params.id);
+  if (!subscriber) throw ApiError.notFound("Subscriber not found");
+  sendSuccess(res, { message: `${subscriber.email} removed` });
 });

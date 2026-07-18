@@ -13,3 +13,7 @@ export const listSubscribersQuerySchema = {
     q: z.string().optional(),
   }),
 };
+
+export const subscriberIdParamSchema = {
+  params: z.object({ id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid subscriber id") }),
+};
