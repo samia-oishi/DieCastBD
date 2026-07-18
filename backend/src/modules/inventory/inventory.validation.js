@@ -6,6 +6,7 @@ export const listInventoryQuerySchema = {
     limit: z.coerce.number().int().min(1).max(100).optional().default(20),
     q: z.string().optional(),
     lowStockOnly: z.coerce.boolean().optional(),
+    hasAlerts: z.coerce.boolean().optional(),
   }),
 };
 

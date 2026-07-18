@@ -12,7 +12,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 // just as fast as a $expr aggregation pipeline that duplicates the virtual's
 // subtraction logic in Mongo query syntax.
 export const listInventory = asyncHandler(async (req, res) => {
-  const { page, limit, q, lowStockOnly } = req.query;
+  const { page, limit, q, lowStockOnly, hasAlerts } = req.query;
   const filter = {
     isDeleted: false,
     ...(q ? { $or: [{ title: { $regex: q.trim(), $options: "i" } }, { sku: { $regex: q.trim(), $options: "i" } }] } : {}),
@@ -40,7 +40,20 @@ export const listInventory = asyncHandler(async (req, res) => {
     restockAlertCount: alertCountByProduct.get(p._id.toString()) ?? 0,
   }));
 
+  // KPI totals are computed BEFORE the view toggles so the tiles stay stable
+  // while you filter (a "Low / out of stock" tile that always equalled the row
+  // count would tell you nothing). They do respect the search, so the tiles and
+  // the list describe the same set of products.
+  const totals = {
+    skuCount: products.length,
+    unitsInStock: products.reduce((n, p) => n + p.stock, 0),
+    reserved: products.reduce((n, p) => n + p.reservedStock, 0),
+    lowOrOut: products.filter((p) => p.isLowStock).length,
+    restockAlerts: products.reduce((n, p) => n + p.restockAlertCount, 0),
+  };
+
   if (lowStockOnly) products = products.filter((p) => p.isLowStock);
+  if (hasAlerts) products = products.filter((p) => p.restockAlertCount > 0);
   products.sort((a, b) => a.availableStock - b.availableStock);
 
   const total = products.length;
@@ -49,7 +62,7 @@ export const listInventory = asyncHandler(async (req, res) => {
 
   sendSuccess(res, {
     data: pageItems,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit), lowStockThreshold: LOW_STOCK_THRESHOLD },
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit), lowStockThreshold: LOW_STOCK_THRESHOLD, totals },
   });
 });
 

@@ -1,165 +1,61 @@
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import toast from "react-hot-toast";
 import { History, PackagePlus, BellRing } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { Pagination } from "@/components/shared/Pagination";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useAdminInventory, useProductInventoryLogs, useProductRestockAlerts, useAdjustStockMutation } from "./api/useAdminInventory";
+import { AdminPageHeader } from "@/features/admin/shell/AdminPageHeader";
+import { AdminSearch } from "@/features/admin/shell/AdminSearch";
+import { AdminThumb } from "@/features/admin/shell/AdminThumb";
+import { useAdminInventory } from "./api/useAdminInventory";
+import { AdjustStockDialog } from "./components/AdjustStockDialog";
+import { HistoryDialog } from "./components/HistoryDialog";
+import { RestockAlertsDialog } from "./components/RestockAlertsDialog";
 
-function formatDateTime(dateString) {
-  return new Date(dateString).toLocaleString("en-US", {
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+// Prototype grid: 40px thumb | Title | SKU | Stock | Reserved | Available | Alerts | Actions
+const GRID = "md:grid-cols-[40px_minmax(200px,1fr)_92px_56px_76px_84px_64px_84px]";
 
-function AdjustStockDialog({ product, onClose }) {
-  const adjustMutation = useAdjustStockMutation();
-  const { register, handleSubmit, control, watch, reset } = useForm({
-    defaultValues: { type: "restock", quantityChange: "", reason: "" },
-  });
-  const type = watch("type");
-
-  const onSubmit = (values) => {
-    const signedQty = type === "restock" ? Math.abs(Number(values.quantityChange)) : Number(values.quantityChange);
-    if (!signedQty) return toast.error("Enter a non-zero quantity");
-
-    toast.promise(
-      adjustMutation.mutateAsync({ productId: product.id, payload: { type, quantityChange: signedQty, reason: values.reason } }),
-      {
-        loading: "Saving...",
-        success: () => {
-          reset();
-          onClose();
-          return "Stock updated";
-        },
-        error: (err) => err.response?.data?.message ?? "Could not update stock",
-      }
-    );
-  };
-
+function KpiCard({ label, value, sub, tone }) {
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Adjust stock — {product.title}</DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          Current: {product.stock} in stock, {product.reservedStock} reserved, {product.availableStock} available.
-        </p>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <FieldGroup>
-            <Field>
-              <FieldLabel>Type</FieldLabel>
-              <Controller
-                control={control}
-                name="type"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="restock">Restock (add units)</SelectItem>
-                      <SelectItem value="adjustment">Adjustment (correction, +/-)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="quantityChange">
-                {type === "restock" ? "Units to add" : "Quantity change (use - to subtract)"}
-              </FieldLabel>
-              <Input id="quantityChange" type="number" {...register("quantityChange")} />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="reason">Reason</FieldLabel>
-              <Input id="reason" placeholder="e.g. New shipment arrived, recount correction..." {...register("reason", { required: true })} />
-            </Field>
-          </FieldGroup>
-          <DialogFooter className="mt-4">
-            <Button type="submit" disabled={adjustMutation.isPending}>
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <div className="rounded-[14px] border border-line bg-white px-4 py-[13px]">
+      <div className="text-[11px] font-semibold text-[#6B6E60]">{label}</div>
+      <div className="mt-[5px] flex items-baseline gap-[7px]">
+        <span className={cn("font-display text-[21px] font-extrabold tracking-[-0.02em]", tone === "amber" ? "text-warn" : "text-ink")}>
+          {value}
+        </span>
+        <span className="text-[11px] text-faint">{sub}</span>
+      </div>
+    </div>
   );
 }
 
-function HistoryDialog({ product, onClose }) {
-  const { data: logs, isLoading } = useProductInventoryLogs(product.id);
-
+/** Ink-filled when on, per the prototype's toggle-pills. */
+function TogglePill({ active, onClick, children }) {
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Stock history — {product.title}</DialogTitle>
-        </DialogHeader>
-        <div className="flex max-h-96 flex-col gap-2 overflow-y-auto text-sm">
-          {isLoading && <p className="text-muted-foreground">Loading...</p>}
-          {!isLoading && logs?.length === 0 && <p className="text-muted-foreground">No history yet.</p>}
-          {logs?.map((log) => (
-            <div key={log._id} className="flex items-center justify-between border-b border-border pb-2">
-              <div>
-                <p className="capitalize text-foreground">
-                  {log.type} <span className="text-muted-foreground">{log.reason ? `— ${log.reason}` : ""}</span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDateTime(log.createdAt)}
-                  {log.performedBy?.name && ` · ${log.performedBy.name}`}
-                  {log.referenceOrder?.orderNumber && ` · ${log.referenceOrder.orderNumber}`}
-                </p>
-              </div>
-              <span className={log.quantityChange > 0 ? "text-primary" : "text-destructive"}>
-                {log.quantityChange > 0 ? "+" : ""}
-                {log.quantityChange}
-              </span>
-            </div>
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex h-9 shrink-0 items-center gap-2 rounded-full px-3.5 text-[12.5px] font-semibold transition-colors duration-150",
+        active ? "bg-ink text-white" : "border border-line bg-white text-ink-soft hover:bg-tile"
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
-function RestockAlertsDialog({ product, onClose }) {
-  const { data: alerts, isLoading } = useProductRestockAlerts(product.id);
-
+function IconAction({ label, icon: Icon, onClick }) {
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Restock alerts — {product.title}</DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-muted-foreground">Customers waiting to hear when this is back in stock.</p>
-        <div className="flex max-h-96 flex-col gap-2 overflow-y-auto text-sm">
-          {isLoading && <p className="text-muted-foreground">Loading...</p>}
-          {!isLoading && alerts?.length === 0 && <p className="text-muted-foreground">No one's waiting yet.</p>}
-          {alerts?.map((alert) => (
-            <div key={alert._id} className="flex items-center justify-between border-b border-border pb-2">
-              <span className="text-foreground">{alert.contact}</span>
-              <span className="text-xs text-muted-foreground">
-                {alert.notifiedAt ? `Notified ${formatDateTime(alert.notifiedAt)}` : `Waiting since ${formatDateTime(alert.createdAt)}`}
-              </span>
-            </div>
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="flex size-[30px] items-center justify-center rounded-[9px] border border-line bg-white text-[#6B6E60] transition-colors hover:border-ink hover:text-ink"
+    >
+      <Icon size={15} strokeWidth={2} />
+    </button>
   );
 }
 
@@ -167,129 +63,169 @@ export function InventoryPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [hasAlerts, setHasAlerts] = useState(false);
   const debouncedSearch = useDebounce(search, 400);
-  const [adjustingProduct, setAdjustingProduct] = useState(null);
-  const [historyProduct, setHistoryProduct] = useState(null);
-  const [alertsProduct, setAlertsProduct] = useState(null);
+
+  const [adjusting, setAdjusting] = useState(null);
+  const [history, setHistory] = useState(null);
+  const [alerts, setAlerts] = useState(null);
 
   const { data, isLoading } = useAdminInventory({
     page,
-    limit: 20,
+    limit: 12,
     q: debouncedSearch || undefined,
     lowStockOnly: lowStockOnly || undefined,
+    hasAlerts: hasAlerts || undefined,
   });
 
   const items = data?.data ?? [];
   const meta = data?.meta;
+  const totals = meta?.totals;
+  const threshold = meta?.lowStockThreshold ?? 2;
+
+  const resetTo = (fn) => (value) => {
+    fn(value);
+    setPage(1);
+  };
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="font-heading text-2xl">Inventory</h1>
+    <div className="flex flex-col gap-[18px]">
+      <AdminPageHeader eyebrow="Stock levels" title="Inventory" />
 
-      <div className="flex flex-wrap items-center gap-4">
-        <Input
-          placeholder="Search title or SKU..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="max-w-xs"
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+        <KpiCard label="Units in stock" value={totals?.unitsInStock ?? 0} sub={`across ${totals?.skuCount ?? 0} SKUs`} />
+        <KpiCard label="Reserved by orders" value={totals?.reserved ?? 0} sub="awaiting dispatch" />
+        <KpiCard label="Low / out of stock" value={totals?.lowOrOut ?? 0} sub={`≤ ${threshold} available`} tone="amber" />
+        <KpiCard
+          label="Restock alerts"
+          value={totals?.restockAlerts ?? 0}
+          sub="customers waiting"
+          tone={totals?.restockAlerts > 0 ? "amber" : undefined}
         />
-        <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Switch
-            checked={lowStockOnly}
-            onCheckedChange={(v) => {
-              setLowStockOnly(v);
-              setPage(1);
-            }}
-          />
-          Low stock only (≤ {meta?.lowStockThreshold ?? 2} available)
-        </label>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-14"></TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>SKU</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead>Reserved</TableHead>
-            <TableHead>Available</TableHead>
-            <TableHead>Alerts</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading && (
-            <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground">
-                Loading...
-              </TableCell>
-            </TableRow>
-          )}
+      <div className="flex flex-col gap-3">
+        <AdminSearch
+          value={search}
+          onChange={(e) => resetTo(setSearch)(e.target.value)}
+          placeholder="Search title or SKU…"
+          className="max-w-md"
+        />
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          <TogglePill active={lowStockOnly} onClick={() => resetTo(setLowStockOnly)(!lowStockOnly)}>
+            <span className={cn("size-1.5 rounded-full", lowStockOnly ? "bg-brand-glow" : "bg-warn")} />
+            Low stock only (≤ {threshold} available)
+          </TogglePill>
+          <TogglePill active={hasAlerts} onClick={() => resetTo(setHasAlerts)(!hasAlerts)}>
+            Has restock alerts
+          </TogglePill>
+        </div>
+      </div>
+
+      <section className="overflow-x-auto rounded-[18px] border border-line bg-white">
+        <div className="min-w-[900px]">
+          <div className={cn("hidden items-center gap-2.5 border-b border-line-soft px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.07em] text-faint md:grid", GRID)}>
+            <span />
+            <span>Title</span>
+            <span>SKU</span>
+            <span className="text-right">Stock</span>
+            <span className="text-right">Reserved</span>
+            <span className="text-right">Available</span>
+            <span>Alerts</span>
+            <span className="text-right">Actions</span>
+          </div>
+
+          {isLoading && <p className="px-5 py-10 text-center text-[13.5px] text-faint">Loading…</p>}
           {!isLoading && items.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground">
-                No products found.
-              </TableCell>
-            </TableRow>
+            <p className="px-5 py-10 text-center text-[13.5px] text-faint">No products match — try a different search or filter.</p>
           )}
-          {items.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell>
-                {product.thumbnail?.url ? (
-                  <img src={product.thumbnail.url} alt="" className="size-8 rounded object-cover" />
-                ) : (
-                  <div className="size-8 rounded bg-muted" />
-                )}
-              </TableCell>
-              <TableCell className="font-medium">{product.title}</TableCell>
-              <TableCell className="font-mono text-xs text-muted-foreground">{product.sku}</TableCell>
-              <TableCell>{product.stock}</TableCell>
-              <TableCell className="text-muted-foreground">{product.reservedStock}</TableCell>
-              <TableCell>
-                <span className={product.isLowStock ? "font-medium text-destructive" : ""}>{product.availableStock}</span>
-                {product.isLowStock && (
-                  <Badge variant="destructive" className="ml-2">
-                    Low
-                  </Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                {product.restockAlertCount > 0 ? (
-                  <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2" onClick={() => setAlertsProduct(product)}>
-                    <BellRing className="size-3.5" /> {product.restockAlertCount}
-                  </Button>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon-sm" aria-label="Stock history" onClick={() => setHistoryProduct(product)}>
-                    <History />
-                  </Button>
-                  <Button variant="ghost" size="icon-sm" aria-label="Adjust stock" onClick={() => setAdjustingProduct(product)}>
-                    <PackagePlus />
-                  </Button>
+
+          {items.map((p) => (
+            <div
+              key={p.id}
+              className={cn(
+                "grid grid-cols-[40px_1fr] items-center gap-3 border-b border-line-soft px-4 py-3 last:border-b-0 md:gap-2.5 md:px-5 md:py-1.5",
+                GRID
+              )}
+            >
+              <AdminThumb src={p.thumbnail?.url} alt={p.title} size={32} className="rounded-[8px]" />
+
+              {/* desktop cells */}
+              <div className="hidden md:contents">
+                <span className="truncate text-[12.5px] font-semibold text-ink" title={p.title}>{p.title}</span>
+                <span className="truncate font-display text-[11px] font-bold tracking-[0.02em] text-[#6B6E60]">{p.sku}</span>
+                <span className="text-right text-[12.5px] font-bold text-ink">{p.stock}</span>
+                <span className="text-right text-[12.5px] text-[#6B6E60]">{p.reservedStock}</span>
+                <span className="whitespace-nowrap text-right">
+                  <span className={cn("text-[12.5px] font-bold", p.availableStock === 0 ? "text-danger" : p.isLowStock ? "text-warn" : "text-ink")}>
+                    {p.availableStock}
+                  </span>
+                  {p.isLowStock && (
+                    <span className="ml-1.5 rounded-full bg-danger-soft px-1.5 py-0.5 text-[9.5px] font-bold text-danger">
+                      {p.availableStock === 0 ? "Out" : "Low"}
+                    </span>
+                  )}
+                </span>
+                <span>
+                  {p.restockAlertCount > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setAlerts(p)}
+                      className="inline-flex h-[26px] items-center gap-1.5 rounded-full bg-warn-soft px-2.5 text-[11px] font-bold text-warn hover:bg-[#F2DFC7]"
+                    >
+                      <BellRing size={12} strokeWidth={2.2} /> {p.restockAlertCount}
+                    </button>
+                  ) : (
+                    <span className="text-[12px] text-[#DEDFD6]">—</span>
+                  )}
+                </span>
+                <span className="flex justify-end gap-1.5">
+                  <IconAction label="Stock history" icon={History} onClick={() => setHistory(p)} />
+                  <IconAction label="Adjust stock" icon={PackagePlus} onClick={() => setAdjusting(p)} />
+                </span>
+              </div>
+
+              {/* mobile row */}
+              <div className="flex items-center gap-3 md:hidden">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[12.5px] font-semibold text-ink">{p.title}</div>
+                  <div className="mt-0.5 truncate text-[11px] text-faint">
+                    {p.sku} · {p.stock} stock · {p.reservedStock} reserved
+                  </div>
                 </div>
-              </TableCell>
-            </TableRow>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className={cn("text-[13px] font-bold", p.availableStock === 0 ? "text-danger" : p.isLowStock ? "text-warn" : "text-ink")}>
+                    {p.availableStock}
+                  </span>
+                  <IconAction label="Adjust stock" icon={PackagePlus} onClick={() => setAdjusting(p)} />
+                </div>
+              </div>
+            </div>
           ))}
-        </TableBody>
-      </Table>
+        </div>
+      </section>
 
       {meta && meta.totalPages > 1 && (
-        <div className="mt-4 flex justify-center">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[12.5px] text-faint">
+            Showing {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
+          </span>
           <Pagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
         </div>
       )}
 
-      {adjustingProduct && <AdjustStockDialog product={adjustingProduct} onClose={() => setAdjustingProduct(null)} />}
-      {historyProduct && <HistoryDialog product={historyProduct} onClose={() => setHistoryProduct(null)} />}
-      {alertsProduct && <RestockAlertsDialog product={alertsProduct} onClose={() => setAlertsProduct(null)} />}
+      {adjusting && <AdjustStockDialog product={adjusting} onClose={() => setAdjusting(null)} />}
+      {history && <HistoryDialog product={history} onClose={() => setHistory(null)} />}
+      {alerts && (
+        <RestockAlertsDialog
+          product={alerts}
+          onClose={() => setAlerts(null)}
+          onRestock={() => {
+            setAlerts(null);
+            setAdjusting(alerts);
+          }}
+        />
+      )}
     </div>
   );
 }
