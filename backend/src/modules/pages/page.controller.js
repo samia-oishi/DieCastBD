@@ -1,6 +1,7 @@
 import sanitizeHtml from "sanitize-html";
 import { Page } from "./page.model.js";
 import { Product } from "../products/product.model.js";
+import { PUBLIC_CARD_FIELDS, withComputedVirtuals } from "../products/product.view.js";
 import { slugify } from "../../utils/slugify.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
@@ -46,10 +47,17 @@ async function resolveBlockProducts(blocks = []) {
 
   // Only active products — a block must not resurrect something the merchant
   // drafted or archived after building the page.
-  return Product.find({ ...query, status: "active" })
-    .select("slug title thumbnail price salePrice stock reservedStock isPreOrder preOrderEndDate isFeatured brand")
+  //
+  // The same projection and virtual-recompute the public product routes use.
+  // Leaning without withComputedVirtuals left availableStock undefined, and
+  // `undefined <= 0` is false, so an out-of-stock product rendered on a block
+  // page as buyable, complete with an add-to-cart button.
+  const products = await Product.find({ ...query, status: "active" })
+    .select(PUBLIC_CARD_FIELDS)
     .populate("brand", "name slug")
     .lean();
+
+  return products.map(withComputedVirtuals);
 }
 
 export const getPageBySlug = asyncHandler(async (req, res) => {

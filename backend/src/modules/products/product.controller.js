@@ -1,5 +1,6 @@
 import { Product } from "./product.model.js";
 import { effectivePrice } from "../../utils/pricing.js";
+import { withComputedVirtuals } from "./product.view.js";
 import { Brand } from "../brands/brand.model.js";
 import { Category } from "../categories/category.model.js";
 import { slugify } from "../../utils/slugify.js";
@@ -15,26 +16,6 @@ const SORT_MAP = {
   "price-desc": { price: -1 },
   "title-asc": { title: 1 },
 };
-
-// .lean() skips Mongoose's virtual getters entirely (there's no native
-// "lean + virtuals" option — that only exists via the separate
-// mongoose-lean-virtuals plugin, which isn't installed here), so public reads
-// that use .lean() for the hydration-overhead savings must recompute these by
-// hand. Mirrors product.model.js's availableStock/profitMargin/isPreOrderActive
-// getters exactly — keep in sync if those change. costPrice is select:false
-// and never re-selected on these public routes, so it's always undefined here
-// and profitMargin always resolves to null, same as before this change.
-function withComputedVirtuals(p) {
-  p.availableStock = p.stock - p.reservedStock;
-  if (p.costPrice == null || !p.price) {
-    p.profitMargin = null;
-  } else {
-    const effective = effectivePrice(p);
-    p.profitMargin = effective ? Math.round(((effective - p.costPrice) / effective) * 100) : null;
-  }
-  p.isPreOrderActive = Boolean(p.isPreOrder) && (!p.preOrderEndDate || p.preOrderEndDate >= new Date());
-  return p;
-}
 
 async function buildPublicFilter({
   brand,
