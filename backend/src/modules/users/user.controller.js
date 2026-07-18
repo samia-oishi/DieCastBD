@@ -4,6 +4,7 @@ import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { clearAuthCookies } from "../../utils/cookies.js";
+import { Order } from "../orders/order.model.js";
 
 // Explicit whitelist rather than passing req.body wholesale — even though `validate()`
 // strips fields the schema doesn't define, a controller that forwards req.body directly
@@ -33,11 +34,28 @@ export const deactivateMe = asyncHandler(async (req, res) => {
   sendSuccess(res, { message: "Account deactivated" });
 });
 
+const EMPTY_STATS = { orderCount: 0, totalSpent: 0, lastOrderAt: null };
+
+/** Per-user order count / lifetime spend / last order date, in one grouped query.
+ * Lifetime spend deliberately EXCLUDES cancelled and refunded orders — that money
+ * was never kept, so counting it would overstate what a customer is worth. */
+async function orderStatsFor(userIds) {
+  if (userIds.length === 0) return new Map();
+  const rows = await Order.aggregate([
+    { $match: { user: { $in: userIds }, status: { $nin: ["cancelled", "refunded"] } } },
+    { $group: { _id: "$user", orderCount: { $sum: 1 }, totalSpent: { $sum: "$total" }, lastOrderAt: { $max: "$createdAt" } } },
+  ]);
+  return new Map(rows.map((r) => [String(r._id), { orderCount: r.orderCount, totalSpent: r.totalSpent, lastOrderAt: r.lastOrderAt }]));
+}
+
 export const listUsersAdmin = asyncHandler(async (req, res) => {
-  const { page, limit, q, role, isActive } = req.query;
+  const { page, limit, q, role, isActive, isGuest } = req.query;
   const filter = {
     ...(role ? { role } : {}),
     ...(isActive !== undefined ? { isActive } : {}),
+    // Guest-vs-registered is the admin list's headline split (guests are created
+    // by guest checkout and have isGuest: true).
+    ...(isGuest !== undefined ? { isGuest } : {}),
     ...(q ? { $or: [{ name: { $regex: q.trim(), $options: "i" } }, { email: { $regex: q.trim(), $options: "i" } }] } : {}),
   };
 
@@ -47,8 +65,11 @@ export const listUsersAdmin = asyncHandler(async (req, res) => {
     User.countDocuments(filter),
   ]);
 
+  // Order counts + lifetime spend, aggregated for THIS page's users only.
+  const stats = await orderStatsFor(items.map((u) => u._id));
+
   sendSuccess(res, {
-    data: items.map(serializeUserAdmin),
+    data: items.map((u) => ({ ...serializeUserAdmin(u), ...(stats.get(String(u._id)) ?? EMPTY_STATS) })),
     meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 });
@@ -56,7 +77,15 @@ export const listUsersAdmin = asyncHandler(async (req, res) => {
 export const getUserAdmin = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) throw ApiError.notFound("User not found");
-  sendSuccess(res, { data: serializeUserAdmin(user) });
+
+  const [stats, recentOrders] = await Promise.all([
+    orderStatsFor([user._id]),
+    Order.find({ user: user._id }).sort({ createdAt: -1 }).limit(5).select("orderNumber total status createdAt"),
+  ]);
+
+  sendSuccess(res, {
+    data: { ...serializeUserAdmin(user), ...(stats.get(String(user._id)) ?? EMPTY_STATS), recentOrders },
+  });
 });
 
 const ADMIN_EDITABLE_FIELDS = ["name", "phone", "isActive"];

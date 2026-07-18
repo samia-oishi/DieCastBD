@@ -19,6 +19,7 @@ export const listUsersQuerySchema = {
     q: z.string().optional(),
     role: z.enum(["customer", "staff", "admin"]).optional(),
     isActive: z.coerce.boolean().optional(),
+    isGuest: z.coerce.boolean().optional(),
   }),
 };
 
