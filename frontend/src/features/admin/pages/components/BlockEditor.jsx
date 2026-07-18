@@ -68,7 +68,7 @@ function Select({ value, onChange, options, className }) {
  * is how two upload paths drift apart. Blocks store the URL string, so a hand-
  * typed URL still works for images already hosted elsewhere.
  */
-function ImageUpload({ value, onChange, size = 68, label = "Upload image" }) {
+function ImageUpload({ value, onChange, onRemove, size = 68, label = "Upload image" }) {
   const uploadMutation = useUploadSettingsImageMutation();
 
   const onFile = async (e) => {
@@ -98,10 +98,13 @@ function ImageUpload({ value, onChange, size = 68, label = "Upload image" }) {
           {uploadMutation.isPending ? "Uploading…" : label}
           <input type="file" accept="image/png,image/jpeg,image/webp,image/avif" className="hidden" onChange={onFile} />
         </label>
-        {value && (
+        {/* `onRemove` callers (carousel slides) always get the button — an empty
+            slide tile with no way to delete it strands the merchant with a blank
+            entry they can't clear. Without it, Remove only clears a set image. */}
+        {(value || onRemove) && (
           <button
             type="button"
-            onClick={() => onChange("")}
+            onClick={() => (onRemove ? onRemove() : onChange(""))}
             className="inline-flex h-9 items-center gap-1 rounded-full px-2.5 text-[12.5px] font-semibold text-faint transition-colors hover:text-[#B3261E]"
           >
             <X size={13} strokeWidth={2.2} /> Remove
@@ -178,14 +181,8 @@ export function BlockEditor({ block, set }) {
                     value={slide}
                     size={56}
                     label={slide ? "Replace" : "Upload slide"}
-                    onChange={(url) => {
-                      // An emptied slide is removed rather than left as a blank
-                      // tile the storefront would have to filter out.
-                      const slides = url
-                        ? block.slides.map((s, j) => (j === i ? url : s))
-                        : block.slides.filter((_, j) => j !== i);
-                      set({ slides });
-                    }}
+                    onChange={(url) => set({ slides: block.slides.map((s, j) => (j === i ? url : s)) })}
+                    onRemove={() => set({ slides: block.slides.filter((_, j) => j !== i) })}
                   />
                 ))}
                 <button
