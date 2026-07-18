@@ -24,6 +24,16 @@ export async function deleteProduct(id) {
   await api.delete(`/admin/products/${id}`);
 }
 
+export async function bulkUpdateProductStatus(ids, status) {
+  const { data } = await api.patch("/admin/products/bulk-status", { ids, status });
+  return data;
+}
+
+export async function bulkDeleteProducts(ids) {
+  const { data } = await api.delete("/admin/products", { data: { ids } });
+  return data;
+}
+
 export async function uploadProductThumbnail(id, file) {
   const formData = new FormData();
   formData.append("image", file);

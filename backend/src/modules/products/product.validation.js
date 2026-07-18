@@ -18,12 +18,34 @@ export const listProductsQuerySchema = {
   }),
 };
 
+// Admin list = the public query shape plus a status filter (the storefront list
+// is hardcoded to active, so status stays off the public schema).
+export const listProductsAdminQuerySchema = {
+  query: listProductsQuerySchema.query.extend({
+    status: z.enum(["draft", "active", "archived"]).optional(),
+  }),
+};
+
 export const slugParamSchema = {
   params: z.object({ slug: z.string().min(1) }),
 };
 
 export const idParamSchema = {
   params: z.object({ id: z.string().min(1) }),
+};
+
+// Bulk actions from the admin list. ids capped at 100 per call.
+const bulkIds = z
+  .array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid product id"))
+  .min(1, "Select at least one product")
+  .max(100, "At most 100 products at a time");
+
+export const bulkStatusSchema = {
+  body: z.object({ ids: bulkIds, status: z.enum(["active", "draft"]) }),
+};
+
+export const bulkDeleteSchema = {
+  body: z.object({ ids: bulkIds }),
 };
 
 const productFields = {

@@ -6,6 +6,8 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  bulkUpdateProductStatus,
+  bulkDeleteProducts,
   uploadProductThumbnail,
   addProductGalleryImages,
   deleteProductGalleryImage,
@@ -48,6 +50,19 @@ export function useUpdateProductMutation() {
 export function useDeleteProductMutation() {
   const invalidate = useInvalidateProducts();
   return useMutation({ mutationFn: deleteProduct, onSuccess: invalidate });
+}
+
+export function useBulkProductStatusMutation() {
+  const invalidate = useInvalidateProducts();
+  return useMutation({
+    mutationFn: ({ ids, status }) => bulkUpdateProductStatus(ids, status),
+    onSuccess: invalidate,
+  });
+}
+
+export function useBulkDeleteProductsMutation() {
+  const invalidate = useInvalidateProducts();
+  return useMutation({ mutationFn: (ids) => bulkDeleteProducts(ids), onSuccess: invalidate });
 }
 
 export function useUploadThumbnailMutation() {

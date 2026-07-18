@@ -6,6 +6,7 @@ import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { uploadBufferToCloudinary, deleteFromCloudinary } from "../../utils/cloudinaryUpload.js";
+import { AuditLog } from "../auditLogs/auditLog.model.js";
 
 const SORT_MAP = {
   newest: { createdAt: -1 },
@@ -178,8 +179,18 @@ export const getRelatedProducts = asyncHandler(async (req, res) => {
 });
 
 export const listProductsAdmin = asyncHandler(async (req, res) => {
-  const { page, limit } = req.query;
+  const { page, limit, status, q } = req.query;
+  // The admin list honours status + search (the redesigned Products screen has
+  // status chips and a search box); previously both were silently ignored here.
   const filter = { isDeleted: false };
+  if (status) filter.status = status;
+  if (q) {
+    // Same escaped case-insensitive substring search as the storefront list, but
+    // scoped to the fields an admin scans by.
+    const escaped = String(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rx = new RegExp(escaped, "i");
+    filter.$or = [{ title: rx }, { sku: rx }];
+  }
 
   const skip = (page - 1) * limit;
   const [items, total] = await Promise.all([
@@ -253,6 +264,52 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findByIdAndUpdate(req.params.id, { isDeleted: true }, { returnDocument: "after" });
   if (!product) throw ApiError.notFound("Product not found");
   sendSuccess(res, { message: "Product deleted" });
+});
+
+// Bulk audit helper — the auditLog() middleware keys off a single :id, so bulk
+// routes record per-entity rows here instead (same reasoning as deleteOrders).
+async function auditProducts(req, products, before) {
+  await AuditLog.insertMany(
+    products.map((p) => ({
+      actor: req.user?.id,
+      action: `${req.method} ${req.originalUrl}`,
+      entityType: "Product",
+      entityId: p._id.toString(),
+      before: before?.(p),
+      after: null,
+      ip: req.ip,
+    }))
+  ).catch((err) => console.error("Bulk audit write failed:", err.message));
+}
+
+export const bulkUpdateProductStatus = asyncHandler(async (req, res) => {
+  const { ids, status } = req.body;
+  const products = await Product.find({ _id: { $in: ids }, isDeleted: false });
+  if (products.length === 0) throw ApiError.notFound("No matching products found");
+
+  await auditProducts(req, products, (p) => ({ status: p.status }));
+  await Product.updateMany({ _id: { $in: products.map((p) => p._id) } }, { $set: { status } });
+
+  sendSuccess(res, {
+    data: { updatedCount: products.length, status },
+    message: `${products.length} product${products.length === 1 ? "" : "s"} set to ${status}`,
+  });
+});
+
+export const bulkDeleteProducts = asyncHandler(async (req, res) => {
+  const { ids } = req.body;
+  // Products soft-delete (isDeleted) — unlike orders they hold no reservedStock,
+  // so there's no stock to return; a plain flag flip is correct.
+  const products = await Product.find({ _id: { $in: ids }, isDeleted: false });
+  if (products.length === 0) throw ApiError.notFound("No matching products found");
+
+  await auditProducts(req, products, (p) => p.toObject());
+  await Product.updateMany({ _id: { $in: products.map((p) => p._id) } }, { $set: { isDeleted: true } });
+
+  sendSuccess(res, {
+    data: { deletedCount: products.length },
+    message: `${products.length} product${products.length === 1 ? "" : "s"} deleted`,
+  });
 });
 
 export const uploadThumbnail = asyncHandler(async (req, res) => {

@@ -4,11 +4,14 @@ import { auditLog } from "../../middlewares/auditLog.js";
 import { upload } from "../../middlewares/upload.js";
 import {
   listProductsQuerySchema,
+  listProductsAdminQuerySchema,
   slugParamSchema,
   idParamSchema,
   createProductSchema,
   updateProductSchema,
   galleryIndexParamSchema,
+  bulkStatusSchema,
+  bulkDeleteSchema,
 } from "./product.validation.js";
 import {
   listProducts,
@@ -20,6 +23,8 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  bulkUpdateProductStatus,
+  bulkDeleteProducts,
   uploadThumbnail,
   addGalleryImages,
   deleteGalleryImage,
@@ -33,7 +38,12 @@ publicRouter.get("/:slug", validate(slugParamSchema), getProductBySlug);
 publicRouter.get("/:slug/related", validate(slugParamSchema), getRelatedProducts);
 
 export const adminRouter = Router();
-adminRouter.get("/", validate(listProductsQuerySchema), listProductsAdmin);
+adminRouter.get("/", validate(listProductsAdminQuerySchema), listProductsAdmin);
+// Bulk routes are declared before "/:id" so their literal paths aren't captured
+// as an id. They audit per-product internally (see the controller), so no
+// auditLog() middleware here.
+adminRouter.patch("/bulk-status", validate(bulkStatusSchema), bulkUpdateProductStatus);
+adminRouter.delete("/", validate(bulkDeleteSchema), bulkDeleteProducts);
 adminRouter.get("/:id", validate(idParamSchema), getProductAdmin);
 adminRouter.post("/", validate(createProductSchema), auditLog("Product"), createProduct);
 adminRouter.patch("/:id", validate(updateProductSchema), auditLog("Product", Product), updateProduct);

@@ -1,189 +1,327 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import toast from "react-hot-toast";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronRight, CarFront } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { formatTaka } from "@/lib/currency";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAdminProducts, useDeleteProductMutation } from "./api/useProducts";
+import { Pagination } from "@/components/shared/Pagination";
 import { useDebounce } from "@/hooks/useDebounce";
+import { AdminPageHeader } from "@/features/admin/shell/AdminPageHeader";
+import { AdminSearch } from "@/features/admin/shell/AdminSearch";
+import { FilterChips } from "@/features/admin/shell/FilterChips";
+import { BulkBar } from "@/features/admin/shell/BulkBar";
+import { AdminButton } from "@/features/admin/shell/AdminButton";
+import { adminToast } from "@/features/admin/shell/adminToast";
+import { useAdminProducts, useBulkProductStatusMutation, useBulkDeleteProductsMutation } from "./api/useProducts";
 
-const PAGE_SIZE = 20;
+// Photo column sits right after the checkbox (merchant request — the design's
+// prototype had no thumbnail, but scanning a catalogue by picture is faster).
+const GRID = "md:grid-cols-[auto_44px_84px_1.9fr_1fr_1fr_1.05fr_66px_92px_24px]";
+const CHECKBOX_CLS = "size-5 rounded-[6px] border-[1.5px] border-[#C9CBBE] data-[state=checked]:border-brand";
+
+const STATUS_PILL = {
+  active: "bg-brand-tint text-brand-deep",
+  draft: "bg-[#FDF3E7] text-[#B45309]",
+  archived: "bg-tile text-faint",
+};
+
+/** Effective selling price — mirrors the model's rule (a salePrice only counts
+ * when it's a real discount below list), so the list can't show a bogus sale. */
+function effectivePrice(p) {
+  return p.salePrice != null && p.salePrice < p.price ? p.salePrice : p.price;
+}
+
+function ProductThumb({ product }) {
+  return product.thumbnail?.url ? (
+    <img
+      src={product.thumbnail.url}
+      alt=""
+      loading="lazy"
+      className="size-11 shrink-0 rounded-[10px] border border-line bg-white object-contain"
+    />
+  ) : (
+    <div className="flex size-11 shrink-0 items-center justify-center rounded-[10px] border border-line bg-tile text-faint">
+      <CarFront size={18} strokeWidth={1.5} />
+    </div>
+  );
+}
 
 export function ProductsPage() {
   const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 400);
-  const [deletingProduct, setDeletingProduct] = useState(null);
 
-  const { data, isLoading } = useAdminProducts({ page, limit: PAGE_SIZE, q: debouncedSearch || undefined });
-  const deleteMutation = useDeleteProductMutation();
+  // Status chips hit the API; "Low stock" is a client-side lens over the page
+  // (there's no backend low-stock filter on this endpoint).
+  const statusParam = filter === "all" || filter === "lowStock" ? undefined : filter;
 
-  const products = data?.data ?? [];
+  const { data, isLoading } = useAdminProducts({
+    page,
+    limit: 10,
+    status: statusParam,
+    q: debouncedSearch || undefined,
+  });
+  const bulkStatus = useBulkProductStatusMutation();
+  const bulkDelete = useBulkDeleteProductsMutation();
+
+  const all = data?.data ?? [];
+  const products = filter === "lowStock" ? all.filter((p) => (p.availableStock ?? p.stock) <= 2) : all;
   const meta = data?.meta;
+  const selected = products.filter((p) => selectedIds.includes(p._id));
+
+  const resetTo = (fn) => (value) => {
+    fn(value);
+    setPage(1);
+    setSelectedIds([]);
+  };
+
+  const allOnPageSelected = products.length > 0 && products.every((p) => selectedIds.includes(p._id));
+  const someOnPageSelected = products.some((p) => selectedIds.includes(p._id));
+  const toggleAll = () => setSelectedIds(allOnPageSelected ? [] : products.map((p) => p._id));
+  const toggleOne = (id) => setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const onSetStatus = (status) => {
+    bulkStatus.mutate(
+      { ids: selectedIds, status },
+      {
+        onSuccess: (res) => {
+          adminToast(res?.message ?? `Products set to ${status}`);
+          setSelectedIds([]);
+        },
+        onError: (err) => adminToast(err.response?.data?.message ?? "Could not update products"),
+      }
+    );
+  };
 
   const onDelete = () => {
-    toast.promise(deleteMutation.mutateAsync(deletingProduct._id), {
-      loading: "Deleting...",
-      success: () => {
-        setDeletingProduct(null);
-        return "Product deleted";
+    bulkDelete.mutate(selectedIds, {
+      onSuccess: (res) => {
+        adminToast(res?.message ?? "Products deleted");
+        setSelectedIds([]);
+        setConfirmOpen(false);
       },
-      error: "Could not delete product",
+      onError: (err) => adminToast(err.response?.data?.message ?? "Could not delete products"),
     });
   };
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl">Products</h1>
-        <Button asChild size="sm">
-          <Link to="new">
-            <Plus /> Add Product
-          </Link>
-        </Button>
-      </div>
+  const chips = [
+    { value: "all", label: "All" },
+    { value: "active", label: "Active" },
+    { value: "draft", label: "Draft" },
+    { value: "lowStock", label: "Low stock" },
+  ];
 
-      <Input
-        placeholder="Search products..."
-        value={search}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-        className="max-w-sm"
+  return (
+    <div className="flex flex-col gap-[18px]">
+      <AdminPageHeader
+        eyebrow={meta ? `${meta.total} product${meta.total === 1 ? "" : "s"}` : "Catalogue"}
+        title="Products"
+        actions={
+          <AdminButton asChild>
+            <Link to="new">
+              <Plus size={16} strokeWidth={2.4} /> Add product
+            </Link>
+          </AdminButton>
+        }
       />
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-14"></TableHead>
-            <TableHead>SKU</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Brand</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Cost</TableHead>
-            <TableHead>Profit</TableHead>
-            <TableHead>Margin</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading && (
-            <TableRow>
-              <TableCell colSpan={11} className="text-center text-muted-foreground">
-                Loading...
-              </TableCell>
-            </TableRow>
-          )}
+      <div className="flex flex-col gap-3">
+        <AdminSearch
+          value={search}
+          onChange={(e) => resetTo(setSearch)(e.target.value)}
+          placeholder="Search by title or SKU…"
+          className="max-w-md"
+        />
+        <FilterChips chips={chips} value={filter} onChange={resetTo(setFilter)} />
+      </div>
+
+      <section className="overflow-x-auto rounded-[18px] border border-line bg-white">
+        <div className="min-w-[940px]">
+          <div className={cn("hidden items-center gap-4 border-b border-line-soft px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.07em] text-faint md:grid", GRID)}>
+            <Checkbox
+              className={CHECKBOX_CLS}
+              checked={allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false}
+              onCheckedChange={toggleAll}
+              disabled={products.length === 0}
+              aria-label="Select all products on this page"
+            />
+            <span>Photo</span>
+            <span>SKU</span>
+            <span>Product</span>
+            <span>Brand</span>
+            <span>Price</span>
+            <span>Profit</span>
+            <span>Stock</span>
+            <span>Status</span>
+            <span />
+          </div>
+
+          {isLoading && <p className="px-5 py-10 text-center text-[13.5px] text-faint">Loading…</p>}
           {!isLoading && products.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={11} className="text-center text-muted-foreground">
-                No products found.
-              </TableCell>
-            </TableRow>
+            <p className="px-5 py-10 text-center text-[13.5px] text-faint">No products match — try a different search or filter.</p>
           )}
-          {products.map((product) => {
-            const onSale = product.salePrice != null && product.salePrice < product.price;
-            const effectivePrice = onSale ? product.salePrice : product.price;
+
+          {products.map((p) => {
+            const isSel = selectedIds.includes(p._id);
+            const price = effectivePrice(p);
+            const onSale = price < p.price;
+            const stock = p.availableStock ?? p.stock;
+            const profit = p.costPrice != null ? price - p.costPrice : null;
+            const margin = profit != null && price > 0 ? Math.round((profit / price) * 100) : null;
+
             return (
-            <TableRow key={product._id}>
-              <TableCell>
-                {product.thumbnail?.url ? (
-                  <img src={product.thumbnail.url} alt="" className="size-8 rounded object-cover" />
-                ) : (
-                  <div className="size-8 rounded bg-muted" />
+              <div
+                key={p._id}
+                className={cn(
+                  "grid grid-cols-[auto_1fr] items-center gap-3 border-t border-line-soft px-4 py-2.5 transition-colors first:border-t-0 hover:bg-[#FCFCF9] md:gap-4 md:px-5",
+                  GRID,
+                  isSel && "bg-[#FBFDF3]"
                 )}
-              </TableCell>
-              <TableCell className="font-mono text-xs">{product.sku}</TableCell>
-              <TableCell className="font-medium">
-                <div className="flex items-center gap-2">
-                  {product.title}
-                  {onSale && <Badge className="bg-amber-400 text-background">Sale</Badge>}
-                </div>
-              </TableCell>
-              <TableCell className="text-muted-foreground">{product.brand?.name}</TableCell>
-              <TableCell>
-                ৳{effectivePrice.toLocaleString()}
-                {onSale && (
-                  <span className="ml-1.5 text-xs text-muted-foreground line-through">
-                    ৳{product.price.toLocaleString()}
+              >
+                <Checkbox
+                  className={cn(CHECKBOX_CLS, "relative z-10")}
+                  checked={isSel}
+                  onCheckedChange={() => toggleOne(p._id)}
+                  aria-label={`Select product ${p.title}`}
+                />
+
+                {/* desktop cells */}
+                <div className="hidden md:contents">
+                  <ProductThumb product={p} />
+                  <span className="truncate font-display text-[11px] font-bold text-[#6B6E60]" title={p.sku}>{p.sku}</span>
+                  <Link to={p._id} className="truncate text-[13px] text-ink hover:text-brand-deep" title={p.title}>
+                    {p.title}
+                  </Link>
+                  <span className="truncate text-[12.5px] text-ink-soft">{p.brand?.name ?? "—"}</span>
+                  <span className="truncate text-[12.5px]">
+                    <span className="font-semibold text-ink">{formatTaka(price)}</span>
+                    {onSale && <span className="ml-1.5 text-[11px] text-faint line-through">{formatTaka(p.price)}</span>}
                   </span>
-                )}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {product.costPrice != null ? `৳${product.costPrice.toLocaleString()}` : "—"}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {product.costPrice != null ? `৳${(effectivePrice - product.costPrice).toLocaleString()}` : "—"}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {product.profitMargin != null ? `${product.profitMargin}%` : "—"}
-              </TableCell>
-              <TableCell>{product.availableStock}</TableCell>
-              <TableCell className="capitalize text-muted-foreground">{product.status}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon-sm" aria-label="Edit product" asChild>
-                    <Link to={product._id}>
-                      <Pencil />
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="icon-sm" aria-label="Delete product" onClick={() => setDeletingProduct(product)}>
-                    <Trash2 />
-                  </Button>
+                  <span className="truncate text-[12px]">
+                    {profit != null ? (
+                      <span className={profit > 0 ? "text-brand-deep" : "text-faint"}>
+                        {formatTaka(profit)}
+                        {margin != null && ` · ${margin}%`}
+                      </span>
+                    ) : (
+                      <span className="text-faint">—</span>
+                    )}
+                  </span>
+                  <span className={cn("text-[12.5px] font-semibold", stock === 0 ? "text-danger" : stock <= 2 ? "text-warn" : "text-ink")}>
+                    {stock}
+                  </span>
+                  <span>
+                    <span className={cn("inline-block rounded-full px-2.5 py-[3px] text-[10.5px] font-bold capitalize", STATUS_PILL[p.status] ?? STATUS_PILL.archived)}>
+                      {p.status}
+                    </span>
+                  </span>
+                  <Link to={p._id} className="flex justify-end text-faint hover:text-ink">
+                    <ChevronRight size={18} strokeWidth={2} />
+                  </Link>
                 </div>
-              </TableCell>
-            </TableRow>
+
+                {/* mobile card */}
+                <Link to={p._id} className="flex items-center gap-3 md:hidden">
+                  <ProductThumb product={p} />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] text-ink">{p.title}</div>
+                    <div className="truncate text-[11.5px] text-faint">
+                      {p.sku} · {p.brand?.name ?? "—"}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="text-[13px] font-bold text-ink">{formatTaka(price)}</span>
+                    <span className={cn("text-[11.5px] font-semibold", stock === 0 ? "text-danger" : stock <= 2 ? "text-warn" : "text-faint")}>
+                      {stock} in stock
+                    </span>
+                  </div>
+                </Link>
+              </div>
             );
           })}
-        </TableBody>
-      </Table>
+        </div>
+      </section>
 
       {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>
-            Page {meta.page} of {meta.totalPages} ({meta.total} products)
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[12.5px] text-faint">
+            Showing {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
           </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= meta.totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
+          <Pagination
+            page={meta.page}
+            totalPages={meta.totalPages}
+            onPageChange={(p) => {
+              setPage(p);
+              setSelectedIds([]);
+            }}
+          />
         </div>
       )}
 
-      <AlertDialog open={!!deletingProduct} onOpenChange={(open) => !open && setDeletingProduct(null)}>
+      <BulkBar count={selectedIds.length}>
+        <AdminButton variant="glass" size="sm" onClick={() => onSetStatus("active")} disabled={bulkStatus.isPending}>
+          Set active
+        </AdminButton>
+        <AdminButton variant="glass" size="sm" onClick={() => onSetStatus("draft")} disabled={bulkStatus.isPending}>
+          Set draft
+        </AdminButton>
+        <AdminButton variant="glass" size="sm" onClick={() => setSelectedIds([])}>
+          Clear
+        </AdminButton>
+        <AdminButton variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>
+          <Trash2 size={15} strokeWidth={2.2} /> Delete
+        </AdminButton>
+      </BulkBar>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {deletingProduct?.title}?</AlertDialogTitle>
-            <AlertDialogDescription>This can't be undone.</AlertDialogDescription>
+            <AlertDialogTitle>
+              Delete {selectedIds.length} product{selectedIds.length === 1 ? "" : "s"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="max-h-48 overflow-y-auto rounded-md border border-border">
+                  {selected.map((p) => (
+                    <div key={p._id} className="flex items-center justify-between gap-3 border-b border-border px-3 py-2 text-xs last:border-b-0">
+                      <span className="truncate">{p.title}</span>
+                      <span className="shrink-0 font-mono text-[11px]">{p.sku}</span>
+                    </div>
+                  ))}
+                </div>
+                <p>
+                  They&apos;ll disappear from the storefront and these lists. Past orders keep their own copy of each
+                  item, so order history is unaffected.
+                </p>
+              </div>
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
+            <AlertDialogCancel disabled={bulkDelete.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                onDelete();
+              }}
+              disabled={bulkDelete.isPending}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {bulkDelete.isPending ? "Deleting…" : `Delete ${selectedIds.length} product${selectedIds.length === 1 ? "" : "s"}`}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
