@@ -7,9 +7,13 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const ZOOM = 2.5;
 
-/** Dark pill controls used inside the image viewer — visible over any photo. */
+/** Dark pills for the prev/next arrows, which do overlay the photo. */
 const VIEWER_BTN =
   "flex size-10 items-center justify-center rounded-full bg-[rgba(16,18,8,0.55)] text-white backdrop-blur transition-colors hover:bg-[rgba(16,18,8,0.75)]";
+
+/** Light circles for the header bar — they sit on white, not on the image. */
+const HEADER_BTN =
+  "flex size-9 items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:bg-tile";
 
 /** True only for devices that genuinely hover with a precise pointer.
  *
@@ -129,15 +133,31 @@ function MainImage({ image, title, isNew, onOpen }) {
 
 /** Image viewer as a standard centred dialog: the page stays visible behind the
  * scrim, tapping outside the image closes it (Radix default once the content
- * no longer covers the screen), and the close pill stays. One tap on the image
- * toggles actual 1:1 pixels inside a pannable scroll area. */
+ * no longer covers the screen). The controls live in a header BAR above the
+ * photo, not floating on it — the merchant's explicit ask — which also means
+ * they can't cover the product. One tap on the image toggles actual 1:1 pixels
+ * inside a pannable scroll area that starts centred. */
 function Lightbox({ images, index, onIndex, title, open, onClose }) {
   const [actualSize, setActualSize] = useState(false);
+  const panRef = useRef(null);
   const image = images[index];
 
   // Reset the zoom whenever the viewer opens or the slide changes, so it never
   // opens mysteriously scrolled into the middle of a previous image.
   useEffect(() => setActualSize(false), [index, open]);
+
+  // 1:1 mode used to open scrolled to the image's top-left corner — on a
+  // product shot that corner is blank white, which read as "zoom is broken".
+  // Centre the pan area on the middle of the photo instead.
+  const centerPan = () => {
+    const el = panRef.current;
+    if (!el) return;
+    el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+    el.scrollTop = (el.scrollHeight - el.clientHeight) / 2;
+  };
+  useEffect(() => {
+    if (actualSize) centerPan();
+  }, [actualSize]);
 
   useEffect(() => {
     if (!open || images.length < 2) return undefined;
@@ -163,24 +183,35 @@ function Lightbox({ images, index, onIndex, title, open, onClose }) {
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>
 
-        <div className="absolute right-2 top-2 z-20 flex gap-1.5">
-          <button
-            type="button"
-            onClick={() => setActualSize((v) => !v)}
-            aria-label={actualSize ? "Fit to screen" : "View actual size"}
-            className={VIEWER_BTN}
-          >
-            {actualSize ? <ZoomOut size={18} strokeWidth={1.9} /> : <ZoomIn size={18} strokeWidth={1.9} />}
-          </button>
-          <button type="button" onClick={onClose} aria-label="Close" className={VIEWER_BTN}>
-            <X size={18} strokeWidth={2} />
-          </button>
+        {/* Header bar — controls sit above the photo, never on it. */}
+        <div className="flex items-center justify-between gap-3 border-b border-line-soft px-3.5 py-2">
+          <span className="text-[12.5px] font-semibold text-ink-soft">
+            {images.length > 1 ? `${index + 1} / ${images.length}` : "Photo"}
+          </span>
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => setActualSize((v) => !v)}
+              aria-label={actualSize ? "Fit to screen" : "View actual size"}
+              className={HEADER_BTN}
+            >
+              {actualSize ? <ZoomOut size={17} strokeWidth={1.9} /> : <ZoomIn size={17} strokeWidth={1.9} />}
+            </button>
+            <button type="button" onClick={onClose} aria-label="Close" className={HEADER_BTN}>
+              <X size={17} strokeWidth={2} />
+            </button>
+          </div>
         </div>
 
         {actualSize ? (
-          // 1:1 pixels; the wrapper pans in both axes when the image outgrows it.
-          <div className="max-h-[85vh] max-w-[calc(100vw-24px)] overflow-auto overscroll-contain sm:max-w-[min(92vw,1100px)]">
-            <img src={src} alt={title} decoding="async" onClick={() => setActualSize(false)} className="max-w-none cursor-zoom-out" />
+          // 1:1 pixels; the wrapper pans in both axes when the image outgrows
+          // it. Width is pinned to the fit-mode footprint so toggling zoom
+          // doesn't reshape the dialog into a tall strip.
+          <div
+            ref={panRef}
+            className="max-h-[70vh] w-[calc(100vw-24px)] overflow-auto overscroll-contain sm:w-auto sm:max-w-[min(92vw,1100px)] sm:max-h-[78vh]"
+          >
+            <img src={src} alt={title} decoding="async" onLoad={centerPan} onClick={() => setActualSize(false)} className="max-w-none cursor-zoom-out" />
           </div>
         ) : (
           <img
@@ -188,7 +219,7 @@ function Lightbox({ images, index, onIndex, title, open, onClose }) {
             alt={title}
             decoding="async"
             onClick={() => setActualSize(true)}
-            className="block h-auto max-h-[80vh] w-auto max-w-[calc(100vw-24px)] cursor-zoom-in sm:max-w-[min(92vw,1100px)]"
+            className="block h-auto max-h-[74vh] w-auto max-w-[calc(100vw-24px)] cursor-zoom-in sm:max-w-[min(92vw,1100px)]"
           />
         )}
 
@@ -210,9 +241,6 @@ function Lightbox({ images, index, onIndex, title, open, onClose }) {
             >
               <ChevronRight size={20} strokeWidth={2} />
             </button>
-            <div className="absolute bottom-2.5 left-1/2 z-20 -translate-x-1/2 rounded-full bg-[rgba(16,18,8,0.55)] px-3 py-1 text-[12px] font-semibold text-white backdrop-blur">
-              {index + 1} / {images.length}
-            </div>
           </>
         )}
       </DialogContent>
