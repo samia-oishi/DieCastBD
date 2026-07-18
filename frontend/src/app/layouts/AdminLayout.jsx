@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { NavLink, Outlet, Link } from "react-router";
-import "@/styles/admin-fonts.css";
 import {
   LayoutDashboard,
   Package,
@@ -37,7 +36,7 @@ const NAV_ITEMS = [
 
 export function AdminLayout() {
   return (
-    <div data-theme="diecastbd-admin" className="flex min-h-svh bg-background text-foreground">
+    <div className="flex min-h-svh bg-background text-foreground">
       <aside className="flex w-64 shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar px-4 py-6 text-sidebar-foreground">
         <div>
           <span className="font-heading text-lg tracking-wide">DiecastBD Admin</span>

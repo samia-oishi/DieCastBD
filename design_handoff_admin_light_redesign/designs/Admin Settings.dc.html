@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400..900;1,400..900&amp;family=Instrument+Sans:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#FAFAF7;}
+body{font-family:'Instrument Sans',sans-serif;color:#101208;-webkit-font-smoothing:antialiased;}
+a{color:#4F6B0B;text-decoration:none;}
+a:hover{color:#5F7A10;}
+input,textarea,select,button{font-family:inherit;}
+input::placeholder,textarea::placeholder{color:#8A8D80;}
+*:focus-visible{outline:2px solid #A8CD2F;outline-offset:2px;}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes drawerIn{from{transform:translateX(-100%);}to{transform:translateX(0);}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#FAFAF7">
+
+  <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+    <aside data-screen-label="Admin sidebar" style="position:fixed;top:0;left:0;bottom:0;width:232px;background:#ffffff;border-right:1px solid #E7E8E0;display:flex;flex-direction:column;z-index:40;box-sizing:border-box">
+      <div style="padding:22px 20px 16px;display:flex;align-items:center;gap:8px">
+        <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.02em">{{ storeName }}<span style="color:#A8CD2F">.</span></div>
+        <span style="font-size:9.5px;font-weight:700;letter-spacing:0.08em;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:3px 8px">ADMIN</span>
+      </div>
+      <nav style="flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="12">
+          <button data-id="{{ it.id }}" onClick="{{ navClick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:9px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;transition:background .15s" style-hover="background:#F1F2EA">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+            {{ it.label }}
+          </button>
+        </sc-for>
+      </nav>
+      <div style="padding:14px;border-top:1px solid #EFEFE9;display:grid;gap:10px">
+        <a href="#" style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3A3D33;padding:6px 8px;border-radius:8px" style-hover="background:#F1F2EA">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"></path></svg>
+          Back to store
+        </a>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 8px 4px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:700;font-size:11.5px;flex:none">DB</div>
+          <div style="min-width:0">
+            <div style="font-size:12.5px;font-weight:600">Admin</div>
+            <div style="font-size:11px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">diecastbd.official@gmail.com</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <sc-if value="{{ m }}" hint-placeholder-val="{{ false }}">
+    <header data-screen-label="Mobile top bar" style="position:fixed;top:0;left:0;right:0;z-index:50;height:56px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(250,250,247,0.75);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid #E7E8E0;box-sizing:border-box">
+      <button onClick="{{ openNav }}" aria-label="Open menu" style="width:44px;height:44px;border:none;background:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#101208" style-hover="background:#F1F2EA">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+      </button>
+      <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:17px;letter-spacing:-0.01em">Settings</div>
+      <div style="margin-left:auto;width:32px;height:32px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:700;font-size:11.5px">DB</div>
+    </header>
+  </sc-if>
+
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeNav }}" style="position:fixed;inset:0;background:rgba(16,18,8,0.5);backdrop-filter:blur(4px);z-index:80;animation:fadeIn .2s ease-out"></div>
+    <aside data-screen-label="Mobile nav drawer" style="position:fixed;top:0;left:0;bottom:0;width:280px;background:#ffffff;z-index:81;animation:drawerIn .22s ease-out;display:flex;flex-direction:column;border-radius:0 24px 24px 0;overflow:hidden;box-shadow:0 12px 40px rgba(16,18,8,0.25)">
+      <div style="padding:18px 18px 12px;display:flex;align-items:center;gap:8px">
+        <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px">{{ storeName }}<span style="color:#A8CD2F">.</span></div>
+        <span style="font-size:9.5px;font-weight:700;letter-spacing:0.08em;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:3px 8px">ADMIN</span>
+        <button onClick="{{ closeNav }}" aria-label="Close menu" style="margin-left:auto;width:40px;height:40px;border:none;background:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3A3D33" style-hover="background:#F1F2EA">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <nav style="flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="12">
+          <button data-id="{{ it.id }}" onClick="{{ navClick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:11px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:14px;font-weight:600;cursor:pointer;text-align:left" style-hover="background:#F1F2EA">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+            {{ it.label }}
+          </button>
+        </sc-for>
+      </nav>
+      <div style="padding:14px;border-top:1px solid #EFEFE9">
+        <a href="#" style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#3A3D33">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"></path></svg>
+          Back to store
+        </a>
+      </div>
+    </aside>
+  </sc-if>
+
+  <main style="{{ mainStyle }}">
+    <div style="max-width:1180px;margin:0 auto">
+
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8A8D80;text-transform:uppercase;margin-bottom:6px">Storefront control</div>
+          <h1 style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:{{ h1fs }};letter-spacing:-0.015em;line-height:1.1">Settings</h1>
+          <p style="margin:8px 0 0;font-size:13.5px;color:#6B6E60;line-height:1.5">Everything the storefront shows — grouped so you never scroll a mile again.</p>
+        </div>
+        <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+          <a href="#" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border:1.5px solid #101208;border-radius:99px;font-family:Archivo,sans-serif;font-weight:700;font-size:13px;color:#101208;transition:background .15s,color .15s" style-hover="background:#101208;color:#ffffff">
+            Visit store
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"></path></svg>
+          </a>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ m }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Mobile section chips" style="position:sticky;top:56px;z-index:30;background:rgba(250,250,247,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);margin:0 -16px 16px;padding:10px 16px;overflow-x:auto;display:flex;gap:8px;border-bottom:1px solid #EFEFE9;-webkit-overflow-scrolling:touch">
+          <sc-for list="{{ chips }}" as="c" hint-placeholder-count="6">
+            <button data-id="{{ c.id }}" onClick="{{ go }}" style="flex:none;height:36px;padding:0 15px;border-radius:99px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.color }};font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ c.label }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div style="{{ bodyGrid }}">
+
+        <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+          <nav data-screen-label="Settings sub-navigation" style="{{ snWrap }}">
+            <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+              <div>
+                <div style="{{ g.ks }}">{{ g.k }}</div>
+                <div style="display:grid;gap:2px">
+                  <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+                    <button data-id="{{ it.id }}" onClick="{{ go }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:8px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:13px;font-weight:600;cursor:pointer;text-align:left;transition:background .15s" style-hover="background:{{ it.hbg }}">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+                      {{ it.label }}
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </nav>
+        </sc-if>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:18px;min-width:0">
+
+          <sc-if value="{{ secHero }}" hint-placeholder-val="{{ true }}">
+            <section data-screen-label="Settings — Hero" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+                <div>
+                  <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Hero</h2>
+                  <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">The homepage hero — style, image, highlight card, and per-style copy.</p>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;flex:none;padding-top:2px">
+                  Show hero
+                  <button data-k="hero.show" onClick="{{ tgl }}" aria-label="Show hero" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ t.heroShow.bg }};transition:background .18s;flex:none;box-sizing:border-box">
+                    <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ t.heroShow.tx }};transition:transform .18s"></span>
+                  </button>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:18px">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Hero style</label>
+                  <select data-k="hero.style" value="{{ s.hero.style }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 36px 0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 12px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    <option>Lime showroom</option>
+                    <option>Dark spotlight</option>
+                    <option>Photo full-bleed</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Hero image</label>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#C9E469,#A8CD2F);border:1px solid #DCE9B4;flex:none;display:flex;align-items:center;justify-content:center;color:#101208">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3zM21 15l-5-5L5 21M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"></path></svg>
+                    </div>
+                    <button style="height:38px;padding:0 15px;border:1px solid #E7E8E0;border-radius:99px;background:#ffffff;font-size:12.5px;font-weight:600;color:#101208;cursor:pointer;display:flex;align-items:center;gap:7px" style-hover="border-color:#101208">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg>
+                      Replace image
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div style="border:1px solid #EFEFE9;border-radius:14px;padding:16px;margin-top:16px;background:#FCFCF9">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                  <div>
+                    <div style="font-size:13.5px;font-weight:700">Highlight card</div>
+                    <div style="font-size:12px;color:#8A8D80;margin-top:2px">Lime / dark hero only</div>
+                  </div>
+                  <button data-k="hero.highlight.on" onClick="{{ tgl }}" aria-label="Highlight card" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ t.hl.bg }};transition:background .18s;flex:none;box-sizing:border-box">
+                    <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ t.hl.tx }};transition:transform .18s"></span>
+                  </button>
+                </div>
+                <sc-if value="{{ s.hero.highlight.on }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:14px">
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Kicker</label>
+                      <input data-k="hero.highlight.kicker" value="{{ s.hero.highlight.kicker }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Title</label>
+                      <input data-k="hero.highlight.title" value="{{ s.hero.highlight.title }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Price (৳)</label>
+                      <input data-k="hero.highlight.price" value="{{ s.hero.highlight.price }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="margin-top:16px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <div style="font-size:13.5px;font-weight:700">Hero copy per style</div>
+                  <div style="font-size:12px;color:#8A8D80">Blank fields fall back to their defaults</div>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+                  <sc-for list="{{ heroTabs }}" as="ht" hint-placeholder-count="3">
+                    <button data-id="{{ ht.id }}" onClick="{{ heroTabSet }}" style="height:34px;padding:0 14px;border-radius:99px;border:none;background:{{ ht.bg }};color:{{ ht.color }};font-size:12.5px;font-weight:600;cursor:pointer;transition:background .15s">{{ ht.label }}</button>
+                  </sc-for>
+                </div>
+                <div style="display:grid;gap:14px;margin-top:14px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Badge</label>
+                    <input data-k="{{ hp }}badge" value="{{ hc.badge }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Title line 1</label>
+                      <input data-k="{{ hp }}t1" value="{{ hc.t1 }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Title line 2 <span style="color:#8A8D80;font-weight:500">(emphasized)</span></label>
+                      <input data-k="{{ hp }}t2" value="{{ hc.t2 }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Subtitle</label>
+                    <textarea data-k="{{ hp }}sub" value="{{ hc.sub }}" onChange="{{ edit }}" style="width:100%;padding:12px 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;min-height:76px;resize:vertical;line-height:1.5" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)"></textarea>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Primary button text</label>
+                      <input data-k="{{ hp }}pbt" value="{{ hc.pbt }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Primary button link</label>
+                      <input data-k="{{ hp }}pbl" value="{{ hc.pbl }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Secondary button text</label>
+                      <input data-k="{{ hp }}sbt" value="{{ hc.sbt }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Secondary button link</label>
+                      <input data-k="{{ hp }}sbl" value="{{ hc.sbl }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Footnote</label>
+                    <input data-k="{{ hp }}foot" value="{{ hc.foot }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secBar }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — Announcement bar" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Announcement bar</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">The strip above the header. Desktop and mobile carry separate messages — turning a device off hides its bar.</p>
+              <div style="margin-top:16px;border-radius:12px;overflow:hidden;border:1px solid #EFEFE9">
+                <div style="background:{{ s.bar.bg }};color:{{ s.bar.text }};font-size:11.5px;font-weight:600;letter-spacing:0.02em;padding:9px 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ barPreview }}</div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Background</label>
+                  <div style="display:flex;gap:8px">
+                    <input type="color" data-k="bar.bg" value="{{ s.bar.bg }}" onChange="{{ edit }}" style="width:44px;height:44px;padding:3px;border:1px solid #E7E8E0;border-radius:10px;background:#ffffff;cursor:pointer;flex:none;box-sizing:border-box">
+                    <input data-k="bar.bg" value="{{ s.bar.bg }}" onChange="{{ edit }}" style="width:100%;min-width:0;height:44px;padding:0 12px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Text</label>
+                  <div style="display:flex;gap:8px">
+                    <input type="color" data-k="bar.text" value="{{ s.bar.text }}" onChange="{{ edit }}" style="width:44px;height:44px;padding:3px;border:1px solid #E7E8E0;border-radius:10px;background:#ffffff;cursor:pointer;flex:none;box-sizing:border-box">
+                    <input data-k="bar.text" value="{{ s.bar.text }}" onChange="{{ edit }}" style="width:100%;min-width:0;height:44px;padding:0 12px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Icons</label>
+                  <div style="display:flex;gap:8px">
+                    <input type="color" data-k="bar.icons" value="{{ s.bar.icons }}" onChange="{{ edit }}" style="width:44px;height:44px;padding:3px;border:1px solid #E7E8E0;border-radius:10px;background:#ffffff;cursor:pointer;flex:none;box-sizing:border-box">
+                    <input data-k="bar.icons" value="{{ s.bar.icons }}" onChange="{{ edit }}" style="width:100%;min-width:0;height:44px;padding:0 12px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Separators</label>
+                  <div style="display:flex;gap:8px">
+                    <input type="color" data-k="bar.sep" value="{{ s.bar.sep }}" onChange="{{ edit }}" style="width:44px;height:44px;padding:3px;border:1px solid #E7E8E0;border-radius:10px;background:#ffffff;cursor:pointer;flex:none;box-sizing:border-box">
+                    <input data-k="bar.sep" value="{{ s.bar.sep }}" onChange="{{ edit }}" style="width:100%;min-width:0;height:44px;padding:0 12px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:14px">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Separator style</label>
+                  <select data-k="bar.sepStyle" value="{{ s.bar.sepStyle }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 36px 0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 12px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    <option>· Dot</option>
+                    <option>/ Slash</option>
+                    <option>— Dash</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Scroll speed <span style="color:#8A8D80;font-weight:500">(sec / loop)</span></label>
+                  <input type="number" data-k="bar.speed" value="{{ s.bar.speed }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:16px;font-size:13px;font-weight:600">
+                <button data-k="bar.allPages" onClick="{{ tgl }}" aria-label="Show on all pages" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ t.allPages.bg }};transition:background .18s;flex:none;box-sizing:border-box">
+                  <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ t.allPages.tx }};transition:transform .18s"></span>
+                </button>
+                Show on all pages <span style="color:#8A8D80;font-weight:500">(off = home page only)</span>
+              </div>
+            </section>
+            <section style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15px">Desktop messages</h2>
+                <div style="display:flex;gap:18px;flex-wrap:wrap">
+                  <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3A3D33">
+                    <button data-k="bar.dAuto" onClick="{{ tgl }}" aria-label="Auto-scroll desktop" style="width:36px;height:22px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ t.dAuto.bg }};transition:background .18s;flex:none;box-sizing:border-box">
+                      <span style="display:block;width:16px;height:16px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ t.dAuto.tx }};transition:transform .18s"></span>
+                    </button>
+                    Auto-scroll
+                  </span>
+                  <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3A3D33">
+                    <button data-k="bar.dShow" onClick="{{ tgl }}" aria-label="Show on desktop" style="width:36px;height:22px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ t.dShow.bg }};transition:background .18s;flex:none;box-sizing:border-box">
+                      <span style="display:block;width:16px;height:16px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ t.dShow.tx }};transition:transform .18s"></span>
+                    </button>
+                    Show on desktop
+                  </span>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:14px">
+                <sc-for list="{{ dMsgs }}" as="msg" hint-placeholder-count="3">
+                  <div style="display:flex;gap:8px">
+                    <select data-k="bar.dMsgs.{{ $index }}.icon" value="{{ msg.icon }}" onChange="{{ edit }}" style="width:118px;flex:none;height:44px;padding:0 30px 0 12px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:12.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2214%22 height=%2214%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 10px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                      <option>No icon</option><option>ShieldCheck</option><option>Package</option><option>Truck</option><option>Sparkles</option><option>Award</option><option>Clock</option><option>Heart</option><option>Star</option><option>Megaphone</option><option>Tag</option><option>Gift</option><option>BadgeCheck</option><option>Zap</option>
+                    </select>
+                    <input data-k="bar.dMsgs.{{ $index }}.text" value="{{ msg.text }}" onChange="{{ edit }}" placeholder="Message text" style="flex:1;min-width:0;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    <button data-k="bar.dMsgs" data-i="{{ $index }}" onClick="{{ del }}" aria-label="Delete message" style="width:44px;height:44px;flex:none;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;cursor:pointer;color:#8A8D80;display:flex;align-items:center;justify-content:center" style-hover="color:#B3261E;border-color:#F0C9C5;background:#FDF6F5">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+                    </button>
+                  </div>
+                </sc-for>
+                <button data-k="bar.dMsgs" data-t="msg" onClick="{{ add }}" style="width:100%;padding:12px;border:1.5px dashed #DEDFD6;border-radius:14px;background:none;color:#3A3D33;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add message
+                </button>
+              </div>
+            </section>
+            <section style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15px">Mobile messages</h2>
+                <div style="display:flex;gap:18px;flex-wrap:wrap">
+                  <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3A3D33">
+                    <button data-k="bar.mAuto" onClick="{{ tgl }}" aria-label="Auto-scroll mobile" style="width:36px;height:22px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ t.mAuto.bg }};transition:background .18s;flex:none;box-sizing:border-box">
+                      <span style="display:block;width:16px;height:16px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ t.mAuto.tx }};transition:transform .18s"></span>
+                    </button>
+                    Auto-scroll
+                  </span>
+                  <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3A3D33">
+                    <button data-k="bar.mShow" onClick="{{ tgl }}" aria-label="Show on mobile" style="width:36px;height:22px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ t.mShow.bg }};transition:background .18s;flex:none;box-sizing:border-box">
+                      <span style="display:block;width:16px;height:16px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ t.mShow.tx }};transition:transform .18s"></span>
+                    </button>
+                    Show on mobile
+                  </span>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:14px">
+                <sc-for list="{{ mMsgs }}" as="msg" hint-placeholder-count="2">
+                  <div style="display:flex;gap:8px">
+                    <select data-k="bar.mMsgs.{{ $index }}.icon" value="{{ msg.icon }}" onChange="{{ edit }}" style="width:118px;flex:none;height:44px;padding:0 30px 0 12px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:12.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2214%22 height=%2214%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 10px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                      <option>No icon</option><option>ShieldCheck</option><option>Package</option><option>Truck</option><option>Sparkles</option><option>Award</option><option>Clock</option><option>Heart</option><option>Star</option><option>Megaphone</option><option>Tag</option><option>Gift</option><option>BadgeCheck</option><option>Zap</option>
+                    </select>
+                    <input data-k="bar.mMsgs.{{ $index }}.text" value="{{ msg.text }}" onChange="{{ edit }}" placeholder="Message text" style="flex:1;min-width:0;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    <button data-k="bar.mMsgs" data-i="{{ $index }}" onClick="{{ del }}" aria-label="Delete message" style="width:44px;height:44px;flex:none;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;cursor:pointer;color:#8A8D80;display:flex;align-items:center;justify-content:center" style-hover="color:#B3261E;border-color:#F0C9C5;background:#FDF6F5">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+                    </button>
+                  </div>
+                </sc-for>
+                <button data-k="bar.mMsgs" data-t="msg" onClick="{{ add }}" style="width:100%;padding:12px;border:1.5px dashed #DEDFD6;border-radius:14px;background:none;color:#3A3D33;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add message
+                </button>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secSections }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — Homepage sections" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Homepage sections</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Show or hide sections on the homepage. The hero has its own controls.</p>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;margin-top:16px">
+                <sc-for list="{{ sections }}" as="row" hint-placeholder-count="9">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #EFEFE9;border-radius:12px;padding:12px 14px;background:#FCFCF9">
+                    <span style="font-size:13.5px;font-weight:600">{{ row.label }}</span>
+                    <button data-k="sections.{{ $index }}.on" onClick="{{ tgl }}" aria-label="{{ row.label }}" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ row.tbg }};transition:background .18s;flex:none;box-sizing:border-box">
+                      <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ row.ttx }};transition:transform .18s"></span>
+                    </button>
+                  </div>
+                </sc-for>
+              </div>
+            </section>
+            <section data-screen-label="Settings — Shop by shelf" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Shop by shelf</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">The tile row on the homepage — each tile has its own image, label, and link, in the order listed.</p>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:16px">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Section heading</label>
+                  <input data-k="shelf.heading" value="{{ s.shelf.heading }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Section subtitle</label>
+                  <input data-k="shelf.sub" value="{{ s.shelf.sub }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:14px">
+                <sc-for list="{{ tiles }}" as="row" hint-placeholder-count="3">
+                  <div style="border:1px solid #E7E8E0;border-radius:14px;background:#ffffff;overflow:hidden">
+                    <button data-k="tl:{{ $index }}" onClick="{{ exp }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:left">
+                      <span style="width:38px;height:38px;border-radius:10px;background:#F1F2EA;border:1px solid #EFEFE9;flex:none;display:flex;align-items:center;justify-content:center;color:#8A8D80">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3zM21 15l-5-5L5 21M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"></path></svg>
+                      </span>
+                      <span style="min-width:0;flex:1">
+                        <span style="display:block;font-size:13.5px;font-weight:700">{{ row.label }}</span>
+                        <span style="display:block;font-size:11.5px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.link }}</span>
+                      </span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ row.chev }};transition:transform .18s"><path d="M6 9l6 6 6-6"></path></svg>
+                    </button>
+                    <sc-if value="{{ row.open }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:16px;border-top:1px solid #EFEFE9;display:grid;gap:14px">
+                        <div style="display:flex;align-items:center;gap:12px">
+                          <div style="width:44px;height:44px;border-radius:12px;background:#F1F2EA;border:1px solid #EFEFE9;flex:none;display:flex;align-items:center;justify-content:center;color:#8A8D80">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3zM21 15l-5-5L5 21M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"></path></svg>
+                          </div>
+                          <button style="height:38px;padding:0 15px;border:1px solid #E7E8E0;border-radius:99px;background:#ffffff;font-size:12.5px;font-weight:600;color:#101208;cursor:pointer" style-hover="border-color:#101208">Upload image</button>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Label</label>
+                            <input data-k="shelf.tiles.{{ $index }}.label" value="{{ row.label }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Link</label>
+                            <input data-k="shelf.tiles.{{ $index }}.link" value="{{ row.link }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                        </div>
+                        <button data-k="shelf.tiles" data-i="{{ $index }}" onClick="{{ del }}" style="justify-self:start;display:flex;align-items:center;gap:7px;border:none;background:none;color:#B3261E;font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:8px" style-hover="background:#F9E3E1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+                          Remove tile
+                        </button>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <button data-k="shelf.tiles" data-t="tile" data-p="tl" onClick="{{ add }}" style="width:100%;padding:12px;border:1.5px dashed #DEDFD6;border-radius:14px;background:none;color:#3A3D33;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add tile
+                </button>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secSpotlight }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — Featured spotlight" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Featured spotlight</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">The big card in the homepage 'Featured products' section. Overrides change this card only — never the product itself. Blank = use the product's real value.</p>
+              <div style="display:grid;gap:14px;margin-top:16px">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Spotlight product</label>
+                  <select data-k="spotlight.product" value="{{ s.spotlight.product }}" onChange="{{ edit }}" style="width:100%;max-width:380px;height:44px;padding:0 36px 0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 12px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    <option>First featured product (default)</option>
+                    <option>Supra A80 Top Secret</option>
+                    <option>Skyline GT-R R34</option>
+                    <option>Porsche 911 GT3 RS</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Image override</label>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:56px;height:56px;border-radius:12px;border:1.5px dashed #DEDFD6;flex:none;display:flex;align-items:center;justify-content:center;color:#8A8D80;font-size:9.5px;font-weight:600;text-align:center;line-height:1.3">No<br>override</div>
+                    <button style="height:38px;padding:0 15px;border:1px solid #E7E8E0;border-radius:99px;background:#ffffff;font-size:12.5px;font-weight:600;color:#101208;cursor:pointer" style-hover="border-color:#101208">Upload image</button>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Badge override</label>
+                    <input data-k="spotlight.badge" value="{{ s.spotlight.badge }}" onChange="{{ edit }}" placeholder="NEW" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Brand line override</label>
+                    <input data-k="spotlight.brand" value="{{ s.spotlight.brand }}" onChange="{{ edit }}" placeholder="Hot Wheels Premium" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Title override</label>
+                  <input data-k="spotlight.title" value="{{ s.spotlight.title }}" onChange="{{ edit }}" placeholder="Product title shown on the card" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Description override</label>
+                  <textarea data-k="spotlight.desc" value="{{ s.spotlight.desc }}" onChange="{{ edit }}" placeholder="Short description shown on the card (desktop)" style="width:100%;padding:12px 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;min-height:76px;resize:vertical;line-height:1.5" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)"></textarea>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secTrust }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — Why choose us" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Why choose us</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Homepage trust-signal grid.</p>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:16px">
+                <sc-for list="{{ why }}" as="row" hint-placeholder-count="4">
+                  <div style="border:1px solid #E7E8E0;border-radius:14px;background:#ffffff;overflow:hidden">
+                    <button data-k="wy:{{ $index }}" onClick="{{ exp }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:left">
+                      <span style="width:34px;height:34px;border-radius:10px;background:#EFF5DC;border:1px solid #DCE9B4;flex:none;display:flex;align-items:center;justify-content:center;color:#4F6B0B;font-size:9px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase">{{ row.abbr }}</span>
+                      <span style="flex:1;min-width:0;font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.title }}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ row.chev }};transition:transform .18s"><path d="M6 9l6 6 6-6"></path></svg>
+                    </button>
+                    <sc-if value="{{ row.open }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:16px;border-top:1px solid #EFEFE9;display:grid;gap:14px">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Icon</label>
+                            <select data-k="why.{{ $index }}.icon" value="{{ row.icon }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 36px 0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 12px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                              <option>ShieldCheck</option><option>Package</option><option>Truck</option><option>Sparkles</option><option>Award</option><option>Clock</option><option>Heart</option><option>Star</option><option>Megaphone</option><option>Tag</option><option>Gift</option><option>BadgeCheck</option><option>Zap</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Title</label>
+                            <input data-k="why.{{ $index }}.title" value="{{ row.title }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                        </div>
+                        <div>
+                          <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Description</label>
+                          <textarea data-k="why.{{ $index }}.desc" value="{{ row.desc }}" onChange="{{ edit }}" style="width:100%;padding:12px 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;min-height:70px;resize:vertical;line-height:1.5" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)"></textarea>
+                        </div>
+                        <button data-k="why" data-i="{{ $index }}" onClick="{{ del }}" style="justify-self:start;display:flex;align-items:center;gap:7px;border:none;background:none;color:#B3261E;font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:8px" style-hover="background:#F9E3E1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+                          Remove item
+                        </button>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <button data-k="why" data-t="why" data-p="wy" onClick="{{ add }}" style="width:100%;padding:12px;border:1.5px dashed #DEDFD6;border-radius:14px;background:none;color:#3A3D33;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add item
+                </button>
+              </div>
+            </section>
+            <section data-screen-label="Settings — Collector promise" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Collector promise</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">The dark 'Premium Shelf' promo banner between Why Choose Us and Testimonials.</p>
+              <div style="display:grid;gap:14px;margin-top:16px">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Title</label>
+                  <input data-k="promise.title" value="{{ s.promise.title }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Description</label>
+                  <textarea data-k="promise.desc" value="{{ s.promise.desc }}" onChange="{{ edit }}" style="width:100%;padding:12px 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;min-height:76px;resize:vertical;line-height:1.5" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)"></textarea>
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Banner image</label>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:56px;height:44px;border-radius:10px;background:#00240c;flex:none;display:flex;align-items:center;justify-content:center;color:#C9E469">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3zM21 15l-5-5L5 21M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"></path></svg>
+                    </div>
+                    <button style="height:38px;padding:0 15px;border:1px solid #E7E8E0;border-radius:99px;background:#ffffff;font-size:12.5px;font-weight:600;color:#101208;cursor:pointer" style-hover="border-color:#101208">Replace image</button>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Background color</label>
+                    <div style="display:flex;gap:8px">
+                      <input type="color" data-k="promise.bg" value="{{ s.promise.bg }}" onChange="{{ edit }}" style="width:44px;height:44px;padding:3px;border:1px solid #E7E8E0;border-radius:10px;background:#ffffff;cursor:pointer;flex:none;box-sizing:border-box">
+                      <input data-k="promise.bg" value="{{ s.promise.bg }}" onChange="{{ edit }}" style="width:100%;min-width:0;height:44px;padding:0 12px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Text color</label>
+                    <div style="display:flex;gap:8px">
+                      <input type="color" data-k="promise.color" value="{{ s.promise.color }}" onChange="{{ edit }}" style="width:44px;height:44px;padding:3px;border:1px solid #E7E8E0;border-radius:10px;background:#ffffff;cursor:pointer;flex:none;box-sizing:border-box">
+                      <input data-k="promise.color" value="{{ s.promise.color }}" onChange="{{ edit }}" style="width:100%;min-width:0;height:44px;padding:0 12px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Button text</label>
+                    <input data-k="promise.btnText" value="{{ s.promise.btnText }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Button link</label>
+                    <input data-k="promise.btnLink" value="{{ s.promise.btnLink }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secTesti }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — Testimonials" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Testimonials</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Only real customer testimonials — leave empty until collected.</p>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:16px">
+                <sc-for list="{{ tms }}" as="row" hint-placeholder-count="3">
+                  <div style="border:1px solid #E7E8E0;border-radius:14px;background:#ffffff;overflow:hidden">
+                    <button data-k="tm:{{ $index }}" onClick="{{ exp }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 16px;background:none;border:none;cursor:pointer;text-align:left">
+                      <span style="font-size:13.5px;font-weight:700;flex:none">{{ row.name }}</span>
+                      <span style="font-size:12px;color:#B45309;letter-spacing:0.1em;flex:none">{{ row.stars }}</span>
+                      <span style="flex:1;min-width:0;font-size:12.5px;color:#6B6E60;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.quote }}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ row.chev }};transition:transform .18s"><path d="M6 9l6 6 6-6"></path></svg>
+                    </button>
+                    <sc-if value="{{ row.open }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:16px;border-top:1px solid #EFEFE9;display:grid;gap:14px">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Name</label>
+                            <input data-k="testimonials.{{ $index }}.name" value="{{ row.name }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Rating (1–5)</label>
+                            <input type="number" min="1" max="5" data-k="testimonials.{{ $index }}.rating" value="{{ row.rating }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                        </div>
+                        <div>
+                          <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Quote</label>
+                          <textarea data-k="testimonials.{{ $index }}.quote" value="{{ row.quote }}" onChange="{{ edit }}" style="width:100%;padding:12px 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;min-height:70px;resize:vertical;line-height:1.5" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)"></textarea>
+                        </div>
+                        <button data-k="testimonials" data-i="{{ $index }}" onClick="{{ del }}" style="justify-self:start;display:flex;align-items:center;gap:7px;border:none;background:none;color:#B3261E;font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:8px" style-hover="background:#F9E3E1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+                          Remove testimonial
+                        </button>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <button data-k="testimonials" data-t="tm" data-p="tm" onClick="{{ add }}" style="width:100%;padding:12px;border:1.5px dashed #DEDFD6;border-radius:14px;background:none;color:#3A3D33;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add testimonial
+                </button>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secFaq }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — FAQ" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">FAQ</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Shown on the public FAQ page.</p>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:16px">
+                <sc-for list="{{ faqs }}" as="row" hint-placeholder-count="6">
+                  <div style="border:1px solid #E7E8E0;border-radius:14px;background:#ffffff;overflow:hidden">
+                    <button data-k="fq:{{ $index }}" onClick="{{ exp }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 16px;background:none;border:none;cursor:pointer;text-align:left">
+                      <span style="width:26px;height:26px;border-radius:50%;background:#F1F2EA;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#3A3D33">{{ row.n }}</span>
+                      <span style="flex:1;min-width:0;font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.q }}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ row.chev }};transition:transform .18s"><path d="M6 9l6 6 6-6"></path></svg>
+                    </button>
+                    <sc-if value="{{ row.open }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:16px;border-top:1px solid #EFEFE9;display:grid;gap:14px">
+                        <div>
+                          <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Question</label>
+                          <input data-k="faqs.{{ $index }}.q" value="{{ row.q }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                        </div>
+                        <div>
+                          <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Answer</label>
+                          <textarea data-k="faqs.{{ $index }}.a" value="{{ row.a }}" onChange="{{ edit }}" style="width:100%;padding:12px 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;min-height:88px;resize:vertical;line-height:1.5" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)"></textarea>
+                        </div>
+                        <button data-k="faqs" data-i="{{ $index }}" onClick="{{ del }}" style="justify-self:start;display:flex;align-items:center;gap:7px;border:none;background:none;color:#B3261E;font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:8px" style-hover="background:#F9E3E1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+                          Remove question
+                        </button>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <button data-k="faqs" data-t="faq" data-p="fq" onClick="{{ add }}" style="width:100%;padding:12px;border:1.5px dashed #DEDFD6;border-radius:14px;background:none;color:#3A3D33;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add question
+                </button>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secContact }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — Contact info" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Contact info</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Shown in the footer and on the contact page.</p>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:16px">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Email</label>
+                  <input data-k="contact.email" value="{{ s.contact.email }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Phone</label>
+                  <input data-k="contact.phone" value="{{ s.contact.phone }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Address</label>
+                  <input data-k="contact.address" value="{{ s.contact.address }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+              </div>
+            </section>
+            <section data-screen-label="Settings — Social links" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Social links</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Leave a field blank to hide that icon.</p>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:16px">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Facebook</label>
+                  <input data-k="social.facebook" value="{{ s.social.facebook }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Instagram</label>
+                  <input data-k="social.instagram" value="{{ s.social.instagram }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">YouTube</label>
+                  <input data-k="social.youtube" value="{{ s.social.youtube }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">WhatsApp</label>
+                  <input data-k="social.whatsapp" value="{{ s.social.whatsapp }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secShipping }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — Shipping" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Shipping</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Delivery zones and their flat fees — e.g. Inside Dhaka vs. Outside Dhaka.</p>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:16px">
+                <sc-for list="{{ zones }}" as="row" hint-placeholder-count="2">
+                  <div style="border:1px solid #E7E8E0;border-radius:14px;background:#ffffff;overflow:hidden">
+                    <button data-k="zn:{{ $index }}" onClick="{{ exp }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:13px 16px;background:none;border:none;cursor:pointer;text-align:left">
+                      <span style="font-size:13.5px;font-weight:700;flex:none">{{ row.name }}</span>
+                      <span style="font-size:11px;font-weight:700;background:#F1F2EA;border-radius:99px;padding:4px 10px;flex:none">৳{{ row.fee }}</span>
+                      <sc-if value="{{ row.prepay }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:4px 9px;flex:none">Prepay required</span>
+                      </sc-if>
+                      <span style="flex:1"></span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ row.chev }};transition:transform .18s"><path d="M6 9l6 6 6-6"></path></svg>
+                    </button>
+                    <sc-if value="{{ row.open }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:16px;border-top:1px solid #EFEFE9;display:grid;gap:14px">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Zone name</label>
+                            <input data-k="shipping.zones.{{ $index }}.name" value="{{ row.name }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Fee (৳)</label>
+                            <input type="number" data-k="shipping.zones.{{ $index }}.fee" value="{{ row.fee }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600">
+                          <button data-k="shipping.zones.{{ $index }}.prepay" onClick="{{ tgl }}" aria-label="Require prepay" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ row.tbg }};transition:background .18s;flex:none;box-sizing:border-box">
+                            <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ row.ttx }};transition:transform .18s"></span>
+                          </button>
+                          Require prepaying the delivery charge before placing an order
+                        </div>
+                        <button data-k="shipping.zones" data-i="{{ $index }}" onClick="{{ del }}" style="justify-self:start;display:flex;align-items:center;gap:7px;border:none;background:none;color:#B3261E;font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:8px" style-hover="background:#F9E3E1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+                          Remove zone
+                        </button>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <button data-k="shipping.zones" data-t="zone" data-p="zn" onClick="{{ add }}" style="width:100%;padding:12px;border:1.5px dashed #DEDFD6;border-radius:14px;background:none;color:#3A3D33;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add zone
+                </button>
+              </div>
+              <div style="margin-top:18px;padding-top:18px;border-top:1px solid #EFEFE9">
+                <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Free shipping threshold (৳)</label>
+                <input type="number" data-k="shipping.freeAt" value="{{ s.shipping.freeAt }}" onChange="{{ edit }}" style="width:100%;max-width:220px;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                <div style="font-size:12px;color:#8A8D80;margin-top:6px">Set to 0 to disable free shipping.</div>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secPay }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — Payment bKash" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="width:34px;height:34px;border-radius:10px;background:#E2136E;flex:none;display:flex;align-items:center;justify-content:center;color:#ffffff;font-family:Archivo,sans-serif;font-weight:800;font-size:12px;font-style:italic">bK</span>
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Payment — bKash</h2>
+              </div>
+              <p style="margin:10px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Customers Send Money to this number, then enter the last 4 digits of the bKash number they paid from — match that against your statement.</p>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:16px;align-items:start">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Merchant bKash number</label>
+                  <input data-k="pay.bkash" value="{{ s.pay.bkash }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Payment QR code</label>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:56px;height:56px;border-radius:12px;border:1px solid #E7E8E0;background:#ffffff;flex:none;display:flex;align-items:center;justify-content:center;color:#101208">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="3" height="3"></rect><rect x="18" y="18" width="3" height="3"></rect><rect x="18" y="14" width="3" height="3" opacity="0.35"></rect><rect x="14" y="18" width="3" height="3" opacity="0.35"></rect></svg>
+                    </div>
+                    <button style="height:38px;padding:0 15px;border:1px solid #E7E8E0;border-radius:99px;background:#ffffff;font-size:12.5px;font-weight:600;color:#101208;cursor:pointer" style-hover="border-color:#101208">Replace QR</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section data-screen-label="Settings — Payment BanglaQR" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="width:34px;height:34px;border-radius:10px;background:#101208;flex:none;display:flex;align-items:center;justify-content:center;color:#ffffff;font-family:Archivo,sans-serif;font-weight:800;font-size:11px">QR</span>
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Payment — BanglaQR</h2>
+              </div>
+              <p style="margin:10px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Customers scan this QR from any bank/MFS app and enter the resulting payment reference at checkout.</p>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:16px;align-items:start">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Account / merchant info</label>
+                  <input data-k="pay.bqr" value="{{ s.pay.bqr }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">BanglaQR code</label>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:56px;height:56px;border-radius:12px;border:1px solid #E7E8E0;background:#ffffff;flex:none;display:flex;align-items:center;justify-content:center;color:#101208">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="3" height="3"></rect><rect x="18" y="18" width="3" height="3"></rect><rect x="18" y="14" width="3" height="3" opacity="0.35"></rect><rect x="14" y="18" width="3" height="3" opacity="0.35"></rect></svg>
+                    </div>
+                    <button style="height:38px;padding:0 15px;border:1px solid #E7E8E0;border-radius:99px;background:#ffffff;font-size:12.5px;font-weight:600;color:#101208;cursor:pointer" style-hover="border-color:#101208">Replace QR</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secNav }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — Navigation" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">Navigation</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Header and footer links, and the footer tagline.</p>
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8A8D80;text-transform:uppercase;margin:18px 0 8px">Header links</div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px">
+                <sc-for list="{{ hLinks }}" as="row" hint-placeholder-count="4">
+                  <div style="border:1px solid #E7E8E0;border-radius:14px;background:#ffffff;overflow:hidden">
+                    <button data-k="hl:{{ $index }}" onClick="{{ exp }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:left">
+                      <span style="font-size:13.5px;font-weight:700;flex:none">{{ row.label }}</span>
+                      <span style="flex:1;min-width:0;font-size:12px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.url }}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ row.chev }};transition:transform .18s"><path d="M6 9l6 6 6-6"></path></svg>
+                    </button>
+                    <sc-if value="{{ row.open }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:16px;border-top:1px solid #EFEFE9;display:grid;gap:14px">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Label</label>
+                            <input data-k="nav.header.{{ $index }}.label" value="{{ row.label }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">URL</label>
+                            <input data-k="nav.header.{{ $index }}.url" value="{{ row.url }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                        </div>
+                        <button data-k="nav.header" data-i="{{ $index }}" onClick="{{ del }}" style="justify-self:start;display:flex;align-items:center;gap:7px;border:none;background:none;color:#B3261E;font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:8px" style-hover="background:#F9E3E1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+                          Remove link
+                        </button>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <button data-k="nav.header" data-t="link" data-p="hl" onClick="{{ add }}" style="width:100%;padding:12px;border:1.5px dashed #DEDFD6;border-radius:14px;background:none;color:#3A3D33;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add header link
+                </button>
+              </div>
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8A8D80;text-transform:uppercase;margin:20px 0 8px">Footer links</div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px">
+                <sc-for list="{{ fLinks }}" as="row" hint-placeholder-count="7">
+                  <div style="border:1px solid #E7E8E0;border-radius:14px;background:#ffffff;overflow:hidden">
+                    <button data-k="fl:{{ $index }}" onClick="{{ exp }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:left">
+                      <span style="font-size:13.5px;font-weight:700;flex:none">{{ row.label }}</span>
+                      <span style="flex:1;min-width:0;font-size:12px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.url }}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ row.chev }};transition:transform .18s"><path d="M6 9l6 6 6-6"></path></svg>
+                    </button>
+                    <sc-if value="{{ row.open }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:16px;border-top:1px solid #EFEFE9;display:grid;gap:14px">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Label</label>
+                            <input data-k="nav.footer.{{ $index }}.label" value="{{ row.label }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                          <div>
+                            <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">URL</label>
+                            <input data-k="nav.footer.{{ $index }}.url" value="{{ row.url }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                          </div>
+                        </div>
+                        <button data-k="nav.footer" data-i="{{ $index }}" onClick="{{ del }}" style="justify-self:start;display:flex;align-items:center;gap:7px;border:none;background:none;color:#B3261E;font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:8px" style-hover="background:#F9E3E1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+                          Remove link
+                        </button>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <button data-k="nav.footer" data-t="link" data-p="fl" onClick="{{ add }}" style="width:100%;padding:12px;border:1.5px dashed #DEDFD6;border-radius:14px;background:none;color:#3A3D33;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add footer link
+                </button>
+              </div>
+              <div style="margin-top:18px">
+                <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Footer tagline</label>
+                <textarea data-k="nav.tagline" value="{{ s.nav.tagline }}" onChange="{{ edit }}" style="width:100%;padding:12px 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;min-height:70px;resize:vertical;line-height:1.5" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)"></textarea>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ secSeo }}" hint-placeholder-val="{{ false }}">
+            <section data-screen-label="Settings — SEO defaults" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em">SEO defaults</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#6B6E60;line-height:1.5">Used when a page doesn't set its own title or description.</p>
+              <div style="display:grid;gap:14px;margin-top:16px">
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Default title</label>
+                  <input data-k="seo.title" value="{{ s.seo.title }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Default description</label>
+                  <textarea data-k="seo.desc" value="{{ s.seo.desc }}" onChange="{{ edit }}" style="width:100%;padding:12px 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;min-height:88px;resize:vertical;line-height:1.5" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)"></textarea>
+                </div>
+                <div style="border:1px solid #EFEFE9;border-radius:14px;padding:14px 16px;background:#FCFCF9">
+                  <div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8A8D80;text-transform:uppercase;margin-bottom:8px">Search preview</div>
+                  <div style="font-size:15px;font-weight:600;color:#1a0dab;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.seo.title }}</div>
+                  <div style="font-size:12px;color:#006621;margin-top:2px">thediecastbd.com</div>
+                  <div style="font-size:12.5px;color:#545454;line-height:1.5;margin-top:2px">{{ s.seo.desc }}</div>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Unsaved changes bar" style="position:fixed;z-index:60;{{ barPos }};background:rgba(13,15,7,0.94);border:1px solid rgba(255,255,255,0.16);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-radius:22px;box-shadow:0 10px 30px rgba(16,18,8,0.45);display:flex;align-items:center;gap:14px;padding:10px 10px 10px 18px;animation:toastIn .25s ease-out;box-sizing:border-box">
+      <span style="display:flex;align-items:center;gap:9px;color:#DDDFD2;font-size:13px;font-weight:600;white-space:nowrap">
+        <span style="width:8px;height:8px;border-radius:50%;background:#C9E469;flex:none"></span>
+        Unsaved changes
+      </span>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button onClick="{{ discard }}" style="height:38px;padding:0 16px;border-radius:99px;border:1px solid rgba(255,255,255,0.25);background:none;color:#ffffff;font-weight:600;font-size:13px;cursor:pointer" style-hover="background:rgba(255,255,255,0.1)">Discard</button>
+        <button onClick="{{ save }}" style="height:38px;padding:0 18px;border-radius:99px;border:none;background:#A8CD2F;color:#101208;font-family:Archivo,sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:background .15s" style-hover="background:#B9DC4B">Save settings</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastMsg }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Toast" style="position:fixed;z-index:70;{{ toastPos }};display:flex;align-items:center;gap:10px;background:rgba(13,15,7,0.94);color:#ffffff;border:1px solid rgba(255,255,255,0.16);border-radius:99px;padding:10px 18px 10px 11px;box-shadow:0 10px 30px rgba(16,18,8,0.35);animation:toastIn .22s ease-out;font-size:13.5px;font-weight:600;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)">
+      <span style="width:26px;height:26px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;flex:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      </span>
+      {{ toastMsg }}
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;subnavStyle&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;card&quot;, &quot;floating&quot;], &quot;default&quot;: &quot;card&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Layout&quot; },
+  &quot;storeName&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;DiecastBD&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Brand&quot; },
+  &quot;startSection&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;hero&quot;, &quot;bar&quot;, &quot;sections&quot;, &quot;spotlight&quot;, &quot;trust&quot;, &quot;testimonials&quot;, &quot;faq&quot;, &quot;contact&quot;, &quot;shipping&quot;, &quot;payments&quot;, &quot;nav&quot;, &quot;seo&quot;], &quot;default&quot;: &quot;hero&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Behavior&quot; }
+}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const s = {
+      hero: {
+        show: true, style: 'Lime showroom',
+        highlight: { on: true, kicker: 'MINI GT', title: 'Supra A80 Top Secret', price: '2600' },
+        copy: {
+          lime: { badge: 'Every piece hand-verified', t1: 'Own the', t2: 'original.', sub: 'Hot Wheels Premium and MINI GT 1:64 — sourced direct, inspected piece by piece.', pbt: 'Explore the collection', pbl: '/shop', sbt: 'New arrivals', sbl: '/shop', foot: 'Cash on delivery · bKash · BanglaQR — delivered nationwide' },
+          dark: { badge: 'Every piece hand-verified', t1: 'Real metal.', t2: 'Zero fakes.', sub: 'Hot Wheels Premium and MINI GT 1:64 under studio lights — inspected piece by piece.', pbt: 'Explore the collection', pbl: '/shop', sbt: 'New arrivals', sbl: '/shop', foot: 'Cash on delivery · bKash · BanglaQR' },
+          photo: { badge: 'Hand-verified authentic', t1: 'Authenticity,', t2: 'cast in metal.', sub: 'Verified Hot Wheels Premium & MINI GT — one import batch, gone for good.', pbt: 'Explore the collection', pbl: '/shop', sbt: 'New arrivals', sbl: '/shop', foot: 'COD · bKash · BanglaQR' }
+        }
+      },
+      bar: {
+        bg: '#101208', text: '#DDDFD2', icons: '#A8CD2F', sep: '#A8CD2F', sepStyle: '· Dot', speed: '20', allPages: false,
+        dAuto: false, dShow: true,
+        dMsgs: [
+          { icon: 'No icon', text: '100% authentic — every piece hand-verified' },
+          { icon: 'No icon', text: 'Collector-grade packaging' },
+          { icon: 'No icon', text: 'COD · bKash · BanglaQR' }
+        ],
+        mAuto: true, mShow: true,
+        mMsgs: [
+          { icon: 'No icon', text: '100% authentic — hand-verified' },
+          { icon: 'No icon', text: 'COD · bKash · BanglaQR' }
+        ]
+      },
+      sections: [
+        { label: 'Collector Picks', on: true }, { label: 'Featured Products', on: true }, { label: 'Brands Strip', on: true },
+        { label: 'New Arrivals', on: true }, { label: 'Why Choose Us', on: true }, { label: 'Collector Promise', on: true },
+        { label: 'Testimonials', on: true }, { label: 'Instagram', on: true }, { label: 'Newsletter Signup', on: true }
+      ],
+      shelf: {
+        heading: 'Shop by shelf', sub: 'Two brands we trust — and the gear that keeps them mint.',
+        tiles: [
+          { label: 'Hotwheels Premium', link: '/shop?brand=hot-wheels-premium' },
+          { label: 'Mini GT', link: '/shop?brand=mini-gt' },
+          { label: 'Accessories', link: '/shop?category=accessories' }
+        ]
+      },
+      spotlight: { product: 'First featured product (default)', badge: '', brand: '', title: '', desc: '' },
+      why: [
+        { icon: 'Package', title: '100% Authentic', desc: 'Every piece sourced directly and verified before it reaches you — no replicas, ever.' },
+        { icon: 'Package', title: 'Collector-Grade Packaging', desc: 'Cards and boxes protected in transit — what you see online is what arrives.' },
+        { icon: 'Truck', title: 'Nationwide Delivery', desc: 'Delivered securely across Bangladesh, tracked from dispatch to doorstep.' },
+        { icon: 'Sparkles', title: 'Curated, Not Crowded', desc: "We list what's genuinely worth collecting — not a warehouse dump." }
+      ],
+      promise: { title: 'Limited runs. Real metal. Gone fast.', desc: 'Premium castings reach Bangladesh in one batch. When a piece sells through, it is retired — no reprints, no restocks.', bg: '#00240c', color: '#ffffff', btnText: 'Explore this', btnLink: '/shop?featured=true' },
+      testimonials: [
+        { name: 'Rafid H.', rating: 5, quote: 'Card was mint, corners sharp, bubble intact. Better packing than stores abroad.' },
+        { name: 'Tanvir A.', rating: 5, quote: 'Checked every marking on the Supra — 100% genuine. Instant trust.' },
+        { name: 'Nusrat J.', rating: 5, quote: 'Ordered Friday, on my shelf Sunday. COD made it easy.' }
+      ],
+      faqs: [
+        { q: 'Are your models 100% authentic?', a: "Yes — every piece is sourced directly and inspected before it's listed. No replicas, no customs passed off as originals, ever. If we wouldn't put it on our own shelf, it doesn't get listed." },
+        { q: 'How long does delivery take?', a: "Inside Dhaka: 24–48 hours. Everywhere else in Bangladesh: 2–4 days, tracked from dispatch to doorstep. You'll get the tracking link as soon as it ships." },
+        { q: 'Which payment methods do you accept?', a: 'Cash on Delivery anywhere in Bangladesh, bKash Send Money, and BanglaQR from any bank app. For bKash you just enter your Transaction ID at checkout.' },
+        { q: 'How do you pack cards and boxes?', a: 'Collector-grade: card protectors on carded pieces, double-boxing, corner protection, and void fill. What you see online is what arrives — mint, with sharp corners.' },
+        { q: 'Do sold-out premium pieces come back?', a: 'Usually not — premium castings reach Bangladesh in one import batch and are retired when they sell through. Hit "Notify me" on a sold-out piece and you\'ll be first to know if a restock ever happens.' },
+        { q: 'Can I return or exchange an order?', a: "Yes — 7 days for unopened items or anything that arrives not as described. Full details in the Refund Policy; message us with your order ID and we'll sort it fast." }
+      ],
+      social: { facebook: 'https://www.facebook.com/thediecastbd', instagram: 'https://www.instagram.com/thediecastbd', youtube: 'https://www.youtube.com/@thediecastbd', whatsapp: 'https://wa.me/message/VYHRD2GT2Y' },
+      contact: { email: 'diecastbd.official@gmail.com', phone: '01560001776', address: 'Dhanmondi, Dhaka-1207.' },
+      shipping: { zones: [{ name: 'Inside Dhaka', fee: '60', prepay: false }, { name: 'Outside Dhaka', fee: '120', prepay: true }], freeAt: '5000' },
+      pay: { bkash: '01764250814', bqr: 'DiecastBD' },
+      nav: {
+        header: [
+          { label: 'Shop', url: '/shop' }, { label: 'Hot Wheels Premium', url: '/shop?brand=hot-wheels-premium' },
+          { label: 'MINI GT', url: '/shop?brand=mini-gt' }, { label: 'Accessories', url: '/shop?category=accessories' }
+        ],
+        footer: [
+          { label: 'About', url: '/about' }, { label: 'Contact', url: '/contact' }, { label: 'FAQ', url: '/faq' },
+          { label: 'Shipping Policy', url: '/shipping-policy' }, { label: 'Refund Policy', url: '/refund-policy' },
+          { label: 'Privacy Policy', url: '/privacy-policy' }, { label: 'Terms & Conditions', url: '/terms-conditions' }
+        ],
+        tagline: 'Premium diecast collectibles for serious collectors in Bangladesh.'
+      },
+      seo: { title: 'Hot Wheels, MINI GT & Diecast Cars in Bangladesh | DiecastBD', desc: 'Buy authentic Hot Wheels Premium and MINI GT diecast cars in Bangladesh. Verified 1:64 collectibles, collector-grade packaging, and nationwide delivery.' }
+    };
+    this.init = JSON.stringify(s);
+    this.state = {
+      s, sec: props.startSection ?? 'hero', heroTab: 'lime', open: null, dirty: false, toastMsg: null, navOpen: false,
+      m: typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : false
+    };
+    this.edit = (e) => this.setPath(e.target.dataset.k, e.target.value);
+    this.tgl = (e) => { const k = e.currentTarget.dataset.k; this.setPath(k, !this.gp(k)); };
+    this.del = (e) => { e.stopPropagation(); const d = e.currentTarget.dataset; this.gp(d.k).splice(+d.i, 1); this.setState({ s: this.state.s, dirty: true, open: null }); };
+    this.add = (e) => {
+      const d = e.currentTarget.dataset;
+      const blank = { zone: { name: 'New zone', fee: '0', prepay: false }, msg: { icon: 'No icon', text: '' }, tile: { label: 'New tile', link: '' }, why: { icon: 'Sparkles', title: 'New item', desc: '' }, tm: { name: 'Name', rating: 5, quote: '' }, faq: { q: 'New question', a: '' }, link: { label: 'New link', url: '/' } }[d.t];
+      const a = this.gp(d.k); a.push(JSON.parse(JSON.stringify(blank)));
+      this.setState({ s: this.state.s, dirty: true, open: d.p ? d.p + ':' + (a.length - 1) : this.state.open });
+    };
+    this.exp = (e) => { const k = e.currentTarget.dataset.k; this.setState({ open: this.state.open === k ? null : k }); };
+    this.go = (e) => { this.setState({ sec: e.currentTarget.dataset.id, navOpen: false, open: null }); window.scrollTo({ top: 0 }); };
+    this.navClick = (e) => {
+      const d = e.currentTarget.dataset;
+      if (d.id === 'dashboard') { window.location.href = './Admin Dashboard.dc.html'; return; }
+      if (d.id === 'orders') { window.location.href = './Admin Orders.dc.html'; return; }
+      if (d.id === 'products') { window.location.href = './Admin Products.dc.html'; return; }
+      if (d.id === 'inventory') { window.location.href = './Admin Inventory.dc.html'; return; }
+      const P2 = { brands: 'Brands', categories: 'Categories', customers: 'Customers', coupons: 'Coupons', newsletter: 'Newsletter', reports: 'Reports', pages: 'Pages' };
+      if (P2[d.id]) { window.location.href = './Admin ' + P2[d.id] + '.dc.html'; return; }
+      this.setState({ navOpen: false });
+    };
+    this.heroTabSet = (e) => this.setState({ heroTab: e.currentTarget.dataset.id });
+    this.save = () => { this.init = JSON.stringify(this.state.s); this.setState({ dirty: false }); this.showToast('Settings saved'); };
+    this.discard = () => { this.setState({ s: JSON.parse(this.init), dirty: false, open: null }); this.showToast('Changes discarded'); };
+    this.openNav = () => this.setState({ navOpen: true });
+    this.closeNav = () => this.setState({ navOpen: false });
+  }
+  componentDidMount() {
+    this.mq = window.matchMedia('(max-width: 767px)');
+    this.onMq = (e) => this.setState({ m: e.matches });
+    this.mq.addEventListener('change', this.onMq);
+  }
+  componentWillUnmount() {
+    if (this.mq) this.mq.removeEventListener('change', this.onMq);
+    clearTimeout(this.tt);
+  }
+  gp(k) { return k.split('.').reduce((o, p) => o[p], this.state.s); }
+  setPath(k, v) {
+    const ps = k.split('.'); let o = this.state.s;
+    for (let i = 0; i < ps.length - 1; i++) o = o[ps[i]];
+    o[ps[ps.length - 1]] = v;
+    this.setState({ s: this.state.s, dirty: true });
+  }
+  showToast(msg) {
+    clearTimeout(this.tt);
+    this.setState({ toastMsg: msg });
+    this.tt = setTimeout(() => this.setState({ toastMsg: null }), 2400);
+  }
+  renderVals() {
+    const { s, m, sec, heroTab, open, dirty, toastMsg, navOpen } = this.state;
+    const dm = !m;
+    const T = (v) => ({ bg: v ? '#A8CD2F' : '#DEDFD6', tx: v ? 'translateX(16px)' : 'none' });
+    const T2 = (v) => ({ bg: v ? '#A8CD2F' : '#DEDFD6', tx: v ? 'translateX(14px)' : 'none' });
+    const t = { heroShow: T(s.hero.show), hl: T(s.hero.highlight.on), allPages: T(s.bar.allPages), dAuto: T2(s.bar.dAuto), dShow: T2(s.bar.dShow), mAuto: T2(s.bar.mAuto), mShow: T2(s.bar.mShow) };
+    const NO = { cx: 0, cy: 0, r: 0 };
+    const navDefs = [
+      { id: 'dashboard', label: 'Dashboard', d: 'M3 3h8v8H3zM13 3h8v5h-8zM13 12h8v9h-8zM3 15h8v6H3z', ...NO },
+      { id: 'orders', label: 'Orders', d: 'M9 4h6v3H9zM9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2M9 12h6M9 16h4', ...NO },
+      { id: 'products', label: 'Products', d: 'M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v9', ...NO },
+      { id: 'inventory', label: 'Inventory', d: 'M3 4h18v4H3zM5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M9 12h6', ...NO },
+      { id: 'brands', label: 'Brands', d: 'M8 14l-1.5 7L12 18l5.5 3L16 14M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12z', ...NO },
+      { id: 'categories', label: 'Categories', d: 'M12 2H2v10l9.3 9.3a1 1 0 0 0 1.4 0l8.6-8.6a1 1 0 0 0 0-1.4zM7 7h.01', ...NO },
+      { id: 'customers', label: 'Customers', d: 'M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8', cx: 9, cy: 7, r: 4 },
+      { id: 'coupons', label: 'Coupons', d: 'M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a2 2 0 0 0 0 6v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-6zM13 5v2M13 11v2M13 17v2', ...NO },
+      { id: 'newsletter', label: 'Newsletter', d: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6', ...NO },
+      { id: 'reports', label: 'Reports', d: 'M3 3v18h18M8 17V9M13 17V5M18 17v-7', ...NO },
+      { id: 'pages', label: 'Pages', d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 2v6h6', ...NO },
+      { id: 'settings', label: 'Settings', d: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6', ...NO }
+    ];
+    const navItems = navDefs.map((n) => {
+      const active = n.id === 'settings';
+      return { ...n, bg: active ? '#EFF5DC' : 'transparent', color: active ? '#101208' : '#3A3D33', ic: active ? '#4F6B0B' : '#8A8D80' };
+    });
+    const groupDefs = [
+      { k: 'Homepage', items: [
+        { id: 'hero', label: 'Hero', d: 'M3 5h18v14H3zM21 15l-5-5L5 21M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z', ...NO },
+        { id: 'bar', label: 'Announcement bar', d: 'M3 11l18-5v12L3 13v-2zM11.6 16.8a3 3 0 1 1-5.8-1.6', ...NO },
+        { id: 'sections', label: 'Sections & shelf', d: 'M3 3h18v18H3zM3 9h18M9 21V9', ...NO },
+        { id: 'spotlight', label: 'Featured spotlight', d: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z', ...NO },
+        { id: 'trust', label: 'Trust & promise', d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4', ...NO }
+      ]},
+      { k: 'Content', items: [
+        { id: 'testimonials', label: 'Testimonials', d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z', ...NO },
+        { id: 'faq', label: 'FAQ', d: 'M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01', cx: 12, cy: 12, r: 10 }
+      ]},
+      { k: 'Store', items: [
+        { id: 'contact', label: 'Contact & social', d: 'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.81.3 1.6.54 2.36a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.71-1.11a2 2 0 0 1 2.11-.45c.76.24 1.55.42 2.36.54A2 2 0 0 1 22 16.92z', ...NO },
+        { id: 'shipping', label: 'Shipping', d: 'M8 18.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM21 18.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM1 3h15v13H1zM16 8h4l3 3v5h-7z', ...NO },
+        { id: 'payments', label: 'Payments', d: 'M1 5h22v14H1zM1 10h22', ...NO }
+      ]},
+      { k: 'Site', items: [
+        { id: 'nav', label: 'Navigation', d: 'M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z', cx: 12, cy: 12, r: 10 },
+        { id: 'seo', label: 'SEO defaults', d: 'M21 21l-4.35-4.35', cx: 11, cy: 11, r: 8 }
+      ]}
+    ];
+    const snCard = (this.props.subnavStyle ?? 'card') === 'card';
+    const kick = 'font-size:10px;font-weight:700;letter-spacing:0.09em;color:#8A8D80;text-transform:uppercase;padding:0 12px;margin-bottom:6px;';
+    const groups = groupDefs.map((g, gi) => ({
+      k: g.k,
+      ks: kick + (snCard && gi > 0 ? 'margin-top:12px;padding-top:14px;border-top:1px solid #EFEFE9' : ''),
+      items: g.items.map((it) => {
+        const active = it.id === sec;
+        return {
+          ...it,
+          bg: active ? (snCard ? '#101208' : '#EFF5DC') : 'transparent',
+          color: active ? (snCard ? '#ffffff' : '#101208') : '#3A3D33',
+          ic: active ? (snCard ? '#C9E469' : '#4F6B0B') : '#8A8D80',
+          hbg: active ? (snCard ? '#101208' : '#EFF5DC') : '#F1F2EA'
+        };
+      })
+    }));
+    const chips = groupDefs.flatMap((g) => g.items).map((it) => {
+      const active = it.id === sec;
+      return { id: it.id, label: it.label, bg: active ? '#101208' : '#ffffff', color: active ? '#ffffff' : '#3A3D33', bd: active ? '#101208' : '#E7E8E0' };
+    });
+    const heroTabs = [{ id: 'lime', label: 'Lime showroom' }, { id: 'dark', label: 'Dark spotlight' }, { id: 'photo', label: 'Photo full-bleed' }].map((h) => ({
+      ...h, bg: h.id === heroTab ? '#101208' : '#F1F2EA', color: h.id === heroTab ? '#ffffff' : '#3A3D33'
+    }));
+    const rows = (arr, pre, extra) => arr.map((x, i) => {
+      const o = open === pre + ':' + i;
+      return { ...x, open: o, chev: o ? 'rotate(180deg)' : 'none', ...(extra ? extra(x) : null) };
+    });
+    const sepChar = { '· Dot': ' · ', '/ Slash': ' / ', '— Dash': ' — ' }[s.bar.sepStyle] || ' · ';
+    return {
+      m, dm, s, t, sec, dirty, toastMsg, navOpen,
+      drawerOpen: m && navOpen,
+      storeName: this.props.storeName ?? 'DiecastBD',
+      navItems, groups, chips, heroTabs,
+      hc: s.hero.copy[heroTab], hp: 'hero.copy.' + heroTab + '.',
+      sections: s.sections.map((x) => ({ ...x, tbg: T(x.on).bg, ttx: T(x.on).tx })),
+      dMsgs: s.bar.dMsgs, mMsgs: s.bar.mMsgs,
+      barPreview: s.bar.dMsgs.map((x) => x.text).filter(Boolean).join(sepChar) || 'Announcement preview',
+      tiles: rows(s.shelf.tiles, 'tl'),
+      why: rows(s.why, 'wy', (x) => ({ abbr: (x.icon || '?').slice(0, 2) })),
+      tms: rows(s.testimonials, 'tm', (x) => ({ stars: '★★★★★'.slice(0, Math.max(0, Math.min(5, +x.rating || 0))) })),
+      faqs: rows(s.faqs, 'fq').map((x, i) => ({ ...x, n: i + 1 })),
+      zones: rows(s.shipping.zones, 'zn', (x) => ({ tbg: T(x.prepay).bg, ttx: T(x.prepay).tx })),
+      hLinks: rows(s.nav.header, 'hl'), fLinks: rows(s.nav.footer, 'fl'),
+      secHero: sec === 'hero', secBar: sec === 'bar', secSections: sec === 'sections', secSpotlight: sec === 'spotlight',
+      secTrust: sec === 'trust', secTesti: sec === 'testimonials', secFaq: sec === 'faq', secContact: sec === 'contact',
+      secShipping: sec === 'shipping', secPay: sec === 'payments', secNav: sec === 'nav', secSeo: sec === 'seo',
+      snWrap: snCard
+        ? 'position:sticky;top:24px;display:grid;gap:0;background:#ffffff;border:1px solid #E7E8E0;border-radius:16px;padding:12px 10px'
+        : 'position:sticky;top:24px;display:grid;gap:18px',
+      mainStyle: m ? 'padding:70px 16px 130px' : 'padding:34px 40px 150px 272px',
+      bodyGrid: dm ? 'display:grid;grid-template-columns:212px minmax(0,1fr);gap:26px;align-items:start' : 'display:block',
+      h1fs: m ? '24px' : '30px',
+      barPos: m ? 'left:12px;right:12px;bottom:12px' : 'left:50%;bottom:16px;transform:translateX(-50%);min-width:440px',
+      toastPos: m ? 'left:50%;transform:translateX(-50%);bottom:78px;white-space:nowrap' : 'right:24px;bottom:24px',
+      edit: this.edit, tgl: this.tgl, del: this.del, add: this.add, exp: this.exp, go: this.go,
+      navClick: this.navClick, heroTabSet: this.heroTabSet, save: this.save, discard: this.discard,
+      openNav: this.openNav, closeNav: this.closeNav
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -58,8 +58,7 @@ const AdminPageFormPage = page(() => import("@/features/admin/pages/PageFormPage
 // Unlike PublicLayout/AuthLayout (eager — every visitor needs them), AdminLayout
 // is gated behind RequireRole and every one of its child pages is already
 // lazy — only the shell itself wasn't. Lazy-loading it too keeps its
-// admin-only weight (including the Geist font, see styles/admin-fonts.css)
-// off the critical path for the storefront majority.
+// admin-only weight off the critical path for the storefront majority.
 const AdminLayout = page(() => import("./layouts/AdminLayout"), "AdminLayout");
 
 export const router = createBrowserRouter([

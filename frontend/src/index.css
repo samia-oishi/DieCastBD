@@ -2,24 +2,17 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Storefront fonts (redesign): Archivo = display/headings/prices/wordmark (700/800
-   + italic accents), Instrument Sans = body. Geist (admin-only) is intentionally
-   NOT imported here — every visitor loads this file, and Geist's woff2 files are
-   dead weight for the storefront majority who never see /admin. It's imported
-   from styles/admin-fonts.css instead, pulled in only by AdminLayout.jsx (itself
-   a lazy route chunk), so it downloads only when /admin is actually visited. The
-   [data-theme="diecastbd-admin"] font-variable scope below still lives here —
-   it's a few bytes of CSS custom properties, not a font download. */
+/* App fonts (light design system, storefront + admin): Archivo = display/
+   headings/prices/wordmark (700/800 + italic accents), Instrument Sans = body. */
 @import "@fontsource-variable/archivo";
 @import "@fontsource-variable/archivo/wght-italic.css";
 @import "@fontsource-variable/instrument-sans";
 
-/* Two DaisyUI themes so the DaisyUI-only components (Rating/Steps/Loading) match
-   whichever scope renders them: `diecastbd` is the light storefront default;
-   `diecastbd-admin` restores the original dark values for the admin dashboard,
-   activated by AdminLayout's `data-theme="diecastbd-admin"`. */
+/* One DaisyUI theme for the DaisyUI-only components (Rating/Steps/Loading):
+   `diecastbd` is the light design system, used app-wide including admin (the
+   admin dashboard shares the storefront's light tokens as of the admin redesign). */
 @plugin "daisyui" {
-  themes: diecastbd --default, diecastbd-admin;
+  themes: diecastbd --default;
 }
 
 @plugin "daisyui/theme" {
@@ -44,30 +37,6 @@
   --radius-selector: 9999px;
   --radius-field: 0.75rem;
   --radius-box: 1.125rem;
-}
-
-@plugin "daisyui/theme" {
-  name: "diecastbd-admin";
-  color-scheme: dark;
-  --color-base-100: #0a0a0a;
-  --color-base-200: #141414;
-  --color-base-300: #1f1f1f;
-  --color-base-content: #fafafa;
-  --color-primary: #a3e635;
-  --color-primary-content: #0a0a0a;
-  --color-secondary: #1f1f1f;
-  --color-secondary-content: #fafafa;
-  --color-accent: #a3e635;
-  --color-accent-content: #0a0a0a;
-  --color-neutral: #1f1f1f;
-  --color-neutral-content: #fafafa;
-  --color-info: #38bdf8;
-  --color-success: #a3e635;
-  --color-warning: #fbbf24;
-  --color-error: #ef4444;
-  --radius-selector: 0.5rem;
-  --radius-field: 0.5rem;
-  --radius-box: 0.75rem;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -144,10 +113,9 @@
 }
 
 /*
- * Storefront = light "paper" theme at :root (the default, brand identity for the
- * public storefront). The admin dashboard re-declares every shadcn token back to
- * the original dark values under [data-theme="diecastbd-admin"] (set by
- * AdminLayout) so admin stays pixel-identical — see docs/plan.md.
+ * Light "paper" design system at :root — the single app-wide theme. Both the
+ * public storefront and the admin dashboard use these tokens (the admin's former
+ * dark theme was retired in the admin light redesign — see docs/plan.md).
  */
 :root {
     color-scheme: light;
@@ -193,58 +161,6 @@
     --sidebar-accent-foreground: #4F6B0B;
     --sidebar-border: #E7E8E0;
     --sidebar-ring: #A8CD2F;
-}
-
-/*
- * Admin dashboard scope — restores the original pre-redesign dark theme byte-for-byte.
- * AdminLayout sets this attribute on its root element; every shadcn/DaisyUI component
- * under it re-points to these dark values, so the admin UI is untouched by the
- * storefront redesign.
- */
-[data-theme="diecastbd-admin"] {
-    color-scheme: dark;
-
-    --body-font: 'Geist Variable', sans-serif;
-    --display-font: 'Geist Variable', sans-serif;
-
-    --background: #0a0a0a;
-    --foreground: #fafafa;
-    --card: #141414;
-    --card-foreground: #fafafa;
-    --popover: #141414;
-    --popover-foreground: #fafafa;
-
-    --primary: #a3e635;
-    --primary-foreground: #0a0a0a;
-    --secondary: #1f1f1f;
-    --secondary-foreground: #fafafa;
-    --muted: #1a1a1a;
-    --muted-foreground: #a1a1aa;
-    --accent: #1f1f1f;
-    --accent-foreground: #fafafa;
-
-    --destructive: #ef4444;
-
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: #a3e635;
-
-    --chart-1: #a3e635;
-    --chart-2: #84cc16;
-    --chart-3: #65a30d;
-    --chart-4: #4d7c0f;
-    --chart-5: #3f6212;
-
-    --radius: 0.5rem;
-
-    --sidebar: #0d0d0d;
-    --sidebar-foreground: #fafafa;
-    --sidebar-primary: #a3e635;
-    --sidebar-primary-foreground: #0a0a0a;
-    --sidebar-accent: #1a1a1a;
-    --sidebar-accent-foreground: #fafafa;
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: #a3e635;
 }
 
 @layer base {

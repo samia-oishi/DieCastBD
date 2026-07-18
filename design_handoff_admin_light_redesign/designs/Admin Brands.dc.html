@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400..900;1,400..900&amp;family=Instrument+Sans:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#FAFAF7;}
+body{font-family:'Instrument Sans',sans-serif;color:#101208;-webkit-font-smoothing:antialiased;}
+a{color:#4F6B0B;text-decoration:none;}
+a:hover{color:#5F7A10;}
+input,textarea,select,button{font-family:inherit;}
+input::placeholder,textarea::placeholder{color:#8A8D80;}
+*:focus-visible{outline:2px solid #A8CD2F;outline-offset:2px;}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes drawerIn{from{transform:translateX(-100%);}to{transform:translateX(0);}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#FAFAF7">
+
+  <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+    <aside data-screen-label="Admin sidebar" style="position:fixed;top:0;left:0;bottom:0;width:232px;background:#ffffff;border-right:1px solid #E7E8E0;display:flex;flex-direction:column;z-index:40;box-sizing:border-box">
+      <div style="padding:22px 20px 16px;display:flex;align-items:center;gap:8px">
+        <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.02em">{{ storeName }}<span style="color:#A8CD2F">.</span></div>
+        <span style="font-size:9.5px;font-weight:700;letter-spacing:0.08em;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:3px 8px">ADMIN</span>
+      </div>
+      <nav style="flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="12">
+          <button data-id="{{ it.id }}" onClick="{{ navClick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:9px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;transition:background .15s" style-hover="background:#F1F2EA">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+            {{ it.label }}
+          </button>
+        </sc-for>
+      </nav>
+      <div style="padding:14px;border-top:1px solid #EFEFE9;display:grid;gap:10px">
+        <a href="#" style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3A3D33;padding:6px 8px;border-radius:8px" style-hover="background:#F1F2EA">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"></path></svg>
+          Back to store
+        </a>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 8px 4px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:700;font-size:11.5px;flex:none">DB</div>
+          <div style="min-width:0">
+            <div style="font-size:12.5px;font-weight:600">Admin</div>
+            <div style="font-size:11px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">diecastbd.official@gmail.com</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <sc-if value="{{ m }}" hint-placeholder-val="{{ false }}">
+    <header style="position:fixed;top:0;left:0;right:0;z-index:50;height:56px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(250,250,247,0.75);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid #E7E8E0;box-sizing:border-box">
+      <button onClick="{{ openNav }}" aria-label="Open menu" style="width:44px;height:44px;border:none;background:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#101208" style-hover="background:#F1F2EA">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+      </button>
+      <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:17px;letter-spacing:-0.01em">Brands</div>
+      <div style="margin-left:auto;width:32px;height:32px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:700;font-size:11.5px">DB</div>
+    </header>
+  </sc-if>
+
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeNav }}" style="position:fixed;inset:0;background:rgba(16,18,8,0.5);backdrop-filter:blur(4px);z-index:80;animation:fadeIn .2s ease-out"></div>
+    <aside style="position:fixed;top:0;left:0;bottom:0;width:280px;background:#ffffff;z-index:81;animation:drawerIn .22s ease-out;display:flex;flex-direction:column;border-radius:0 24px 24px 0;overflow:hidden;box-shadow:0 12px 40px rgba(16,18,8,0.25)">
+      <div style="padding:18px 18px 12px;display:flex;align-items:center;gap:8px">
+        <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px">{{ storeName }}<span style="color:#A8CD2F">.</span></div>
+        <span style="font-size:9.5px;font-weight:700;letter-spacing:0.08em;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:3px 8px">ADMIN</span>
+        <button onClick="{{ closeNav }}" aria-label="Close menu" style="margin-left:auto;width:40px;height:40px;border:none;background:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3A3D33" style-hover="background:#F1F2EA">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <nav style="flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="12">
+          <button data-id="{{ it.id }}" onClick="{{ navClick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:11px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:14px;font-weight:600;cursor:pointer;text-align:left" style-hover="background:#F1F2EA">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+            {{ it.label }}
+          </button>
+        </sc-for>
+      </nav>
+    </aside>
+  </sc-if>
+
+  <main style="{{ mainStyle }}">
+    <div style="max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:18px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8A8D80;text-transform:uppercase;margin-bottom:6px">{{ countLabel }}</div>
+          <h1 style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:{{ h1fs }};letter-spacing:-0.015em;line-height:1.1">Brands</h1>
+          <p style="margin:8px 0 0;font-size:13.5px;color:#6B6E60;line-height:1.5">Brands power the storefront filters and the homepage shelf tiles.</p>
+        </div>
+        <button onClick="{{ openAdd }}" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border:none;border-radius:99px;background:#A8CD2F;font-family:Archivo,sans-serif;font-weight:700;font-size:13px;color:#101208;cursor:pointer;transition:background .15s" style-hover="background:#B9DC4B">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          Add brand
+        </button>
+      </div>
+
+      <section style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:52px minmax(160px,1fr) minmax(140px,1fr) 90px 90px 110px;gap:12px;align-items:center;padding:10px 20px;border-bottom:1px solid #EFEFE9;min-width:780px;box-sizing:border-box;font-size:10px;font-weight:700;letter-spacing:0.07em;color:#8A8D80;text-transform:uppercase">
+            <span></span><span>Name</span><span>Slug</span><span style="text-align:right">Products</span><span>Active</span><span style="text-align:right">Actions</span>
+          </div>
+        </sc-if>
+        <sc-for list="{{ rows }}" as="b" hint-placeholder-count="2">
+          <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:52px minmax(160px,1fr) minmax(140px,1fr) 90px 90px 110px;gap:12px;align-items:center;padding:10px 20px;border-bottom:1px solid #EFEFE9;min-width:780px;box-sizing:border-box">
+              <span style="width:40px;height:40px;border-radius:10px;background:{{ b.logoBg }};border:1px solid #EFEFE9;display:flex;align-items:center;justify-content:center;color:{{ b.logoC }};font-family:Archivo,sans-serif;font-weight:800;font-size:11px">{{ b.abbr }}</span>
+              <span style="min-width:0">
+                <span style="display:block;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.name }}</span>
+                <sc-if value="{{ b.desc }}" hint-placeholder-val="{{ false }}"><span style="display:block;font-size:11.5px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.desc }}</span></sc-if>
+              </span>
+              <span style="font-size:12px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.slug }}</span>
+              <span style="text-align:right"><a href="./Admin Products.dc.html" style="font-size:12.5px;font-weight:700">{{ b.count }}</a></span>
+              <span>
+                <button data-id="{{ b.slug }}" onClick="{{ tglActive }}" aria-label="Active" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ b.tbg }};transition:background .18s;box-sizing:border-box">
+                  <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ b.ttx }};transition:transform .18s"></span>
+                </button>
+              </span>
+              <span style="display:flex;gap:6px;justify-content:flex-end">
+                <button data-id="{{ b.slug }}" onClick="{{ openEdit }}" title="Edit" style="width:30px;height:30px;border:1px solid #E7E8E0;border-radius:9px;background:#ffffff;cursor:pointer;color:#6B6E60;display:flex;align-items:center;justify-content:center" style-hover="border-color:#101208;color:#101208">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                </button>
+                <button data-id="{{ b.slug }}" onClick="{{ del }}" title="Delete" style="width:30px;height:30px;border:1px solid #E7E8E0;border-radius:9px;background:#ffffff;cursor:pointer;color:#8A8D80;display:flex;align-items:center;justify-content:center" style-hover="color:#B3261E;border-color:#F0C9C5;background:#FDF6F5">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+                </button>
+              </span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ m }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #EFEFE9">
+              <span style="width:40px;height:40px;border-radius:10px;background:{{ b.logoBg }};border:1px solid #EFEFE9;flex:none;display:flex;align-items:center;justify-content:center;color:{{ b.logoC }};font-family:Archivo,sans-serif;font-weight:800;font-size:11px">{{ b.abbr }}</span>
+              <span style="min-width:0;flex:1">
+                <span style="display:block;font-size:13px;font-weight:700">{{ b.name }}</span>
+                <span style="display:block;font-size:11px;color:#8A8D80;margin-top:2px">{{ b.slug }} · {{ b.count }} products</span>
+              </span>
+              <button data-id="{{ b.slug }}" onClick="{{ tglActive }}" aria-label="Active" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ b.tbg }};transition:background .18s;box-sizing:border-box;flex:none">
+                <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ b.ttx }};transition:transform .18s"></span>
+              </button>
+              <button data-id="{{ b.slug }}" onClick="{{ openEdit }}" aria-label="Edit" style="width:40px;height:40px;border:1px solid #E7E8E0;border-radius:11px;background:#ffffff;cursor:pointer;color:#6B6E60;display:flex;align-items:center;justify-content:center;flex:none">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+              </button>
+            </div>
+          </sc-if>
+        </sc-for>
+      </section>
+      <div style="font-size:12px;color:#8A8D80;line-height:1.6">Deleting a brand doesn't delete its products — they just lose the brand filter. Turning a brand off hides it from the storefront menus.</div>
+    </div>
+  </main>
+
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:90;background:rgba(16,18,8,0.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:fadeIn .18s ease-out"></div>
+    <div style="position:fixed;z-index:91;{{ modalPos }};background:#ffffff;border-radius:18px;box-shadow:0 20px 60px rgba(16,18,8,0.4);width:min(460px,calc(100vw - 32px));max-height:calc(100vh - 60px);display:flex;flex-direction:column;overflow:hidden;animation:toastIn .2s ease-out">
+      <div style="display:flex;align-items:center;gap:12px;padding:20px 22px 0">
+        <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:16px;letter-spacing:-0.01em;flex:1">{{ modalTitle }}</h2>
+        <button onClick="{{ closeModal }}" aria-label="Close" style="width:36px;height:36px;border:none;background:#F1F2EA;border-radius:99px;cursor:pointer;color:#3A3D33;display:flex;align-items:center;justify-content:center" style-hover="background:#E7E8E0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div style="padding:16px 22px 22px;overflow-y:auto;display:grid;gap:14px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:52px;height:52px;border-radius:12px;background:#F1F2EA;border:1.5px dashed #DEDFD6;flex:none;display:flex;align-items:center;justify-content:center;color:#8A8D80">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3zM21 15l-5-5L5 21M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"></path></svg>
+          </div>
+          <button style="height:38px;padding:0 15px;border:1px solid #E7E8E0;border-radius:99px;background:#ffffff;font-size:12.5px;font-weight:600;color:#101208;cursor:pointer" style-hover="border-color:#101208">Upload logo</button>
+        </div>
+        <div>
+          <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Name</label>
+          <input data-k="name" value="{{ f.name }}" onChange="{{ edit }}" placeholder="e.g. Tarmac Works" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+        </div>
+        <div>
+          <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Slug <span style="color:#8A8D80;font-weight:500">(auto from name)</span></label>
+          <input data-k="slug" value="{{ f.slug }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#FCFCF9;font-size:13.5px;color:#6B6E60;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+        </div>
+        <div>
+          <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Description <span style="color:#8A8D80;font-weight:500">(optional)</span></label>
+          <textarea data-k="desc" value="{{ f.desc }}" onChange="{{ edit }}" style="width:100%;padding:12px 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;min-height:70px;resize:vertical;line-height:1.5" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)"></textarea>
+        </div>
+        <div>
+          <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Sort order <span style="color:#8A8D80;font-weight:500">(lower shows first)</span></label>
+          <input type="number" data-k="sort" value="{{ f.sort }}" onChange="{{ edit }}" style="width:120px;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+        </div>
+        <button onClick="{{ save }}" style="justify-self:end;height:42px;padding:0 22px;border:none;border-radius:99px;background:#A8CD2F;font-family:Archivo,sans-serif;font-weight:700;font-size:13.5px;color:#101208;cursor:pointer;transition:background .15s" style-hover="background:#B9DC4B">{{ saveLabel }}</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastMsg }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;z-index:95;{{ toastPos }};display:flex;align-items:center;gap:10px;background:rgba(13,15,7,0.94);color:#ffffff;border:1px solid rgba(255,255,255,0.16);border-radius:99px;padding:10px 18px 10px 11px;box-shadow:0 10px 30px rgba(16,18,8,0.35);animation:toastIn .22s ease-out;font-size:13.5px;font-weight:600;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)">
+      <span style="width:26px;height:26px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;flex:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      </span>
+      {{ toastMsg }}
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{ &quot;storeName&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;DiecastBD&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Brand&quot; } }">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.brands = [
+      { name: 'Hot Wheels Premium', slug: 'hot-wheels-premium', desc: 'Premium castings with Real Riders wheels', sort: 0, active: true, count: 8, logo: true },
+      { name: 'MINI GT', slug: 'mini-gt', desc: '1:64 by TSM — blister card and box', sort: 1, active: true, count: 5, logo: false }
+    ];
+    this.state = {
+      modal: null, f: { name: '', slug: '', desc: '', sort: 0 }, slugTouched: false,
+      toastMsg: null, navOpen: false,
+      m: typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : false
+    };
+    this.openAdd = () => this.setState({ modal: 'add', f: { name: '', slug: '', desc: '', sort: this.brands.length }, slugTouched: false });
+    this.openEdit = (e) => {
+      const b = this.brands.find((x) => x.slug === e.currentTarget.dataset.id);
+      this.setState({ modal: b.slug, f: { name: b.name, slug: b.slug, desc: b.desc, sort: b.sort }, slugTouched: true });
+    };
+    this.closeModal = () => this.setState({ modal: null });
+    this.edit = (e) => {
+      const k = e.target.dataset.k, f = { ...this.state.f, [k]: e.target.value };
+      let slugTouched = this.state.slugTouched;
+      if (k === 'slug') slugTouched = true;
+      if (k === 'name' && !slugTouched) f.slug = e.target.value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      this.setState({ f, slugTouched });
+    };
+    this.save = () => {
+      const f = this.state.f;
+      if (!f.name.trim()) { this.showToast('Give the brand a name'); return; }
+      if (this.state.modal === 'add') {
+        this.brands.push({ ...f, sort: +f.sort || 0, active: true, count: 0, logo: false });
+        this.showToast('Brand created');
+      } else {
+        const b = this.brands.find((x) => x.slug === this.state.modal);
+        Object.assign(b, f, { sort: +f.sort || 0 });
+        this.showToast('Brand saved');
+      }
+      this.brands.sort((a, b) => a.sort - b.sort);
+      this.setState({ modal: null });
+    };
+    this.tglActive = (e) => {
+      const b = this.brands.find((x) => x.slug === e.currentTarget.dataset.id);
+      b.active = !b.active;
+      this.forceUpdate();
+      this.showToast(b.name + (b.active ? ' is live on the storefront' : ' hidden from the storefront'));
+    };
+    this.del = (e) => {
+      const i = this.brands.findIndex((x) => x.slug === e.currentTarget.dataset.id);
+      const b = this.brands[i];
+      this.brands.splice(i, 1);
+      this.forceUpdate();
+      this.showToast(b.name + ' deleted — its products kept their listings');
+    };
+    this.navClick = (e) => {
+      const id = e.currentTarget.dataset.id;
+      if (id === 'brands') { this.setState({ navOpen: false }); return; }
+      const L = { dashboard: 'Dashboard', orders: 'Orders', products: 'Products', inventory: 'Inventory', categories: 'Categories', customers: 'Customers', coupons: 'Coupons', newsletter: 'Newsletter', reports: 'Reports', pages: 'Pages', settings: 'Settings' };
+      window.location.href = './Admin ' + L[id] + '.dc.html';
+    };
+    this.openNav = () => this.setState({ navOpen: true });
+    this.closeNav = () => this.setState({ navOpen: false });
+  }
+  componentDidMount() {
+    this.mq = window.matchMedia('(max-width: 767px)');
+    this.onMq = (e) => this.setState({ m: e.matches });
+    this.mq.addEventListener('change', this.onMq);
+  }
+  componentWillUnmount() { if (this.mq) this.mq.removeEventListener('change', this.onMq); clearTimeout(this.tt); }
+  showToast(msg) { clearTimeout(this.tt); this.setState({ toastMsg: msg }); this.tt = setTimeout(() => this.setState({ toastMsg: null }), 2600); }
+  renderVals() {
+    const { m, modal, f, toastMsg, navOpen } = this.state;
+    const dm = !m;
+    const NO = { cx: 0, cy: 0, r: 0 };
+    const navDefs = [
+      { id: 'dashboard', label: 'Dashboard', d: 'M3 3h8v8H3zM13 3h8v5h-8zM13 12h8v9h-8zM3 15h8v6H3z', ...NO },
+      { id: 'orders', label: 'Orders', d: 'M9 4h6v3H9zM9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2M9 12h6M9 16h4', ...NO },
+      { id: 'products', label: 'Products', d: 'M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v9', ...NO },
+      { id: 'inventory', label: 'Inventory', d: 'M3 4h18v4H3zM5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M9 12h6', ...NO },
+      { id: 'brands', label: 'Brands', d: 'M8 14l-1.5 7L12 18l5.5 3L16 14M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12z', ...NO },
+      { id: 'categories', label: 'Categories', d: 'M12 2H2v10l9.3 9.3a1 1 0 0 0 1.4 0l8.6-8.6a1 1 0 0 0 0-1.4zM7 7h.01', ...NO },
+      { id: 'customers', label: 'Customers', d: 'M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8', cx: 9, cy: 7, r: 4 },
+      { id: 'coupons', label: 'Coupons', d: 'M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a2 2 0 0 0 0 6v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-6zM13 5v2M13 11v2M13 17v2', ...NO },
+      { id: 'newsletter', label: 'Newsletter', d: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6', ...NO },
+      { id: 'reports', label: 'Reports', d: 'M3 3v18h18M8 17V9M13 17V5M18 17v-7', ...NO },
+      { id: 'pages', label: 'Pages', d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 2v6h6', ...NO },
+      { id: 'settings', label: 'Settings', d: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6', ...NO }
+    ];
+    const navItems = navDefs.map((n) => {
+      const active = n.id === 'brands';
+      return { ...n, bg: active ? '#EFF5DC' : 'transparent', color: active ? '#101208' : '#3A3D33', ic: active ? '#4F6B0B' : '#8A8D80' };
+    });
+    const rows = this.brands.map((b) => ({ ...b,
+      abbr: b.name.split(' ').map((w) => w[0]).join('').slice(0, 3).toUpperCase(),
+      logoBg: b.logo ? '#101208' : '#F1F2EA', logoC: b.logo ? '#C9E469' : '#8A8D80',
+      tbg: b.active ? '#A8CD2F' : '#DEDFD6', ttx: b.active ? 'translateX(16px)' : 'none' }));
+    return {
+      m, dm, toastMsg, navOpen, drawerOpen: m && navOpen, navItems, rows,
+      storeName: this.props.storeName ?? 'DiecastBD',
+      countLabel: this.brands.length + ' brands · ' + this.brands.filter((b) => b.active).length + ' live',
+      modalOpen: !!modal, modalTitle: modal === 'add' ? 'Add brand' : 'Edit brand',
+      saveLabel: modal === 'add' ? 'Create brand' : 'Save brand', f,
+      modalPos: m ? 'left:16px;right:16px;bottom:16px' : 'left:50%;top:50%;transform:translate(-50%,-50%)',
+      mainStyle: m ? 'padding:70px 16px 40px' : 'padding:34px 40px 60px 272px',
+      h1fs: m ? '24px' : '30px',
+      toastPos: m ? 'left:50%;transform:translateX(-50%);bottom:20px;white-space:nowrap' : 'right:24px;bottom:24px',
+      openAdd: this.openAdd, openEdit: this.openEdit, closeModal: this.closeModal, edit: this.edit, save: this.save,
+      tglActive: this.tglActive, del: this.del, navClick: this.navClick, openNav: this.openNav, closeNav: this.closeNav
+    };
+  }
+}
+</script>
+</body>
+</html>

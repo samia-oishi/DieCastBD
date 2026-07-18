@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400..900;1,400..900&amp;family=Instrument+Sans:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#FAFAF7;}
+body{font-family:'Instrument Sans',sans-serif;color:#101208;-webkit-font-smoothing:antialiased;}
+a{color:#4F6B0B;text-decoration:none;}
+a:hover{color:#5F7A10;}
+input,textarea,select,button{font-family:inherit;}
+input::placeholder,textarea::placeholder{color:#8A8D80;}
+*:focus-visible{outline:2px solid #A8CD2F;outline-offset:2px;}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes drawerIn{from{transform:translateX(-100%);}to{transform:translateX(0);}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#FAFAF7">
+
+  <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+    <aside data-screen-label="Admin sidebar" style="position:fixed;top:0;left:0;bottom:0;width:232px;background:#ffffff;border-right:1px solid #E7E8E0;display:flex;flex-direction:column;z-index:40;box-sizing:border-box">
+      <div style="padding:22px 20px 16px;display:flex;align-items:center;gap:8px">
+        <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.02em">{{ storeName }}<span style="color:#A8CD2F">.</span></div>
+        <span style="font-size:9.5px;font-weight:700;letter-spacing:0.08em;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:3px 8px">ADMIN</span>
+      </div>
+      <nav style="flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="12">
+          <button data-id="{{ it.id }}" onClick="{{ navClick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:9px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;transition:background .15s" style-hover="background:#F1F2EA">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+            {{ it.label }}
+          </button>
+        </sc-for>
+      </nav>
+      <div style="padding:14px;border-top:1px solid #EFEFE9;display:grid;gap:10px">
+        <a href="#" style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3A3D33;padding:6px 8px;border-radius:8px" style-hover="background:#F1F2EA">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"></path></svg>
+          Back to store
+        </a>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 8px 4px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:700;font-size:11.5px;flex:none">DB</div>
+          <div style="min-width:0">
+            <div style="font-size:12.5px;font-weight:600">Admin</div>
+            <div style="font-size:11px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">diecastbd.official@gmail.com</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <sc-if value="{{ m }}" hint-placeholder-val="{{ false }}">
+    <header data-screen-label="Mobile top bar" style="position:fixed;top:0;left:0;right:0;z-index:50;height:56px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(250,250,247,0.75);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid #E7E8E0;box-sizing:border-box">
+      <button onClick="{{ openNav }}" aria-label="Open menu" style="width:44px;height:44px;border:none;background:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#101208" style-hover="background:#F1F2EA">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+      </button>
+      <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:17px;letter-spacing:-0.01em">Products</div>
+      <div style="margin-left:auto;width:32px;height:32px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:700;font-size:11.5px">DB</div>
+    </header>
+  </sc-if>
+
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeNav }}" style="position:fixed;inset:0;background:rgba(16,18,8,0.5);backdrop-filter:blur(4px);z-index:80;animation:fadeIn .2s ease-out"></div>
+    <aside data-screen-label="Mobile nav drawer" style="position:fixed;top:0;left:0;bottom:0;width:280px;background:#ffffff;z-index:81;animation:drawerIn .22s ease-out;display:flex;flex-direction:column;border-radius:0 24px 24px 0;overflow:hidden;box-shadow:0 12px 40px rgba(16,18,8,0.25)">
+      <div style="padding:18px 18px 12px;display:flex;align-items:center;gap:8px">
+        <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px">{{ storeName }}<span style="color:#A8CD2F">.</span></div>
+        <span style="font-size:9.5px;font-weight:700;letter-spacing:0.08em;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:3px 8px">ADMIN</span>
+        <button onClick="{{ closeNav }}" aria-label="Close menu" style="margin-left:auto;width:40px;height:40px;border:none;background:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3A3D33" style-hover="background:#F1F2EA">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <nav style="flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="12">
+          <button data-id="{{ it.id }}" onClick="{{ navClick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:11px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:14px;font-weight:600;cursor:pointer;text-align:left" style-hover="background:#F1F2EA">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+            {{ it.label }}
+          </button>
+        </sc-for>
+      </nav>
+    </aside>
+  </sc-if>
+
+  <main style="{{ mainStyle }}">
+    <div style="max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:18px">
+
+      <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+        <div data-screen-label="Products list" style="display:grid;grid-template-columns:minmax(0,1fr);gap:18px">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8A8D80;text-transform:uppercase;margin-bottom:6px">{{ countLabel }}</div>
+              <h1 style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:{{ h1fs }};letter-spacing:-0.015em;line-height:1.1">Products</h1>
+            </div>
+            <button onClick="{{ newProduct }}" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border:none;border-radius:99px;background:#A8CD2F;font-family:Archivo,sans-serif;font-weight:700;font-size:13px;color:#101208;cursor:pointer;transition:background .15s" style-hover="background:#B9DC4B">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+              Add product
+            </button>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div style="position:relative;flex:1;max-width:340px;min-width:200px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+              <input value="{{ q }}" onChange="{{ setQ }}" placeholder="Search title, SKU…" style="width:100%;height:44px;padding:0 14px 0 38px;border:1px solid #E7E8E0;border-radius:99px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+            </div>
+            <div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+              <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+                <button data-id="{{ f.id }}" onClick="{{ setFilter }}" style="flex:none;height:36px;padding:0 14px;border-radius:99px;border:1px solid {{ f.bd }};background:{{ f.bg }};color:{{ f.color }};font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ f.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <section style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+            <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:28px 92px minmax(220px,1fr) 90px 120px 70px 92px 34px;gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid #EFEFE9;font-size:10.5px;font-weight:700;letter-spacing:0.07em;color:#8A8D80;text-transform:uppercase;min-width:920px;box-sizing:border-box">
+                <button onClick="{{ toggleAll }}" aria-label="Select all" style="width:20px;height:20px;border-radius:6px;border:1.5px solid {{ allBd }};background:{{ allBg }};cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
+                  <sc-if value="{{ anySel }}" hint-placeholder-val="{{ false }}">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#101208" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="{{ allIcon }}"></path></svg>
+                  </sc-if>
+                </button>
+                <span>SKU</span><span>Product</span><span style="text-align:right">Price</span><span style="text-align:right">Profit / margin</span><span style="text-align:right">Stock</span><span>Status</span><span></span>
+              </div>
+            </sc-if>
+            <sc-for list="{{ list }}" as="p" hint-placeholder-count="8">
+              <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+                <button data-id="{{ p.sku }}" onClick="{{ editProduct }}" style="width:100%;display:grid;grid-template-columns:28px 92px minmax(220px,1fr) 90px 120px 70px 92px 34px;gap:12px;align-items:center;padding:13px 20px;border:none;border-bottom:1px solid #EFEFE9;background:{{ p.rowBg }};cursor:pointer;text-align:left;transition:background .12s;min-width:920px;box-sizing:border-box" style-hover="background:#FCFCF9">
+                  <span data-id="{{ p.sku }}" onClick="{{ toggleSel }}" role="checkbox" aria-checked="{{ p.selected }}" style="width:20px;height:20px;border-radius:6px;border:1.5px solid {{ p.cbBd }};background:{{ p.cbBg }};display:flex;align-items:center;justify-content:center;box-sizing:border-box">
+                    <sc-if value="{{ p.selected }}" hint-placeholder-val="{{ false }}">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#101208" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+                    </sc-if>
+                  </span>
+                  <span style="font-size:11.5px;font-weight:700;font-family:Archivo,sans-serif;color:#6B6E60;letter-spacing:0.02em">{{ p.sku }}</span>
+                  <span style="min-width:0">
+                    <span style="display:block;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</span>
+                    <span style="display:block;font-size:11.5px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.brand }}</span>
+                  </span>
+                  <span style="text-align:right">
+                    <span style="display:block;font-size:13px;font-weight:700">৳{{ p.priceF }}</span>
+                    <sc-if value="{{ p.saleF }}" hint-placeholder-val="{{ false }}"><span style="display:block;font-size:11px;color:#B45309;font-weight:600">sale ৳{{ p.saleF }}</span></sc-if>
+                  </span>
+                  <span style="text-align:right">
+                    <span style="display:block;font-size:12.5px;font-weight:700;color:#4F6B0B">৳{{ p.profitF }}</span>
+                    <span style="display:block;font-size:11px;color:#8A8D80">{{ p.marginF }} · cost ৳{{ p.costF }}</span>
+                  </span>
+                  <span style="text-align:right;font-size:13px;font-weight:700;color:{{ p.stC }}">{{ p.stock }}</span>
+                  <span><span style="font-size:10.5px;font-weight:700;color:{{ p.sc }};background:{{ p.sbg }};border-radius:99px;padding:4px 10px">{{ p.status }}</span></span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+                </button>
+              </sc-if>
+              <sc-if value="{{ m }}" hint-placeholder-val="{{ false }}">
+                <button data-id="{{ p.sku }}" onClick="{{ editProduct }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;border:none;border-bottom:1px solid #EFEFE9;background:{{ p.rowBg }};cursor:pointer;text-align:left">
+                  <span data-id="{{ p.sku }}" onClick="{{ toggleSel }}" role="checkbox" aria-checked="{{ p.selected }}" style="width:22px;height:22px;border-radius:7px;border:1.5px solid {{ p.cbBd }};background:{{ p.cbBg }};display:flex;align-items:center;justify-content:center;box-sizing:border-box;flex:none">
+                    <sc-if value="{{ p.selected }}" hint-placeholder-val="{{ false }}">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#101208" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+                    </sc-if>
+                  </span>
+                  <span style="min-width:0;flex:1">
+                    <span style="display:block;font-size:12.5px;font-weight:600;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</span>
+                    <span style="display:block;font-size:11px;color:#8A8D80;margin-top:2px">{{ p.sku }} · <span style="color:{{ p.stC }};font-weight:700">{{ p.stock }} in stock</span></span>
+                  </span>
+                  <span style="text-align:right;flex:none">
+                    <span style="display:block;font-size:13px;font-weight:700">৳{{ p.priceF }}</span>
+                    <span style="display:inline-block;font-size:9.5px;font-weight:700;color:{{ p.sc }};background:{{ p.sbg }};border-radius:99px;padding:3px 8px;margin-top:4px">{{ p.status }}</span>
+                  </span>
+                </button>
+              </sc-if>
+            </sc-for>
+            <sc-if value="{{ emptyList }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:40px 20px;text-align:center;color:#8A8D80;font-size:13.5px">No products match — try a different search or filter.</div>
+            </sc-if>
+          </section>
+          <sc-if value="{{ showPager }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="Pagination" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <span style="font-size:12.5px;color:#8A8D80">{{ pageInfo }}</span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button onClick="{{ prevPage }}" aria-label="Previous page" style="width:36px;height:36px;border-radius:99px;border:1px solid #E7E8E0;background:#ffffff;cursor:pointer;color:{{ prevC }};display:flex;align-items:center;justify-content:center" style-hover="border-color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+                </button>
+                <sc-for list="{{ pageBtns }}" as="pb" hint-placeholder-count="2">
+                  <button data-p="{{ pb.n }}" onClick="{{ goPage }}" style="min-width:36px;height:36px;padding:0 6px;border-radius:99px;border:1px solid {{ pb.bd }};background:{{ pb.bg }};color:{{ pb.c }};font-size:12.5px;font-weight:700;cursor:pointer">{{ pb.n }}</button>
+                </sc-for>
+                <button onClick="{{ nextPage }}" aria-label="Next page" style="width:36px;height:36px;border-radius:99px;border:1px solid #E7E8E0;background:#ffffff;cursor:pointer;color:{{ nextC }};display:flex;align-items:center;justify-content:center" style-hover="border-color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+                </button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isForm }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Product form" style="display:grid;grid-template-columns:minmax(0,1fr);gap:18px">
+          <div>
+            <button onClick="{{ backToList }}" style="display:inline-flex;align-items:center;gap:7px;border:none;background:none;color:#3A3D33;font-size:13px;font-weight:600;cursor:pointer;padding:8px 10px;border-radius:99px;margin-left:-10px" style-hover="background:#F1F2EA">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+              Back to products
+            </button>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px">
+              <h1 style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:{{ h1fsD }};letter-spacing:-0.015em;line-height:1.1">{{ formTitle }}</h1>
+              <sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:11px;font-weight:700;font-family:Archivo,sans-serif;color:#6B6E60;background:#F1F2EA;border-radius:99px;padding:5px 12px">{{ f.sku }}</span>
+              </sc-if>
+            </div>
+          </div>
+
+          <div style="{{ twoCol }}">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:18px;min-width:0">
+              <section data-screen-label="Basics" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Basics</h2>
+                <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Title</label>
+                    <input data-k="title" value="{{ f.title }}" onChange="{{ edit }}" placeholder="e.g. MINI GT #1106 Mazda RX-7 RE Amemiya — Silver" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">SKU</label>
+                      <div style="display:flex;gap:8px">
+                        <input data-k="sku" value="{{ f.sku }}" onChange="{{ edit }}" placeholder="MGT-0000" style="flex:1;min-width:0;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                        <button onClick="{{ genSku }}" title="Generate from brand" style="height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:12px;font-weight:700;color:#3A3D33;cursor:pointer;flex:none" style-hover="border-color:#101208">Auto</button>
+                      </div>
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Status</label>
+                      <select data-k="status" value="{{ f.status }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 36px 0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 12px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                        <option>Draft</option><option>Active</option><option>Archived</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Brand</label>
+                      <select data-k="brand" value="{{ f.brand }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 36px 0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 12px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                        <option>Select a brand</option><option>Hot Wheels Premium</option><option>MINI GT</option><option>Accessories</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Category</label>
+                      <select data-k="category" value="{{ f.category }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 36px 0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 12px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                        <option>Select a category</option><option>Diecast Cars</option><option>Accessories</option><option>Display Cases</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Description</label>
+                    <textarea data-k="desc" value="{{ f.desc }}" onChange="{{ edit }}" placeholder="What makes this piece worth collecting?" style="width:100%;padding:12px 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;min-height:90px;resize:vertical;line-height:1.5" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)"></textarea>
+                  </div>
+                </div>
+              </section>
+
+              <section data-screen-label="Photos" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Photos</h2>
+                  <span style="font-size:11.5px;color:#8A8D80">First photo is the cover · drag to reorder</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:14px">
+                  <div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#C9E469,#A8CD2F);border:1px solid #DCE9B4;position:relative;display:flex;align-items:center;justify-content:center;color:#101208">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3zM21 15l-5-5L5 21M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"></path></svg>
+                    <span style="position:absolute;top:6px;left:6px;font-size:8.5px;font-weight:800;letter-spacing:0.06em;background:#101208;color:#ffffff;border-radius:99px;padding:3px 7px">COVER</span>
+                  </div>
+                  <div style="aspect-ratio:1;border-radius:12px;background:#F1F2EA;border:1px solid #EFEFE9;display:flex;align-items:center;justify-content:center;color:#8A8D80">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3zM21 15l-5-5L5 21M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"></path></svg>
+                  </div>
+                  <button style="aspect-ratio:1;border-radius:12px;border:1.5px dashed #DEDFD6;background:none;color:#3A3D33;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:11px;font-weight:600" style-hover="border-color:#101208;color:#101208">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                    Add photo
+                  </button>
+                </div>
+              </section>
+
+              <section data-screen-label="Collector details" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Collector details</h2>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:14px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Series</label>
+                    <input data-k="series" value="{{ f.series }}" onChange="{{ edit }}" placeholder="Fast &amp; Furious" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Model number</label>
+                    <input data-k="model" value="{{ f.model }}" onChange="{{ edit }}" placeholder="#1106" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Manufacturer</label>
+                    <input data-k="manufacturer" value="{{ f.manufacturer }}" onChange="{{ edit }}" placeholder="TSM / Mattel" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Scale</label>
+                    <input data-k="scale" value="{{ f.scale }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Material</label>
+                    <input data-k="material" value="{{ f.material }}" onChange="{{ edit }}" placeholder="Diecast metal" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Color</label>
+                    <input data-k="color" value="{{ f.color }}" onChange="{{ edit }}" placeholder="Silver" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-content:start;min-width:0">
+              <section data-screen-label="Pricing and stock" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Pricing &amp; stock</h2>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Price (৳)</label>
+                    <input type="number" data-k="price" value="{{ f.price }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Sale price (৳)</label>
+                    <input type="number" data-k="sale" value="{{ f.sale }}" onChange="{{ edit }}" placeholder="Optional" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Cost price (৳)</label>
+                    <input type="number" data-k="cost" value="{{ f.cost }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Stock</label>
+                    <input type="number" data-k="stock" value="{{ f.stock }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                </div>
+                <div style="margin-top:14px;border:1px solid #DCE9B4;background:#EFF5DC;border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+                  <div>
+                    <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:#4F6B0B;text-transform:uppercase">Profit per unit</div>
+                    <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px;margin-top:2px;color:{{ profitC }}">৳{{ profitF }}</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:#4F6B0B;text-transform:uppercase">Margin</div>
+                    <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px;margin-top:2px;color:{{ profitC }}">{{ marginF }}</div>
+                  </div>
+                </div>
+                <div style="font-size:11.5px;color:#8A8D80;margin-top:8px;line-height:1.5">Calculated from {{ effLabel }} minus cost — updates as you type.</div>
+              </section>
+
+              <section data-screen-label="Merchandising" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Merchandising</h2>
+                <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:14px">
+                  <sc-for list="{{ merch }}" as="mm" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                      <div>
+                        <div style="font-size:13px;font-weight:600">{{ mm.label }}</div>
+                        <div style="font-size:11.5px;color:#8A8D80">{{ mm.hint }}</div>
+                      </div>
+                      <button data-k="{{ mm.k }}" onClick="{{ tgl }}" aria-label="{{ mm.label }}" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ mm.bg }};transition:background .18s;flex:none;box-sizing:border-box">
+                        <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ mm.tx }};transition:transform .18s"></span>
+                      </button>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+
+              <section data-screen-label="Pre-order" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                  <div>
+                    <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Pre-order</h2>
+                    <p style="margin:4px 0 0;font-size:11.5px;color:#8A8D80">Sell before the batch lands</p>
+                  </div>
+                  <button data-k="preorder" onClick="{{ tgl }}" aria-label="Pre-order" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ preBg }};transition:background .18s;flex:none;box-sizing:border-box">
+                    <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ preTx }};transition:transform .18s"></span>
+                  </button>
+                </div>
+                <sc-if value="{{ f.preorder }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px">
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Start date</label>
+                      <input type="date" data-k="preStart" value="{{ f.preStart }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">End date <span style="color:#8A8D80;font-weight:500">(optional)</span></label>
+                      <input type="date" data-k="preEnd" value="{{ f.preEnd }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                    </div>
+                  </div>
+                </sc-if>
+              </section>
+
+              <section data-screen-label="Payment options" style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Payment options</h2>
+                <p style="margin:4px 0 0;font-size:11.5px;color:#8A8D80">Which checkout methods this product allows.</p>
+                <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:14px">
+                  <sc-for list="{{ pays }}" as="pp" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                      <span style="font-size:13px;font-weight:600">{{ pp.label }}</span>
+                      <button data-k="{{ pp.k }}" onClick="{{ tgl }}" aria-label="{{ pp.label }}" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ pp.bg }};transition:background .18s;flex:none;box-sizing:border-box">
+                        <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ pp.tx }};transition:transform .18s"></span>
+                      </button>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{ anySel }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Bulk actions bar" style="position:fixed;z-index:60;{{ bulkPos }};background:rgba(13,15,7,0.94);border:1px solid rgba(255,255,255,0.16);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-radius:22px;box-shadow:0 10px 30px rgba(16,18,8,0.45);display:flex;align-items:center;gap:12px;padding:10px 10px 10px 18px;box-sizing:border-box;animation:toastIn .25s ease-out;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:9px;color:#DDDFD2;font-size:13px;font-weight:600;white-space:nowrap">
+        <span style="min-width:22px;height:22px;border-radius:99px;background:#A8CD2F;color:#101208;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11.5px;padding:0 6px;box-sizing:border-box">{{ selCount }}</span>
+        selected
+      </span>
+      <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
+        <button data-st="Active" onClick="{{ bulkStatus }}" style="height:38px;padding:0 14px;border-radius:99px;border:1px solid rgba(255,255,255,0.25);background:none;color:#ffffff;font-weight:600;font-size:12.5px;cursor:pointer" style-hover="background:rgba(255,255,255,0.1)">Set active</button>
+        <button data-st="Draft" onClick="{{ bulkStatus }}" style="height:38px;padding:0 14px;border-radius:99px;border:1px solid rgba(255,255,255,0.25);background:none;color:#ffffff;font-weight:600;font-size:12.5px;cursor:pointer" style-hover="background:rgba(255,255,255,0.1)">Set draft</button>
+        <button onClick="{{ clearSel }}" style="height:38px;padding:0 14px;border-radius:99px;border:1px solid rgba(255,255,255,0.25);background:none;color:#ffffff;font-weight:600;font-size:12.5px;cursor:pointer" style-hover="background:rgba(255,255,255,0.1)">Clear</button>
+        <button onClick="{{ deleteSel }}" style="display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 16px;border-radius:99px;border:none;background:#E5484D;color:#ffffff;font-family:Archivo,sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;transition:background .15s" style-hover="background:#F16A6E">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"></path></svg>
+          Delete
+        </button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Unsaved changes bar" style="position:fixed;z-index:60;{{ bulkPos }};background:rgba(13,15,7,0.94);border:1px solid rgba(255,255,255,0.16);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-radius:22px;box-shadow:0 10px 30px rgba(16,18,8,0.45);display:flex;align-items:center;gap:14px;padding:10px 10px 10px 18px;animation:toastIn .25s ease-out;box-sizing:border-box">
+      <span style="display:flex;align-items:center;gap:9px;color:#DDDFD2;font-size:13px;font-weight:600;white-space:nowrap">
+        <span style="width:8px;height:8px;border-radius:50%;background:#C9E469;flex:none"></span>
+        {{ dirtyLabel }}
+      </span>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button onClick="{{ discard }}" style="height:38px;padding:0 16px;border-radius:99px;border:1px solid rgba(255,255,255,0.25);background:none;color:#ffffff;font-weight:600;font-size:13px;cursor:pointer" style-hover="background:rgba(255,255,255,0.1)">Discard</button>
+        <button onClick="{{ save }}" style="height:38px;padding:0 18px;border-radius:99px;border:none;background:#A8CD2F;color:#101208;font-family:Archivo,sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:background .15s" style-hover="background:#B9DC4B">{{ saveLabel }}</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastMsg }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Toast" style="position:fixed;z-index:95;{{ toastPos }};display:flex;align-items:center;gap:10px;background:rgba(13,15,7,0.94);color:#ffffff;border:1px solid rgba(255,255,255,0.16);border-radius:99px;padding:10px 18px 10px 11px;box-shadow:0 10px 30px rgba(16,18,8,0.35);animation:toastIn .22s ease-out;font-size:13.5px;font-weight:600;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)">
+      <span style="width:26px;height:26px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;flex:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      </span>
+      {{ toastMsg }}
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{ &quot;storeName&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;DiecastBD&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Brand&quot; } }">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const P = (sku, title, brand, price, cost, stock, status, sale) => ({ sku, title, brand, price, cost, stock, status, sale: sale || '', category: brand === 'Accessories' ? 'Accessories' : 'Diecast Cars', series: '', model: '', manufacturer: '', scale: '1:64', material: 'Diecast metal', color: '', desc: '', featured: false, hero: false, newArrival: false, preorder: false, preStart: '', preEnd: '', payCOD: true, payDCO: false, payPartial: false, payFull: true });
+    this.products = [
+      P('ACC-003', 'Card Protector — Top-Open Gen-2 Shell (per piece)', 'Accessories', 200, 70, 10, 'Active'),
+      P('ACC-002', 'Card Protector — Folding PVC Display Case (per piece)', 'Accessories', 220, 79, 10, 'Active'),
+      P('ACC-001', 'Card Protector — Folding Blister Case for Carded Diecast (per piece)', 'Accessories', 200, 68, 12, 'Active'),
+      P('MGT-1106', 'MINI GT #1106 Mazda RX-7 RE Amemiya — Silver (Blister Card)', 'MINI GT', 2440, 1553, 1, 'Active'),
+      P('MGT-TS01', 'MINI GT Toyota Supra A80 Top Secret GT-300 — Red', 'MINI GT', 2590, 1765, 2, 'Active'),
+      P('MGT-1094', 'MINI GT #1094 Toyota Supra (A80) VeilSide Combat — Red', 'MINI GT', 2390, 1577, 1, 'Active'),
+      P('MGT-1022', 'MINI GT #1022 Nissan Silvia S15 LB Super Silhouette', 'MINI GT', 2190, 1547, 1, 'Active'),
+      P('MGT-1046', 'MINI GT #1046 Mazda RX-7 (FD3S) RE Amemiya 20B — Blue', 'MINI GT', 2250, 1582, 1, 'Active'),
+      P('HWFF-005', 'Hot Wheels Fast & Furious — 2021 Toyota GR Supra', 'Hot Wheels Premium', 1490, 909, 1, 'Active'),
+      P('HWFF-004', 'Hot Wheels Fast & Furious — Honda Civic EG, Yellow (Race-Off)', 'Hot Wheels Premium', 1200, 625, 1, 'Active', 1100),
+      P('HWFF-003', 'Hot Wheels Fast & Furious — Mercedes-Benz 500 SEL', 'Hot Wheels Premium', 1350, 929, 1, 'Active'),
+      P('HWCC-013', "Hot Wheels Car Culture — '70 Chevy Nova Custom (Aero Styles)", 'Hot Wheels Premium', 1890, 1120, 0, 'Draft')
+    ];
+    this.blank = () => P('', '', 'Select a brand', 0, 0, 0, 'Draft');
+    this.state = {
+      view: 'list', q: '', filter: 'All', sel: [], f: this.blank(), editSku: null, dirty: false, toastMsg: null, navOpen: false, page: 1,
+      m: typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : false
+    };
+    this.setQ = (e) => this.setState({ q: e.target.value, page: 1 });
+    this.setFilter = (e) => this.setState({ filter: e.currentTarget.dataset.id, page: 1 });
+    this.goPage = (e) => { this.setState({ page: +e.currentTarget.dataset.p }); window.scrollTo({ top: 0 }); };
+    this.prevPage = () => { if (this.state.page > 1) { this.setState({ page: this.state.page - 1 }); window.scrollTo({ top: 0 }); } };
+    this.nextPage = () => { if (this.state.page < this.pages) { this.setState({ page: this.state.page + 1 }); window.scrollTo({ top: 0 }); } };
+    this.newProduct = () => { this.setState({ view: 'form', editSku: null, f: this.blank(), dirty: false }); window.scrollTo({ top: 0 }); };
+    this.editProduct = (e) => {
+      const p = this.products.find((x) => x.sku === e.currentTarget.dataset.id);
+      this.setState({ view: 'form', editSku: p.sku, f: JSON.parse(JSON.stringify(p)), dirty: false });
+      window.scrollTo({ top: 0 });
+    };
+    this.backToList = () => { this.setState({ view: 'list', dirty: false }); window.scrollTo({ top: 0 }); };
+    this.edit = (e) => { const f = { ...this.state.f, [e.target.dataset.k]: e.target.value }; this.setState({ f, dirty: true }); };
+    this.tgl = (e) => { const k = e.currentTarget.dataset.k; const f = { ...this.state.f, [k]: !this.state.f[k] }; this.setState({ f, dirty: true }); };
+    this.genSku = () => {
+      const pre = { 'Hot Wheels Premium': 'HWP', 'MINI GT': 'MGT', 'Accessories': 'ACC' }[this.state.f.brand] || 'SKU';
+      const n = Math.max(0, ...this.products.filter((p) => p.sku.startsWith(pre)).map((p) => parseInt(p.sku.split('-')[1], 10) || 0)) + 1;
+      this.setState({ f: { ...this.state.f, sku: pre + '-' + String(n).padStart(3, '0') }, dirty: true });
+    };
+    this.save = () => {
+      const f = this.state.f;
+      if (!f.title.trim() || !f.sku.trim()) { this.showToast('Add a title and SKU before saving'); return; }
+      f.price = +f.price || 0; f.cost = +f.cost || 0; f.stock = +f.stock || 0;
+      if (this.state.editSku) {
+        const i = this.products.findIndex((p) => p.sku === this.state.editSku);
+        this.products[i] = JSON.parse(JSON.stringify(f));
+        this.showToast('Product saved');
+      } else {
+        this.products.unshift(JSON.parse(JSON.stringify(f)));
+        this.showToast('Product created');
+      }
+      this.setState({ view: 'list', dirty: false, editSku: null });
+      window.scrollTo({ top: 0 });
+    };
+    this.discard = () => {
+      if (this.state.editSku) {
+        const p = this.products.find((x) => x.sku === this.state.editSku);
+        this.setState({ f: JSON.parse(JSON.stringify(p)), dirty: false });
+      } else this.setState({ f: this.blank(), dirty: false });
+      this.showToast('Changes discarded');
+    };
+    this.toggleSel = (e) => {
+      e.stopPropagation();
+      const id = e.currentTarget.dataset.id;
+      const sel = this.state.sel.includes(id) ? this.state.sel.filter((x) => x !== id) : [...this.state.sel, id];
+      this.setState({ sel });
+    };
+    this.toggleAll = () => {
+      const vis = this.visibleIds();
+      const all = vis.every((id) => this.state.sel.includes(id));
+      this.setState({ sel: all ? [] : vis });
+    };
+    this.clearSel = () => this.setState({ sel: [] });
+    this.deleteSel = () => {
+      const n = this.state.sel.length;
+      this.products = this.products.filter((p) => !this.state.sel.includes(p.sku));
+      this.setState({ sel: [] });
+      this.showToast(n === 1 ? 'Product deleted' : n + ' products deleted');
+    };
+    this.bulkStatus = (e) => {
+      const st = e.currentTarget.dataset.st;
+      this.products.forEach((p) => { if (this.state.sel.includes(p.sku)) p.status = st; });
+      const n = this.state.sel.length;
+      this.setState({ sel: [] });
+      this.showToast(n + (n === 1 ? ' product' : ' products') + ' set to ' + st.toLowerCase());
+    };
+    this.navClick = (e) => {
+      const id = e.currentTarget.dataset.id;
+      const links = { dashboard: './Admin Dashboard.dc.html', orders: './Admin Orders.dc.html', inventory: './Admin Inventory.dc.html', settings: './Admin Settings.dc.html' };
+      if (links[id]) { window.location.href = links[id]; return; }
+      if (id === 'products') { this.setState({ view: 'list', navOpen: false }); return; }
+      const P2 = { brands: 'Brands', categories: 'Categories', customers: 'Customers', coupons: 'Coupons', newsletter: 'Newsletter', reports: 'Reports', pages: 'Pages' };
+      if (P2[id]) { window.location.href = './Admin ' + P2[id] + '.dc.html'; return; }
+      this.showToast(id.charAt(0).toUpperCase() + id.slice(1) + " isn't part of this prototype");
+    };
+    this.openNav = () => this.setState({ navOpen: true });
+    this.closeNav = () => this.setState({ navOpen: false });
+  }
+  componentDidMount() {
+    this.mq = window.matchMedia('(max-width: 767px)');
+    this.onMq = (e) => this.setState({ m: e.matches });
+    this.mq.addEventListener('change', this.onMq);
+  }
+  componentWillUnmount() {
+    if (this.mq) this.mq.removeEventListener('change', this.onMq);
+    clearTimeout(this.tt);
+  }
+  visibleIds() {
+    const { q, filter, page } = this.state;
+    const ql = q.trim().toLowerCase();
+    const all = this.products
+      .filter((p) => filter === 'All' || (filter === 'Low stock' ? p.stock <= 2 : p.status === filter))
+      .filter((p) => !ql || (p.sku + ' ' + p.title + ' ' + p.brand).toLowerCase().includes(ql));
+    const pg = Math.min(page, Math.max(1, Math.ceil(all.length / 10)));
+    return all.slice((pg - 1) * 10, pg * 10).map((p) => p.sku);
+  }
+  showToast(msg) {
+    clearTimeout(this.tt);
+    this.setState({ toastMsg: msg });
+    this.tt = setTimeout(() => this.setState({ toastMsg: null }), 2400);
+  }
+  renderVals() {
+    const { m, view, q, filter, sel, f, editSku, dirty, toastMsg, navOpen } = this.state;
+    const dm = !m;
+    const fmt = (n) => (+n || 0).toLocaleString('en-US');
+    const S = { Active: ['#4F6B0B', '#EFF5DC'], Draft: ['#B45309', '#FDF3E7'], Archived: ['#8A8D80', '#F1F2EA'] };
+    const NO = { cx: 0, cy: 0, r: 0 };
+    const navDefs = [
+      { id: 'dashboard', label: 'Dashboard', d: 'M3 3h8v8H3zM13 3h8v5h-8zM13 12h8v9h-8zM3 15h8v6H3z', ...NO },
+      { id: 'orders', label: 'Orders', d: 'M9 4h6v3H9zM9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2M9 12h6M9 16h4', ...NO },
+      { id: 'products', label: 'Products', d: 'M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v9', ...NO },
+      { id: 'inventory', label: 'Inventory', d: 'M3 4h18v4H3zM5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M9 12h6', ...NO },
+      { id: 'brands', label: 'Brands', d: 'M8 14l-1.5 7L12 18l5.5 3L16 14M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12z', ...NO },
+      { id: 'categories', label: 'Categories', d: 'M12 2H2v10l9.3 9.3a1 1 0 0 0 1.4 0l8.6-8.6a1 1 0 0 0 0-1.4zM7 7h.01', ...NO },
+      { id: 'customers', label: 'Customers', d: 'M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8', cx: 9, cy: 7, r: 4 },
+      { id: 'coupons', label: 'Coupons', d: 'M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a2 2 0 0 0 0 6v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-6zM13 5v2M13 11v2M13 17v2', ...NO },
+      { id: 'newsletter', label: 'Newsletter', d: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6', ...NO },
+      { id: 'reports', label: 'Reports', d: 'M3 3v18h18M8 17V9M13 17V5M18 17v-7', ...NO },
+      { id: 'pages', label: 'Pages', d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 2v6h6', ...NO },
+      { id: 'settings', label: 'Settings', d: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6', ...NO }
+    ];
+    const navItems = navDefs.map((n) => {
+      const active = n.id === 'products';
+      return { ...n, bg: active ? '#EFF5DC' : 'transparent', color: active ? '#101208' : '#3A3D33', ic: active ? '#4F6B0B' : '#8A8D80' };
+    });
+    const filterDefs = ['All', 'Active', 'Draft', 'Low stock'];
+    const filters = filterDefs.map((id) => {
+      const a = id === filter;
+      return { id, label: id, bg: a ? '#101208' : '#ffffff', color: a ? '#ffffff' : '#3A3D33', bd: a ? '#101208' : '#E7E8E0' };
+    });
+    const ql = q.trim().toLowerCase();
+    const filtered = this.products
+      .filter((p) => filter === 'All' || (filter === 'Low stock' ? p.stock <= 2 : p.status === filter))
+      .filter((p) => !ql || (p.sku + ' ' + p.title + ' ' + p.brand).toLowerCase().includes(ql));
+    const pageSize = 10;
+    this.pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const page = Math.min(this.state.page, this.pages);
+    const list = filtered.slice((page - 1) * pageSize, page * pageSize)
+      .map((p) => {
+        const eff = +p.sale || +p.price;
+        const profit = eff - p.cost;
+        const selected = sel.includes(p.sku);
+        return { ...p, selected, priceF: fmt(p.price), saleF: p.sale ? fmt(p.sale) : null, costF: fmt(p.cost), profitF: fmt(profit),
+          marginF: eff ? Math.round((profit / eff) * 100) + '%' : '—',
+          stC: p.stock === 0 ? '#B3261E' : p.stock <= 2 ? '#B45309' : '#101208',
+          sc: S[p.status][0], sbg: S[p.status][1],
+          cbBd: selected ? '#A8CD2F' : '#DEDFD6', cbBg: selected ? '#A8CD2F' : '#ffffff', rowBg: selected ? '#FBFDF3' : 'transparent' };
+      });
+    const visIds = list.map((x) => x.sku);
+    const selCount = sel.length;
+    const allSel = visIds.length > 0 && visIds.every((id) => sel.includes(id));
+    const T = (v) => ({ bg: v ? '#A8CD2F' : '#DEDFD6', tx: v ? 'translateX(16px)' : 'none' });
+    const eff = +f.sale || +f.price || 0;
+    const profit = eff - (+f.cost || 0);
+    const low = this.products.filter((p) => p.stock <= 2 && p.status === 'Active').length;
+    return {
+      m, dm, toastMsg, navOpen, drawerOpen: m && navOpen, navItems,
+      storeName: this.props.storeName ?? 'DiecastBD',
+      isList: view === 'list', isForm: view === 'form', isEdit: !!editSku,
+      formTitle: editSku ? 'Edit product' : 'New product',
+      q, filters, list, emptyList: view === 'list' && list.length === 0,
+      countLabel: this.products.length + ' products · ' + low + ' low stock',
+      f, dirty: view === 'form' && dirty,
+      dirtyLabel: editSku ? 'Unsaved changes' : 'New product — not saved yet',
+      saveLabel: editSku ? 'Save product' : 'Create product',
+      profitF: fmt(profit), marginF: eff ? Math.round((profit / eff) * 100) + '%' : '—',
+      profitC: profit < 0 ? '#B3261E' : '#101208',
+      effLabel: +f.sale ? 'the sale price' : 'the price',
+      merch: [
+        { k: 'featured', label: 'Featured', hint: 'Shows in the homepage Featured row', ...T(f.featured) },
+        { k: 'hero', label: 'Hero product', hint: 'Eligible for the hero highlight card', ...T(f.hero) },
+        { k: 'newArrival', label: 'New arrival', hint: 'Badged and listed under New Arrivals', ...T(f.newArrival) }
+      ],
+      preBg: T(f.preorder).bg, preTx: T(f.preorder).tx,
+      pays: [
+        { k: 'payCOD', label: 'Cash on Delivery', ...T(f.payCOD) },
+        { k: 'payDCO', label: 'Delivery Charge Only', ...T(f.payDCO) },
+        { k: 'payPartial', label: 'Partial Advance Payment', ...T(f.payPartial) },
+        { k: 'payFull', label: 'Full Payment', ...T(f.payFull) }
+      ],
+      anySel: view === 'list' && selCount > 0, selCount,
+      allBd: selCount > 0 ? '#A8CD2F' : '#DEDFD6', allBg: selCount > 0 ? '#A8CD2F' : '#ffffff',
+      allIcon: allSel ? 'M20 6L9 17l-5-5' : 'M5 12h14',
+      showPager: view === 'list' && filtered.length > 0,
+      pageInfo: 'Showing ' + ((page - 1) * pageSize + 1) + '–' + Math.min(page * pageSize, filtered.length) + ' of ' + filtered.length,
+      pageBtns: Array.from({ length: this.pages }, (_, i) => {
+        const nb = i + 1, a = nb === page;
+        return { n: nb, bg: a ? '#101208' : '#ffffff', c: a ? '#ffffff' : '#3A3D33', bd: a ? '#101208' : '#E7E8E0' };
+      }),
+      prevC: page > 1 ? '#101208' : '#DEDFD6', nextC: page < this.pages ? '#101208' : '#DEDFD6',
+      goPage: this.goPage, prevPage: this.prevPage, nextPage: this.nextPage,
+      mainStyle: m ? 'padding:70px 16px 130px' : 'padding:34px 40px 120px 272px',
+      twoCol: m ? 'display:grid;grid-template-columns:minmax(0,1fr);gap:18px' : 'display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:start',
+      h1fs: m ? '24px' : '30px', h1fsD: m ? '20px' : '26px',
+      bulkPos: m ? 'left:12px;right:12px;bottom:12px' : 'left:50%;bottom:16px;transform:translateX(-50%);min-width:520px',
+      toastPos: m ? 'left:50%;transform:translateX(-50%);bottom:78px;white-space:nowrap' : 'right:24px;bottom:24px',
+      setQ: this.setQ, setFilter: this.setFilter, newProduct: this.newProduct, editProduct: this.editProduct,
+      backToList: this.backToList, edit: this.edit, tgl: this.tgl, genSku: this.genSku, save: this.save, discard: this.discard,
+      toggleSel: this.toggleSel, toggleAll: this.toggleAll, clearSel: this.clearSel, deleteSel: this.deleteSel, bulkStatus: this.bulkStatus,
+      navClick: this.navClick, openNav: this.openNav, closeNav: this.closeNav
+    };
+  }
+}
+</script>
+</body>
+</html>

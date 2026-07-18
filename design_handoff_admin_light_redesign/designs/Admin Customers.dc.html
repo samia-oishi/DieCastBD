@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400..900;1,400..900&amp;family=Instrument+Sans:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#FAFAF7;}
+body{font-family:'Instrument Sans',sans-serif;color:#101208;-webkit-font-smoothing:antialiased;}
+a{color:#4F6B0B;text-decoration:none;}
+a:hover{color:#5F7A10;}
+input,textarea,select,button{font-family:inherit;}
+input::placeholder,textarea::placeholder{color:#8A8D80;}
+*:focus-visible{outline:2px solid #A8CD2F;outline-offset:2px;}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes drawerIn{from{transform:translateX(-100%);}to{transform:translateX(0);}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#FAFAF7">
+
+  <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+    <aside data-screen-label="Admin sidebar" style="position:fixed;top:0;left:0;bottom:0;width:232px;background:#ffffff;border-right:1px solid #E7E8E0;display:flex;flex-direction:column;z-index:40;box-sizing:border-box">
+      <div style="padding:22px 20px 16px;display:flex;align-items:center;gap:8px">
+        <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.02em">{{ storeName }}<span style="color:#A8CD2F">.</span></div>
+        <span style="font-size:9.5px;font-weight:700;letter-spacing:0.08em;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:3px 8px">ADMIN</span>
+      </div>
+      <nav style="flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="12">
+          <button data-id="{{ it.id }}" onClick="{{ navClick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:9px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;transition:background .15s" style-hover="background:#F1F2EA">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+            {{ it.label }}
+          </button>
+        </sc-for>
+      </nav>
+      <div style="padding:14px;border-top:1px solid #EFEFE9;display:grid;gap:10px">
+        <a href="#" style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3A3D33;padding:6px 8px;border-radius:8px" style-hover="background:#F1F2EA">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"></path></svg>
+          Back to store
+        </a>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 8px 4px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:700;font-size:11.5px;flex:none">DB</div>
+          <div style="min-width:0">
+            <div style="font-size:12.5px;font-weight:600">Admin</div>
+            <div style="font-size:11px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">diecastbd.official@gmail.com</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <sc-if value="{{ m }}" hint-placeholder-val="{{ false }}">
+    <header style="position:fixed;top:0;left:0;right:0;z-index:50;height:56px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(250,250,247,0.75);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid #E7E8E0;box-sizing:border-box">
+      <button onClick="{{ openNav }}" aria-label="Open menu" style="width:44px;height:44px;border:none;background:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#101208" style-hover="background:#F1F2EA">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+      </button>
+      <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:17px;letter-spacing:-0.01em">Customers</div>
+      <div style="margin-left:auto;width:32px;height:32px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:700;font-size:11.5px">DB</div>
+    </header>
+  </sc-if>
+
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeNav }}" style="position:fixed;inset:0;background:rgba(16,18,8,0.5);backdrop-filter:blur(4px);z-index:80;animation:fadeIn .2s ease-out"></div>
+    <aside style="position:fixed;top:0;left:0;bottom:0;width:280px;background:#ffffff;z-index:81;animation:drawerIn .22s ease-out;display:flex;flex-direction:column;border-radius:0 24px 24px 0;overflow:hidden;box-shadow:0 12px 40px rgba(16,18,8,0.25)">
+      <div style="padding:18px 18px 12px;display:flex;align-items:center;gap:8px">
+        <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px">{{ storeName }}<span style="color:#A8CD2F">.</span></div>
+        <span style="font-size:9.5px;font-weight:700;letter-spacing:0.08em;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:3px 8px">ADMIN</span>
+        <button onClick="{{ closeNav }}" aria-label="Close menu" style="margin-left:auto;width:40px;height:40px;border:none;background:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3A3D33" style-hover="background:#F1F2EA">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <nav style="flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="12">
+          <button data-id="{{ it.id }}" onClick="{{ navClick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:11px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:14px;font-weight:600;cursor:pointer;text-align:left" style-hover="background:#F1F2EA">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+            {{ it.label }}
+          </button>
+        </sc-for>
+      </nav>
+    </aside>
+  </sc-if>
+
+  <main style="{{ mainStyle }}">
+    <div style="max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:18px">
+
+      <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+        <div data-screen-label="Customers list" style="display:grid;grid-template-columns:minmax(0,1fr);gap:18px">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8A8D80;text-transform:uppercase;margin-bottom:6px">{{ countLabel }}</div>
+              <h1 style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:{{ h1fs }};letter-spacing:-0.015em;line-height:1.1">Customers</h1>
+            </div>
+            <div style="position:relative;flex:1;max-width:340px;min-width:220px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+              <input value="{{ q }}" onChange="{{ setQ }}" placeholder="Search name, email, phone…" style="width:100%;height:44px;padding:0 14px 0 38px;border:1px solid #E7E8E0;border-radius:99px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+              <button data-id="{{ f.id }}" onClick="{{ setFilter }}" style="flex:none;height:36px;padding:0 14px;border-radius:99px;border:1px solid {{ f.bd }};background:{{ f.bg }};color:{{ f.color }};font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ f.label }}</button>
+            </sc-for>
+          </div>
+          <section style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+            <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:minmax(170px,1.3fr) minmax(180px,1.3fr) 92px 74px 96px 80px 26px;gap:10px;align-items:center;padding:9px 20px;border-bottom:1px solid #EFEFE9;font-size:10px;font-weight:700;letter-spacing:0.07em;color:#8A8D80;text-transform:uppercase;min-width:860px;box-sizing:border-box">
+                <span>Name</span><span>Email</span><span>Joined</span><span style="text-align:right">Orders</span><span style="text-align:right">Spent</span><span>Role</span><span></span>
+              </div>
+            </sc-if>
+            <sc-for list="{{ list }}" as="c" hint-placeholder-count="10">
+              <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+                <button data-id="{{ c.id }}" onClick="{{ openC }}" style="width:100%;display:grid;grid-template-columns:minmax(170px,1.3fr) minmax(180px,1.3fr) 92px 74px 96px 80px 26px;gap:10px;align-items:center;padding:8px 20px;border:none;border-bottom:1px solid #EFEFE9;background:none;cursor:pointer;text-align:left;transition:background .12s;min-width:860px;box-sizing:border-box" style-hover="background:#FCFCF9">
+                  <span style="min-width:0;display:flex;align-items:center;gap:8px">
+                    <span style="font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.name }}</span>
+                    <sc-if value="{{ c.guest }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:9.5px;font-weight:700;color:#6B6E60;background:#F1F2EA;border-radius:99px;padding:2px 8px">Guest</span></sc-if>
+                  </span>
+                  <span style="font-size:12px;color:#6B6E60;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.emailD }}</span>
+                  <span style="font-size:12px;color:#6B6E60">{{ c.joined }}</span>
+                  <span style="text-align:right;font-size:12.5px;font-weight:700">{{ c.orders }}</span>
+                  <span style="text-align:right;font-size:12.5px;font-weight:700">৳{{ c.spentF }}</span>
+                  <span><span style="font-size:10px;font-weight:700;color:{{ c.rc }};background:{{ c.rbg }};border-radius:99px;padding:3px 9px">{{ c.roleL }}</span></span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+                </button>
+              </sc-if>
+              <sc-if value="{{ m }}" hint-placeholder-val="{{ false }}">
+                <button data-id="{{ c.id }}" onClick="{{ openC }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 16px;border:none;border-bottom:1px solid #EFEFE9;background:none;cursor:pointer;text-align:left">
+                  <span style="min-width:0;flex:1">
+                    <span style="display:flex;align-items:center;gap:7px">
+                      <span style="font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.name }}</span>
+                      <sc-if value="{{ c.guest }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:9px;font-weight:700;color:#6B6E60;background:#F1F2EA;border-radius:99px;padding:2px 7px">Guest</span></sc-if>
+                    </span>
+                    <span style="display:block;font-size:11px;color:#8A8D80;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.emailD }} · {{ c.joined }}</span>
+                  </span>
+                  <span style="text-align:right;flex:none">
+                    <span style="display:block;font-size:12.5px;font-weight:700">৳{{ c.spentF }}</span>
+                    <span style="display:block;font-size:10.5px;color:#8A8D80;margin-top:2px">{{ c.orders }} orders</span>
+                  </span>
+                </button>
+              </sc-if>
+            </sc-for>
+            <sc-if value="{{ emptyList }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:40px 20px;text-align:center;color:#8A8D80;font-size:13.5px">No customers match — try a different search or filter.</div>
+            </sc-if>
+          </section>
+          <sc-if value="{{ showPager }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <span style="font-size:12.5px;color:#8A8D80">{{ pageInfo }}</span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button onClick="{{ prevPage }}" aria-label="Previous page" style="width:36px;height:36px;border-radius:99px;border:1px solid #E7E8E0;background:#ffffff;cursor:pointer;color:{{ prevC }};display:flex;align-items:center;justify-content:center" style-hover="border-color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+                </button>
+                <sc-for list="{{ pageBtns }}" as="pb" hint-placeholder-count="2">
+                  <button data-p="{{ pb.n }}" onClick="{{ goPage }}" style="min-width:36px;height:36px;padding:0 6px;border-radius:99px;border:1px solid {{ pb.bd }};background:{{ pb.bg }};color:{{ pb.c }};font-size:12.5px;font-weight:700;cursor:pointer">{{ pb.n }}</button>
+                </sc-for>
+                <button onClick="{{ nextPage }}" aria-label="Next page" style="width:36px;height:36px;border-radius:99px;border:1px solid #E7E8E0;background:#ffffff;cursor:pointer;color:{{ nextC }};display:flex;align-items:center;justify-content:center" style-hover="border-color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+                </button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Customer detail" style="display:grid;grid-template-columns:minmax(0,1fr);gap:18px">
+          <div>
+            <button onClick="{{ backToList }}" style="display:inline-flex;align-items:center;gap:7px;border:none;background:none;color:#3A3D33;font-size:13px;font-weight:600;cursor:pointer;padding:8px 10px;border-radius:99px;margin-left:-10px" style-hover="background:#F1F2EA">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+              Back to customers
+            </button>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px">
+              <h1 style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:{{ h1fsD }};letter-spacing:-0.015em;line-height:1.1">{{ sc.name }}</h1>
+              <sc-if value="{{ sc.guest }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-weight:700;color:#6B6E60;background:#F1F2EA;border-radius:99px;padding:4px 10px">Guest checkout</span></sc-if>
+              <span style="font-size:10.5px;font-weight:700;color:{{ sc.rc }};background:{{ sc.rbg }};border-radius:99px;padding:4px 10px">{{ sc.roleL }}</span>
+            </div>
+            <p style="margin:8px 0 0;font-size:13px;color:#6B6E60">{{ sc.emailD }} · {{ sc.phoneD }} · Joined {{ sc.joinedFull }}</p>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+            <div style="background:#ffffff;border:1px solid #E7E8E0;border-radius:14px;padding:13px 16px">
+              <div style="font-size:11px;font-weight:600;color:#6B6E60">Orders</div>
+              <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:21px;margin-top:5px">{{ sc.orders }}</div>
+            </div>
+            <div style="background:#ffffff;border:1px solid #E7E8E0;border-radius:14px;padding:13px 16px">
+              <div style="font-size:11px;font-weight:600;color:#6B6E60">Lifetime spend</div>
+              <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:21px;margin-top:5px">৳{{ sc.spentF }}</div>
+            </div>
+            <div style="background:#ffffff;border:1px solid #E7E8E0;border-radius:14px;padding:13px 16px">
+              <div style="font-size:11px;font-weight:600;color:#6B6E60">Last order</div>
+              <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:21px;margin-top:5px">{{ sc.lastOrder }}</div>
+            </div>
+          </div>
+
+          <div style="{{ twoCol }}">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:18px;min-width:0">
+              <section style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Profile</h2>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:14px">
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Name</label>
+                    <input data-k="name" value="{{ f.name }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Phone</label>
+                    <input data-k="phone" value="{{ f.phone }}" onChange="{{ edit }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  </div>
+                </div>
+              </section>
+              <section style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                  <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Recent orders</h2>
+                  <a href="./Admin Orders.dc.html" style="font-size:12.5px;font-weight:700">View all orders</a>
+                </div>
+                <sc-if value="{{ noOrders }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:13px;color:#8A8D80;margin-top:12px">No orders yet.</div>
+                </sc-if>
+                <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin-top:14px">
+                  <sc-for list="{{ scOrders }}" as="o" hint-placeholder-count="2">
+                    <a href="./Admin Orders.dc.html" style="display:flex;align-items:center;gap:12px;border:1px solid #EFEFE9;border-radius:12px;padding:11px 14px;background:#FCFCF9;color:#101208" style-hover="border-color:#DEDFD6">
+                      <span style="min-width:0;flex:1">
+                        <span style="display:block;font-size:12.5px;font-weight:700;font-family:Archivo,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ o.id }}</span>
+                        <span style="display:block;font-size:11.5px;color:#8A8D80;margin-top:2px">{{ o.date }}</span>
+                      </span>
+                      <span style="font-size:13px;font-weight:700;flex:none">৳{{ o.totalF }}</span>
+                      <span style="flex:none;font-size:10px;font-weight:700;color:{{ o.sc }};background:{{ o.sbg }};border-radius:99px;padding:3px 9px">{{ o.status }}</span>
+                    </a>
+                  </sc-for>
+                </div>
+              </section>
+            </div>
+
+            <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-content:start;min-width:0">
+              <section style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                  <div>
+                    <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Account active</h2>
+                    <p style="margin:4px 0 0;font-size:11.5px;color:#8A8D80">Deactivating blocks this user from signing in.</p>
+                  </div>
+                  <button onClick="{{ tglActive }}" aria-label="Account active" style="width:40px;height:24px;border-radius:99px;border:none;cursor:pointer;padding:3px;background:{{ actBg }};transition:background .18s;flex:none;box-sizing:border-box">
+                    <span style="display:block;width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(16,18,8,0.25);transform:{{ actTx }};transition:transform .18s"></span>
+                  </button>
+                </div>
+              </section>
+              <section style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;padding:22px">
+                <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em">Role</h2>
+                <p style="margin:4px 0 0;font-size:11.5px;color:#8A8D80;line-height:1.5">Admins have full dashboard access. Staff can manage orders and catalog but not other users' roles.</p>
+                <select data-k="role" value="{{ f.role }}" onChange="{{ edit }}" style="width:100%;margin-top:12px;height:44px;padding:0 36px 0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 12px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                  <option>Customer</option><option>Staff</option><option>Admin</option>
+                </select>
+              </section>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;z-index:60;{{ barPos }};background:rgba(13,15,7,0.94);border:1px solid rgba(255,255,255,0.16);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-radius:22px;box-shadow:0 10px 30px rgba(16,18,8,0.45);display:flex;align-items:center;gap:14px;padding:10px 10px 10px 18px;animation:toastIn .25s ease-out;box-sizing:border-box">
+      <span style="display:flex;align-items:center;gap:9px;color:#DDDFD2;font-size:13px;font-weight:600;white-space:nowrap">
+        <span style="width:8px;height:8px;border-radius:50%;background:#C9E469;flex:none"></span>
+        Unsaved changes
+      </span>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button onClick="{{ discard }}" style="height:38px;padding:0 16px;border-radius:99px;border:1px solid rgba(255,255,255,0.25);background:none;color:#ffffff;font-weight:600;font-size:13px;cursor:pointer" style-hover="background:rgba(255,255,255,0.1)">Discard</button>
+        <button onClick="{{ save }}" style="height:38px;padding:0 18px;border-radius:99px;border:none;background:#A8CD2F;color:#101208;font-family:Archivo,sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:background .15s" style-hover="background:#B9DC4B">Save customer</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastMsg }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;z-index:95;{{ toastPos }};display:flex;align-items:center;gap:10px;background:rgba(13,15,7,0.94);color:#ffffff;border:1px solid rgba(255,255,255,0.16);border-radius:99px;padding:10px 18px 10px 11px;box-shadow:0 10px 30px rgba(16,18,8,0.35);animation:toastIn .22s ease-out;font-size:13.5px;font-weight:600;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)">
+      <span style="width:26px;height:26px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;flex:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      </span>
+      {{ toastMsg }}
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{ &quot;storeName&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;DiecastBD&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Brand&quot; } }">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let id = 0;
+    const C = (name, guest, email, phone, joined, role, orders, spent, ordersList) => ({ id: 'c' + (++id), name, guest, email, phone, joined, role, orders, spent, active: true, ordersList: ordersList || [] });
+    this.customers = [
+      C('tht', true, 'atiksabbir@gmail.com', '01798392494', 'Jul 15, 2026', 'Customer', 1, 258, [{ id: 'DBD-20260715-77A102', date: 'Jul 15, 2026', total: 258, status: 'Delivered' }]),
+      C('KM Rakib', true, 'kmr.rabbi@gmail.com', '', 'Jul 15, 2026', 'Customer', 1, 258, [{ id: 'DBD-20260715-31B990', date: 'Jul 15, 2026', total: 258, status: 'Delivered' }]),
+      C('Aymen Mohsni', false, 'aymen.mohsni97@gmail.com', '', 'Jul 14, 2026', 'Customer', 0, 0),
+      C('dsd', true, '', '', 'Jul 13, 2026', 'Customer', 0, 0),
+      C('DExTer Bhai', false, 'dexter.exe1@gmail.com', '', 'Jul 12, 2026', 'Customer', 1, 1550, [{ id: 'DBD-20260712-40D211', date: 'Jul 12, 2026', total: 1550, status: 'Delivered' }]),
+      C('Repay Tester', true, '', '', 'Jul 12, 2026', 'Customer', 1, 1310, [{ id: 'DBD-20260712-90C455', date: 'Jul 12, 2026', total: 1310, status: 'Cancelled' }]),
+      C('BuyNow Tester', true, '', '', 'Jul 12, 2026', 'Customer', 1, 2650, [{ id: 'DBD-20260712-18E730', date: 'Jul 12, 2026', total: 2650, status: 'Delivered' }]),
+      C('Test Buyer', true, '', '', 'Jul 12, 2026', 'Customer', 1, 2720, [{ id: 'DBD-20260712-55F204', date: 'Jul 12, 2026', total: 2720, status: 'Delivered' }]),
+      C('Bkash Retest5 Guest', true, '', '', 'Jul 10, 2026', 'Customer', 1, 1490, [{ id: 'DBD-20260710-12G881', date: 'Jul 10, 2026', total: 1490, status: 'Delivered' }]),
+      C('Bkash Retest4 Guest', true, '', '', 'Jul 10, 2026', 'Customer', 1, 1490, [{ id: 'DBD-20260710-09H502', date: 'Jul 10, 2026', total: 1490, status: 'Delivered' }]),
+      C('Bkash Retest Guest', true, '', '', 'Jul 10, 2026', 'Customer', 1, 1490, [{ id: 'DBD-20260710-73J110', date: 'Jul 10, 2026', total: 1490, status: 'Delivered' }]),
+      C('Cod Test Guest', true, '', '', 'Jul 10, 2026', 'Customer', 1, 2660, [{ id: 'DBD-20260710-88K420', date: 'Jul 10, 2026', total: 2660, status: 'Delivered' }]),
+      C('Customer Samia', true, '', '', 'Jul 10, 2026', 'Customer', 1, 1550, [{ id: 'DBD-20260718-39B226', date: 'Jul 18, 2026', total: 1550, status: 'Pending' }]),
+      C('Samia Alam Oishi', false, 'scribe.oishi@gmail.com', '', 'Jul 9, 2026', 'Customer', 2, 5340, [{ id: 'DBD-20260711-63L910', date: 'Jul 11, 2026', total: 2690, status: 'Delivered' }, { id: 'DBD-20260709-21M330', date: 'Jul 9, 2026', total: 2650, status: 'Delivered' }]),
+      C('diecastbd.official', false, 'diecastbd.official@gmail.com', '01560001776', 'Jul 9, 2026', 'Admin', 0, 0)
+    ];
+    this.state = {
+      view: 'list', selId: null, q: '', filter: 'All', page: 1,
+      f: { name: '', phone: '', role: 'Customer' }, dirty: false,
+      toastMsg: null, navOpen: false,
+      m: typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : false
+    };
+    this.setQ = (e) => this.setState({ q: e.target.value, page: 1 });
+    this.setFilter = (e) => this.setState({ filter: e.currentTarget.dataset.id, page: 1 });
+    this.goPage = (e) => { this.setState({ page: +e.currentTarget.dataset.p }); window.scrollTo({ top: 0 }); };
+    this.prevPage = () => { if (this.state.page > 1) { this.setState({ page: this.state.page - 1 }); window.scrollTo({ top: 0 }); } };
+    this.nextPage = () => { if (this.state.page < this.pages) { this.setState({ page: this.state.page + 1 }); window.scrollTo({ top: 0 }); } };
+    this.openC = (e) => {
+      const c = this.customers.find((x) => x.id === e.currentTarget.dataset.id);
+      this.setState({ view: 'detail', selId: c.id, f: { name: c.name, phone: c.phone, role: c.role }, dirty: false });
+      window.scrollTo({ top: 0 });
+    };
+    this.backToList = () => { this.setState({ view: 'list', dirty: false }); window.scrollTo({ top: 0 }); };
+    this.edit = (e) => this.setState({ f: { ...this.state.f, [e.target.dataset.k]: e.target.value }, dirty: true });
+    this.save = () => {
+      const c = this.customers.find((x) => x.id === this.state.selId);
+      Object.assign(c, this.state.f);
+      this.setState({ dirty: false });
+      this.showToast('Customer saved');
+    };
+    this.discard = () => {
+      const c = this.customers.find((x) => x.id === this.state.selId);
+      this.setState({ f: { name: c.name, phone: c.phone, role: c.role }, dirty: false });
+      this.showToast('Changes discarded');
+    };
+    this.tglActive = () => {
+      const c = this.customers.find((x) => x.id === this.state.selId);
+      c.active = !c.active;
+      this.forceUpdate();
+      this.showToast(c.active ? 'Account reactivated' : 'Account deactivated — sign-in blocked');
+    };
+    this.navClick = (e) => {
+      const id = e.currentTarget.dataset.id;
+      if (id === 'customers') { this.setState({ view: 'list', navOpen: false }); return; }
+      const L = { dashboard: 'Dashboard', orders: 'Orders', products: 'Products', inventory: 'Inventory', brands: 'Brands', categories: 'Categories', coupons: 'Coupons', newsletter: 'Newsletter', reports: 'Reports', pages: 'Pages', settings: 'Settings' };
+      window.location.href = './Admin ' + L[id] + '.dc.html';
+    };
+    this.openNav = () => this.setState({ navOpen: true });
+    this.closeNav = () => this.setState({ navOpen: false });
+  }
+  componentDidMount() {
+    this.mq = window.matchMedia('(max-width: 767px)');
+    this.onMq = (e) => this.setState({ m: e.matches });
+    this.mq.addEventListener('change', this.onMq);
+  }
+  componentWillUnmount() { if (this.mq) this.mq.removeEventListener('change', this.onMq); clearTimeout(this.tt); }
+  showToast(msg) { clearTimeout(this.tt); this.setState({ toastMsg: msg }); this.tt = setTimeout(() => this.setState({ toastMsg: null }), 2600); }
+  renderVals() {
+    const { m, view, q, filter, f, dirty, toastMsg, navOpen } = this.state;
+    const dm = !m;
+    const fmt = (n) => n.toLocaleString('en-US');
+    const NO = { cx: 0, cy: 0, r: 0 };
+    const navDefs = [
+      { id: 'dashboard', label: 'Dashboard', d: 'M3 3h8v8H3zM13 3h8v5h-8zM13 12h8v9h-8zM3 15h8v6H3z', ...NO },
+      { id: 'orders', label: 'Orders', d: 'M9 4h6v3H9zM9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2M9 12h6M9 16h4', ...NO },
+      { id: 'products', label: 'Products', d: 'M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v9', ...NO },
+      { id: 'inventory', label: 'Inventory', d: 'M3 4h18v4H3zM5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M9 12h6', ...NO },
+      { id: 'brands', label: 'Brands', d: 'M8 14l-1.5 7L12 18l5.5 3L16 14M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12z', ...NO },
+      { id: 'categories', label: 'Categories', d: 'M12 2H2v10l9.3 9.3a1 1 0 0 0 1.4 0l8.6-8.6a1 1 0 0 0 0-1.4zM7 7h.01', ...NO },
+      { id: 'customers', label: 'Customers', d: 'M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8', cx: 9, cy: 7, r: 4 },
+      { id: 'coupons', label: 'Coupons', d: 'M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a2 2 0 0 0 0 6v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-6zM13 5v2M13 11v2M13 17v2', ...NO },
+      { id: 'newsletter', label: 'Newsletter', d: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6', ...NO },
+      { id: 'reports', label: 'Reports', d: 'M3 3v18h18M8 17V9M13 17V5M18 17v-7', ...NO },
+      { id: 'pages', label: 'Pages', d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 2v6h6', ...NO },
+      { id: 'settings', label: 'Settings', d: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6', ...NO }
+    ];
+    const navItems = navDefs.map((n) => {
+      const active = n.id === 'customers';
+      return { ...n, bg: active ? '#EFF5DC' : 'transparent', color: active ? '#101208' : '#3A3D33', ic: active ? '#4F6B0B' : '#8A8D80' };
+    });
+    const R = { Customer: ['#3A3D33', '#F1F2EA'], Staff: ['#0E7490', '#E6F4F7'], Admin: ['#101208', '#C9E469'] };
+    const S = { Pending: ['#B45309', '#FDF3E7'], Delivered: ['#4F6B0B', '#EFF5DC'], Cancelled: ['#B3261E', '#F9E3E1'] };
+    const deco = (c) => ({ ...c, emailD: c.email || '—', phoneD: c.phone || 'no phone', spentF: fmt(c.spent),
+      roleL: c.role, rc: R[c.role][0], rbg: R[c.role][1],
+      joinedFull: c.joined,
+      lastOrder: c.ordersList.length ? c.ordersList[0].date.replace(', 2026', '') : '—' });
+    const filterDefs = ['All', 'Registered', 'Guests', 'Admins & staff'];
+    const filters = filterDefs.map((fd) => ({ id: fd, label: fd, bg: fd === filter ? '#101208' : '#ffffff', color: fd === filter ? '#ffffff' : '#3A3D33', bd: fd === filter ? '#101208' : '#E7E8E0' }));
+    const ql = q.trim().toLowerCase();
+    const filtered = this.customers
+      .filter((c) => filter === 'All' || (filter === 'Guests' ? c.guest : filter === 'Registered' ? !c.guest && c.role === 'Customer' : c.role !== 'Customer'))
+      .filter((c) => !ql || (c.name + ' ' + c.email + ' ' + c.phone).toLowerCase().includes(ql));
+    const pageSize = 10;
+    this.pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const page = Math.min(this.state.page, this.pages);
+    const list = filtered.slice((page - 1) * pageSize, page * pageSize).map(deco);
+    const sc0 = this.customers.find((x) => x.id === this.state.selId) || this.customers[0];
+    const sc = deco(sc0);
+    return {
+      m, dm, toastMsg, navOpen, drawerOpen: m && navOpen, navItems,
+      storeName: this.props.storeName ?? 'DiecastBD',
+      isList: view === 'list', isDetail: view === 'detail',
+      countLabel: this.customers.length + ' accounts · ' + this.customers.filter((c) => c.guest).length + ' guest checkouts',
+      q, filters, list, emptyList: view === 'list' && list.length === 0,
+      showPager: view === 'list' && filtered.length > 0,
+      pageInfo: 'Showing ' + ((page - 1) * pageSize + 1) + '–' + Math.min(page * pageSize, filtered.length) + ' of ' + filtered.length,
+      pageBtns: Array.from({ length: this.pages }, (_, i) => {
+        const nb = i + 1, a = nb === page;
+        return { n: nb, bg: a ? '#101208' : '#ffffff', c: a ? '#ffffff' : '#3A3D33', bd: a ? '#101208' : '#E7E8E0' };
+      }),
+      prevC: page > 1 ? '#101208' : '#DEDFD6', nextC: page < this.pages ? '#101208' : '#DEDFD6',
+      sc, f, dirty,
+      scOrders: sc0.ordersList.map((o) => ({ ...o, totalF: fmt(o.total), sc: S[o.status][0], sbg: S[o.status][1] })),
+      noOrders: sc0.ordersList.length === 0,
+      actBg: sc0.active ? '#A8CD2F' : '#DEDFD6', actTx: sc0.active ? 'translateX(16px)' : 'none',
+      mainStyle: m ? 'padding:70px 16px 130px' : 'padding:34px 40px 120px 272px',
+      twoCol: m ? 'display:grid;grid-template-columns:minmax(0,1fr);gap:18px' : 'display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start',
+      h1fs: m ? '24px' : '30px', h1fsD: m ? '21px' : '26px',
+      barPos: m ? 'left:12px;right:12px;bottom:12px' : 'left:50%;bottom:16px;transform:translateX(-50%);min-width:440px',
+      toastPos: m ? 'left:50%;transform:translateX(-50%);bottom:78px;white-space:nowrap' : 'right:24px;bottom:24px',
+      setQ: this.setQ, setFilter: this.setFilter, goPage: this.goPage, prevPage: this.prevPage, nextPage: this.nextPage,
+      openC: this.openC, backToList: this.backToList, edit: this.edit, save: this.save, discard: this.discard,
+      tglActive: this.tglActive, navClick: this.navClick, openNav: this.openNav, closeNav: this.closeNav
+    };
+  }
+}
+</script>
+</body>
+</html>

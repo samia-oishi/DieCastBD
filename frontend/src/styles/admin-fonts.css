@@ -1,5 +1,0 @@
-/* Geist Variable — used only under [data-theme="diecastbd-admin"] (see
-   index.css). Imported here instead of the global stylesheet so its woff2
-   files download only when /admin is visited, not for every storefront
-   visitor. Imported from AdminLayout.jsx, which is itself a lazy route chunk. */
-@import "@fontsource-variable/geist";

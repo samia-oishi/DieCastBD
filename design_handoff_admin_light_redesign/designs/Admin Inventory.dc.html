@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400..900;1,400..900&amp;family=Instrument+Sans:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#FAFAF7;}
+body{font-family:'Instrument Sans',sans-serif;color:#101208;-webkit-font-smoothing:antialiased;}
+a{color:#4F6B0B;text-decoration:none;}
+a:hover{color:#5F7A10;}
+input,textarea,select,button{font-family:inherit;}
+input::placeholder,textarea::placeholder{color:#8A8D80;}
+*:focus-visible{outline:2px solid #A8CD2F;outline-offset:2px;}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes drawerIn{from{transform:translateX(-100%);}to{transform:translateX(0);}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#FAFAF7">
+
+  <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+    <aside data-screen-label="Admin sidebar" style="position:fixed;top:0;left:0;bottom:0;width:232px;background:#ffffff;border-right:1px solid #E7E8E0;display:flex;flex-direction:column;z-index:40;box-sizing:border-box">
+      <div style="padding:22px 20px 16px;display:flex;align-items:center;gap:8px">
+        <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.02em">{{ storeName }}<span style="color:#A8CD2F">.</span></div>
+        <span style="font-size:9.5px;font-weight:700;letter-spacing:0.08em;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:3px 8px">ADMIN</span>
+      </div>
+      <nav style="flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="12">
+          <button data-id="{{ it.id }}" onClick="{{ navClick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:9px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;transition:background .15s" style-hover="background:#F1F2EA">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+            {{ it.label }}
+          </button>
+        </sc-for>
+      </nav>
+      <div style="padding:14px;border-top:1px solid #EFEFE9;display:grid;gap:10px">
+        <a href="#" style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3A3D33;padding:6px 8px;border-radius:8px" style-hover="background:#F1F2EA">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"></path></svg>
+          Back to store
+        </a>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 8px 4px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:700;font-size:11.5px;flex:none">DB</div>
+          <div style="min-width:0">
+            <div style="font-size:12.5px;font-weight:600">Admin</div>
+            <div style="font-size:11px;color:#8A8D80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">diecastbd.official@gmail.com</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <sc-if value="{{ m }}" hint-placeholder-val="{{ false }}">
+    <header data-screen-label="Mobile top bar" style="position:fixed;top:0;left:0;right:0;z-index:50;height:56px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(250,250,247,0.75);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid #E7E8E0;box-sizing:border-box">
+      <button onClick="{{ openNav }}" aria-label="Open menu" style="width:44px;height:44px;border:none;background:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#101208" style-hover="background:#F1F2EA">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+      </button>
+      <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:17px;letter-spacing:-0.01em">Inventory</div>
+      <div style="margin-left:auto;width:32px;height:32px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:700;font-size:11.5px">DB</div>
+    </header>
+  </sc-if>
+
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeNav }}" style="position:fixed;inset:0;background:rgba(16,18,8,0.5);backdrop-filter:blur(4px);z-index:80;animation:fadeIn .2s ease-out"></div>
+    <aside data-screen-label="Mobile nav drawer" style="position:fixed;top:0;left:0;bottom:0;width:280px;background:#ffffff;z-index:81;animation:drawerIn .22s ease-out;display:flex;flex-direction:column;border-radius:0 24px 24px 0;overflow:hidden;box-shadow:0 12px 40px rgba(16,18,8,0.25)">
+      <div style="padding:18px 18px 12px;display:flex;align-items:center;gap:8px">
+        <div style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px">{{ storeName }}<span style="color:#A8CD2F">.</span></div>
+        <span style="font-size:9.5px;font-weight:700;letter-spacing:0.08em;color:#4F6B0B;background:#EFF5DC;border:1px solid #DCE9B4;border-radius:99px;padding:3px 8px">ADMIN</span>
+        <button onClick="{{ closeNav }}" aria-label="Close menu" style="margin-left:auto;width:40px;height:40px;border:none;background:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3A3D33" style-hover="background:#F1F2EA">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <nav style="flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="12">
+          <button data-id="{{ it.id }}" onClick="{{ navClick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:11px 12px;border:none;border-radius:10px;background:{{ it.bg }};color:{{ it.color }};font-size:14px;font-weight:600;cursor:pointer;text-align:left" style-hover="background:#F1F2EA">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:{{ it.ic }}"><path d="{{ it.d }}"></path><circle cx="{{ it.cx }}" cy="{{ it.cy }}" r="{{ it.r }}"></circle></svg>
+            {{ it.label }}
+          </button>
+        </sc-for>
+      </nav>
+    </aside>
+  </sc-if>
+
+  <main style="{{ mainStyle }}">
+    <div style="max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:18px">
+
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8A8D80;text-transform:uppercase;margin-bottom:6px">{{ countLabel }}</div>
+          <h1 style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:{{ h1fs }};letter-spacing:-0.015em;line-height:1.1">Inventory</h1>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+          <div style="background:#ffffff;border:1px solid #E7E8E0;border-radius:14px;padding:13px 16px">
+            <div style="font-size:11px;font-weight:600;color:#6B6E60">{{ k.label }}</div>
+            <div style="display:flex;align-items:baseline;gap:7px;margin-top:5px">
+              <span style="font-family:Archivo,sans-serif;font-weight:800;font-size:21px;letter-spacing:-0.02em;color:{{ k.c }}">{{ k.value }}</span>
+              <span style="font-size:11px;color:#8A8D80">{{ k.sub }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="position:relative;flex:1;max-width:340px;min-width:200px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A8D80" stroke-width="2" stroke-linecap="round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+          <input value="{{ q }}" onChange="{{ setQ }}" placeholder="Search title or SKU…" style="width:100%;height:44px;padding:0 14px 0 38px;border:1px solid #E7E8E0;border-radius:99px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+        </div>
+        <button onClick="{{ tglLow }}" style="height:38px;padding:0 15px;border-radius:99px;border:1px solid {{ lowBd }};background:{{ lowBg }};color:{{ lowC }};font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap">
+          <span style="width:8px;height:8px;border-radius:50%;background:{{ lowDot }};flex:none"></span>
+          Low stock only (≤ 2 available)
+        </button>
+        <button onClick="{{ tglAlerts }}" style="height:38px;padding:0 15px;border-radius:99px;border:1px solid {{ alBd }};background:{{ alBg }};color:{{ alC }};font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          Has restock alerts
+        </button>
+      </div>
+
+      <section style="background:#ffffff;border:1px solid #E7E8E0;border-radius:18px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:40px minmax(200px,1fr) 92px 56px 76px 84px 64px 84px;gap:10px;align-items:center;padding:9px 20px;border-bottom:1px solid #EFEFE9;font-size:10px;font-weight:700;letter-spacing:0.07em;color:#8A8D80;text-transform:uppercase;min-width:900px;box-sizing:border-box">
+            <span></span><span>Title</span><span>SKU</span><span style="text-align:right">Stock</span><span style="text-align:right">Reserved</span><span style="text-align:right">Available</span><span>Alerts</span><span style="text-align:right">Actions</span>
+          </div>
+        </sc-if>
+        <sc-for list="{{ list }}" as="p" hint-placeholder-count="10">
+          <sc-if value="{{ dm }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:40px minmax(200px,1fr) 92px 56px 76px 84px 64px 84px;gap:10px;align-items:center;padding:6px 20px;border-bottom:1px solid #EFEFE9;min-width:900px;box-sizing:border-box;background:none;transition:background .12s">
+              <span style="width:32px;height:32px;border-radius:8px;background:#F1F2EA;border:1px solid #EFEFE9;display:flex;align-items:center;justify-content:center;color:#8A8D80">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3zM21 15l-5-5L5 21M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"></path></svg>
+              </span>
+              <span style="min-width:0;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ p.title }}">{{ p.title }}</span>
+              <span style="font-size:11px;font-weight:700;font-family:Archivo,sans-serif;color:#6B6E60;letter-spacing:0.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.sku }}</span>
+              <span style="text-align:right;font-size:12.5px;font-weight:700">{{ p.stock }}</span>
+              <span style="text-align:right;font-size:12.5px;color:#6B6E60">{{ p.reserved }}</span>
+              <span style="text-align:right;white-space:nowrap"><span style="font-size:12.5px;font-weight:700;color:{{ p.avC }}">{{ p.avail }}</span><sc-if value="{{ p.low }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:700;color:#B3261E;background:#F9E3E1;border-radius:99px;padding:2px 7px;margin-left:6px">{{ p.badge }}</span></sc-if></span>
+              <span>
+                <sc-if value="{{ p.hasAlerts }}" hint-placeholder-val="{{ false }}">
+                  <button data-id="{{ p.sku }}" onClick="{{ openAlerts }}" title="Restock alerts" style="display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:99px;border:1px solid #F2DFC7;background:#FDF3E7;color:#B45309;font-size:11px;font-weight:700;cursor:pointer">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    {{ p.alertN }}
+                  </button>
+                </sc-if>
+                <sc-if value="{{ p.noAlerts }}" hint-placeholder-val="{{ true }}"><span style="font-size:12px;color:#DEDFD6">—</span></sc-if>
+              </span>
+              <span style="display:flex;gap:6px;justify-content:flex-end">
+                <button data-id="{{ p.sku }}" onClick="{{ openHistory }}" title="Stock history" style="width:30px;height:30px;border:1px solid #E7E8E0;border-radius:9px;background:#ffffff;cursor:pointer;color:#6B6E60;display:flex;align-items:center;justify-content:center" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5M3.05 13A9 9 0 1 0 6 5.3L3 8M12 7v5l4 2"></path></svg>
+                </button>
+                <button data-id="{{ p.sku }}" onClick="{{ openAdjust }}" title="Adjust stock" style="width:30px;height:30px;border:1px solid #E7E8E0;border-radius:9px;background:#ffffff;cursor:pointer;color:#6B6E60;display:flex;align-items:center;justify-content:center" style-hover="border-color:#101208;color:#101208">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v9"></path></svg>
+                </button>
+              </span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ m }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #EFEFE9">
+              <span style="min-width:0;flex:1">
+                <span style="display:block;font-size:12.5px;font-weight:600;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</span>
+                <span style="display:block;font-size:11px;color:#8A8D80;margin-top:2px">{{ p.sku }} · <span style="font-weight:700;color:{{ p.avC }}">{{ p.avail }} available</span> · {{ p.reserved }} reserved<sc-if value="{{ p.hasAlerts }}" hint-placeholder-val="{{ false }}"> · <span style="color:#B45309;font-weight:700">{{ p.alertN }} waiting</span></sc-if></span>
+              </span>
+              <span style="display:flex;gap:6px;flex:none">
+                <button data-id="{{ p.sku }}" onClick="{{ openHistory }}" aria-label="Stock history" style="width:40px;height:40px;border:1px solid #E7E8E0;border-radius:11px;background:#ffffff;cursor:pointer;color:#6B6E60;display:flex;align-items:center;justify-content:center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5M3.05 13A9 9 0 1 0 6 5.3L3 8M12 7v5l4 2"></path></svg>
+                </button>
+                <button data-id="{{ p.sku }}" onClick="{{ openAdjust }}" aria-label="Adjust stock" style="width:40px;height:40px;border:1px solid #E7E8E0;border-radius:11px;background:#ffffff;cursor:pointer;color:#6B6E60;display:flex;align-items:center;justify-content:center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v9"></path></svg>
+                </button>
+              </span>
+            </div>
+          </sc-if>
+        </sc-for>
+        <sc-if value="{{ emptyList }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:40px 20px;text-align:center;color:#8A8D80;font-size:13.5px">No items match — try a different search or filter.</div>
+        </sc-if>
+      </section>
+
+      <sc-if value="{{ showPager }}" hint-placeholder-val="{{ true }}">
+        <div data-screen-label="Pagination" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <span style="font-size:12.5px;color:#8A8D80">{{ pageInfo }}</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button onClick="{{ prevPage }}" aria-label="Previous page" style="width:36px;height:36px;border-radius:99px;border:1px solid #E7E8E0;background:#ffffff;cursor:pointer;color:{{ prevC }};display:flex;align-items:center;justify-content:center" style-hover="border-color:#101208">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+            </button>
+            <sc-for list="{{ pageBtns }}" as="pb" hint-placeholder-count="2">
+              <button data-p="{{ pb.n }}" onClick="{{ goPage }}" style="min-width:36px;height:36px;padding:0 6px;border-radius:99px;border:1px solid {{ pb.bd }};background:{{ pb.bg }};color:{{ pb.c }};font-size:12.5px;font-weight:700;cursor:pointer">{{ pb.n }}</button>
+            </sc-for>
+            <button onClick="{{ nextPage }}" aria-label="Next page" style="width:36px;height:36px;border-radius:99px;border:1px solid #E7E8E0;background:#ffffff;cursor:pointer;color:{{ nextC }};display:flex;align-items:center;justify-content:center" style-hover="border-color:#101208">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:90;background:rgba(16,18,8,0.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:fadeIn .18s ease-out"></div>
+    <div data-screen-label="Inventory modal" style="position:fixed;z-index:91;{{ modalPos }};background:#ffffff;border-radius:18px;box-shadow:0 20px 60px rgba(16,18,8,0.4);width:min(480px,calc(100vw - 32px));max-height:calc(100vh - 60px);display:flex;flex-direction:column;overflow:hidden;animation:toastIn .2s ease-out">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 22px 0">
+        <div style="min-width:0;flex:1">
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#8A8D80;text-transform:uppercase">{{ modalKicker }}</div>
+          <h2 style="margin:4px 0 0;font-family:Archivo,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-0.01em;line-height:1.35">{{ modalTitle }}</h2>
+        </div>
+        <button onClick="{{ closeModal }}" aria-label="Close" style="width:36px;height:36px;flex:none;border:none;background:#F1F2EA;border-radius:99px;cursor:pointer;color:#3A3D33;display:flex;align-items:center;justify-content:center" style-hover="background:#E7E8E0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div style="padding:14px 22px 22px;overflow-y:auto">
+
+        <sc-if value="{{ isAdjust }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12.5px;color:#6B6E60;margin-bottom:14px">Current: <strong style="color:#101208">{{ mp.stock }}</strong> in stock · {{ mp.reserved }} reserved · <strong style="color:#101208">{{ mp.avail }}</strong> available</div>
+          <div style="display:grid;gap:14px">
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Type</label>
+              <select value="{{ adjType }}" onChange="{{ setAdjType }}" style="width:100%;height:44px;padding:0 36px 0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8D80%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 12px center" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+                <option>Restock (add units)</option>
+                <option>Recount (set exact total)</option>
+                <option>Damaged / lost (remove units)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">{{ adjUnitsLabel }}</label>
+              <input type="number" min="0" value="{{ adjUnits }}" onChange="{{ setAdjUnits }}" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px">Reason <span style="color:#8A8D80;font-weight:500">(kept in stock history)</span></label>
+              <input value="{{ adjReason }}" onChange="{{ setAdjReason }}" placeholder="e.g. New shipment arrived, recount correction…" style="width:100%;height:44px;padding:0 14px;border:1px solid #E7E8E0;border-radius:12px;background:#ffffff;font-size:13.5px;color:#101208;box-sizing:border-box;outline:none" style-focus="border-color:#A8CD2F;box-shadow:0 0 0 3px rgba(168,205,47,0.22)">
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #DCE9B4;background:#EFF5DC;border-radius:12px;padding:11px 14px">
+              <span style="font-size:12px;font-weight:700;letter-spacing:0.05em;color:#4F6B0B;text-transform:uppercase">After saving</span>
+              <span style="font-family:Archivo,sans-serif;font-weight:800;font-size:15px">{{ adjPreview }} in stock</span>
+            </div>
+            <button onClick="{{ saveAdjust }}" style="justify-self:end;height:42px;padding:0 22px;border:none;border-radius:99px;background:#A8CD2F;font-family:Archivo,sans-serif;font-weight:700;font-size:13.5px;color:#101208;cursor:pointer;transition:background .15s" style-hover="background:#B9DC4B">Save adjustment</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ noHistory }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:13px;color:#8A8D80;padding:8px 0 4px">No history yet — adjustments and order deductions will appear here.</div>
+          </sc-if>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:0">
+            <sc-for list="{{ mHistory }}" as="h" hint-placeholder-count="3">
+              <div style="display:flex;gap:12px">
+                <div style="display:flex;flex-direction:column;align-items:center;flex:none;width:12px">
+                  <span style="width:10px;height:10px;border-radius:50%;background:{{ h.dot }};margin-top:4px;flex:none"></span>
+                  <sc-if value="{{ h.line }}" hint-placeholder-val="{{ true }}"><span style="width:2px;flex:1;background:#EFEFE9;margin:4px 0"></span></sc-if>
+                </div>
+                <div style="padding-bottom:{{ h.pb }};min-width:0;flex:1">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <span style="font-size:13px;font-weight:700">{{ h.type }}</span>
+                    <span style="font-size:10.5px;font-weight:700;color:{{ h.dc }};background:{{ h.dbg }};border-radius:99px;padding:2px 8px">{{ h.delta }}</span>
+                    <span style="font-size:11px;color:#8A8D80">→ {{ h.after }} in stock</span>
+                  </div>
+                  <div style="font-size:11.5px;color:#8A8D80;margin-top:2px">{{ h.when }}</div>
+                  <sc-if value="{{ h.reason }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#6B6E60;margin-top:3px;line-height:1.5">{{ h.reason }}</div></sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isAlerts }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12.5px;color:#6B6E60;margin-bottom:12px">Customers waiting to hear when this is back in stock. They're notified automatically once available stock goes above zero.</div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:0">
+            <sc-for list="{{ mAlerts }}" as="a" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #EFEFE9">
+                <span style="font-size:13px;font-weight:700;font-family:Archivo,sans-serif;letter-spacing:0.02em">{{ a.phone }}</span>
+                <span style="font-size:11.5px;color:#8A8D80">Waiting since {{ a.since }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <button data-id="{{ mp.sku }}" onClick="{{ restockFromAlerts }}" style="margin-top:16px;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border:none;border-radius:99px;background:#A8CD2F;font-family:Archivo,sans-serif;font-weight:700;font-size:13px;color:#101208;cursor:pointer;transition:background .15s" style-hover="background:#B9DC4B">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v9"></path></svg>
+            Restock this item
+          </button>
+        </sc-if>
+
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastMsg }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Toast" style="position:fixed;z-index:95;{{ toastPos }};display:flex;align-items:center;gap:10px;background:rgba(13,15,7,0.94);color:#ffffff;border:1px solid rgba(255,255,255,0.16);border-radius:99px;padding:10px 18px 10px 11px;box-shadow:0 10px 30px rgba(16,18,8,0.35);animation:toastIn .22s ease-out;font-size:13.5px;font-weight:600;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)">
+      <span style="width:26px;height:26px;border-radius:50%;background:#A8CD2F;color:#101208;display:flex;align-items:center;justify-content:center;flex:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      </span>
+      {{ toastMsg }}
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{ &quot;storeName&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;DiecastBD&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Brand&quot; } }">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const I = (sku, title, stock, reserved, alerts, history) => ({ sku, title, stock, reserved, alerts: alerts || [], history: history || [] });
+    this.items = [
+      I('HWCC-005', 'Hot Wheels Car Culture — Nissan Skyline GT-R R32 Pandem, Yellow (Ronin Run II)', 1, 0),
+      I('HWFF-002', 'Hot Wheels Fast & Furious — Mazda RX-7 FD, White', 1, 0),
+      I('HWFF-003', 'Hot Wheels Fast & Furious — Mercedes-Benz 500 SEL', 1, 0),
+      I('HWCC-013', "Hot Wheels Car Culture — '70 Chevy Nova Custom (Aero Styles)", 1, 0),
+      I('HWCC-012', 'Hot Wheels Car Culture — Lexus RC F GT3 (Aero Styles)', 1, 0, [{ phone: '01919191019', since: 'Jul 12, 2:41 PM' }]),
+      I('HWCC-011', 'Hot Wheels Car Culture — LB Super Silhouette Nissan Silvia S15 (Aero Styles)', 1, 0),
+      I('HWCC-010', 'Hot Wheels Car Culture — 2008 Audi A4 DTM Touring Car (Aero Styles)', 1, 0),
+      I('HWFF-004', 'Hot Wheels Fast & Furious — Honda Civic EG, Yellow (Race-Off)', 1, 0),
+      I('HWCC-008', 'Hot Wheels Car Culture — Nissan Skyline 2000GT-R LBWK (Japan Historics)', 1, 0),
+      I('MGT-1046', 'MINI GT #1046 Mazda RX-7 (FD3S) RE Amemiya 20B — Blue', 1, 0),
+      I('HWCC-004', 'Hot Wheels Car Culture — BMW M3 E46 (Power Trip)', 1, 0),
+      I('MGT-1022', 'MINI GT #1022 Nissan Silvia S15 LB Super Silhouette', 1, 0),
+      I('HWCC-002', 'Hot Wheels Car Culture — Porsche 917K (Vintage Racing Club)', 1, 0),
+      I('HWCC-001', 'Hot Wheels Car Culture — Ferrari 250 GTO (Vintage Racing Club)', 1, 0),
+      I('HWPC-002', 'Hot Wheels Pop Culture — Stranger Things 1983 BMW 733i', 1, 0),
+      I('HWPC-001', 'Hot Wheels Pop Culture — Cyberpunk 2077 Quadra Turbo-R V-Tech', 1, 0),
+      I('MGT-1094', 'MINI GT #1094 Toyota Supra (A80) VeilSide Combat — Red', 1, 0),
+      I('MGT-1106', 'MINI GT #1106 Mazda RX-7 RE Amemiya — Silver (Blister Card)', 1, 0),
+      I('HWFF-005', 'Hot Wheels Fast & Furious — 2021 Toyota GR Supra', 2, 1, [], [{ type: 'Order deduction', delta: -1, after: 2, when: 'Jul 18, 1:28 PM', reason: 'Reserved for order DBD-20260718-39B226' }]),
+      I('HW5P-002', 'Hot Wheels Formula 1 5-Pack (Sealed)', 2, 0, [], [{ type: 'Restock', delta: 2, after: 2, when: 'Jul 10, 11:20 AM', reason: 'New shipment arrived' }]),
+      I('ACC-001', 'Card Protector — Folding Blister Case for Carded Diecast (per piece)', 12, 0, [], [{ type: 'Restock', delta: 12, after: 12, when: 'Jul 8, 4:05 PM', reason: 'Bulk order from supplier' }]),
+      I('ACC-002', 'Card Protector — Folding PVC Display Case (per piece)', 10, 0),
+      I('ACC-003', 'Card Protector — Top-Open Gen-2 Shell (per piece)', 10, 0)
+    ];
+    this.state = {
+      q: '', low: false, alertsOnly: false, page: 1,
+      modal: null, adjType: 'Restock (add units)', adjUnits: '', adjReason: '',
+      toastMsg: null, navOpen: false,
+      m: typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : false
+    };
+    this.setQ = (e) => this.setState({ q: e.target.value, page: 1 });
+    this.tglLow = () => this.setState({ low: !this.state.low, page: 1 });
+    this.tglAlerts = () => this.setState({ alertsOnly: !this.state.alertsOnly, page: 1 });
+    this.goPage = (e) => { this.setState({ page: +e.currentTarget.dataset.p }); window.scrollTo({ top: 0 }); };
+    this.prevPage = () => { if (this.state.page > 1) { this.setState({ page: this.state.page - 1 }); window.scrollTo({ top: 0 }); } };
+    this.nextPage = () => { if (this.state.page < this.pages) { this.setState({ page: this.state.page + 1 }); window.scrollTo({ top: 0 }); } };
+    this.openHistory = (e) => this.setState({ modal: { kind: 'history', sku: e.currentTarget.dataset.id } });
+    this.openAdjust = (e) => this.setState({ modal: { kind: 'adjust', sku: e.currentTarget.dataset.id }, adjType: 'Restock (add units)', adjUnits: '', adjReason: '' });
+    this.openAlerts = (e) => this.setState({ modal: { kind: 'alerts', sku: e.currentTarget.dataset.id } });
+    this.closeModal = () => this.setState({ modal: null });
+    this.restockFromAlerts = (e) => this.setState({ modal: { kind: 'adjust', sku: e.currentTarget.dataset.id }, adjType: 'Restock (add units)', adjUnits: '', adjReason: '' });
+    this.setAdjType = (e) => this.setState({ adjType: e.target.value });
+    this.setAdjUnits = (e) => this.setState({ adjUnits: e.target.value });
+    this.setAdjReason = (e) => this.setState({ adjReason: e.target.value });
+    this.saveAdjust = () => {
+      const p = this.items.find((x) => x.sku === this.state.modal.sku);
+      const n = parseInt(this.state.adjUnits, 10);
+      if (isNaN(n) || n < 0 || (this.state.adjType !== 'Recount (set exact total)' && n === 0)) { this.showToast('Enter a valid unit count'); return; }
+      const before = p.stock;
+      let type;
+      if (this.state.adjType === 'Restock (add units)') { p.stock += n; type = 'Restock'; }
+      else if (this.state.adjType === 'Recount (set exact total)') { p.stock = n; type = 'Recount'; }
+      else { p.stock = Math.max(0, p.stock - n); type = 'Damaged / lost'; }
+      const delta = p.stock - before;
+      const now = new Date();
+      p.history.unshift({ type, delta, after: p.stock, when: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }), reason: this.state.adjReason });
+      const hadAlerts = p.alerts.length;
+      let toast = p.sku + ' — now ' + p.stock + ' in stock';
+      if (hadAlerts && delta > 0 && p.stock - p.reserved > 0) { toast += ' · ' + hadAlerts + (hadAlerts === 1 ? ' customer' : ' customers') + ' notified'; p.alerts = []; }
+      this.setState({ modal: null });
+      this.showToast(toast);
+    };
+    this.navClick = (e) => {
+      const id = e.currentTarget.dataset.id;
+      const links = { dashboard: './Admin Dashboard.dc.html', orders: './Admin Orders.dc.html', products: './Admin Products.dc.html', settings: './Admin Settings.dc.html' };
+      if (links[id]) { window.location.href = links[id]; return; }
+      if (id === 'inventory') { this.setState({ navOpen: false }); return; }
+      const P2 = { brands: 'Brands', categories: 'Categories', customers: 'Customers', coupons: 'Coupons', newsletter: 'Newsletter', reports: 'Reports', pages: 'Pages' };
+      if (P2[id]) { window.location.href = './Admin ' + P2[id] + '.dc.html'; return; }
+      this.showToast(id.charAt(0).toUpperCase() + id.slice(1) + " isn't part of this prototype");
+    };
+    this.openNav = () => this.setState({ navOpen: true });
+    this.closeNav = () => this.setState({ navOpen: false });
+  }
+  componentDidMount() {
+    this.mq = window.matchMedia('(max-width: 767px)');
+    this.onMq = (e) => this.setState({ m: e.matches });
+    this.mq.addEventListener('change', this.onMq);
+  }
+  componentWillUnmount() {
+    if (this.mq) this.mq.removeEventListener('change', this.onMq);
+    clearTimeout(this.tt);
+  }
+  showToast(msg) {
+    clearTimeout(this.tt);
+    this.setState({ toastMsg: msg });
+    this.tt = setTimeout(() => this.setState({ toastMsg: null }), 3000);
+  }
+  renderVals() {
+    const { m, q, low, alertsOnly, modal, adjType, adjUnits, adjReason, toastMsg, navOpen } = this.state;
+    const dm = !m;
+    const NO = { cx: 0, cy: 0, r: 0 };
+    const navDefs = [
+      { id: 'dashboard', label: 'Dashboard', d: 'M3 3h8v8H3zM13 3h8v5h-8zM13 12h8v9h-8zM3 15h8v6H3z', ...NO },
+      { id: 'orders', label: 'Orders', d: 'M9 4h6v3H9zM9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2M9 12h6M9 16h4', ...NO },
+      { id: 'products', label: 'Products', d: 'M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v9', ...NO },
+      { id: 'inventory', label: 'Inventory', d: 'M3 4h18v4H3zM5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M9 12h6', ...NO },
+      { id: 'brands', label: 'Brands', d: 'M8 14l-1.5 7L12 18l5.5 3L16 14M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12z', ...NO },
+      { id: 'categories', label: 'Categories', d: 'M12 2H2v10l9.3 9.3a1 1 0 0 0 1.4 0l8.6-8.6a1 1 0 0 0 0-1.4zM7 7h.01', ...NO },
+      { id: 'customers', label: 'Customers', d: 'M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8', cx: 9, cy: 7, r: 4 },
+      { id: 'coupons', label: 'Coupons', d: 'M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a2 2 0 0 0 0 6v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a2 2 0 0 0 0-6zM13 5v2M13 11v2M13 17v2', ...NO },
+      { id: 'newsletter', label: 'Newsletter', d: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6', ...NO },
+      { id: 'reports', label: 'Reports', d: 'M3 3v18h18M8 17V9M13 17V5M18 17v-7', ...NO },
+      { id: 'pages', label: 'Pages', d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 2v6h6', ...NO },
+      { id: 'settings', label: 'Settings', d: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6', ...NO }
+    ];
+    const navItems = navDefs.map((n) => {
+      const active = n.id === 'inventory';
+      return { ...n, bg: active ? '#EFF5DC' : 'transparent', color: active ? '#101208' : '#3A3D33', ic: active ? '#4F6B0B' : '#8A8D80' };
+    });
+    const ql = q.trim().toLowerCase();
+    const filtered = this.items
+      .filter((p) => !low || p.stock - p.reserved <= 2)
+      .filter((p) => !alertsOnly || p.alerts.length > 0)
+      .filter((p) => !ql || (p.sku + ' ' + p.title).toLowerCase().includes(ql));
+    const pageSize = 12;
+    this.pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const page = Math.min(this.state.page, this.pages);
+    const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+    const list = paged.map((p) => {
+      const avail = p.stock - p.reserved;
+      return { ...p, avail, avC: avail <= 0 ? '#B3261E' : avail <= 2 ? '#B45309' : '#101208',
+        low: avail <= 2, badge: avail <= 0 ? 'Out' : 'Low',
+        hasAlerts: p.alerts.length > 0, noAlerts: p.alerts.length === 0, alertN: p.alerts.length };
+    });
+    const totUnits = this.items.reduce((a, p) => a + p.stock, 0);
+    const totReserved = this.items.reduce((a, p) => a + p.reserved, 0);
+    const lowN = this.items.filter((p) => p.stock - p.reserved <= 2).length;
+    const alertN = this.items.reduce((a, p) => a + p.alerts.length, 0);
+    const mp0 = modal ? this.items.find((x) => x.sku === modal.sku) : null;
+    const mp = mp0 ? { ...mp0, avail: mp0.stock - mp0.reserved } : { stock: 0, reserved: 0, avail: 0, sku: '', title: '', history: [], alerts: [] };
+    const n = parseInt(adjUnits, 10);
+    let preview = mp.stock;
+    if (!isNaN(n) && n >= 0) {
+      if (adjType === 'Restock (add units)') preview = mp.stock + n;
+      else if (adjType === 'Recount (set exact total)') preview = n;
+      else preview = Math.max(0, mp.stock - n);
+    }
+    const kinds = { history: 'Stock history', adjust: 'Adjust stock', alerts: 'Restock alerts' };
+    const win = Math.min(this.pages, 5);
+    let start = Math.max(1, Math.min(page - 2, this.pages - win + 1));
+    const pageBtns = Array.from({ length: win }, (_, i) => {
+      const nb = start + i, a = nb === page;
+      return { n: nb, bg: a ? '#101208' : '#ffffff', c: a ? '#ffffff' : '#3A3D33', bd: a ? '#101208' : '#E7E8E0' };
+    });
+    return {
+      m, dm, toastMsg, navOpen, drawerOpen: m && navOpen, navItems,
+      storeName: this.props.storeName ?? 'DiecastBD',
+      countLabel: this.items.length + ' SKUs · ' + totUnits + ' units on hand',
+      kpis: [
+        { label: 'Units in stock', value: totUnits, sub: 'across ' + this.items.length + ' SKUs', c: '#101208' },
+        { label: 'Reserved by orders', value: totReserved, sub: 'awaiting dispatch', c: '#101208' },
+        { label: 'Low / out of stock', value: lowN, sub: '≤ 2 available', c: '#B45309' },
+        { label: 'Restock alerts', value: alertN, sub: 'customers waiting', c: alertN > 0 ? '#B45309' : '#101208' }
+      ],
+      q, list, emptyList: list.length === 0,
+      lowBd: low ? '#101208' : '#E7E8E0', lowBg: low ? '#101208' : '#ffffff', lowC: low ? '#ffffff' : '#3A3D33', lowDot: low ? '#C9E469' : '#B45309',
+      alBd: alertsOnly ? '#101208' : '#E7E8E0', alBg: alertsOnly ? '#101208' : '#ffffff', alC: alertsOnly ? '#ffffff' : '#3A3D33',
+      showPager: filtered.length > 0,
+      pageInfo: 'Showing ' + ((page - 1) * pageSize + 1) + '–' + Math.min(page * pageSize, filtered.length) + ' of ' + filtered.length,
+      pageBtns, prevC: page > 1 ? '#101208' : '#DEDFD6', nextC: page < this.pages ? '#101208' : '#DEDFD6',
+      modalOpen: !!modal,
+      modalKicker: modal ? kinds[modal.kind] : '', modalTitle: mp.title,
+      isAdjust: modal && modal.kind === 'adjust', isHistory: modal && modal.kind === 'history', isAlerts: modal && modal.kind === 'alerts',
+      mp, adjType, adjUnits, adjReason,
+      adjUnitsLabel: adjType === 'Restock (add units)' ? 'Units to add' : adjType === 'Recount (set exact total)' ? 'Exact total on the shelf' : 'Units to remove',
+      adjPreview: preview,
+      noHistory: mp.history.length === 0,
+      mHistory: mp.history.map((h, i, arr) => ({ ...h,
+        delta: (h.delta > 0 ? '+' : '') + h.delta,
+        dc: h.delta > 0 ? '#4F6B0B' : '#B3261E', dbg: h.delta > 0 ? '#EFF5DC' : '#F9E3E1',
+        dot: i === 0 ? '#A8CD2F' : '#DEDFD6', line: i < arr.length - 1, pb: i < arr.length - 1 ? '16px' : '0px' })),
+      mAlerts: mp.alerts,
+      modalPos: m ? 'left:16px;right:16px;bottom:16px' : 'left:50%;top:50%;transform:translate(-50%,-50%)',
+      mainStyle: m ? 'padding:70px 16px 40px' : 'padding:34px 40px 60px 272px',
+      h1fs: m ? '24px' : '30px',
+      toastPos: m ? 'left:50%;transform:translateX(-50%);bottom:20px;white-space:nowrap' : 'right:24px;bottom:24px',
+      setQ: this.setQ, tglLow: this.tglLow, tglAlerts: this.tglAlerts,
+      goPage: this.goPage, prevPage: this.prevPage, nextPage: this.nextPage,
+      openHistory: this.openHistory, openAdjust: this.openAdjust, openAlerts: this.openAlerts, closeModal: this.closeModal,
+      restockFromAlerts: this.restockFromAlerts, setAdjType: this.setAdjType, setAdjUnits: this.setAdjUnits, setAdjReason: this.setAdjReason, saveAdjust: this.saveAdjust,
+      navClick: this.navClick, openNav: this.openNav, closeNav: this.closeNav
+    };
+  }
+}
+</script>
+</body>
+</html>
