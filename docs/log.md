@@ -875,3 +875,8 @@ Notables: new shared curated icon map `components/shared/settingsIcons.js` (extr
 
 
 **Follow-up (merchant):** separator style gained a **"No separator"** option, mirroring the icon select's "No icon". `none` is a real enum value end to end (model + Zod + admin Select + renderer), not a sentinel. When selected, messages are separated by widened whitespace (`gap-7`/`pr-7` instead of `gap-3.5`/`pr-3.5`) so they don't read as one run-on line — in both the static bar and the marquee copies (where the pr-based tiling keeps the −50% loop exact). New unit test asserts no dot span and no glyphs render; 41/41. Backend curl accepts `separatorStyle: "none"`; verified live at 1440px.
+
+
+### docs/style-guide.md — extracted design-system reference (2026-07-14)
+
+Merchant wants to hand the current visual system to design tools so new screens (admin and storefront) reuse the existing tokens. Wrote `docs/style-guide.md` — every value extracted from shipped code (`index.css` @theme + :root + admin scope, SiteHeader FROST, StickyBuyBar/MobileBottomNav dark pill, StatusChip map, ProductCard hover, Container, PDP CTA), not approximated. Covers: both themes' full token tables (storefront paper/lime/ink + admin dark/Geist), typography scale, the explicit-`rounded-[Npx]` radius rule and in-use radii, layout/breakpoints, glass/elevation recipes, component recipes (buttons/inputs/option cards/badges/status chips/product cards), curated icon map, motion rules, admin patterns, and the no-fabricated-content + microcopy conventions.
