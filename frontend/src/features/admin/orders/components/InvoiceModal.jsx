@@ -18,9 +18,11 @@ function formatDate(dateString) {
 export function InvoiceModal({ order, contact, onClose }) {
   const addr = order.shippingAddress;
 
+  // flex-col: the action row stacks ABOVE the sheet. (As a plain `flex` row they
+  // sat side by side and squeezed the invoice.)
   return (
-    <div className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-[rgba(16,18,8,0.55)] p-5 [backdrop-filter:blur(6px)]">
-      <div className="admin-invoice-hide mb-3 flex w-full max-w-[640px] items-center justify-end gap-2">
+    <div className="fixed inset-0 z-[90] flex flex-col items-center overflow-y-auto bg-[rgba(16,18,8,0.55)] p-5 [backdrop-filter:blur(6px)]">
+      <div className="admin-invoice-hide mb-3 flex w-full max-w-[640px] shrink-0 items-center justify-end gap-2">
         <AdminButton variant="primary" size="sm" onClick={() => window.print()}>
           <Printer size={15} strokeWidth={2.2} /> Print
         </AdminButton>
@@ -34,7 +36,7 @@ export function InvoiceModal({ order, contact, onClose }) {
         </button>
       </div>
 
-      <div className="admin-invoice w-full max-w-[640px] self-start rounded-[16px] bg-white p-8 text-ink shadow-[0_20px_60px_rgba(16,18,8,0.4)]">
+      <div className="admin-invoice w-full max-w-[640px] shrink-0 rounded-[16px] bg-white p-6 text-ink shadow-[0_20px_60px_rgba(16,18,8,0.4)] sm:p-8">
         {/* header */}
         <div className="flex items-start justify-between gap-4">
           <div>

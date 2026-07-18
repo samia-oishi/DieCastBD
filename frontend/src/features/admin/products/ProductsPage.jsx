@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Plus, Trash2, ChevronRight, CarFront } from "lucide-react";
+import { Plus, Trash2, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
@@ -22,6 +22,7 @@ import { AdminSearch } from "@/features/admin/shell/AdminSearch";
 import { FilterChips } from "@/features/admin/shell/FilterChips";
 import { BulkBar } from "@/features/admin/shell/BulkBar";
 import { AdminButton } from "@/features/admin/shell/AdminButton";
+import { AdminThumb } from "@/features/admin/shell/AdminThumb";
 import { adminToast } from "@/features/admin/shell/adminToast";
 import { useAdminProducts, useBulkProductStatusMutation, useBulkDeleteProductsMutation } from "./api/useProducts";
 
@@ -42,20 +43,6 @@ function effectivePrice(p) {
   return p.salePrice != null && p.salePrice < p.price ? p.salePrice : p.price;
 }
 
-function ProductThumb({ product }) {
-  return product.thumbnail?.url ? (
-    <img
-      src={product.thumbnail.url}
-      alt=""
-      loading="lazy"
-      className="size-11 shrink-0 rounded-[10px] border border-line bg-white object-contain"
-    />
-  ) : (
-    <div className="flex size-11 shrink-0 items-center justify-center rounded-[10px] border border-line bg-tile text-faint">
-      <CarFront size={18} strokeWidth={1.5} />
-    </div>
-  );
-}
 
 export function ProductsPage() {
   const [page, setPage] = useState(1);
@@ -201,7 +188,7 @@ export function ProductsPage() {
 
                 {/* desktop cells */}
                 <div className="hidden md:contents">
-                  <ProductThumb product={p} />
+                  <AdminThumb src={p.thumbnail?.url} alt={p.title} />
                   <span className="truncate font-display text-[11px] font-bold text-[#6B6E60]" title={p.sku}>{p.sku}</span>
                   <Link to={p._id} className="truncate text-[13px] text-ink hover:text-brand-deep" title={p.title}>
                     {p.title}
@@ -236,7 +223,7 @@ export function ProductsPage() {
 
                 {/* mobile card */}
                 <Link to={p._id} className="flex items-center gap-3 md:hidden">
-                  <ProductThumb product={p} />
+                  <AdminThumb src={p.thumbnail?.url} alt={p.title} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[13px] text-ink">{p.title}</div>
                     <div className="truncate text-[11.5px] text-faint">
