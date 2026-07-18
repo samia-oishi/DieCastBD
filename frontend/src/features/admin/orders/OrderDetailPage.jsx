@@ -15,6 +15,7 @@ import { adminToast } from "@/features/admin/shell/adminToast";
 import { useAdminOrder, useUpdateOrderStatusMutation } from "./api/useAdminOrders";
 import { InvoiceModal } from "./components/InvoiceModal";
 import { ROUTES } from "@/constants/routes";
+import { adminSelectCls } from "@/features/admin/shell/adminFieldCls";
 
 const STATUS_OPTIONS = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
 const PAYMENT_METHOD_LABELS = { cod: "Cash on Delivery", bkash: "bKash", banglaqr: "BanglaQR" };
@@ -162,7 +163,7 @@ export function OrderDetailPage() {
               <label className="flex flex-col gap-1.5">
                 <span className="text-[12.5px] font-semibold text-ink">New status</span>
                 <Select value={nextStatus} onValueChange={setNextStatus}>
-                  <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                  <SelectTrigger className={adminSelectCls}><SelectValue placeholder="Select status" /></SelectTrigger>
                   <SelectContent>
                     {STATUS_OPTIONS.filter((s) => s !== order.status).map((s) => (
                       <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>

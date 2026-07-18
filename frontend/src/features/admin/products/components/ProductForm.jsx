@@ -12,7 +12,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useBrands } from "@/features/admin/catalog/api/useBrands";
 import { useCategories } from "@/features/admin/catalog/api/useCategories";
 import { SectionPanel } from "@/features/admin/shell/SectionPanel";
-import { adminInputCls, adminTextareaCls } from "@/features/admin/shell/adminFieldCls";
+import { adminInputCls, adminTextareaCls, adminSelectCls } from "@/features/admin/shell/adminFieldCls";
 import { effectivePrice } from "@/lib/pricing";
 import { ProductPhotos } from "./ProductPhotos";
 import { SaveBar } from "@/features/admin/shell/SaveBar";
@@ -239,7 +239,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
                     name="status"
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className={adminInputCls}><SelectValue /></SelectTrigger>
+                        <SelectTrigger className={adminSelectCls}><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="draft">Draft</SelectItem>
                           <SelectItem value="active">Active</SelectItem>
@@ -258,7 +258,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
                     name="brand"
                     render={({ field }) => (
                       <Select value={field.value || undefined} onValueChange={field.onChange}>
-                        <SelectTrigger className={adminInputCls}><SelectValue placeholder="Select brand" /></SelectTrigger>
+                        <SelectTrigger className={adminSelectCls}><SelectValue placeholder="Select brand" /></SelectTrigger>
                         <SelectContent>
                           {brands.list.data?.map((b) => (
                             <SelectItem key={b._id} value={b._id}>{b.name}</SelectItem>
@@ -277,7 +277,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
                         value={field.value?.[0] || undefined}
                         onValueChange={(v) => field.onChange(v ? [v] : [])}
                       >
-                        <SelectTrigger className={adminInputCls}><SelectValue placeholder="Select category" /></SelectTrigger>
+                        <SelectTrigger className={adminSelectCls}><SelectValue placeholder="Select category" /></SelectTrigger>
                         <SelectContent>
                           {categories.list.data?.map((c) => (
                             <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>
