@@ -102,14 +102,16 @@ export function RevenueChart({ data }) {
         <path d={areaPath} fill="url(#revenueFill)" stroke="none" />
         <path d={linePath} fill="none" stroke="#7FA31C" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
 
-        {points.map(
-          (p, i) =>
-            i % labelStep === 0 && (
-              <text key={p.date} x={p.x} y={HEIGHT - 8} textAnchor="middle" className="fill-faint text-[10px]">
-                {formatDateShort(p.date)}
-              </text>
-            )
-        )}
+        {points.map((p, i) => {
+          if (i % labelStep !== 0) return null;
+          // Anchor edge labels inward so the first/last don't clip at the SVG bounds.
+          const anchor = p.x < PAD_LEFT + 30 ? "start" : p.x > WIDTH - PAD_RIGHT - 30 ? "end" : "middle";
+          return (
+            <text key={p.date} x={p.x} y={HEIGHT - 8} textAnchor={anchor} className="fill-faint text-[10px]">
+              {formatDateShort(p.date)}
+            </text>
+          );
+        })}
 
         {/* Peak day — ink dot with a white ring (hidden while hovering that same point). */}
         {peak && peak.index !== hoverIndex && (
@@ -124,9 +126,10 @@ export function RevenueChart({ data }) {
         )}
       </svg>
 
-      {/* Best-day pill — anchored top-right of the plot. */}
-      {peak && data.length > 1 && (
-        <div className="pointer-events-none absolute right-0 top-0 rounded-full border border-brand-soft-border bg-brand-tint px-2.5 py-1 text-[10.5px] font-bold text-brand-deep">
+      {/* Best-day pill — top-right of the plot, inset so it clears the edge and
+          the top gridline. Hidden while hovering (the tooltip takes over). */}
+      {peak && peak.revenue > 0 && data.length > 1 && !hovered && (
+        <div className="pointer-events-none absolute right-2 top-2 rounded-full border border-brand-soft-border bg-brand-tint px-3 py-1 text-[11px] font-bold text-brand-deep shadow-[0_2px_8px_rgba(16,18,8,0.06)]">
           Best day · {formatDateShort(peak.date)} · {formatPrice(peak.revenue)}
         </div>
       )}

@@ -19,12 +19,10 @@ export function KpiCard({ icon: Icon, label, value, sub, tone = "default", delta
         {Icon && <Icon size={15} strokeWidth={2} className={TONES[tone]} />}
         <span className="text-[12px] font-semibold text-[#6B6E60]">{label}</span>
       </div>
-      <div className="mt-2 flex items-end gap-2">
-        <span className="font-display text-[26px] font-extrabold leading-none tracking-[-0.02em] text-ink">
-          {value}
-        </span>
-        {delta}
+      <div className="mt-2 font-display text-[26px] font-extrabold leading-none tracking-[-0.02em] text-ink">
+        {value}
       </div>
+      {delta && <div className="mt-2">{delta}</div>}
       {sub && <div className="mt-1.5 text-[11.5px] text-faint">{sub}</div>}
     </div>
   );

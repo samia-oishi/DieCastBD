@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Wallet, ShoppingCart, Users, TriangleAlert, Plus, Ticket, ArrowRight } from "lucide-react";
+import { DollarSign, BarChart3, UserPlus, TriangleAlert, Plus, Ticket, ArrowRight } from "lucide-react";
 
 import { formatTaka } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -40,10 +40,39 @@ function todayEyebrow() {
   return new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
+// UTC date key (YYYY-MM-DD) `offset` days before today — matches the backend's
+// rollup keys (toDateKey), so lookups against the daily history line up.
+function utcKey(offset = 0) {
+  const n = new Date();
+  return new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() - offset)).toISOString().slice(0, 10);
+}
+
+/** Period-over-period delta, computed from REAL daily-rollup revenue. When the
+ * prior period had zero revenue a percentage is undefined, so it shows a plain
+ * "▲ vs …" growth marker instead of a fabricated number; nothing when both are 0. */
+function DeltaPill({ current, prior, period }) {
+  if (prior > 0) {
+    const pct = Math.round(((current - prior) / prior) * 100);
+    const up = pct >= 0;
+    return (
+      <span className={cn("inline-block rounded-full px-2 py-[3px] text-[11px] font-bold", up ? "bg-brand-tint text-brand-deep" : "bg-[#FDF3E7] text-[#B45309]")}>
+        {up ? "+" : ""}{pct}% {period}
+      </span>
+    );
+  }
+  if (current > 0) {
+    return <span className="inline-block rounded-full bg-brand-tint px-2 py-[3px] text-[11px] font-bold text-brand-deep">▲ {period}</span>;
+  }
+  return null;
+}
+
 export function DashboardPage() {
   const { data: summary, isLoading } = useAnalyticsSummary();
   const [days, setDays] = useState(30);
   const { data: dailyRows, isLoading: chartLoading } = useAnalyticsDaily(days);
+  // Fixed 30-day window for the KPI deltas / month-to-date, independent of the
+  // chart's range chip (dedupes with the chart query when days === 30).
+  const { data: kpiRows } = useAnalyticsDaily(30);
   const { data: recentOrders } = useAdminOrders({ limit: 5 });
   const { data: lowStock } = useAdminInventory({ lowStockOnly: true, limit: 5 });
   const pipeline = useOrderPipeline();
@@ -61,6 +90,18 @@ export function DashboardPage() {
   const lowTotal = lowStock?.meta?.total ?? 0;
   const topProducts = today?.topProducts ?? [];
   const topMax = Math.max(1, ...topProducts.map((p) => p.unitsSold));
+
+  // Real KPI deltas from the daily rollup: revenue vs yesterday, this week vs
+  // the prior 7 days, and month-to-date new customers.
+  const histByDate = new Map((kpiRows ?? []).map((r) => [r.date, r]));
+  const yesterdayRevenue = histByDate.get(utcKey(1))?.revenue ?? 0;
+  let priorWeekRevenue = 0;
+  for (let i = 7; i <= 13; i++) priorWeekRevenue += histByDate.get(utcKey(i))?.revenue ?? 0;
+  const thisMonth = utcKey(0).slice(0, 7);
+  let monthCustomers = today?.newCustomers ?? 0;
+  for (const r of kpiRows ?? []) {
+    if (r.date.slice(0, 7) === thisMonth && r.date !== utcKey(0)) monthCustomers += r.newCustomers ?? 0;
+  }
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -85,10 +126,40 @@ export function DashboardPage() {
 
       {/* KPI row */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Wallet} tone="lime" label="Today's revenue" value={formatTaka(today?.revenue ?? 0)} sub={`${today?.ordersCount ?? 0} order${today?.ordersCount === 1 ? "" : "s"} today`} />
-        <KpiCard icon={ShoppingCart} label="Last 7 days" value={formatTaka(week?.revenue ?? 0)} sub={`${week?.ordersCount ?? 0} order${week?.ordersCount === 1 ? "" : "s"}`} />
-        <KpiCard icon={Users} tone="teal" label="New customers today" value={today?.newCustomers ?? 0} sub={today?.newCustomers ? "Signed up today" : "None yet today"} />
-        <KpiCard icon={TriangleAlert} tone="amber" label="Low stock products" value={today?.lowStockCount ?? 0} sub={today?.lowStockCount > 0 ? "≤ 2 units left" : "All healthy"} />
+        <KpiCard
+          icon={DollarSign}
+          tone="lime"
+          label="Today's revenue"
+          value={formatTaka(today?.revenue ?? 0)}
+          delta={<DeltaPill current={today?.revenue ?? 0} prior={yesterdayRevenue} period="vs yesterday" />}
+          sub={`${today?.ordersCount ?? 0} order${today?.ordersCount === 1 ? "" : "s"} today`}
+        />
+        <KpiCard
+          icon={BarChart3}
+          label="Last 7 days"
+          value={formatTaka(week?.revenue ?? 0)}
+          delta={<DeltaPill current={week?.revenue ?? 0} prior={priorWeekRevenue} period="vs prior week" />}
+          sub={`${week?.ordersCount ?? 0} order${week?.ordersCount === 1 ? "" : "s"}`}
+        />
+        <KpiCard
+          icon={UserPlus}
+          tone="teal"
+          label="New customers today"
+          value={today?.newCustomers ?? 0}
+          sub={`${monthCustomers} total this month`}
+        />
+        <KpiCard
+          icon={TriangleAlert}
+          tone="amber"
+          label="Low stock products"
+          value={today?.lowStockCount ?? 0}
+          delta={
+            today?.lowStockCount > 0 ? (
+              <span className="inline-block rounded-full bg-[#FDF3E7] px-2 py-[3px] text-[11px] font-bold text-[#B45309]">Needs restock</span>
+            ) : null
+          }
+          sub={today?.lowStockCount > 0 ? "≤ 2 units left" : "All healthy"}
+        />
       </div>
 
       {/* Revenue chart */}
