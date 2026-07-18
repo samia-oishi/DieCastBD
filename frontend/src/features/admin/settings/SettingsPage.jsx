@@ -27,48 +27,6 @@ function SectionCard({ title, description, children }) {
   );
 }
 
-function HeroSlideImage({ control, index }) {
-  const uploadMutation = useUploadSettingsImageMutation();
-
-  return (
-    <Controller
-      control={control}
-      name={`heroBanner.${index}.image`}
-      render={({ field }) => (
-        <div className="flex items-center gap-3">
-          {field.value?.url ? (
-            <img src={field.value.url} alt="" className="size-14 rounded object-cover" />
-          ) : (
-            <div className="flex size-14 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
-              No image
-            </div>
-          )}
-          <Button variant="outline" size="sm" asChild disabled={uploadMutation.isPending}>
-            <label className="cursor-pointer">
-              <ImageUp /> {uploadMutation.isPending ? "Uploading..." : "Upload"}
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/avif"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  try {
-                    const uploaded = await uploadMutation.mutateAsync(file);
-                    field.onChange(uploaded);
-                  } catch {
-                    toast.error("Upload failed");
-                  }
-                }}
-              />
-            </label>
-          </Button>
-        </div>
-      )}
-    />
-  );
-}
-
 // Per-variant hero copy editors. Placeholders show the shipped default that
 // renders when a field is left blank, so admins can see what they're overriding
 // (and clearing a field restores that default rather than blanking the hero).
@@ -263,7 +221,6 @@ export function SettingsPage() {
   const { register, control, handleSubmit } = useForm({
     values: settings,
     defaultValues: {
-      heroBanner: [],
       // PATCH /admin/settings replaces the whole subtree, so every field must
       // exist here or it would be dropped on save.
       announcementBar: {
@@ -293,8 +250,7 @@ export function SettingsPage() {
       homepageSections: {
         hero: {
           enabled: true,
-          autoplay: true,
-          autoplayInterval: 6,
+          image: null,
           variant: "photo-fullbleed",
           highlightCard: { enabled: false, kicker: "", title: "", price: 0 },
           content: { limeShowroom: {}, darkSpotlight: {}, photoFullbleed: {} },
@@ -315,7 +271,6 @@ export function SettingsPage() {
     },
   });
 
-  const heroBanner = useFieldArray({ control, name: "heroBanner" });
   const shopByShelf = useFieldArray({ control, name: "shopByShelf" });
   const whyChooseUs = useFieldArray({ control, name: "whyChooseUs" });
   const testimonials = useFieldArray({ control, name: "testimonials" });
@@ -355,47 +310,88 @@ export function SettingsPage() {
         </Button>
       </div>
 
-      <SectionCard title="Hero Banner" description="Homepage carousel slides, shown in order.">
+      {/* Everything hero in ONE place. The old "Hero Banner" slides card is gone —
+          the redesigned hero is a single styled section, not a carousel, and only
+          ever used one image; the slide text/CTA fields and autoplay controls were
+          dead weight the storefront never read. */}
+      <SectionCard title="Hero" description="The homepage hero: style, image, highlight card, and per-style copy.">
         <div className="flex flex-col gap-4">
-          {heroBanner.fields.map((field, index) => (
-            <div key={field.id} className="rounded-lg border border-border p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <HeroSlideImage control={control} index={index} />
-                <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove slide" onClick={() => heroBanner.remove(index)}>
-                  <Trash2 />
-                </Button>
-              </div>
-              <FieldGroup>
-                <Field>
-                  <FieldLabel>Title</FieldLabel>
-                  <Input {...register(`heroBanner.${index}.title`, { required: true })} />
-                </Field>
-                <Field>
-                  <FieldLabel>Subtitle</FieldLabel>
-                  <Textarea rows={2} {...register(`heroBanner.${index}.subtitle`)} />
-                </Field>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field>
-                    <FieldLabel>CTA text</FieldLabel>
-                    <Input {...register(`heroBanner.${index}.ctaText`)} />
-                  </Field>
-                  <Field>
-                    <FieldLabel>CTA link</FieldLabel>
-                    <Input {...register(`heroBanner.${index}.ctaLink`)} />
-                  </Field>
-                </div>
-              </FieldGroup>
+          <div className="flex flex-wrap items-end gap-6">
+            <Controller
+              control={control}
+              name="homepageSections.hero.enabled"
+              render={({ field }) => (
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  Show hero
+                </label>
+              )}
+            />
+            <Field>
+              <FieldLabel>Hero style</FieldLabel>
+              <Controller
+                control={control}
+                name="homepageSections.hero.variant"
+                render={({ field }) => (
+                  <Select key={field.value} value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-[220px]"><SelectValue placeholder="Select a hero style" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lime-showroom">Lime showroom</SelectItem>
+                      <SelectItem value="dark-spotlight">Dark spotlight</SelectItem>
+                      <SelectItem value="photo-fullbleed">Photo full-bleed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </Field>
+          </div>
+
+          <Field>
+            <FieldLabel>Hero image</FieldLabel>
+            <QrImageField control={control} name="homepageSections.hero.image" emptyLabel="No image" uploadLabel="Upload image" />
+          </Field>
+
+          <div className="rounded-lg border border-border p-4">
+            <Controller
+              control={control}
+              name="homepageSections.hero.highlightCard.enabled"
+              render={({ field }) => (
+                <label className="flex items-center justify-between gap-3 text-sm">
+                  Highlight card (lime / dark hero only)
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </label>
+              )}
+            />
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              <Field>
+                <FieldLabel>Kicker</FieldLabel>
+                <Input {...register("homepageSections.hero.highlightCard.kicker")} placeholder="MINI GT" />
+              </Field>
+              <Field>
+                <FieldLabel>Title</FieldLabel>
+                <Input {...register("homepageSections.hero.highlightCard.title")} placeholder="Supra A80…" />
+              </Field>
+              <Field>
+                <FieldLabel>Price (৳)</FieldLabel>
+                <Input type="number" {...register("homepageSections.hero.highlightCard.price")} />
+              </Field>
             </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-fit"
-            onClick={() => heroBanner.append({ title: "", subtitle: "", ctaText: "", ctaLink: "" })}
-          >
-            <Plus /> Add Slide
-          </Button>
+          </div>
+
+          <div className="rounded-lg border border-border p-4">
+            <p className="text-sm font-medium">Hero copy per style</p>
+            <p className="mb-3 mt-1 text-xs text-muted-foreground">
+              Edit the text for each style. Only the style selected above is shown on the homepage. Leave a field blank to use its default (shown as the placeholder).
+            </p>
+            <div className="flex flex-col gap-4">
+              {HERO_VARIANTS.map(({ key, label, ph }) => (
+                <div key={key} className="rounded-lg border border-border p-4">
+                  <p className="mb-3 text-sm font-medium">{label}</p>
+                  <HeroVariantFields register={register} base={`homepageSections.hero.content.${key}`} ph={ph} />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </SectionCard>
 
@@ -535,97 +531,8 @@ export function SettingsPage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Homepage Sections" description="Show or hide sections on the homepage, and control the hero carousel's autoplay.">
+      <SectionCard title="Homepage Sections" description="Show or hide sections on the homepage. Hero has its own section above.">
         <div className="flex flex-col gap-4">
-          <div className="rounded-lg border border-border p-4">
-            <p className="mb-3 text-sm font-medium">Hero Banner</p>
-            <div className="flex flex-col gap-3">
-              <Controller
-                control={control}
-                name="homepageSections.hero.enabled"
-                render={({ field }) => (
-                  <label className="flex items-center justify-between gap-3 text-sm">
-                    Show hero banner
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </label>
-                )}
-              />
-              <Controller
-                control={control}
-                name="homepageSections.hero.autoplay"
-                render={({ field }) => (
-                  <label className="flex items-center justify-between gap-3 text-sm">
-                    Autoplay
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </label>
-                )}
-              />
-              <Field>
-                <FieldLabel>Autoplay interval (seconds)</FieldLabel>
-                <Input type="number" min={1} max={60} className="max-w-xs" {...register("homepageSections.hero.autoplayInterval")} />
-              </Field>
-              <Field>
-                <FieldLabel>Hero style</FieldLabel>
-                <Controller
-                  control={control}
-                  name="homepageSections.hero.variant"
-                  render={({ field }) => (
-                    <Select key={field.value} value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="max-w-xs"><SelectValue placeholder="Select a hero style" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="lime-showroom">Lime showroom</SelectItem>
-                        <SelectItem value="dark-spotlight">Dark spotlight</SelectItem>
-                        <SelectItem value="photo-fullbleed">Photo full-bleed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </Field>
-
-              <div className="rounded-lg border border-border p-4">
-                <Controller
-                  control={control}
-                  name="homepageSections.hero.highlightCard.enabled"
-                  render={({ field }) => (
-                    <label className="flex items-center justify-between gap-3 text-sm">
-                      Highlight card (lime / dark hero only)
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </label>
-                  )}
-                />
-                <div className="mt-3 grid grid-cols-3 gap-3">
-                  <Field>
-                    <FieldLabel>Kicker</FieldLabel>
-                    <Input {...register("homepageSections.hero.highlightCard.kicker")} placeholder="MINI GT" />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Title</FieldLabel>
-                    <Input {...register("homepageSections.hero.highlightCard.title")} placeholder="Supra A80…" />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Price (৳)</FieldLabel>
-                    <Input type="number" {...register("homepageSections.hero.highlightCard.price")} />
-                  </Field>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-border p-4">
-                <p className="text-sm font-medium">Hero copy per style</p>
-                <p className="mb-3 mt-1 text-xs text-muted-foreground">
-                  Edit the text for each style. Only the style selected above is shown on the homepage. Leave a field blank to use its default (shown as the placeholder).
-                </p>
-                <div className="flex flex-col gap-4">
-                  {HERO_VARIANTS.map(({ key, label, ph }) => (
-                    <div key={key} className="rounded-lg border border-border p-4">
-                      <p className="mb-3 text-sm font-medium">{label}</p>
-                      <HeroVariantFields register={register} base={`homepageSections.hero.content.${key}`} ph={ph} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
           {HOMEPAGE_SECTIONS.map(({ key, label }) => (
             <SectionToggleRow key={key} control={control} name={`homepageSections.${key}.enabled`} label={label} />
           ))}

@@ -5,17 +5,6 @@ const imageSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const heroSlideSchema = new mongoose.Schema(
-  {
-    title: { type: String, required: true },
-    subtitle: String,
-    image: imageSchema,
-    ctaText: String,
-    ctaLink: String,
-  },
-  { _id: false }
-);
-
 const whyChooseItemSchema = new mongoose.Schema(
   {
     icon: String, // lucide-react icon name, rendered dynamically on the frontend
@@ -167,7 +156,6 @@ const announcementDeviceSchema = new mongoose.Schema(
 
 const settingsSchema = new mongoose.Schema(
   {
-    heroBanner: { type: [heroSlideSchema], default: [] },
     // Fully data-driven announcement bar (no hardcoded storefront fallback —
     // OFF genuinely hides it). Blank colors fall back to the shipped design
     // (ink bar, #DDDFD2 text, brand separators/icons) in AnnouncementBar.jsx.
@@ -229,15 +217,16 @@ const settingsSchema = new mongoose.Schema(
       qrImage: imageSchema,
     },
     // Per-section show/hide for the homepage (System 6, post-launch requirements) —
-    // one toggle per section actually rendered on HomePage.jsx today. hero also
-    // carries its own autoplay controls since Embla's autoplay delay is otherwise
-    // hardcoded. Every section defaults to enabled so a fresh/un-migrated document
-    // preserves today's homepage exactly (nothing disappears on deploy).
+    // one toggle per section actually rendered on HomePage.jsx today. Every
+    // section defaults to enabled so a fresh/un-migrated document preserves
+    // today's homepage exactly (nothing disappears on deploy).
+    // (The legacy heroBanner slide array and hero autoplay controls were removed
+    // once the redesigned hero shipped — it is a single styled hero, not a
+    // carousel, and only ever used one image. That image now lives here.)
     homepageSections: {
       hero: {
         enabled: { type: Boolean, default: true },
-        autoplay: { type: Boolean, default: true },
-        autoplayInterval: { type: Number, default: 6, min: 1, max: 60 },
+        image: imageSchema,
         // Which of the storefront redesign's 3 hero visual styles to render
         // (design_handoff_diecastbd_storefront) — admin-selectable per the
         // implementation instructions, not a per-slide field, since it's a

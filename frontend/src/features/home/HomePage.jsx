@@ -92,7 +92,10 @@ export function HomePage() {
       {isEnabled("hero") && (
         <HeroSection
           variant={hero?.variant}
-          image={settings?.heroBanner?.[0]?.image}
+          // hero.image is the home; heroBanner[0] is the pre-cleanup legacy spot,
+          // kept as a fallback so a production DB that hasn't run the migration
+          // yet keeps its hero image through the deploy window.
+          image={hero?.image ?? settings?.heroBanner?.[0]?.image}
           highlightCard={hero?.highlightCard}
           content={hero?.content?.[HERO_CONTENT_KEY[hero?.variant] ?? "limeShowroom"]}
         />

@@ -4,26 +4,6 @@
 // gracefully when empty. Fill them in via PATCH /admin/settings once real content exists.
 
 export const settingsSeed = {
-  heroBanner: [
-    {
-      title: "Authenticity, Cast in Metal.",
-      subtitle: "Premium 1:64 diecast from Hot Wheels Premium and MINI GT — verified authentic, delivered nationwide.",
-      ctaText: "Explore the Collection",
-      ctaLink: "/shop",
-    },
-    {
-      title: "Hot Wheels Premium, Now in Bangladesh.",
-      subtitle: "Car Culture, Pop Culture, and F1 Gold Label — Mattel's flagship collector line.",
-      ctaText: "Shop Hot Wheels",
-      ctaLink: "/shop?brand=hot-wheels-premium",
-    },
-    {
-      title: "MINI GT: JDM Legends, 1:64 Scale.",
-      subtitle: "Museum-grade detailing for the cars that defined a culture.",
-      ctaText: "Shop MINI GT",
-      ctaLink: "/shop?brand=mini-gt",
-    },
-  ],
   // Desktop seeds the redesign's three shipped lines as REAL editable messages
   // (per the redesign-content convention) so a fresh install matches the design;
   // the storefront has no hardcoded fallback anymore — OFF genuinely hides it.
@@ -109,8 +89,6 @@ export const settingsSeed = {
   homepageSections: {
     hero: {
       enabled: true,
-      autoplay: true,
-      autoplayInterval: 6,
       variant: "photo-fullbleed",
       highlightCard: { enabled: false },
     },

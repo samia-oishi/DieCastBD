@@ -21,14 +21,6 @@ const hexOrEmpty = z.preprocess(
 const optionalNumber = (schema) => z.preprocess((v) => (v === "" || v == null ? undefined : v), schema.optional());
 
 
-const heroSlide = z.object({
-  title: z.string().min(1),
-  subtitle: z.string().optional(),
-  image: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
-  ctaText: z.string().optional(),
-  ctaLink: z.string().optional(),
-});
-
 const whyChooseItem = z.object({
   icon: z.string().optional(),
   title: z.string().min(1),
@@ -118,10 +110,7 @@ const homepageSections = z.object({
   hero: z
     .object({
       enabled: z.coerce.boolean().optional(),
-      autoplay: z.coerce.boolean().optional(),
-      // Same clearable-number treatment as scrollSpeed (an emptied input is
-      // "not set", not 0 — 0 would trip min(1)).
-      autoplayInterval: optionalNumber(z.coerce.number().min(1).max(60)),
+      image: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).optional(),
       variant: z.enum(["lime-showroom", "dark-spotlight", "photo-fullbleed"]).optional(),
       highlightCard: z
         .object({
@@ -169,7 +158,6 @@ const announcementDevice = z
 
 export const updateSettingsSchema = {
   body: z.object({
-    heroBanner: z.array(heroSlide).optional(),
     announcementBar: z
       .object({
         bgColor: hexOrEmpty,
