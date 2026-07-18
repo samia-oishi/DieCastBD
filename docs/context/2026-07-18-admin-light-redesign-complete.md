@@ -25,7 +25,9 @@ Docs updated: `docs/plan.md` §7 decisions **#82–88** + "Admin light redesign:
 
 Blocks now persist and render end to end. `blocks[]` on the Page model + Zod discriminated union (`backend/src/modules/pages/page.blocks.js`), admin form wiring, `BlockRenderer` on the storefront, merchant pages at `/<slug>`. Image and carousel-slide blocks upload to Cloudinary via the existing `POST /admin/settings/upload-image`. See `docs/plan.md` #89.
 
-**Known gap, flagged not filled: there is no DELETE route for pages.** The admin can create pages but never remove them — test pages had to be deleted straight from the database. This is the obvious next piece of work (route + controller + validation + confirm dialog in the admin list, mirroring the coupon delete pattern).
+**Pages CRUD is complete** — `DELETE /admin/pages/:id` shipped too (see `docs/plan.md` #90). Deletion refuses the four policy slugs (409) because the storefront hardcodes those routes and links them from the footer. While auditing it, found the shared `idParamSchema` was `z.string().min(1)`, so a malformed id threw a Mongoose CastError and surfaced as a **500 on GET/PATCH/DELETE alike** — now a real ObjectId regex, all three return 400.
+
+No known gaps left in the Pages feature.
 
 ## Gotchas carried forward
 

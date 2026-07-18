@@ -945,3 +945,17 @@ Product and carousel blocks store **slugs**, not embedded product data, so a pri
 **Verified end to end** against the dev DB: `javascript:` link and unknown block type both rejected with 400; a six-block page created via the API, fetched with its two products resolved, and rendered on the storefront with every block correct (bold/link/bullets as real elements, offer banner in its dark-green theme, two-column grid with live prices, divider, lime button, no overflow at 1280); then through the admin UI — blocks load from the server, adding a block arms the save bar, and both the new block and an edited block's fields (text + level) survived a reload. The test page was deleted afterwards. 9 new backend validation tests, 9 new renderer tests: backend 92/92, frontend 50/50.
 
 **Gap flagged, not filled:** there is no DELETE route for pages. The admin can create pages but not remove them — I deleted the QA page directly from the database. Pre-existing; worth adding next.
+
+---
+
+## Pages CRUD completed
+
+Blocks worked but the feature didn't: pages could be created and edited, never deleted. `DELETE /admin/pages/:id` (with `auditLog`) plus a delete button and confirm dialog in the admin list closes it — create, edit, publish, view live, delete all work now.
+
+Deletion refuses the four policy slugs with a 409. `/terms-conditions`, `/privacy-policy`, `/refund-policy` and `/shipping-policy` are hardcoded storefront routes with footer links, so deleting one wouldn't just remove content — it would turn a linked page into a 404. The list shows those rows with a disabled icon rather than a button that could only ever return an error; the merchant unpublishes or clears them instead. The confirm dialog states the consequence per page: a published page names the URL that will start returning "not found", a draft says nothing on the storefront changes.
+
+Found while auditing the API rather than by writing the feature: **a malformed id returned 500, not 400.** The shared `idParamSchema` was `z.string().min(1)`, so `"nope"` passed validation and died in Mongoose as a CastError. That was never delete-specific — GET and PATCH had the same hole, it had simply never been exercised. Both param schemas now require a real ObjectId and all three verbs return 400.
+
+Also fixed in the same pass: image and carousel-slide blocks now upload to Cloudinary via the existing `POST /admin/settings/upload-image` (a generic image upload despite its settings-scoped route — a second endpoint doing the same job is how upload paths drift), the Pages list shows the design's real "N blocks" count now that blocks persist, and `plan.md` decision 86 was marked superseded since it still described blocks as UI-only in what is the living architecture doc.
+
+Verified the whole lifecycle in a browser: created a page with a heading block, published it, saw it render at `/qa-flow-page`, deleted it from the list, confirmed the URL then 404s, and confirmed policy rows offer no delete button. API edge cases: 409 on a system page, 404 on a missing one, 400 on a malformed id, 409 on a duplicate slug, 404 for an unpublished page on the storefront. Database left with its five original pages. Backend 98/98, frontend 50/50.

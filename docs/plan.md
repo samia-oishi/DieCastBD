@@ -297,6 +297,20 @@ The admin was the last dark surface in the app. It's now light, sharing the stor
     for the grid's "show prices & buy button" toggle. Known gap, pre-existing: there is
     **no DELETE route for pages** — the admin can create pages but not remove them.
 
+90. **Pages CRUD completed; a shared param schema was masking 500s.** `DELETE /admin/pages/:id`
+    (+ `auditLog`) closes the gap where pages could be created but never removed. It
+    **refuses the four policy slugs** with a 409 — `/terms-conditions` and friends are
+    hardcoded storefront routes with footer links, so deleting one turns a linked page
+    into a 404; unpublish or clear them instead. The admin list renders those rows with
+    a disabled icon rather than a button that could only ever fail, and the confirm
+    dialog names the real consequence per page (published → the URL starts 404ing for
+    anyone holding the link; draft → nothing on the storefront changes). Separately, the
+    shared `idParamSchema` was `z.string().min(1)`, so a malformed id reached Mongoose
+    and threw a CastError — surfacing as a **500 on GET, PATCH and DELETE alike**. Both
+    param schemas now require a real ObjectId. Image and carousel-slide blocks upload to
+    Cloudinary through the existing `POST /admin/settings/upload-image` rather than a
+    second endpoint doing the same job.
+
 ---
 
 ## Admin light redesign: complete
