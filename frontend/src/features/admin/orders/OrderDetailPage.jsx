@@ -14,6 +14,7 @@ import { AdminButton } from "@/features/admin/shell/AdminButton";
 import { adminToast } from "@/features/admin/shell/adminToast";
 import { useAdminOrder, useUpdateOrderStatusMutation } from "./api/useAdminOrders";
 import { InvoiceModal } from "./components/InvoiceModal";
+import { ROUTES } from "@/constants/routes";
 
 const STATUS_OPTIONS = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
 const PAYMENT_METHOD_LABELS = { cod: "Cash on Delivery", bkash: "bKash", banglaqr: "BanglaQR" };
@@ -71,7 +72,7 @@ export function OrderDetailPage() {
 
   return (
     <div className="flex flex-col gap-[18px] pb-10">
-      <Link to=".." className="flex w-fit items-center gap-1 text-[13px] font-semibold text-ink-soft hover:text-ink">
+      <Link to={`${ROUTES.ADMIN}/orders`} className="flex w-fit items-center gap-1 text-[13px] font-semibold text-ink-soft hover:text-ink">
         <ChevronLeft size={17} strokeWidth={2.2} /> Back to orders
       </Link>
 

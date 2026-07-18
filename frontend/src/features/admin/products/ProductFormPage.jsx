@@ -5,6 +5,7 @@ import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { AdminPageHeader } from "@/features/admin/shell/AdminPageHeader";
 import { ProductForm } from "./components/ProductForm";
 import { useAdminProduct, useCreateProductMutation, useUpdateProductMutation } from "./api/useProducts";
+import { ROUTES } from "@/constants/routes";
 
 export function ProductFormPage() {
   const { id } = useParams();
@@ -23,7 +24,7 @@ export function ProductFormPage() {
 
   return (
     <div className="flex flex-col gap-[18px]">
-      <Link to=".." className="flex w-fit items-center gap-1 text-[13px] font-semibold text-ink-soft hover:text-ink">
+      <Link to={`${ROUTES.ADMIN}/products`} className="flex w-fit items-center gap-1 text-[13px] font-semibold text-ink-soft hover:text-ink">
         <ChevronLeft size={17} strokeWidth={2.2} /> Back to products
       </Link>
 

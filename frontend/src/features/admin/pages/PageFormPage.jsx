@@ -14,6 +14,7 @@ import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { RichTextEditor } from "./components/RichTextEditor";
 import { pageSchema } from "./schemas/pageSchema";
 import { useAdminPage, useCreatePageMutation, useUpdatePageMutation } from "./api/useAdminPages";
+import { ROUTES } from "@/constants/routes";
 
 export function PageFormPage() {
   const { id } = useParams();
@@ -62,7 +63,7 @@ export function PageFormPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 pb-16">
       <Button asChild variant="ghost" size="sm" className="w-fit">
-        <Link to="..">
+        <Link to={`${ROUTES.ADMIN}/pages`}>
           <ChevronLeft /> Back to pages
         </Link>
       </Button>

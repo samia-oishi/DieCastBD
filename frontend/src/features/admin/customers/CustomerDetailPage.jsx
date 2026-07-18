@@ -22,6 +22,7 @@ import {
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { useCurrentUser } from "@/features/auth/api/useAuth";
 import { useAdminUser, useUpdateAdminUserMutation, useChangeUserRoleMutation } from "./api/useAdminUsers";
+import { ROUTES } from "@/constants/routes";
 
 const ROLE_OPTIONS = ["customer", "staff", "admin"];
 
@@ -96,7 +97,7 @@ export function CustomerDetailPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 pb-16">
       <Button asChild variant="ghost" size="sm" className="w-fit">
-        <Link to="..">
+        <Link to={`${ROUTES.ADMIN}/customers`}>
           <ChevronLeft /> Back to customers
         </Link>
       </Button>

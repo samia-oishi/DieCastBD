@@ -27,9 +27,10 @@ import { adminToast } from "@/features/admin/shell/adminToast";
 import { useAdminProducts, useBulkProductStatusMutation, useBulkDeleteProductsMutation } from "./api/useProducts";
 import { effectivePrice } from "@/lib/pricing";
 
-// Photo column sits right after the checkbox (merchant request — the design's
-// prototype had no thumbnail, but scanning a catalogue by picture is faster).
-const GRID = "md:grid-cols-[auto_44px_84px_1.9fr_1fr_1fr_1.05fr_66px_92px_24px]";
+// Exactly the prototype's column template (28px 92px minmax(220px,1fr) 90px
+// 120px 70px 92px 34px) with ONE addition the merchant asked for: a 44px photo
+// column straight after the checkbox.
+const GRID = "md:grid-cols-[28px_44px_92px_minmax(220px,1fr)_90px_120px_70px_92px_34px]";
 const CHECKBOX_CLS = "size-5 rounded-[6px] border-[1.5px] border-[#C9CBBE] data-[state=checked]:border-brand";
 
 const STATUS_PILL = {
@@ -137,7 +138,7 @@ export function ProductsPage() {
 
       <section className="overflow-x-auto rounded-[18px] border border-line bg-white">
         <div className="min-w-[940px]">
-          <div className={cn("hidden items-center gap-4 border-b border-line-soft px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.07em] text-faint md:grid", GRID)}>
+          <div className={cn("hidden items-center gap-3 border-b border-line-soft px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.07em] text-faint md:grid", GRID)}>
             <Checkbox
               className={CHECKBOX_CLS}
               checked={allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false}
@@ -148,10 +149,9 @@ export function ProductsPage() {
             <span>Photo</span>
             <span>SKU</span>
             <span>Product</span>
-            <span>Brand</span>
-            <span>Price</span>
-            <span>Profit</span>
-            <span>Stock</span>
+            <span className="text-right">Price</span>
+            <span className="text-right">Profit / margin</span>
+            <span className="text-right">Stock</span>
             <span>Status</span>
             <span />
           </div>
@@ -173,11 +173,20 @@ export function ProductsPage() {
               <div
                 key={p._id}
                 className={cn(
-                  "grid grid-cols-[auto_1fr] items-center gap-3 border-t border-line-soft px-4 py-2.5 transition-colors first:border-t-0 hover:bg-[#FCFCF9] md:gap-4 md:px-5",
+                  "relative grid grid-cols-[auto_1fr] items-center gap-3 border-b border-line-soft px-4 py-3.5 transition-colors last:border-b-0 hover:bg-[#FCFCF9] md:px-5 md:py-[13px]",
                   GRID,
                   isSel && "bg-[#FBFDF3]"
                 )}
               >
+                {/* Whole row opens the product (prototype behaviour); the checkbox
+                    sits above this overlay so selecting never navigates. */}
+                <Link
+                  to={p._id}
+                  aria-label={`Edit ${p.title}`}
+                  tabIndex={-1}
+                  className="absolute inset-0 z-0"
+                />
+
                 <Checkbox
                   className={cn(CHECKBOX_CLS, "relative z-10")}
                   checked={isSel}
@@ -186,56 +195,63 @@ export function ProductsPage() {
                 />
 
                 {/* desktop cells */}
-                <div className="hidden md:contents">
-                  <AdminThumb src={p.thumbnail?.url} alt={p.title} />
-                  <span className="truncate font-display text-[11px] font-bold text-[#6B6E60]" title={p.sku}>{p.sku}</span>
-                  <Link to={p._id} className="truncate text-[13px] text-ink hover:text-brand-deep" title={p.title}>
-                    {p.title}
-                  </Link>
-                  <span className="truncate text-[12.5px] text-ink-soft">{p.brand?.name ?? "—"}</span>
-                  <span className="truncate text-[12.5px]">
-                    <span className="font-semibold text-ink">{formatTaka(price)}</span>
-                    {onSale && <span className="ml-1.5 text-[11px] text-faint line-through">{formatTaka(p.price)}</span>}
+                <div className="pointer-events-none hidden md:contents">
+                  <AdminThumb src={p.thumbnail?.url} alt={p.title} size={44} />
+
+                  <span className="truncate font-display text-[11.5px] font-bold tracking-[0.02em] text-[#6B6E60]" title={p.sku}>
+                    {p.sku}
                   </span>
-                  <span className="truncate text-[12px]">
+
+                  <span className="min-w-0">
+                    <span className="block truncate text-[13px] font-semibold text-ink" title={p.title}>{p.title}</span>
+                    <span className="block truncate text-[11.5px] text-faint">{p.brand?.name ?? "—"}</span>
+                  </span>
+
+                  <span className="text-right">
+                    <span className="block text-[13px] font-bold text-ink">{formatTaka(p.price)}</span>
+                    {onSale && <span className="block text-[11px] font-semibold text-warn">sale {formatTaka(price)}</span>}
+                  </span>
+
+                  <span className="text-right">
                     {profit != null ? (
-                      <span className={profit > 0 ? "text-brand-deep" : "text-faint"}>
-                        {formatTaka(profit)}
-                        {margin != null && ` · ${margin}%`}
-                      </span>
+                      <>
+                        <span className="block text-[12.5px] font-bold text-brand-deep">{formatTaka(profit)}</span>
+                        <span className="block text-[11px] text-faint">{margin}% · cost {formatTaka(p.costPrice)}</span>
+                      </>
                     ) : (
-                      <span className="text-faint">—</span>
+                      <span className="block text-[12.5px] text-faint">—</span>
                     )}
                   </span>
-                  <span className={cn("text-[12.5px] font-semibold", stock === 0 ? "text-danger" : stock <= 2 ? "text-warn" : "text-ink")}>
+
+                  <span className={cn("text-right text-[13px] font-bold", stock === 0 ? "text-danger" : stock <= 2 ? "text-warn" : "text-ink")}>
                     {stock}
                   </span>
+
                   <span>
-                    <span className={cn("inline-block rounded-full px-2.5 py-[3px] text-[10.5px] font-bold capitalize", STATUS_PILL[p.status] ?? STATUS_PILL.archived)}>
+                    <span className={cn("inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold capitalize", STATUS_PILL[p.status] ?? STATUS_PILL.archived)}>
                       {p.status}
                     </span>
                   </span>
-                  <Link to={p._id} className="flex justify-end text-faint hover:text-ink">
-                    <ChevronRight size={18} strokeWidth={2} />
-                  </Link>
+
+                  <ChevronRight size={15} strokeWidth={2} className="justify-self-end text-faint" />
                 </div>
 
-                {/* mobile card */}
-                <Link to={p._id} className="flex items-center gap-3 md:hidden">
-                  <AdminThumb src={p.thumbnail?.url} alt={p.title} />
+                {/* mobile row */}
+                <div className="pointer-events-none flex items-center gap-3 md:hidden">
+                  <AdminThumb src={p.thumbnail?.url} alt={p.title} size={40} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] text-ink">{p.title}</div>
-                    <div className="truncate text-[11.5px] text-faint">
-                      {p.sku} · {p.brand?.name ?? "—"}
+                    <div className="truncate text-[12.5px] font-semibold leading-[1.4] text-ink">{p.title}</div>
+                    <div className="mt-0.5 truncate text-[11px] text-faint">
+                      {p.sku} · {stock} in stock
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <span className="text-[13px] font-bold text-ink">{formatTaka(price)}</span>
-                    <span className={cn("text-[11.5px] font-semibold", stock === 0 ? "text-danger" : stock <= 2 ? "text-warn" : "text-faint")}>
-                      {stock} in stock
+                    <span className={cn("inline-block rounded-full px-2 py-[3px] text-[9.5px] font-bold capitalize", STATUS_PILL[p.status] ?? STATUS_PILL.archived)}>
+                      {p.status}
                     </span>
                   </div>
-                </Link>
+                </div>
               </div>
             );
           })}
