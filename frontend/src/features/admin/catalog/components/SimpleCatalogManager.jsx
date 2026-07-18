@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { Pencil, Trash2, ImageUp, Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { slugify } from "@/lib/slug";
 import { ROUTES } from "@/constants/routes";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,16 +28,6 @@ import { adminInputCls, adminTextareaCls } from "@/features/admin/shell/adminFie
 import { catalogItemSchema } from "../schemas/catalogSchemas";
 
 const GRID = "md:grid-cols-[52px_minmax(160px,1fr)_minmax(140px,1fr)_90px_90px_110px]";
-
-/** kebab-case preview of the slug the server will generate from a name. */
-function slugify(name) {
-  return (name ?? "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
 
 function initials(name) {
   return (name ?? "?")
