@@ -190,14 +190,19 @@ function Lightbox({ images, index, onIndex, title, open, onClose }) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       {/* Width overridden at BOTH breakpoints — shadcn caps base and sm:, and
           tailwind-merge only dedupes within a variant (the AdminModal lesson). */}
+      {/* One dialog, two presentations. Mobile (base) keeps the card dialog
+          the merchant approved: white sheet, header bar, tap-outside closes.
+          Desktop (sm:) returns to the full-screen dark view they preferred —
+          the image large and centred, controls floating in the dark backdrop
+          corner where they never touch the photo. */}
       <DialogContent
         showCloseButton={false}
-        className="w-auto max-w-none gap-0 overflow-hidden rounded-[18px] border-none bg-white p-0 shadow-[0_24px_70px_rgba(16,18,8,0.45)] sm:max-w-none"
+        className="w-auto max-w-none gap-0 overflow-hidden rounded-[18px] border-none bg-white p-0 shadow-[0_24px_70px_rgba(16,18,8,0.45)] sm:h-[100dvh] sm:w-screen sm:max-h-none sm:max-w-none sm:rounded-none sm:bg-[rgba(13,15,7,0.96)] sm:shadow-none"
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>
 
-        {/* Header bar — controls sit above the photo, never on it. */}
-        <div className="flex items-center justify-between gap-3 border-b border-line-soft px-3.5 py-2">
+        {/* Mobile header bar — controls sit above the photo, never on it. */}
+        <div className="flex items-center justify-between gap-3 border-b border-line-soft px-3.5 py-2 sm:hidden">
           <span className="text-[12.5px] font-semibold text-ink-soft">
             {images.length > 1 ? `${index + 1} / ${images.length}` : "Photo"}
           </span>
@@ -216,24 +221,52 @@ function Lightbox({ images, index, onIndex, title, open, onClose }) {
           </div>
         </div>
 
+        {/* Desktop controls — in the dark backdrop, clear of the image. */}
+        <div className="absolute right-4 top-4 z-20 hidden gap-2 sm:flex">
+          <button
+            type="button"
+            onClick={() => setActualSize((v) => !v)}
+            aria-label={actualSize ? "Fit to screen" : "View actual size"}
+            className={VIEWER_BTN}
+          >
+            {actualSize ? <ZoomOut size={18} strokeWidth={1.9} /> : <ZoomIn size={18} strokeWidth={1.9} />}
+          </button>
+          <button type="button" onClick={onClose} aria-label="Close" className={VIEWER_BTN}>
+            <X size={18} strokeWidth={2} />
+          </button>
+        </div>
+        {images.length > 1 && (
+          <div className="absolute left-4 top-4 z-20 hidden rounded-full bg-[rgba(16,18,8,0.55)] px-3 py-1.5 text-[12.5px] font-semibold text-white backdrop-blur sm:block">
+            {index + 1} / {images.length}
+          </div>
+        )}
+
         {actualSize ? (
           // 1:1 pixels; the wrapper pans in both axes when the image outgrows
-          // it. Width is pinned to the fit-mode footprint so toggling zoom
-          // doesn't reshape the dialog into a tall strip.
+          // it. Mobile pins the width to the fit-mode footprint so toggling
+          // zoom doesn't reshape the dialog; desktop pans within the full
+          // screen, as the original viewer did.
           <div
             ref={panRef}
-            className="max-h-[70vh] w-[calc(100vw-24px)] overflow-auto overscroll-contain sm:w-auto sm:max-w-[min(92vw,1100px)] sm:max-h-[78vh]"
+            className="max-h-[70vh] w-[calc(100vw-24px)] overflow-auto overscroll-contain sm:h-full sm:max-h-none sm:w-full"
           >
-            <img src={src} alt={title} decoding="async" onLoad={centerPan} onClick={() => setActualSize(false)} className="max-w-none cursor-zoom-out" />
+            <img src={src} alt={title} decoding="async" onLoad={centerPan} onClick={() => setActualSize(false)} className="max-w-none cursor-zoom-out sm:m-auto" />
           </div>
         ) : (
-          <img
-            src={src}
-            alt={title}
-            decoding="async"
-            onClick={() => setActualSize(true)}
-            className="block h-auto max-h-[74vh] w-auto max-w-[calc(100vw-24px)] cursor-zoom-in sm:max-w-[min(92vw,1100px)]"
-          />
+          // Desktop wraps the image in a centring backdrop; clicking the dark
+          // area (not the photo) closes, matching the overlay-click instinct.
+          <div
+            className="contents sm:flex sm:h-full sm:w-full sm:items-center sm:justify-center"
+            onClick={(e) => e.target === e.currentTarget && onClose()}
+          >
+            <img
+              src={src}
+              alt={title}
+              decoding="async"
+              onClick={() => setActualSize(true)}
+              className="block h-auto max-h-[74vh] w-auto max-w-[calc(100vw-24px)] cursor-zoom-in sm:max-h-[88vh] sm:max-w-[90vw] sm:rounded-[12px]"
+            />
+          </div>
         )}
 
         {images.length > 1 && (
