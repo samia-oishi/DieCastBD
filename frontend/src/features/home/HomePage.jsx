@@ -78,11 +78,13 @@ export function HomePage() {
 
   return (
     <div>
-      <Seo title={settings?.seoDefaults?.title} noTemplate={!!settings?.seoDefaults?.title} description={settings?.seoDefaults?.description}>
+      {/* Title/description/share-image/GSC token all come from Settings via
+          Seo itself now; the token also sits statically in index.html so
+          verification never depends on JS rendering. */}
+      <Seo>
         <link rel="canonical" href={canonical("/")} />
         <meta property="og:url" content={canonical("/")} />
         <meta property="og:locale" content="en_US" />
-        <meta name="google-site-verification" content="-hHjBqUWtYFIZPNE0dU9_IpFGrDEtokHS8PvupLBwzE" />
       </Seo>
       <Helmet>
         <script type="application/ld+json">{JSON.stringify(orgJsonLd)}</script>

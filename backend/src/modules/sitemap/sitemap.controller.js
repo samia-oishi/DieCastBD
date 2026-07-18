@@ -1,4 +1,5 @@
 import { Product } from "../products/product.model.js";
+import { Page } from "../pages/page.model.js";
 import { env } from "../../config/env.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -32,6 +33,10 @@ export const getSitemap = asyncHandler(async (req, res) => {
     .select("slug updatedAt")
     .lean();
 
+  // Published CMS pages — the four policies plus anything built in the block
+  // builder. Unpublished drafts stay out, same as draft products.
+  const pages = await Page.find({ isPublished: true }).select("slug updatedAt").lean();
+
   const entries = [
     ...STATIC_PATHS.map((s) => urlEntry(`${base}${s.path}`, s)),
     ...products.map((p) =>
@@ -39,6 +44,13 @@ export const getSitemap = asyncHandler(async (req, res) => {
         lastmod: p.updatedAt?.toISOString().slice(0, 10),
         changefreq: "weekly",
         priority: "0.8",
+      })
+    ),
+    ...pages.map((p) =>
+      urlEntry(`${base}/${p.slug}`, {
+        lastmod: p.updatedAt?.toISOString().slice(0, 10),
+        changefreq: "monthly",
+        priority: "0.6",
       })
     ),
   ];

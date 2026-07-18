@@ -2,6 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://api.diecastbd.com/sitemap.xml" },
+    { "source": "/share-image", "destination": "https://api.diecastbd.com/api/v1/settings/share-image" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

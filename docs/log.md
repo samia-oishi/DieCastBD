@@ -959,3 +959,15 @@ Found while auditing the API rather than by writing the feature: **a malformed i
 Also fixed in the same pass: image and carousel-slide blocks now upload to Cloudinary via the existing `POST /admin/settings/upload-image` (a generic image upload despite its settings-scoped route — a second endpoint doing the same job is how upload paths drift), the Pages list shows the design's real "N blocks" count now that blocks persist, and `plan.md` decision 86 was marked superseded since it still described blocks as UI-only in what is the living architecture doc.
 
 Verified the whole lifecycle in a browser: created a page with a heading block, published it, saw it render at `/qa-flow-page`, deleted it from the list, confirmed the URL then 404s, and confirmed policy rows offer no delete button. API edge cases: 409 on a system page, 404 on a missing one, 400 on a malformed id, 409 on a duplicate slug, 404 for an unpublished page on the storefront. Database left with its five original pages. Backend 98/98, frontend 50/50.
+
+---
+
+## SEO section expansion (decision #91)
+
+Reviewed the settings SEO section against a codebase audit and current Google guidance (product/merchant-listing/return-policy structured data). Base was strong (robots.txt, product sitemap, Product JSON-LD with price/availability, OnlineStore/WebSite schema from real settings); the gaps were the share-image story, defaults that only applied to the homepage, a sitemap missing CMS pages, and no merchant-listing shipping/returns data.
+
+Shipped: three new `seoDefaults` fields (share image upload, Search Console token, return window days) surfaced in the admin SEO card; `Seo.jsx` made settings-driven site-wide with og:image/twitter:image; static index.html fallbacks for non-JS crawlers (GSC token + og:image via the new `/share-image` 302 route and Vercel rewrite); sitemap now lists published CMS pages; PDP emits BreadcrumbList and merchant-listing `shippingDetails` (from real zones) + `hasMerchantReturnPolicy` (only when the merchant commits to a window). Meta keywords deliberately omitted.
+
+Caught during verification: `optionalNumber` passed bare instead of called (every save 500'd); my own manual curl blanked seoDefaults title/description via the whole-subtree PATCH — restored through the UI; QA values (8×8 test image, fake GSC token, invented 7-day window) scrubbed after testing — the return window is a policy commitment only the merchant can make. Verified end to end: admin save → 302 share-image redirect → og/twitter/GSC metas on home → product image + breadcrumbs + shipping/returns schema on PDP → settings restored. Backend 108/108, frontend 50/50.
+
+Deferred deliberately: bot-serving per-product OG previews for WhatsApp/Facebook (needs an edge layer; static default covers branded previews meanwhile).

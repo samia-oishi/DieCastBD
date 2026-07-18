@@ -34,3 +34,19 @@ export const uploadSettingsImage = asyncHandler(async (req, res) => {
   const image = await uploadBufferToCloudinary(req.file.buffer, "settings");
   sendSuccess(res, { data: image, message: "Image uploaded" });
 });
+
+/** Stable URL for the default social share image.
+ *
+ * Facebook/WhatsApp crawlers read the static index.html and never run JS, so
+ * og:image there must be a fixed URL — but the image itself is merchant-
+ * uploaded and lives at a changing Cloudinary URL. This route bridges the two:
+ * the static tag points here, and we redirect to wherever the current upload
+ * lives. The FB scraper follows redirects. 404 when unset — crawlers treat
+ * that as "no image", which is honest.
+ */
+export const getShareImage = asyncHandler(async (req, res) => {
+  const settings = await Settings.findOne().select("seoDefaults.shareImage").lean();
+  const url = settings?.seoDefaults?.shareImage?.url;
+  if (!url) throw ApiError.notFound("No share image set");
+  res.redirect(302, url);
+});

@@ -280,6 +280,16 @@ const settingsSchema = new mongoose.Schema(
     seoDefaults: {
       title: String,
       description: String,
+      // Default og:image for every share that isn't a product page (WhatsApp/
+      // Facebook previews). Served via GET /settings/share-image so the STATIC
+      // index.html can reference a stable URL — social crawlers don't run JS.
+      shareImage: imageSchema,
+      // Google Search Console meta-tag token; rendered site-wide when set.
+      googleSiteVerification: String,
+      // Return window in days for Google merchant-listing schema
+      // (MerchantReturnPolicy). Unset = the schema is simply omitted — we never
+      // invent a returns policy the store hasn't committed to.
+      returnWindowDays: Number,
     },
   },
   { timestamps: true }

@@ -29,6 +29,13 @@
       content="Authentic Hot Wheels Premium and MINI GT diecast, curated for collectors. Nationwide delivery across Bangladesh."
     />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- Social crawlers (FB/WhatsApp) never run JS, so the share image must be
+         referenced statically. /share-image 302-redirects to whatever the
+         merchant has uploaded in Settings -> SEO; no upload = 404 = no image. -->
+    <meta property="og:image" content="https://diecastbd.com/share-image" />
+    <meta name="twitter:image" content="https://diecastbd.com/share-image" />
+    <!-- Search Console verification, static so it never depends on JS. -->
+    <meta name="google-site-verification" content="-hHjBqUWtYFIZPNE0dU9_IpFGrDEtokHS8PvupLBwzE" />
   </head>
   <body>
     <div id="root"></div>

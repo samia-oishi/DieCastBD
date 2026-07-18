@@ -20,6 +20,7 @@ import { WishlistButton } from "@/features/wishlist/components/WishlistButton";
 import { RestockAlertDialog } from "@/components/shared/RestockAlertDialog";
 import { useRestockAlertStore } from "@/stores/restockAlertStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
+import { useSettings } from "@/features/settings/api/useSettings";
 import { useProduct, useRelatedProducts } from "./api/useProducts";
 import { ProductGallery } from "./components/ProductGallery";
 import { ProductSpecs } from "./components/ProductSpecs";
@@ -72,6 +73,7 @@ export function ProductDetailPage() {
   const { data: related } = useRelatedProducts(slug);
   const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
   const recentlyViewed = useRecentlyViewedStore((s) => s.items);
+  const { data: settings } = useSettings();
   const { items } = useCart();
   const addToCart = useAddToCart();
   const [qty, setQty] = useState(1);
@@ -101,6 +103,44 @@ export function ProductDetailPage() {
   const onBuyNow = () => navigate(ROUTES.CHECKOUT, { state: { buyNowItem: { product, qty } } });
 
   const productUrl = canonical(`/products/${product.slug}`);
+  // Shipping + returns for Google merchant listings, from the REAL settings —
+  // one OfferShippingDetails per configured zone, and a return policy only
+  // when the merchant has committed to a window (blank = omitted, never
+  // invented).
+  const shippingDetails = (settings?.shippingZones ?? [])
+    .filter((z) => z?.name)
+    .map((z) => ({
+      "@type": "OfferShippingDetails",
+      name: z.name,
+      shippingRate: { "@type": "MonetaryAmount", value: Number(z.fee) || 0, currency: "BDT" },
+      shippingDestination: { "@type": "DefinedRegion", addressCountry: "BD" },
+    }));
+  const returnDays = Number(settings?.seoDefaults?.returnWindowDays);
+  const returnPolicy =
+    returnDays > 0
+      ? {
+          "@type": "MerchantReturnPolicy",
+          applicableCountry: "BD",
+          returnPolicyCountry: "BD",
+          returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+          merchantReturnDays: returnDays,
+        }
+      : undefined;
+
+  // Mirrors the visible breadcrumb — shapes how the URL renders in results.
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: canonical("/") },
+      { "@type": "ListItem", position: 2, name: "Shop", item: canonical("/shop") },
+      ...(product.brand?.name
+        ? [{ "@type": "ListItem", position: 3, name: product.brand.name, item: canonical(`/shop?brand=${product.brand.slug}`) }]
+        : []),
+      { "@type": "ListItem", position: product.brand?.name ? 4 : 3, name: product.title },
+    ],
+  };
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -118,6 +158,8 @@ export function ProductDetailPage() {
       itemCondition: "https://schema.org/NewCondition",
       availability: outOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
       seller: { "@type": "Organization", name: "DiecastBD" },
+      ...(shippingDetails.length ? { shippingDetails } : {}),
+      ...(returnPolicy ? { hasMerchantReturnPolicy: returnPolicy } : {}),
     },
   };
 
@@ -160,12 +202,19 @@ export function ProductDetailPage() {
 
   return (
     <>
-      <Seo title={product.seo?.title ? product.seo.title : `${product.title} — Buy in Bangladesh`} noTemplate={!!product.seo?.title} description={product.seo?.description || `Buy the ${product.title} in Bangladesh at DiecastBD. ${product.description?.slice(0, 100) ?? ""}`.slice(0, 160)}>
+      <Seo
+        title={product.seo?.title ? product.seo.title : `${product.title} — Buy in Bangladesh`}
+        noTemplate={!!product.seo?.title}
+        description={product.seo?.description || `Buy the ${product.title} in Bangladesh at DiecastBD. ${product.description?.slice(0, 100) ?? ""}`.slice(0, 160)}
+        image={product.thumbnail?.url}
+      >
         <link rel="canonical" href={product.seo?.canonicalUrl || productUrl} />
         <meta property="og:type" content="product" />
         <meta property="og:url" content={productUrl} />
-        {product.thumbnail?.url && <meta property="og:image" content={product.thumbnail.url} />}
       </Seo>
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbJsonLd)}</script>
+      </Helmet>
       <Helmet>
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>

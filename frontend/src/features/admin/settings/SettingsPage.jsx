@@ -517,7 +517,7 @@ export function SettingsPage() {
         newsletter: { enabled: true },
       },
       navigation: { headerLinks: [], footerLinks: [], footerText: "" },
-      seoDefaults: { title: "", description: "" },
+      seoDefaults: { title: "", description: "", shareImage: null, googleSiteVerification: "", returnWindowDays: "" },
       faqs: [],
     },
   });
@@ -1291,6 +1291,20 @@ export function SettingsPage() {
                   <div>
                     <L>Default description</L>
                     <Textarea className={adminTextareaCls} rows={2} {...register("seoDefaults.description")} />
+                  </div>
+                  <div>
+                    <L hint="(shown when the site is shared to WhatsApp / Facebook — 1200×630 works best)">Social share image</L>
+                    <UploadTile control={control} name="seoDefaults.shareImage" />
+                  </div>
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-3.5">
+                    <div>
+                      <L hint="(the content value from the meta tag)">Search Console verification</L>
+                      <Input className={adminInputCls} {...register("seoDefaults.googleSiteVerification")} placeholder="e.g. -hHjBqUWtY…" />
+                    </div>
+                    <div>
+                      <L hint="(blank = returns info left out of Google listings)">Return window (days)</L>
+                      <Input className={adminInputCls} type="number" min={0} {...register("seoDefaults.returnWindowDays")} />
+                    </div>
                   </div>
                   {/* Google-style search preview, live from the fields above. */}
                   <div className="rounded-[14px] border border-line-soft bg-[#FCFCF9] px-4 py-3.5">

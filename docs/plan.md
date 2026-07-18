@@ -311,6 +311,24 @@ The admin was the last dark surface in the app. It's now light, sharing the stor
     Cloudinary through the existing `POST /admin/settings/upload-image` rather than a
     second endpoint doing the same job.
 
+91. **SEO hardened along the whole read path, not just the settings card.** The SEO
+    section gains three merchant-editable fields on `seoDefaults`: `shareImage`
+    (default og:image), `googleSiteVerification`, and `returnWindowDays`. Wiring that
+    actually matters: `Seo.jsx` now treats Settings as the real site-wide defaults
+    (they previously applied to the homepage only), renders og:image/twitter:image
+    (page image wins, e.g. PDP thumbnails), and emits the GSC meta. **Social crawlers
+    (FB/WhatsApp) never run JS**, so their fallbacks are static: index.html carries the
+    GSC token and an og:image pointing at `/share-image`, a new public route that
+    302-redirects to the current Cloudinary upload (Vercel rewrite added; FB's scraper
+    follows redirects). Per-product WhatsApp previews would need a bot-serving layer —
+    deliberately deferred and documented. Also: the sitemap now includes published CMS
+    pages; PDPs emit BreadcrumbList plus merchant-listing extras built from REAL data
+    only — `shippingDetails` from the configured shipping zones and
+    `hasMerchantReturnPolicy` only when the merchant sets a return window (blank =
+    omitted, never invented). Meta keywords deliberately excluded (ignored by Google
+    for 15+ years). Found while wiring: `optionalNumber` is a schema factory and was
+    passed bare, so every settings save 500'd until called properly.
+
 ---
 
 ## Admin light redesign: complete

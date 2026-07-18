@@ -191,6 +191,14 @@ export const updateSettingsSchema = {
     banglaQrConfig: banglaQrConfig.optional(),
     homepageSections: homepageSections.optional(),
     navigation: navigation.optional(),
-    seoDefaults: z.object({ title: z.string().optional(), description: z.string().optional() }).optional(),
+    seoDefaults: z
+      .object({
+        title: z.string().optional(),
+        description: z.string().optional(),
+        shareImage: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).nullable().optional(),
+        googleSiteVerification: z.string().trim().max(200).optional(),
+        returnWindowDays: optionalNumber(z.coerce.number().min(0, "Return window can't be negative").max(365, "Return window over a year? Set it in days")),
+      })
+      .optional(),
   }),
 };
