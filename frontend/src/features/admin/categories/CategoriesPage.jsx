@@ -1,7 +1,14 @@
-import { useCategories } from "@/features/admin/catalog/api/useCategories";
 import { SimpleCatalogManager } from "@/features/admin/catalog/components/SimpleCatalogManager";
+import { useCategories } from "@/features/admin/catalog/api/useCategories";
 
 export function CategoriesPage() {
-  const categories = useCategories();
-  return <SimpleCatalogManager title="Categories" resource={categories} imageField="image" />;
+  return (
+    <SimpleCatalogManager
+      title="Categories"
+      singular="Category"
+      resource={useCategories()}
+      imageField="image"
+      productFilterKey="category"
+    />
+  );
 }

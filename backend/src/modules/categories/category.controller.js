@@ -12,8 +12,20 @@ export const listActiveCategories = asyncHandler(async (req, res) => {
 });
 
 export const listAllCategories = asyncHandler(async (req, res) => {
-  const categories = await Category.find().sort({ sortOrder: 1, name: 1 });
-  sendSuccess(res, { data: categories });
+  const categories = await Category.find().sort({ sortOrder: 1, name: 1 }).lean();
+
+  // Product counts for the admin list. `category` is an ARRAY on Product, so it
+  // unwinds before grouping (unlike brand, which is a single ref).
+  const counts = await Product.aggregate([
+    { $match: { isDeleted: false } },
+    { $unwind: "$category" },
+    { $group: { _id: "$category", count: { $sum: 1 } } },
+  ]);
+  const byId = new Map(counts.map((x) => [String(x._id), x.count]));
+
+  sendSuccess(res, {
+    data: categories.map((x) => ({ ...x, productCount: byId.get(String(x._id)) ?? 0 })),
+  });
 });
 
 export const createCategory = asyncHandler(async (req, res) => {

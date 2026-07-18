@@ -12,8 +12,19 @@ export const listActiveBrands = asyncHandler(async (req, res) => {
 });
 
 export const listAllBrands = asyncHandler(async (req, res) => {
-  const brands = await Brand.find().sort({ sortOrder: 1, name: 1 });
-  sendSuccess(res, { data: brands });
+  const brands = await Brand.find().sort({ sortOrder: 1, name: 1 }).lean();
+
+  // Product counts for the admin list (the design links each count through to a
+  // filtered Products view). One grouped count, not one query per row.
+  const counts = await Product.aggregate([
+    { $match: { isDeleted: false } },
+    { $group: { _id: "$brand", count: { $sum: 1 } } },
+  ]);
+  const byId = new Map(counts.map((c) => [String(c._id), c.count]));
+
+  sendSuccess(res, {
+    data: brands.map((x) => ({ ...x, productCount: byId.get(String(x._id)) ?? 0 })),
+  });
 });
 
 export const createBrand = asyncHandler(async (req, res) => {

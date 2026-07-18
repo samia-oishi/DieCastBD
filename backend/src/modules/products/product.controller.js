@@ -180,7 +180,7 @@ export const getRelatedProducts = asyncHandler(async (req, res) => {
 });
 
 export const listProductsAdmin = asyncHandler(async (req, res) => {
-  const { page, limit, status, q } = req.query;
+  const { page, limit, status, q, brand, category } = req.query;
   // The admin list honours status + search (the redesigned Products screen has
   // status chips and a search box); previously both were silently ignored here.
   const filter = { isDeleted: false };
@@ -192,6 +192,16 @@ export const listProductsAdmin = asyncHandler(async (req, res) => {
     const rx = new RegExp(escaped, "i");
     filter.$or = [{ title: rx }, { sku: rx }];
   }
+
+  // Brand/category arrive as SLUGS (the admin Brands/Categories screens link
+  // their product counts through by slug), so resolve them to ids first. A slug
+  // that matches nothing filters to an empty set rather than being ignored.
+  const [brandDoc, categoryDoc] = await Promise.all([
+    brand ? Brand.findOne({ slug: brand }) : Promise.resolve(undefined),
+    category ? Category.findOne({ slug: category }) : Promise.resolve(undefined),
+  ]);
+  if (brand) filter.brand = brandDoc?._id ?? null;
+  if (category) filter.category = categoryDoc?._id ?? null;
 
   const skip = (page - 1) * limit;
   const [items, total] = await Promise.all([

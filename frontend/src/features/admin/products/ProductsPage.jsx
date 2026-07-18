@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router";
-import { Plus, Trash2, ChevronRight } from "lucide-react";
+import { Link, useSearchParams } from "react-router";
+import { Plus, Trash2, ChevronRight, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
@@ -52,6 +52,12 @@ export function ProductsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 400);
 
+  // Brands/Categories link their product counts here as ?brand=slug / ?category=slug.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const brandSlug = searchParams.get("brand") ?? undefined;
+  const categorySlug = searchParams.get("category") ?? undefined;
+  const scopeLabel = brandSlug ? `brand: ${brandSlug}` : categorySlug ? `category: ${categorySlug}` : null;
+
   // Status chips hit the API; "Low stock" is a client-side lens over the page
   // (there's no backend low-stock filter on this endpoint).
   const statusParam = filter === "all" || filter === "lowStock" ? undefined : filter;
@@ -61,6 +67,8 @@ export function ProductsPage() {
     limit: 10,
     status: statusParam,
     q: debouncedSearch || undefined,
+    brand: brandSlug,
+    category: categorySlug,
   });
   const bulkStatus = useBulkProductStatusMutation();
   const bulkDelete = useBulkDeleteProductsMutation();
@@ -133,7 +141,23 @@ export function ProductsPage() {
           placeholder="Search by title or SKU…"
           className="max-w-md"
         />
-        <FilterChips chips={chips} value={filter} onChange={resetTo(setFilter)} />
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterChips chips={chips} value={filter} onChange={resetTo(setFilter)} />
+          {scopeLabel && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchParams({});
+                setPage(1);
+                setSelectedIds([]);
+              }}
+              className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-brand-soft-border bg-brand-tint px-3.5 text-[12.5px] font-semibold text-brand-deep hover:bg-brand-soft"
+            >
+              {scopeLabel}
+              <X size={13} strokeWidth={2.4} />
+            </button>
+          )}
+        </div>
       </div>
 
       <section className="overflow-x-auto rounded-[18px] border border-line bg-white">
