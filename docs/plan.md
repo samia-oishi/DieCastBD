@@ -281,6 +281,24 @@ The admin was the last dark surface in the app. It's now light, sharing the stor
 
 ---
 
+89. **Pages blocks became real: persisted, validated, rendered.** `blocks[]` on the
+    `Page` model, validated by a Zod discriminated union (`page.blocks.js`) mirroring
+    the admin block registry field for field, `.strict()` per block (unknown field →
+    400) and capped at 60. **Blocks are structured data, never markup** — the
+    storefront renders them as React elements, so unlike `content` (rich-text HTML,
+    sanitized server-side) there is no `dangerouslySetInnerHTML` on the block path and
+    nothing to strip. Links are therefore the only injection surface: image/button/
+    carousel URLs must be relative or http(s), enforced in the API *and* again in the
+    markdown renderer. Product/carousel blocks store **slugs**, resolved server-side in
+    `getPageBySlug` (active products only) so a price edit propagates instead of
+    freezing at build time and a public page stays one request. Merchant-built pages
+    live at `/<slug>` via a catch-all placed last in the public layout — real routes
+    still win, unknown slugs 404 as before. `ProductCard` gained an opt-in `hidePrice`
+    for the grid's "show prices & buy button" toggle. Known gap, pre-existing: there is
+    **no DELETE route for pages** — the admin can create pages but not remove them.
+
+---
+
 ## Admin light redesign: complete
 
 All 12 screens shipped on `main`, one commit each, verified at 1440 / 390 / 320 with a

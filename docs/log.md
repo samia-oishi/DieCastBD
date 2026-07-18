@@ -927,3 +927,21 @@ The admin was the last dark surface left after the storefront went light. Rebuil
 Two production DB migrations remain outstanding from earlier settings work, to run at deploy time: the announcement-bar `$set` for the new shape, and hero `$set hero.image` / `$unset heroBanner` + autoplay fields.
 
 Next: persisting and rendering Pages blocks end to end (backend model/validation/API + storefront rendering), which Phase 10 deliberately left as UI-only.
+
+---
+
+## Pages blocks — full functionality (after the redesign)
+
+Phase 10 of the admin redesign shipped the block builder with an honest amber notice saying blocks weren't saved. The merchant asked for the real thing immediately after the redesign closed, so this completes it.
+
+**Backend.** `blocks[]` on the `Page` model; `page.blocks.js` holds a Zod discriminated union mirroring the admin's block registry field for field, `.strict()` per block so an unknown field is a 400 rather than something that rides into the database, array capped at 60. Blocks are structured data and never markup — that's the security posture, not an accident: `content` needs `sanitize-html` because it *is* HTML from the rich-text editor, while blocks render as React elements, so no `dangerouslySetInnerHTML` and nothing to strip. That leaves links as the only injection surface, so image/button/carousel URLs must be relative or http(s) — enforced by the API and again by the markdown renderer, which refuses to build an anchor from a `javascript:` href.
+
+Product and carousel blocks store **slugs**, not embedded product data, so a price or title edit propagates to every page featuring the product instead of freezing at build time. `getPageBySlug` resolves them (active products only — a block must not resurrect something archived since) so a public page is still one request.
+
+**Admin.** Blocks moved from `useState` into the RHF form via a `Controller`, so they arm the save bar and travel in the save payload like any other field. The preview notice is gone.
+
+**Storefront.** `BlockRenderer` covers all eight types. Text blocks go through a small markdown→React renderer (bold, italic, links, bullet/numbered lists, paragraphs) rather than markdown→HTML. Carousels use Embla, which was already a dependency but had no usage anywhere. Consecutive `Half` blocks pair into a two-column row, which is what the builder's "sit side by side on desktop" hint promises. `ProductCard` gained an opt-in `hidePrice` (default false) for the grid's "show prices & buy button" toggle. Merchant-built pages are reachable at `/<slug>` through a catch-all placed last in the public layout — every real route still wins the match, and an unknown slug renders the same 404 as before.
+
+**Verified end to end** against the dev DB: `javascript:` link and unknown block type both rejected with 400; a six-block page created via the API, fetched with its two products resolved, and rendered on the storefront with every block correct (bold/link/bullets as real elements, offer banner in its dark-green theme, two-column grid with live prices, divider, lime button, no overflow at 1280); then through the admin UI — blocks load from the server, adding a block arms the save bar, and both the new block and an edited block's fields (text + level) survived a reload. The test page was deleted afterwards. 9 new backend validation tests, 9 new renderer tests: backend 92/92, frontend 50/50.
+
+**Gap flagged, not filled:** there is no DELETE route for pages. The admin can create pages but not remove them — I deleted the QA page directly from the database. Pre-existing; worth adding next.
