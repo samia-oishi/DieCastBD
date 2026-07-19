@@ -1,5 +1,5 @@
 # Handoff: DiecastBD Checkout Redesign (partial payment / payment rules)
-
+just a comment for push.
 ## Overview
 This is a redesign of the **Checkout page only** (step 2 of `Cart → Checkout → Done`) for the DiecastBD
 store. The goal is a cleaner, mobile-first checkout that makes the **partial-payment / payment-rule**
