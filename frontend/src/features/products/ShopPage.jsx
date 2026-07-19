@@ -97,6 +97,7 @@ export function ShopPage() {
         description="Browse authentic Hot Wheels Premium and MINI GT diecast cars in Bangladesh — Car Culture, F1, JDM and more. 1:64 scale, nationwide delivery, cash on delivery."
       >
         <link rel="canonical" href={canonical("/shop")} />
+        <meta property="og:url" content={canonical("/shop")} />
       </Seo>
 
       {/* ---------- Mobile head + toolbar ---------- */}

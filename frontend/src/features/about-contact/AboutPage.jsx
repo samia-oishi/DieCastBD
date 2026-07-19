@@ -3,6 +3,7 @@ import { ShieldCheck, Package, Truck, Sparkles, CarFront, ArrowRight } from "luc
 
 import { ROUTES } from "@/constants/routes";
 import { Seo } from "@/components/shared/Seo";
+import { canonical } from "@/lib/siteUrl";
 
 const WHY = [
   { icon: ShieldCheck, title: "100% authentic", desc: "Sourced direct and verified before it reaches you — no replicas, ever." },
@@ -14,7 +15,10 @@ const WHY = [
 export function AboutPage() {
   return (
     <>
-      <Seo title="About" description="DiecastBD brings premium 1:64 diecast to Bangladesh — authentic, collector-grade, curated." />
+      <Seo title="About" description="DiecastBD brings premium 1:64 diecast to Bangladesh — authentic, collector-grade, curated.">
+        <link rel="canonical" href={canonical("/about")} />
+        <meta property="og:url" content={canonical("/about")} />
+      </Seo>
       <div className="mx-auto w-full max-w-[1160px] px-4 pb-12 pt-9 md:px-6 md:pt-14">
         {/* hero statement */}
         <div className="max-w-[760px]">

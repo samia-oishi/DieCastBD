@@ -329,6 +329,43 @@ The admin was the last dark surface in the app. It's now light, sharing the stor
     for 15+ years). Found while wiring: `optionalNumber` is a schema factory and was
     passed bare, so every settings save 500'd until called properly.
 
+92. **Static prerendering for the stable marketing routes — a post-build Playwright
+    snapshot, chosen over SSR to stay least-invasive.** Decision #91 relied on Google's
+    JS rendering plus a static index.html for JS-blind crawlers; that left the marketing
+    routes (about/contact/faq/policies) sharing the generic homepage meta for FB/WhatsApp.
+    Rather than adopt SSR (a new server entry + StaticRouter + hydration — off-limits per
+    the "don't change React Router / Vite / deploy" brief), `scripts/prerender.mjs` runs
+    after `vite build`: it `vite preview`-serves the freshly built `dist`, drives Chromium
+    (Playwright, already a devDep) through each static route, waits until react-helmet-async
+    has injected a `<link rel="canonical">` whose path **matches the route** (both the
+    "rendered" signal and a correctness guard — a route that renders an error/empty state
+    never matches and is skipped, so no junk is ever baked), de-dupes the `<head>` (index.html's
+    static fallback tags + helmet's per-route tags would otherwise leave two `<title>`s —
+    `document.title` wins for the title, last-wins for meta/canonical), scrubs any leaked
+    preview origin, and writes `dist/<route>/index.html`. **Product/shop pages stay CSR on
+    purpose** — their data is MongoDB-at-runtime, so prerendering would freeze price/stock;
+    they already emit dynamic client-side meta + Product/Offer/Breadcrumb JSON-LD, and the
+    backend sitemap already lists every product. Serving: Vercel serves a real
+    `dist/<route>/index.html` before any rewrite, so prerendered routes win and everything
+    else falls through. **The homepage snapshot overwrites `dist/index.html`, so the neutral
+    SPA shell is preserved as `dist/app.html` and `vercel.json`'s catch-all now points there**
+    — otherwise a CSR product page would inherit the homepage's canonical. `app.html` is
+    written FIRST, unconditionally, before any skip path, because it is the fallback for every
+    dynamic route — if it were missing, products/shop/account would 404. The whole step is
+    **fail-soft**: no Chromium, `PRERENDER=false`, a local `VITE_SITE_URL`, or a render error
+    all leave `app.html` in place and the routes CSR, and the build still exits 0 — it can
+    never break a deploy, only enhance it. **Deployment requirement:** the Vercel build must
+    set `VITE_SITE_URL=https://diecastbd.com` (baked canonicals) and reach the API at build
+    (`VITE_API_BASE_URL`) for the CMS policy pages to prerender; when the API is unreachable
+    those four gracefully stay CSR. Shipped alongside: `manifest.webmanifest` (+ link/icons),
+    four additive security headers in `vercel.json` (nosniff, X-Frame-Options SAMEORIGIN,
+    Referrer-Policy, Permissions-Policy — CSP deferred to avoid breaking Firebase/Cloudinary/
+    inline JSON-LD), Vite `manualChunks` vendor splitting (the initial catch-all `return
+    "vendor"` broke module init order — "t is not a function" — fixed by returning `undefined`
+    for unmatched deps and splitting only named vendors), canonical/og:url added to
+    About/Contact/FAQ/Shop, a conditional `FAQPage` JSON-LD (only when the merchant has real
+    FAQs), and robots.txt extended (/api, /private, /dashboard, /unauthorized).
+
 ---
 
 ## Admin light redesign: complete

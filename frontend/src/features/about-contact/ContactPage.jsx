@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { Seo } from "@/components/shared/Seo";
+import { canonical } from "@/lib/siteUrl";
 import { FacebookIcon, InstagramIcon, YouTubeIcon, WhatsAppIcon } from "@/components/shared/SocialIcons";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { contactSchema } from "./schemas/contactSchema";
@@ -73,7 +74,10 @@ export function ContactPage() {
 
   return (
     <>
-      <Seo title="Contact" description="Talk to a collector — order questions, authenticity checks, or casting hunts." />
+      <Seo title="Contact" description="Talk to a collector — order questions, authenticity checks, or casting hunts.">
+        <link rel="canonical" href={canonical("/contact")} />
+        <meta property="og:url" content={canonical("/contact")} />
+      </Seo>
       <div className="mx-auto w-full max-w-[1160px] px-4 pb-10 pt-8 md:px-6 md:pt-11">
         <h1 className="font-display text-[28px] font-extrabold tracking-[-0.02em] text-ink md:text-[38px]">Talk to a collector.</h1>
         <p className="mt-2.5 max-w-[520px] text-[15px] leading-[1.6] text-muted-foreground">

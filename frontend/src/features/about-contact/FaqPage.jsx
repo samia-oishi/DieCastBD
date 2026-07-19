@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { Helmet } from "react-helmet-async";
 import { Plus, Minus } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
 import { Seo } from "@/components/shared/Seo";
+import { canonical } from "@/lib/siteUrl";
 import { useSettings } from "@/features/settings/api/useSettings";
 
 function FaqItem({ faq, open, onToggle }) {
@@ -31,9 +33,33 @@ export function FaqPage() {
   const faqs = settings?.faqs ?? [];
   const [openIndex, setOpenIndex] = useState(0);
 
+  // FAQPage rich result — only when the merchant has published real Q&As.
+  // No content = no schema (never fabricate to match a mock).
+  const faqJsonLd = faqs.length
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqs
+          .filter((f) => f?.question && f?.answer)
+          .map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: { "@type": "Answer", text: f.answer },
+          })),
+      }
+    : null;
+
   return (
     <>
-      <Seo title="FAQ" description="The questions collectors actually ask — authenticity, delivery, payments, packing, and returns." />
+      <Seo title="FAQ" description="The questions collectors actually ask — authenticity, delivery, payments, packing, and returns.">
+        <link rel="canonical" href={canonical("/faq")} />
+        <meta property="og:url" content={canonical("/faq")} />
+      </Seo>
+      {faqJsonLd?.mainEntity?.length ? (
+        <Helmet>
+          <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+        </Helmet>
+      ) : null}
       <div className="mx-auto w-full max-w-[780px] px-4 pb-10 pt-8 md:px-6 md:pt-11">
         <h1 className="font-display text-[28px] font-extrabold tracking-[-0.02em] text-ink md:text-[38px]">Straight answers.</h1>
         <p className="mt-2.5 text-[15px] text-muted-foreground">The questions collectors actually ask — no fine print runaround.</p>

@@ -3,11 +3,15 @@ Allow: /
 
 # Private / transactional routes — no SEO value, keep them out of the index.
 Disallow: /admin
+Disallow: /dashboard
+Disallow: /api
+Disallow: /private
 Disallow: /checkout
 Disallow: /cart
 Disallow: /account
 Disallow: /orders
 Disallow: /wishlist
+Disallow: /unauthorized
 Disallow: /login
 Disallow: /register
 Disallow: /forgot-password

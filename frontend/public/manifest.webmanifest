@@ -1,0 +1,27 @@
+{
+  "name": "DiecastBD — Premium Diecast Collectibles",
+  "short_name": "DiecastBD",
+  "description": "Authentic Hot Wheels Premium and MINI GT diecast cars in Bangladesh — 1:64 collectibles, nationwide delivery.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0a0a0a",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "type": "image/png",
+      "sizes": "128x128",
+      "purpose": "any"
+    }
+  ]
+}
