@@ -6,7 +6,6 @@ import { useDragScroll } from "@/hooks/useDragScroll";
 import { ROUTES } from "@/constants/routes";
 import { cloudinaryCard } from "@/lib/cloudinary";
 import { cn } from "@/lib/utils";
-import { collectionPath } from "@/lib/collectionPath";
 
 function Tile({ href, label, image, className }) {
   return (
@@ -39,6 +38,14 @@ function Tile({ href, label, image, className }) {
 }
 
 /** "Shop by shelf" — a row of admin-configured tiles (Settings → Shop by Shelf),
+ *
+ * NOTE: unlike the header/footer nav, these tiles intentionally keep the
+ * merchant's `/shop?brand=…` links rather than being rewritten to the
+ * /brand/:slug landing pages. The shelf is a browse entry point, so it should
+ * open the shop with filters and sort available. No SEO cost: that filtered
+ * view canonicalises to the landing page, which stays linked from the nav,
+ * footer and sitemap.
+ *
  * each with its own image, label, and link. When no tiles are configured yet it
  * falls back to the legacy derivation (the two brands + an accessories tile) so
  * the section never goes blank on an un-migrated document. Mobile: horizontal
@@ -54,13 +61,13 @@ export function ShopByShelf({ tiles: configuredTiles, heading, subtitle, brands,
   const mini = brands?.find((b) => b.slug === "mini-gt");
   const accessories = categories?.find((c) => c.slug === "accessories");
   const legacyTiles = [
-    hw && { href: "/brand/hot-wheels-premium", label: hw.name, image: hw.logo },
-    mini && { href: "/brand/mini-gt", label: mini.name, image: mini.logo },
-    accessories && { href: "/category/accessories", label: "Protect & display", image: accessories.image },
+    hw && { href: "/shop?brand=hot-wheels-premium", label: hw.name, image: hw.logo },
+    mini && { href: "/shop?brand=mini-gt", label: mini.name, image: mini.logo },
+    accessories && { href: "/shop?category=accessories", label: "Protect & display", image: accessories.image },
   ].filter(Boolean);
 
   const tiles = configuredTiles?.length
-    ? configuredTiles.map((t) => ({ href: collectionPath(t.link), label: t.label, image: t.image }))
+    ? configuredTiles.map((t) => ({ href: t.link, label: t.label, image: t.image }))
     : legacyTiles;
 
   if (!tiles.length) return null;

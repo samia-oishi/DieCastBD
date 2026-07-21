@@ -13,14 +13,6 @@ import { useSettings } from "@/features/settings/api/useSettings";
 import { contactSchema } from "./schemas/contactSchema";
 import { useSubmitContactMessageMutation } from "./api/useContact";
 
-// Design copy is the shipped default; real admin-configured values win when set.
-const DEFAULTS = {
-  email: "support@diecastbd.com",
-  instagram: "https://www.instagram.com/diecastbd.official",
-  facebook: "https://www.facebook.com/diecastbd.official",
-  youtube: "https://www.youtube.com/@diecastbd",
-};
-
 const inputCls =
   "w-full rounded-[12px] border border-line bg-paper px-[15px] py-[13px] text-base leading-[1.2] text-ink placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:text-[13.5px]";
 
@@ -56,12 +48,14 @@ const SOCIAL_CIRCLE = "flex size-9 items-center justify-center rounded-full bord
 export function ContactPage() {
   const { data: settings } = useSettings();
   const social = settings?.socialLinks ?? {};
-  const email = settings?.contactInfo?.email || DEFAULTS.email;
-  const instagram = social.instagram || DEFAULTS.instagram;
-  const facebook = social.facebook || DEFAULTS.facebook;
-  const youtube = social.youtube || DEFAULTS.youtube;
+  // No hardcoded fallbacks: these were design-mock handles (diecastbd.official,
+  // support@diecastbd.com) that don't match the store's real accounts
+  // (thediecastbd, diecastbd.official@gmail.com), so an unset field published a
+  // contact route nobody monitors. Each channel renders only when set.
+  const email = settings?.contactInfo?.email;
+  const { instagram, facebook, youtube } = social;
   const whatsapp = social.whatsapp; // real number/url only — no fabricated default
-  const igHandle = instagram.replace(/\/$/, "").split("/").pop();
+  const igHandle = instagram ? instagram.replace(/\/$/, "").split("/").pop() : null;
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(contactSchema) });
   const submitMutation = useSubmitContactMessageMutation();
@@ -97,17 +91,23 @@ export function ContactPage() {
                 }
               />
             )}
-            <a href={`mailto:${email}`}><ChannelCard icon={<Mail size={19} strokeWidth={1.8} />} title="Email" sub={`${email} — within 24h`} /></a>
-            <a href={instagram} target="_blank" rel="noopener noreferrer"><ChannelCard icon={<InstagramIcon className="size-[19px]" />} title="Instagram" sub={`@${igHandle} — drops & DMs`} /></a>
+            {email && (
+              <a href={`mailto:${email}`}><ChannelCard icon={<Mail size={19} strokeWidth={1.8} />} title="Email" sub={`${email} — within 24h`} /></a>
+            )}
+            {instagram && (
+              <a href={instagram} target="_blank" rel="noopener noreferrer"><ChannelCard icon={<InstagramIcon className="size-[19px]" />} title="Instagram" sub={`@${igHandle} — drops & DMs`} /></a>
+            )}
 
-            <div className="flex items-center justify-between gap-3.5 rounded-[18px] bg-ink p-[16px_20px]">
-              <div className="text-sm font-bold text-white">Follow DiecastBD</div>
-              <div className="flex gap-2">
-                <a href={facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className={SOCIAL_CIRCLE}><FacebookIcon className="size-[15px]" /></a>
-                <a href={instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className={SOCIAL_CIRCLE}><InstagramIcon className="size-[15px]" /></a>
-                <a href={youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube" className={SOCIAL_CIRCLE}><YouTubeIcon className="size-4" /></a>
+            {(facebook || instagram || youtube) && (
+              <div className="flex items-center justify-between gap-3.5 rounded-[18px] bg-ink p-[16px_20px]">
+                <div className="text-sm font-bold text-white">Follow DiecastBD</div>
+                <div className="flex gap-2">
+                  {facebook && <a href={facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className={SOCIAL_CIRCLE}><FacebookIcon className="size-[15px]" /></a>}
+                  {instagram && <a href={instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className={SOCIAL_CIRCLE}><InstagramIcon className="size-[15px]" /></a>}
+                  {youtube && <a href={youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube" className={SOCIAL_CIRCLE}><YouTubeIcon className="size-4" /></a>}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="flex items-center gap-3 rounded-[18px] bg-ink p-[18px_20px]">
               <Clock size={17} strokeWidth={1.8} className="shrink-0 text-brand" />

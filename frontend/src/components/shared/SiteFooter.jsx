@@ -28,12 +28,6 @@ const DEFAULT_POLICY_LINKS = [
   { label: "Terms & Conditions", url: ROUTES.TERMS },
 ];
 
-const SOCIAL_DEFAULTS = {
-  facebook: "https://www.facebook.com/diecastbd.official",
-  instagram: "https://www.instagram.com/diecastbd.official",
-  youtube: "https://www.youtube.com/@diecastbd",
-};
-
 const PAYMENTS = ["COD", "bKash", "BanglaQR"];
 
 function useFooterData() {
@@ -49,10 +43,16 @@ function useFooterData() {
     shopLinks,
     helpLinks: helpLinks.length ? helpLinks : DEFAULT_HELP_LINKS,
     policyLinks: policyLinks.length ? policyLinks : DEFAULT_POLICY_LINKS,
+    // Each icon renders only when the merchant has really set that link —
+    // blank means "we don't have one", so it stays hidden. Hardcoded fallbacks
+    // used to fill these with diecastbd.official handles while the store's real
+    // accounts are thediecastbd: clearing a link would have silently published
+    // a URL pointing at someone else's profile, and nothing in the admin could
+    // remove the icon. Matches how whatsapp already behaved.
     social: {
-      facebook: social.facebook || SOCIAL_DEFAULTS.facebook,
-      instagram: social.instagram || SOCIAL_DEFAULTS.instagram,
-      youtube: social.youtube || SOCIAL_DEFAULTS.youtube,
+      facebook: social.facebook,
+      instagram: social.instagram,
+      youtube: social.youtube,
     },
   };
 }
@@ -74,11 +74,13 @@ function PaymentPills({ pad = "6px 14px", size = "12px" }) {
 }
 
 function Socials({ social, size = 36, icon = 15 }) {
+  // Only channels the merchant has actually set — an unset link previously
+  // rendered <a href={undefined}>, a dead icon that navigated nowhere.
   const items = [
     { href: social.facebook, label: "Facebook", Icon: FacebookIcon },
     { href: social.instagram, label: "Instagram", Icon: InstagramIcon },
     { href: social.youtube, label: "YouTube", Icon: YouTubeIcon },
-  ];
+  ].filter((i) => i.href);
   return (
     <div className="flex gap-2.5">
       {items.map(({ href, label, Icon }) => (
