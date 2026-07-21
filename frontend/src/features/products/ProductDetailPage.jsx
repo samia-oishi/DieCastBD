@@ -135,7 +135,7 @@ export function ProductDetailPage() {
       { "@type": "ListItem", position: 1, name: "Home", item: canonical("/") },
       { "@type": "ListItem", position: 2, name: "Shop", item: canonical("/shop") },
       ...(product.brand?.name
-        ? [{ "@type": "ListItem", position: 3, name: product.brand.name, item: canonical(`/shop?brand=${product.brand.slug}`) }]
+        ? [{ "@type": "ListItem", position: 3, name: product.brand.name, item: canonical(`/brand/${product.brand.slug}`) }]
         : []),
       { "@type": "ListItem", position: product.brand?.name ? 4 : 3, name: product.title },
     ],

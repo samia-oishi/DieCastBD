@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 
 import { ROUTES } from "@/constants/routes";
+import { collectionPath } from "@/lib/collectionPath";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { NewsletterForm } from "@/features/newsletter/components/NewsletterForm";
 import { FacebookIcon, InstagramIcon, YouTubeIcon } from "@/components/shared/SocialIcons";
@@ -11,9 +12,9 @@ const POLICY_ROUTES = new Set([ROUTES.SHIPPING_POLICY, ROUTES.REFUND_POLICY, ROU
 
 const DEFAULT_SHOP_LINKS = [
   { label: "New arrivals", url: ROUTES.SHOP },
-  { label: "Hot Wheels Premium", url: "/shop?brand=hot-wheels-premium" },
-  { label: "MINI GT", url: "/shop?brand=mini-gt" },
-  { label: "Accessories", url: "/shop?category=accessories" },
+  { label: "Hot Wheels Premium", url: "/brand/hot-wheels-premium" },
+  { label: "MINI GT", url: "/brand/mini-gt" },
+  { label: "Accessories", url: "/category/accessories" },
 ];
 const DEFAULT_HELP_LINKS = [
   { label: "About", url: ROUTES.ABOUT },
@@ -102,15 +103,18 @@ function ColumnLabel({ children }) {
 }
 
 function FooterLink({ link }) {
-  if (/^https?:\/\//.test(link.url)) {
+  // Merchant-saved links may still use the ?brand= form that predates the
+  // collection pages; normalise so they land on the indexable URL.
+  const url = collectionPath(link.url);
+  if (/^https?:\/\//.test(url)) {
     return (
-      <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-[#C7C9BC] hover:text-white">
+      <a href={url} target="_blank" rel="noopener noreferrer" className="text-[#C7C9BC] hover:text-white">
         {link.label}
       </a>
     );
   }
   return (
-    <Link to={link.url} className="text-[#C7C9BC] hover:text-white">
+    <Link to={url} className="text-[#C7C9BC] hover:text-white">
       {link.label}
     </Link>
   );

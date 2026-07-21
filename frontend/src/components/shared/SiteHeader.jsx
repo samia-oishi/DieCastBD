@@ -3,6 +3,7 @@ import { Heart, ShoppingBag, ArrowLeft, ChevronDown, User, Package, LayoutDashbo
 
 import { cn } from "@/lib/utils";
 import { ROUTES, ROLES } from "@/constants/routes";
+import { collectionPath } from "@/lib/collectionPath";
 import { useCurrentUser, useLogoutMutation } from "@/features/auth/api/useAuth";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { useCart } from "@/features/cart/api/useCart";
@@ -212,9 +213,12 @@ export function SiteHeader({ onCartClick }) {
   const { itemCount } = useCart();
   const { pathname } = useLocation();
 
-  const links = settings?.navigation?.headerLinks?.length
+  // Merchant-saved nav may still point at /shop?brand=…; normalise to the
+  // collection landing pages without rewriting what they saved.
+  const links = (settings?.navigation?.headerLinks?.length
     ? settings.navigation.headerLinks
-    : DEFAULT_HEADER_LINKS;
+    : DEFAULT_HEADER_LINKS
+  ).map((l) => ({ ...l, url: collectionPath(l.url) }));
 
   return (
     <>

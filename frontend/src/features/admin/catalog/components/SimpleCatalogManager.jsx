@@ -291,6 +291,10 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
             <label className="flex flex-col gap-1.5">
               <span className="text-[12.5px] font-semibold text-ink">Description</span>
               <Textarea rows={3} className={adminTextareaCls} {...register("description")} />
+              <span className="text-[11.5px] text-faint">
+                Shown as the intro paragraph on the {singular.toLowerCase()}&apos;s landing page — good place for the
+                words customers actually search. Left out entirely when blank.
+              </span>
             </label>
 
             <label className="flex w-40 flex-col gap-1.5">

@@ -1,5 +1,7 @@
 import { Product } from "../products/product.model.js";
 import { Page } from "../pages/page.model.js";
+import { Brand } from "../brands/brand.model.js";
+import { Category } from "../categories/category.model.js";
 import { env } from "../../config/env.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -37,6 +39,14 @@ export const getSitemap = asyncHandler(async (req, res) => {
   // builder. Unpublished drafts stay out, same as draft products.
   const pages = await Page.find({ isPublished: true }).select("slug updatedAt").lean();
 
+  // Brand/category landing pages rank for "<collection> bangladesh" searches,
+  // so they belong in the sitemap alongside products. Priority sits above
+  // products because they're the entry points a search lands on first.
+  const [brands, categories] = await Promise.all([
+    Brand.find({ isActive: true }).select("slug updatedAt").lean(),
+    Category.find({ isActive: true }).select("slug updatedAt").lean(),
+  ]);
+
   const entries = [
     ...STATIC_PATHS.map((s) => urlEntry(`${base}${s.path}`, s)),
     ...products.map((p) =>
@@ -44,6 +54,20 @@ export const getSitemap = asyncHandler(async (req, res) => {
         lastmod: p.updatedAt?.toISOString().slice(0, 10),
         changefreq: "weekly",
         priority: "0.8",
+      })
+    ),
+    ...brands.map((b) =>
+      urlEntry(`${base}/brand/${b.slug}`, {
+        lastmod: b.updatedAt?.toISOString().slice(0, 10),
+        changefreq: "weekly",
+        priority: "0.9",
+      })
+    ),
+    ...categories.map((c) =>
+      urlEntry(`${base}/category/${c.slug}`, {
+        lastmod: c.updatedAt?.toISOString().slice(0, 10),
+        changefreq: "weekly",
+        priority: "0.9",
       })
     ),
     ...pages.map((p) =>

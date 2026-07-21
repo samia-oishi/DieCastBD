@@ -90,14 +90,29 @@ export function ShopPage() {
 
   const sidebarProps = { filters, updateFilters, clearFilters, activeFilterCount };
 
+  // A view filtered to exactly one brand or category IS the collection landing
+  // page, so it canonicalises there — that's the URL built to rank, and it
+  // inherits the signal from links pointing at the query form (merchant nav,
+  // anything already indexed). Any other combination stays /shop: multi-facet
+  // and searched views are app state, not pages worth indexing separately.
+  const onlyFacet = (key) => {
+    const others = ["brand", "category", "series", "minPrice", "maxPrice", "q"].filter((k) => k !== key);
+    return filters[key] && !others.some((k) => filters[k]) && !filters.inStock && !filters.featured && !filters.newArrival;
+  };
+  const canonicalPath = onlyFacet("brand")
+    ? `/brand/${filters.brand}`
+    : onlyFacet("category")
+      ? `/category/${filters.category}`
+      : "/shop";
+
   return (
     <>
       <Seo
         title="Shop Hot Wheels & MINI GT Diecast Cars in Bangladesh"
         description="Browse authentic Hot Wheels Premium and MINI GT diecast cars in Bangladesh — Car Culture, F1, JDM and more. 1:64 scale, nationwide delivery, cash on delivery."
       >
-        <link rel="canonical" href={canonical("/shop")} />
-        <meta property="og:url" content={canonical("/shop")} />
+        <link rel="canonical" href={canonical(canonicalPath)} />
+        <meta property="og:url" content={canonical(canonicalPath)} />
       </Seo>
 
       {/* ---------- Mobile head + toolbar ---------- */}

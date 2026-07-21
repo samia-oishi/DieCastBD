@@ -6,6 +6,7 @@ import { useDragScroll } from "@/hooks/useDragScroll";
 import { ROUTES } from "@/constants/routes";
 import { cloudinaryCard } from "@/lib/cloudinary";
 import { cn } from "@/lib/utils";
+import { collectionPath } from "@/lib/collectionPath";
 
 function Tile({ href, label, image, className }) {
   return (
@@ -53,13 +54,13 @@ export function ShopByShelf({ tiles: configuredTiles, heading, subtitle, brands,
   const mini = brands?.find((b) => b.slug === "mini-gt");
   const accessories = categories?.find((c) => c.slug === "accessories");
   const legacyTiles = [
-    hw && { href: "/shop?brand=hot-wheels-premium", label: hw.name, image: hw.logo },
-    mini && { href: "/shop?brand=mini-gt", label: mini.name, image: mini.logo },
-    accessories && { href: "/shop?category=accessories", label: "Protect & display", image: accessories.image },
+    hw && { href: "/brand/hot-wheels-premium", label: hw.name, image: hw.logo },
+    mini && { href: "/brand/mini-gt", label: mini.name, image: mini.logo },
+    accessories && { href: "/category/accessories", label: "Protect & display", image: accessories.image },
   ].filter(Boolean);
 
   const tiles = configuredTiles?.length
-    ? configuredTiles.map((t) => ({ href: t.link, label: t.label, image: t.image }))
+    ? configuredTiles.map((t) => ({ href: collectionPath(t.link), label: t.label, image: t.image }))
     : legacyTiles;
 
   if (!tiles.length) return null;
