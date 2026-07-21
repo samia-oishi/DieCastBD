@@ -47,7 +47,7 @@ export function HomePage() {
     "@type": "OnlineStore",
     name: "DiecastBD",
     url: SITE_URL,
-    logo: `${SITE_URL}/favicon.svg`,
+    logo: `${SITE_URL}/android-chrome-512x512.png`,
     description: "Premium 1:64 diecast collectibles in Bangladesh — authentic Hot Wheels Premium and MINI GT.",
     areaServed: { "@type": "Country", name: "Bangladesh" },
     ...(sameAs.length ? { sameAs } : {}),
