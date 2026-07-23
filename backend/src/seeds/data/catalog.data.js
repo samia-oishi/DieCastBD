@@ -1,15 +1,11 @@
 // AUTO-GENERATED from the July 2026 purchase inventory (32 SKUs).
-// Source of truth: 'Daily Workspace/Diecast/HW-Purchase-List-Jul2026.xlsx' + DiecastBD-Website-Import.csv
+// Source of truth: 'Daily Workspace/Diecast/_tools/inventory.py'
 //
-// costPrice = TRUE LANDED COST per unit:
-//   (yuan x 18.746) + (weight_kg x 900 air freight) + 30 delivery packaging
-//   where 18.746 = 18.20/yuan FX + 3% payment/agent markup.
-//
-// price     = retail (17 Jul re-priced against live BD competitors: CTG + HWsBD live).
-// salePrice: intentionally OMITTED from every product. The owner sets sale prices
-//   MANUALLY in the admin; leaving the field out of the seed payload means
-//   findOneAndUpdate never touches it, so manual sale prices always survive a re-seed.
-//
+// costPrice = TRUE LANDED COST per unit: (yuan x 18.746) + (weight_kg x 900) + 30 packaging.
+// price     = retail, re-priced 23 Jul against live BD competitors (Torklub excluded per owner).
+// salePrice: intentionally OMITTED from every product. The owner sets sale prices MANUALLY
+//   in the admin; leaving the field out of the seed payload means findOneAndUpdate never
+//   touches it, so manual sale prices always survive a re-seed.
 // stock: protectors are counted PER PIECE (12 + 10 + 10 = 32 pcs).
 
 export const brands = [
@@ -39,7 +35,7 @@ export const products = [
     features: ["Sealed 5-car Ferrari set", "Officially licensed Ferrari liveries", "Collectible sealed packaging"],
     tags: ["ferrari", "5-pack", "sealed", "multi-pack", "gift"],
     specifications: { Weight: "380 g" },
-    price: 2890,
+    price: 2790,
     costPrice: 2053,
     stock: 4,
     isFeatured: true,
@@ -171,7 +167,7 @@ export const products = [
     features: ["Car Culture premium series", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["car culture", "ferrari", "250 gto", "vintage racing", "classic"],
     specifications: { Weight: "135 g" },
-    price: 2090,
+    price: 1870,
     costPrice: 1029,
     stock: 1,
     isFeatured: false,
@@ -259,7 +255,7 @@ export const products = [
     features: ["Car Culture premium series", "Pandem widebody kit", "Real Riders rubber tyres"],
     tags: ["jdm", "nissan", "skyline", "r32", "gt-r", "pandem", "ronin run", "godzilla"],
     specifications: { Weight: "135 g" },
-    price: 1750,
+    price: 1370,
     costPrice: 993,
     stock: 1,
     isFeatured: false,
@@ -347,7 +343,7 @@ export const products = [
     features: ["Aero Styles premium series", "LB-Kaido Works widebody", "Real Riders rubber tyres"],
     tags: ["jdm", "nissan", "skyline", "r32", "gt-r", "lbwk", "kaido works", "aero styles", "godzilla"],
     specifications: { Weight: "135 g" },
-    price: 2390,
+    price: 1960,
     costPrice: 1114,
     stock: 3,
     isFeatured: true,
@@ -369,7 +365,7 @@ export const products = [
     features: ["Aero Styles premium series", "Metal body & metal base", "Real Riders rubber tyres"],
     tags: ["car culture", "audi", "a4", "dtm", "aero styles", "motorsport"],
     specifications: { Weight: "135 g" },
-    price: 1790,
+    price: 1720,
     costPrice: 1120,
     stock: 1,
     isFeatured: false,
@@ -391,7 +387,7 @@ export const products = [
     features: ["Aero Styles premium series", "LB Super Silhouette widebody", "Real Riders rubber tyres"],
     tags: ["jdm", "nissan", "silvia", "s15", "lbwk", "liberty walk", "aero styles"],
     specifications: { Weight: "135 g" },
-    price: 2090,
+    price: 1650,
     costPrice: 1120,
     stock: 1,
     isFeatured: false,
@@ -413,7 +409,7 @@ export const products = [
     features: ["Aero Styles premium series", "GT3 race aero", "Real Riders rubber tyres"],
     tags: ["lexus", "rc f", "gt3", "aero styles", "motorsport"],
     specifications: { Weight: "135 g" },
-    price: 2190,
+    price: 1570,
     costPrice: 1120,
     stock: 1,
     isFeatured: false,
@@ -435,7 +431,7 @@ export const products = [
     features: ["Aero Styles premium series", "Custom widebody aero", "Real Riders rubber tyres"],
     tags: ["chevy", "nova", "muscle", "aero styles", "custom"],
     specifications: { Weight: "135 g" },
-    price: 1890,
+    price: 1470,
     costPrice: 1120,
     stock: 1,
     isFeatured: false,
@@ -611,7 +607,7 @@ export const products = [
     features: ["TSM Models premium build", "VeilSide Combat widebody", "Rubber tyres", "Collector display box"],
     tags: ["jdm", "toyota", "supra", "veilside", "mini gt", "tsm", "bd exclusive"],
     specifications: { Weight: "125 g" },
-    price: 2390,
+    price: 2190,
     costPrice: 1577,
     stock: 1,
     isFeatured: true,
@@ -633,7 +629,7 @@ export const products = [
     features: ["TSM Models premium build", "Top Secret GT-300 livery", "Rubber tyres", "Collector display box"],
     tags: ["jdm", "toyota", "supra", "top secret", "mini gt", "tsm", "bd exclusive"],
     specifications: { Weight: "125 g" },
-    price: 2590,
+    price: 2390,
     costPrice: 1765,
     stock: 2,
     isFeatured: true,
@@ -655,7 +651,7 @@ export const products = [
     features: ["TSM Models premium build", "Blister card packaging", "Rubber tyres"],
     tags: ["jdm", "mazda", "rx-7", "re amemiya", "rotary", "mini gt", "tsm", "bd exclusive"],
     specifications: { Weight: "125 g" },
-    price: 2440,
+    price: 2275,
     costPrice: 1553,
     stock: 1,
     isFeatured: false,
@@ -695,11 +691,11 @@ export const products = [
     scale: "Fits 1:64 carded",
     material: "PVC plastic",
     color: "Clear",
-    description: "Foldable PVC display case — scratch-resistant, hangable or free-standing. Protects carded 1:64 diecast on the shelf. Sold per piece.",
+    description: "Foldable PVC display case — scratch-resistant, hangable or free-standing. Protects carded 1:64 diecast on the shelf. Sold per piece",
     features: ["Sold per piece", "Foldable PVC display case", "Hangable or free-standing"],
     tags: ["accessory", "protector", "pvc", "display"],
     specifications: { Weight: "35 g" },
-    price: 220,
+    price: 190,
     costPrice: 79,
     stock: 10,
     isFeatured: false,
@@ -721,7 +717,7 @@ export const products = [
     features: ["Sold per piece", "Top-opening design", "Rigid 19 x 14.8 x 5 cm shell"],
     tags: ["accessory", "protector", "display"],
     specifications: { Weight: "40 g" },
-    price: 200,
+    price: 160,
     costPrice: 70,
     stock: 10,
     isFeatured: false,
