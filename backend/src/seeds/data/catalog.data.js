@@ -79,7 +79,7 @@ export const products = [
     features: ["Gold Label premium series", "Metal body & metal base", "Real Riders rubber tyres", "Lewis Hamilton's Ferrari debut car"],
     tags: ["f1", "formula 1", "ferrari", "hamilton", "gold label", "bd exclusive"],
     specifications: { Weight: "135 g" },
-    price: 2790,
+    price: 2490,
     costPrice: 1464,
     stock: 3,
     isFeatured: true,
