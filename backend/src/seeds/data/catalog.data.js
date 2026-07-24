@@ -629,7 +629,7 @@ export const products = [
     features: ["TSM Models premium build", "Top Secret GT-300 livery", "Rubber tyres", "Collector display box"],
     tags: ["jdm", "toyota", "supra", "top secret", "mini gt", "tsm", "bd exclusive"],
     specifications: { Weight: "125 g" },
-    price: 2250,
+    price: 2280,
     costPrice: 1765,
     stock: 2,
     isFeatured: true,
