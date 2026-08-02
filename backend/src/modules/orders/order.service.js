@@ -294,6 +294,12 @@ export async function transitionOrderStatus({
   const order = await Order.findById(orderId);
   if (!order) throw ApiError.notFound("Order not found");
 
+  // Captured before the in-place mutation below — callers deciding whether a
+  // transition deserves a side effect (the "order confirmed" email) need to
+  // know where the order came FROM, and by return time order.status is
+  // already the new value.
+  const previousStatus = order.status;
+
   // Admin can move an order to any status, including reverting out of
   // cancelled/refunded — there is no terminal lock. Each of the six possible
   // cross-bucket moves below needs its own exact stock delta; same-bucket
@@ -429,7 +435,7 @@ export async function transitionOrderStatus({
     session.endSession();
   }
 
-  return order;
+  return { order, previousStatus };
 }
 
 /**

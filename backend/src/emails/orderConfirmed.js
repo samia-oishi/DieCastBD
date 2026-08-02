@@ -13,20 +13,44 @@ const PAYMENT_OPTION_LABELS = {
   full: "Full payment",
 };
 
-// Inline styles + table layout throughout — email clients (Outlook especially)
-// don't support external stylesheets or most modern CSS, so this is the
-// actually-reliable way to build transactional HTML email. A light background
-// is a deliberate departure from the site's dark theme: dark-mode HTML email
-// renders inconsistently (and sometimes illegibly) across clients that force
-// their own color schemes, so transactional email prioritizes universal
-// legibility over 1:1 brand-theme parity.
-function renderOrderConfirmationHtml(order, user) {
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Whether a status transition is the moment to tell the customer "confirmed".
+ *
+ * True only for pending → confirmed — the first real confirmation:
+ * - packed → confirmed (admin relabelling backwards) sends nothing; the
+ *   customer already heard it.
+ * - cancelled/refunded → confirmed (a restore) sends nothing; the admin
+ *   communicates restores personally.
+ * - confirmed → pending → confirmed re-sends, correctly — the order was
+ *   genuinely un-confirmed in between.
+ * - The stale-order cron only ever transitions to "cancelled", so it can
+ *   never pass this guard.
+ *
+ * Exported as a pure function so the whole decision table is unit-testable
+ * without a database (same style as stockBucket).
+ */
+export function shouldSendOrderConfirmedEmail({ previousStatus, newStatus }) {
+  return newStatus === "confirmed" && previousStatus === "pending";
+}
+
+// Same email-client constraints and light-background reasoning as
+// orderConfirmation.js — see the comment there.
+function renderOrderConfirmedHtml(order, user) {
+  const a = order.shippingAddress ?? {};
+
   const itemRows = order.items
     .map(
       (item) => `
         <tr>
           <td style="padding: 12px 0; border-bottom: 1px solid #eee; font-size: 14px; color: #111;">
-            ${item.title} <span style="color: #888;">× ${item.qty}</span>
+            ${escapeHtml(item.title)} <span style="color: #888;">× ${item.qty}</span>
           </td>
           <td style="padding: 12px 0; border-bottom: 1px solid #eee; font-size: 14px; color: #111; text-align: right;">
             ${formatPrice(item.price * item.qty)}
@@ -45,9 +69,9 @@ function renderOrderConfirmationHtml(order, user) {
       </tr>
       <tr>
         <td style="padding: 32px;">
-          <h1 style="margin: 0 0 8px; font-size: 20px; color: #111;">Thanks for your order, ${user.name}.</h1>
+          <h1 style="margin: 0 0 8px; font-size: 20px; color: #111;">Good news, ${escapeHtml(user.name)} — your order is confirmed.</h1>
           <p style="margin: 0 0 24px; font-size: 14px; color: #555;">
-            Order <strong>${order.orderNumber}</strong> has been placed and is now pending confirmation.
+            We've confirmed <strong>${escapeHtml(order.orderNumber)}</strong> and are getting it ready for delivery.
           </p>
 
           <table role="presentation" width="100%" style="border-collapse: collapse;">
@@ -62,7 +86,7 @@ function renderOrderConfirmationHtml(order, user) {
             ${
               order.discount > 0
                 ? `<tr>
-                    <td style="padding: 4px 0; font-size: 14px; color: #555;">Discount ${order.couponCode ? `(${order.couponCode})` : ""}</td>
+                    <td style="padding: 4px 0; font-size: 14px; color: #555;">Discount ${order.couponCode ? `(${escapeHtml(order.couponCode)})` : ""}</td>
                     <td style="padding: 4px 0; font-size: 14px; color: #16a34a; text-align: right;">-${formatPrice(order.discount)}</td>
                   </tr>`
                 : ""
@@ -78,18 +102,18 @@ function renderOrderConfirmationHtml(order, user) {
           </table>
 
           <div style="margin-top: 32px; padding: 16px; background: #f9f9f9; border-radius: 8px;">
-            <p style="margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #111;">Shipping to</p>
+            <p style="margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #111;">Delivering to</p>
             <p style="margin: 0; font-size: 13px; color: #555; line-height: 1.5;">
-              ${order.shippingAddress.recipientName}<br />
-              ${order.shippingAddress.addressLine1}${order.shippingAddress.addressLine2 ? `, ${order.shippingAddress.addressLine2}` : ""}<br />
-              ${order.shippingAddress.city}${order.shippingAddress.district ? `, ${order.shippingAddress.district}` : ""}<br />
-              ${order.shippingAddress.phone}
+              ${escapeHtml(a.recipientName)}<br />
+              ${escapeHtml(a.addressLine1)}${a.addressLine2 ? `, ${escapeHtml(a.addressLine2)}` : ""}<br />
+              ${escapeHtml(a.city)}${a.district ? `, ${escapeHtml(a.district)}` : ""}<br />
+              ${escapeHtml(a.phone)}
             </p>
           </div>
 
           <p style="margin: 24px 0 0; font-size: 13px; color: #888;">
-            Payment method: ${PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}
-            ${order.paymentOption && order.paymentOption !== "cod" ? ` (${PAYMENT_OPTION_LABELS[order.paymentOption] ?? order.paymentOption})` : ""}
+            Payment method: ${PAYMENT_METHOD_LABELS[order.paymentMethod] ?? escapeHtml(order.paymentMethod)}
+            ${order.paymentOption && order.paymentOption !== "cod" ? ` (${PAYMENT_OPTION_LABELS[order.paymentOption] ?? escapeHtml(order.paymentOption)})` : ""}
           </p>
           ${
             order.amountDue > 0
@@ -107,21 +131,15 @@ function renderOrderConfirmationHtml(order, user) {
   </div>`;
 }
 
-export async function sendOrderConfirmationEmail(order, user) {
-  if (!env.RESEND_API_KEY) return; // not configured yet — silently skip rather than fail order creation
+export async function sendOrderConfirmedEmail(order, user) {
+  if (!env.RESEND_API_KEY) return; // not configured — silently skip, never fail the status change
 
   const resend = getResendClient();
-  // The SDK resolves to {data, error} on API-level failures rather than throwing —
-  // without this check a failed send would never reach the caller's catch block.
   const { error } = await resend.emails.send({
     from: env.EMAIL_FROM,
     to: user.email,
-    // "Order received", not "confirmed" — confirmation is a separate email the
-    // admin triggers from the dashboard (orderConfirmed.js). Two emails both
-    // claiming "confirmed" read as a duplicate and made the real confirmation
-    // meaningless.
-    subject: `Order received — ${order.orderNumber}`,
-    html: renderOrderConfirmationHtml(order, user),
+    subject: `${order.orderNumber} is confirmed — we're getting it ready`,
+    html: renderOrderConfirmedHtml(order, user),
   });
   if (error) throw new Error(`Resend: ${error.message}`);
 }

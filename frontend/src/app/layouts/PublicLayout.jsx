@@ -6,6 +6,7 @@ import { ScrollToTop } from "@/components/shared/ScrollToTop";
 import { SiteHeader } from "@/components/shared/SiteHeader";
 import { SiteFooter } from "@/components/shared/SiteFooter";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
+import { WhatsAppWidget } from "@/components/shared/WhatsAppWidget";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { CartDrawer } from "@/features/cart/components/CartDrawer";
 import { CheckoutHeader } from "@/features/checkout/components/CheckoutHeader";
@@ -50,6 +51,9 @@ export function PublicLayout() {
 
       <SiteFooter variant={footerVariant} />
       {showBottomNav && <MobileBottomNav />}
+      {/* Chat entry on every storefront page except checkout — that page is
+          deliberately stripped to the payment flow (merchant decision). */}
+      {!isCheckout && <WhatsAppWidget />}
     </div>
   );
 }

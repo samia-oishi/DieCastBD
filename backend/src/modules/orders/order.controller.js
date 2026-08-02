@@ -4,6 +4,10 @@ import { User } from "../users/user.model.js";
 import { findOrCreateGuestUser } from "../users/user.service.js";
 import { createOrderFromCart, createOrderFromItems, transitionOrderStatus, deleteOrders } from "./order.service.js";
 import { sendOrderConfirmationEmail } from "../../emails/orderConfirmation.js";
+import { sendAdminNewOrderEmail } from "../../emails/adminNewOrder.js";
+import { sendOrderConfirmedEmail, shouldSendOrderConfirmedEmail } from "../../emails/orderConfirmed.js";
+import { Settings } from "../settings/settings.model.js";
+import { env } from "../../config/env.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -94,6 +98,15 @@ export const createOrder = asyncHandler(async (req, res) => {
     );
   }
 
+  // Notify the store owner about every order, guest or not. The recipient
+  // lookup lives inside the fire-and-forget so even a Settings read failure
+  // can't touch order creation — the 201 below never waits on any of this.
+  (async () => {
+    const settings = await Settings.findOne().select("contactInfo.email");
+    const recipient = settings?.contactInfo?.email || env.ADMIN_EMAILS[0];
+    await sendAdminNewOrderEmail(order, recipient);
+  })().catch((err) => console.error("Admin new-order email failed:", err.message));
+
   sendSuccess(res, { data: order, status: 201, message: "Order placed" });
 });
 
@@ -132,7 +145,7 @@ export const getOrderAdmin = asyncHandler(async (req, res) => {
 
 export const updateOrderStatusAdmin = asyncHandler(async (req, res) => {
   const { status, note, trackingNumber, courierName } = req.body;
-  const order = await transitionOrderStatus({
+  const { order, previousStatus } = await transitionOrderStatus({
     orderId: req.params.id,
     newStatus: status,
     note,
@@ -140,6 +153,17 @@ export const updateOrderStatusAdmin = asyncHandler(async (req, res) => {
     trackingNumber,
     courierName,
   });
+
+  // The customer hears "confirmed" exactly when the order first moves out of
+  // pending — not on packed→confirmed relabels or cancelled→confirmed
+  // restores. Guests may have no email; that skips silently inside.
+  if (shouldSendOrderConfirmedEmail({ previousStatus, newStatus: status })) {
+    (async () => {
+      const user = await User.findById(order.user).select("name email");
+      if (user?.email) await sendOrderConfirmedEmail(order, user);
+    })().catch((err) => console.error("Order confirmed email failed:", err.message));
+  }
+
   sendSuccess(res, { data: order, message: "Order status updated" });
 });
 
