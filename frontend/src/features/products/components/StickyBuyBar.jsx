@@ -15,11 +15,15 @@ export function StickyBuyBar({ qty, onQty, max, onAdd, onBuyNow, outOfStock }) {
           <Plus size={12} strokeWidth={2.4} />
         </button>
       </div>
-      <button type="button" onClick={onAdd} className="flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full bg-brand text-[13px] font-extrabold text-ink">
-        <ShoppingBag size={14} strokeWidth={2} />
+      {/* Proportional halves, not equal ones — "Add to cart" is the longer
+          label, and an even flex-1 split wrapped it onto two lines on small
+          screens. nowrap guarantees one line; the bag icon yields first on
+          very narrow viewports so the text never has to. */}
+      <button type="button" onClick={onAdd} className="flex h-[46px] flex-[1.35] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-brand px-2 text-[13px] font-extrabold text-ink">
+        <ShoppingBag size={14} strokeWidth={2} className="hidden min-[360px]:block" />
         Add to cart
       </button>
-      <button type="button" onClick={onBuyNow} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-white text-[13px] font-extrabold text-ink">
+      <button type="button" onClick={onBuyNow} className="flex h-[46px] flex-1 items-center justify-center whitespace-nowrap rounded-full bg-white px-2 text-[13px] font-extrabold text-ink">
         Buy now
       </button>
     </div>
