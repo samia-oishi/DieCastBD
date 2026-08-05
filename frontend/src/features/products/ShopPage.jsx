@@ -139,17 +139,6 @@ export function ShopPage() {
             In stock
           </Chip>
         </div>
-        <div className="mx-4 mt-4">
-          <div className={isPlaceholderData ? "opacity-60 transition-opacity" : ""}>
-            <ProductGrid products={products} isLoading={isLoading && !isPlaceholderData} />
-          </div>
-          {meta && meta.totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
-            </div>
-          )}
-          {showing && <p className="mt-2.5 text-center text-[11.5px] text-faint">{showing}</p>}
-        </div>
       </div>
 
       {/* ---------- Desktop head + body ---------- */}
@@ -167,23 +156,35 @@ export function ShopPage() {
           </div>
         </Container>
 
-        <Container className="mt-7 grid grid-cols-[250px_1fr] items-start gap-9">
-          <aside className="sticky top-[98px] rounded-[24px] border border-line bg-white p-6">
-            <FilterSidebar {...sidebarProps} />
-          </aside>
-          <div>
-            <div className={isPlaceholderData ? "opacity-60 transition-opacity" : ""}>
-              <ProductGrid products={products} isLoading={isLoading && !isPlaceholderData} />
-            </div>
-            {meta && meta.totalPages > 1 && (
-              <div className="mt-10">
-                <Pagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
-              </div>
-            )}
-            {showing && <p className="mt-3 text-center text-[12.5px] text-faint">{showing}</p>}
-          </div>
-        </Container>
       </div>
+
+      {/* ---------- Results: ONE region for both breakpoints ----------
+          The grid used to be rendered twice (a md:hidden tree and a
+          hidden md:block tree), so every product mounted a duplicate
+          ProductCard — each carrying its own wishlist query observer and
+          restock-store subscription — with half of them permanently
+          invisible. Bounded at 24 products; unbounded once the list grows by
+          scrolling. The heads stay duplicated above because they're genuinely
+          different markup; only the results are shared.
+          Container's mobile gutter (px-4) matches the old mx-4 exactly. */}
+      <Container className="mt-4 md:mt-7 md:grid md:grid-cols-[250px_1fr] md:items-start md:gap-9">
+        <aside className="sticky top-[98px] hidden rounded-[24px] border border-line bg-white p-6 md:block">
+          <FilterSidebar {...sidebarProps} />
+        </aside>
+        <div>
+          <div className={isPlaceholderData ? "opacity-60 transition-opacity" : ""}>
+            <ProductGrid products={products} isLoading={isLoading && !isPlaceholderData} />
+          </div>
+          {meta && meta.totalPages > 1 && (
+            <div className="mt-6 md:mt-10">
+              <Pagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+            </div>
+          )}
+          {showing && (
+            <p className="mt-2.5 text-center text-[11.5px] text-faint md:mt-3 md:text-[12.5px]">{showing}</p>
+          )}
+        </div>
+      </Container>
 
       {/* ---------- Mobile filter sheet ---------- */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>

@@ -10,11 +10,17 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { uploadBufferToCloudinary, deleteFromCloudinary } from "../../utils/cloudinaryUpload.js";
 import { AuditLog } from "../auditLogs/auditLog.model.js";
 
+// Every sort ends with _id so the order is TOTAL, not just sorted-by-field.
+// Mongo's sort is unstable for ties, and this catalogue has products sharing a
+// price — with .skip()/.limit() a tie straddling a page boundary could
+// reproducibly repeat one product on two pages and drop another entirely. That
+// was invisible behind numbered pagination; infinite scroll would render it as
+// a duplicate card.
 const SORT_MAP = {
-  newest: { createdAt: -1 },
-  "price-asc": { price: 1 },
-  "price-desc": { price: -1 },
-  "title-asc": { title: 1 },
+  newest: { createdAt: -1, _id: -1 },
+  "price-asc": { price: 1, _id: 1 },
+  "price-desc": { price: -1, _id: 1 },
+  "title-asc": { title: 1, _id: 1 },
 };
 
 async function buildPublicFilter({
