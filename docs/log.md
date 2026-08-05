@@ -1147,3 +1147,21 @@ Slug renames: freeze after creation. I extended it past the products/pages case 
 The actual problem was a fifth bucket the merchant exported that wasn't in the alert: **"Discovered – currently not indexed", 39 URLs, `Last crawled: 1970-01-01`** — 2 brands, 3 categories, `/demo`, `/qa-blocks` and all 32 products. Google knows the whole catalogue exists from the sitemap and has never fetched a single page of it. Worth being straight about what this means for the work just done: the identical-shell defect was real and worth fixing, but it is not the direct cause of this bucket and fixing it does not guarantee the bucket clears — "discovered, not indexed" is a Google-side crawl-priority decision. The timing is genuinely favourable though: those 39 pages will now be crawled for the *first* time with correct per-page metadata, rather than being re-crawled out of a duplicate-content hole.
 
 Investigating that bucket surfaced something I'd missed: **there are zero crawlable `<a href>` links in any baked HTML.** The prerender bakes the `<head>` only, so every page body is still an empty `<div id="root">` — verified 0 anchors and 0 `/products/` links in `dist/index.html`, `dist/shop/index.html` and `dist/brand/mini-gt/index.html`. The sitemap is therefore the only signal that these 39 URLs exist, with no internal-link support at all, which is a well-known cause of sitemap-only URLs stalling in exactly this state. Recorded as the top follow-up, with a real user-facing HTML sitemap page as the preferred fix over baking hidden link lists.
+
+---
+
+## Reports ↔ orders sync, and the test-data purge (decision #95)
+
+The merchant reported that Reports showed revenue for dates before their first real order, and asked that deleting an order remove its data from the report. Inspecting the database showed the two were the same problem: only **2 orders existed**, both from 28 July onward, while the analytics table claimed **৳38,256 across 15 orders**. The test orders had been deleted at some point and the report simply kept their numbers — ৳33,046 of phantom revenue.
+
+Root cause: `computeDailyRollup` derives a day's figures from the orders collection, but the nightly cron only recomputes *yesterday*. Anything that changed an older order — deletion, cancellation, restoration — left that day frozen at its old values permanently.
+
+Fixed by recomputing the affected days whenever orders change, at three hook points. Creation is fire-and-forget (a customer placing an order must never wait on, or fail because of, an analytics write). Deletion is awaited and runs after the transaction commits, so it reads the post-delete truth rather than racing it. Status changes only recompute when the order crosses the cancelled boundary, since that's the only transition that changes a day's totals — packed→shipped does no work. Recomputation is idempotent because it re-derives from orders, so it converges on the truth rather than accumulating drift.
+
+Cleanup, backed up to `/tmp/analytics-backup.json` before anything was touched: 19 analytics rows before 28 July deleted, 9 orphan guest records left behind by the deleted test orders removed (with a guard that never deletes a guest still attached to a live order), and every surviving row re-derived from the orders. Report total now equals live orders exactly: ৳5,210. The merchant chose to keep the six real-email accounts for their own review rather than have them deleted.
+
+Verified live end to end: place an order → report rises to ৳5,440/3 immediately; cancel → falls; restore → rises; delete → back to ৳5,210/2. The admin Reports page confirms ৳5,210, 2 orders, and no rows before 28 July.
+
+Also cleaned up: three guest records my own verification runs had created (two from this session's sync tests, one from the earlier email-notification work) — each deleted only after confirming it held no orders.
+
+Flagged for the merchant, deliberately not changed: `refunded` orders still count toward revenue, since the rollup excludes only `cancelled`. Whether a refund should reduce reported revenue is a business decision, not a bug to fix silently.

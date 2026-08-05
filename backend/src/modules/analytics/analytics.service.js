@@ -44,6 +44,25 @@ export async function upsertDailyRollup(dateKey) {
   return data;
 }
 
+/** Recomputes the rollup for whichever days these orders fall on.
+ *
+ * The daily rows are a DERIVATION of the orders collection, but the cron only
+ * ever recomputes yesterday — so any later edit to an older order left its day
+ * frozen at the old numbers forever. Deleting orders was the visible case
+ * (reports kept showing revenue for orders that no longer existed), but
+ * cancelling or restoring an old order drifted the same way, since the rollup
+ * excludes cancelled orders.
+ *
+ * Because the rollup is derived, recomputing is idempotent and self-healing:
+ * it always converges on what the orders actually say. Callers pass the orders
+ * BEFORE mutating them (a deleted order can't be read afterwards).
+ */
+export async function recomputeRollupsForOrders(orders) {
+  const dateKeys = [...new Set((orders ?? []).map((o) => toDateKey(new Date(o.createdAt))))];
+  await Promise.all(dateKeys.map((key) => upsertDailyRollup(key)));
+  return dateKeys;
+}
+
 export async function getSummary() {
   const today = toDateKey(new Date());
   const todayStats = await computeDailyRollup(today);

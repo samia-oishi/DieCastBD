@@ -9,6 +9,7 @@ import { Coupon } from "../coupons/coupon.model.js";
 import { findValidCoupon, calculateDiscount } from "../coupons/coupon.service.js";
 import { assertPaymentMethodAllowed, calculateAmountPaid } from "./paymentPlan.service.js";
 import { AuditLog } from "../auditLogs/auditLog.model.js";
+import { recomputeRollupsForOrders } from "../analytics/analytics.service.js";
 import { generateOrderNumber } from "../../utils/generateOrderNumber.js";
 import { ApiError } from "../../utils/apiError.js";
 
@@ -435,6 +436,15 @@ export async function transitionOrderStatus({
     session.endSession();
   }
 
+  // The rollup excludes cancelled orders, so cancelling or restoring an order
+  // changes its day's revenue and order count. Only recompute when the order
+  // crosses that boundary — every other transition (packed → shipped) leaves
+  // the numbers identical and doesn't need the work.
+  const CANCELLED = new Set(["cancelled"]);
+  if (CANCELLED.has(previousStatus) !== CANCELLED.has(newStatus)) {
+    await recomputeRollupsForOrders([order]);
+  }
+
   return { order, previousStatus };
 }
 
@@ -523,6 +533,13 @@ export async function deleteOrders({ orderIds, actorId }) {
   } finally {
     session.endSession();
   }
+
+  // Reports are derived from orders, but the cron only recomputes yesterday —
+  // so without this a deleted order's revenue stayed on the Reports page
+  // forever. Runs after the transaction commits, so the recompute reads the
+  // post-delete truth. Awaited (not fire-and-forget) so the admin's next report
+  // load can't race it.
+  await recomputeRollupsForOrders(orders);
 
   return { deletedCount: orders.length, unitsReturnedToStock };
 }

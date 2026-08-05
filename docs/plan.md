@@ -450,6 +450,28 @@ The admin was the last dark surface in the app. It's now light, sharing the stor
     all 8 carry `font-display: swap`, so they never blocked text paint and were
     left alone.
 
+95. **Reports now track orders in real time; historical test data purged.** The
+    daily rollup is a *derivation* of the orders collection, but the cron only
+    ever recomputed **yesterday** — so any change to an older order left its day
+    frozen. The merchant hit the visible case: test orders had been deleted, yet
+    Reports still showed **৳33,046 of revenue across 13 orders that no longer
+    existed** (live orders totalled ৳5,210 against a reported ৳38,256).
+    `recomputeRollupsForOrders(orders)` (analytics.service.js) now re-derives the
+    affected days, hooked at three points: order **creation** (fire-and-forget —
+    the customer must never wait on analytics), **deletion** (awaited, after the
+    transaction commits so it reads post-delete truth), and **status changes that
+    cross the cancelled boundary** — cancelled orders are excluded from the
+    rollup, so only that crossing changes the numbers; packed→shipped and
+    friends skip the work. Because the rollup is derived, recompute is
+    idempotent and self-healing. Data cleanup (backed up first to
+    `/tmp/analytics-backup.json`): 19 pre-28-July rows deleted, 9 orphan guest
+    records from the deleted test orders removed (guarded — never delete a guest
+    still attached to an order), every remaining row re-derived. Report total
+    now equals live orders exactly. Real-email accounts were kept per the
+    merchant's decision, for them to review. **Flagged, not changed:**
+    `refunded` orders still count toward revenue (only `cancelled` is excluded)
+    — a business call, not a bug.
+
 ---
 
 ## Admin light redesign: complete

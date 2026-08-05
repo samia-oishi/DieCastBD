@@ -4,6 +4,7 @@ import { User } from "../users/user.model.js";
 import { findOrCreateGuestUser } from "../users/user.service.js";
 import { createOrderFromCart, createOrderFromItems, transitionOrderStatus, deleteOrders } from "./order.service.js";
 import { sendOrderConfirmationEmail } from "../../emails/orderConfirmation.js";
+import { recomputeRollupsForOrders } from "../analytics/analytics.service.js";
 import { sendAdminNewOrderEmail } from "../../emails/adminNewOrder.js";
 import { sendOrderConfirmedEmail, shouldSendOrderConfirmedEmail } from "../../emails/orderConfirmed.js";
 import { Settings } from "../settings/settings.model.js";
@@ -106,6 +107,13 @@ export const createOrder = asyncHandler(async (req, res) => {
     const recipient = settings?.contactInfo?.email || env.ADMIN_EMAILS[0];
     await sendAdminNewOrderEmail(order, recipient);
   })().catch((err) => console.error("Admin new-order email failed:", err.message));
+
+  // Keep the Reports page live rather than nightly. Fire-and-forget: the
+  // customer is waiting on this response and a rollup failure must never cost
+  // them their order — the nightly cron would correct it anyway.
+  recomputeRollupsForOrders([order]).catch((err) =>
+    console.error("Analytics rollup after order failed:", err.message)
+  );
 
   sendSuccess(res, { data: order, status: 201, message: "Order placed" });
 });
