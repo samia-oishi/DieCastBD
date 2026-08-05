@@ -214,11 +214,13 @@ export const getProductAdmin = asyncHandler(async (req, res) => {
   sendSuccess(res, { data: product });
 });
 
-async function uniqueSlugFromTitle(title, excludeId) {
+/** Only ever called on create — slugs are immutable afterwards (plan.md #90),
+ * which is why there's no `excludeId` escape for "the row being updated". */
+async function uniqueSlugFromTitle(title) {
   const base = slugify(title);
   let slug = base;
   let suffix = 2;
-  while (await Product.exists({ slug, ...(excludeId ? { _id: { $ne: excludeId } } : {}) })) {
+  while (await Product.exists({ slug })) {
     slug = `${base}-${suffix++}`;
   }
   return slug;
@@ -246,9 +248,21 @@ export const updateProduct = asyncHandler(async (req, res) => {
     const exists = await Product.exists({ sku: updates.sku.toUpperCase(), _id: { $ne: req.params.id } });
     if (exists) throw ApiError.conflict(`SKU ${updates.sku} already exists`);
   }
-  if (updates.title) {
-    updates.slug = await uniqueSlugFromTitle(updates.title, req.params.id);
-  }
+
+  // The slug is set once at creation and never changes (plan.md #90). Editing
+  // the title used to regenerate it, silently moving the product's public URL
+  // with no redirect anywhere in the system — so every rename permanently
+  // orphaned an indexed URL, and the old one didn't even 404: it returned 200
+  // with an empty shell. Same reasoning as decision #18 on coupon codes — once
+  // an identifier is out in the world (here, in Google's index and in customers'
+  // shared links), changing it breaks everyone already holding it.
+  //
+  // The `delete` is defense-in-depth, not the mechanism: `updateProductSchema`
+  // has no slug key and validate() rebuilds req.body from validated data only,
+  // so a smuggled slug never reaches here. Explicit anyway, for the same reason
+  // the Phase 2 role-escalation fix whitelisted fields in the controller rather
+  // than trusting the middleware alone.
+  delete updates.slug;
 
   const product = await Product.findByIdAndUpdate(req.params.id, updates, {
     returnDocument: "after",

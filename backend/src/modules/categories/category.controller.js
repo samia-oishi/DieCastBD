@@ -42,7 +42,10 @@ export const createCategory = asyncHandler(async (req, res) => {
 
 export const updateCategory = asyncHandler(async (req, res) => {
   const updates = { ...req.body };
-  if (updates.name) updates.slug = slugify(updates.name);
+
+  // Immutable after creation (plan.md #90) — same reasoning as brands:
+  // /category/<slug> is an indexed landing page, and a rename had no redirect.
+  delete updates.slug;
 
   const category = await Category.findByIdAndUpdate(req.params.id, updates, {
     returnDocument: "after",

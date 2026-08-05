@@ -274,18 +274,24 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
               {errors.name && <span className="text-[11.5px] text-danger">{errors.name.message}</span>}
             </label>
 
-            {/* The server derives the slug from the name (slugify on create and on
-                rename), so this is a read-only preview rather than a field that
-                pretends to be editable. */}
+            {/* The server derives the slug from the name on CREATE and never
+                changes it afterwards (plan.md #90), so this is a read-only
+                preview rather than a field that pretends to be editable. When
+                editing we show the STORED slug, not a name-derived one — the
+                latter would promise a URL change that never happens. */}
             <label className="flex flex-col gap-1.5">
               <span className="text-[12.5px] font-semibold text-ink">Slug</span>
               <Input
                 className={cn(adminInputCls, "bg-[#FCFCF9] text-faint")}
-                value={slugify(nameValue) || (editingItem?.slug ?? "")}
+                value={editingItem ? (editingItem.slug ?? "") : slugify(nameValue)}
                 readOnly
                 tabIndex={-1}
               />
-              <span className="text-[11.5px] text-faint">Generated from the name — used in storefront links.</span>
+              <span className="text-[11.5px] text-faint">
+                {editingItem
+                  ? "Fixed after creation — renaming won't move the /brand or /category URL."
+                  : "Generated from the name — used in storefront links."}
+              </span>
             </label>
 
             <label className="flex flex-col gap-1.5">

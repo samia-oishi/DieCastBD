@@ -56,7 +56,10 @@ export function PageFormPage() {
   if (isEditing && isLoading) return <FullPageLoader />;
 
   const title = watch("title");
-  const slugPreview = slugify(title) || page?.slug || "";
+  // On CREATE the slug is derived from the title, so previewing it is useful.
+  // On EDIT the stored slug is frozen (plan.md #90) — showing a title-derived
+  // preview there would promise a URL change the server will never make.
+  const slugPreview = isEditing ? (page?.slug ?? "") : slugify(title);
 
   const onSubmit = (values) => {
     const options = {
@@ -103,11 +106,20 @@ export function PageFormPage() {
           </label>
           <label className="block">
             <span className="mb-1.5 block text-[12.5px] font-semibold text-ink">
-              Slug <span className="font-normal text-faint">(from the title)</span>
+              Slug{" "}
+              <span className="font-normal text-faint">
+                {isEditing ? "(fixed — this page's public URL)" : "(from the title)"}
+              </span>
             </span>
-            {/* Read-only on purpose: the server derives the slug from the title,
-                so an editable field here would just be ignored on save. */}
+            {/* Read-only on purpose: the server derives the slug from the title
+                on create and never changes it afterwards, so an editable field
+                here would just be ignored on save. */}
             <input value={slugPreview ? `/${slugPreview}` : ""} readOnly tabIndex={-1} className={cn(adminInputCls, "bg-[#FCFCF9] text-ink-soft")} />
+            {isEditing && (
+              <span className="mt-1 block text-[11.5px] text-faint">
+                Renaming the title won't change this — the URL stays put so existing links keep working.
+              </span>
+            )}
           </label>
           <label className="block">
             <span className="mb-1.5 block text-[12.5px] font-semibold text-ink">Status</span>

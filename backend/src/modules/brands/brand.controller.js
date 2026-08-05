@@ -41,7 +41,12 @@ export const createBrand = asyncHandler(async (req, res) => {
 
 export const updateBrand = asyncHandler(async (req, res) => {
   const updates = { ...req.body };
-  if (updates.name) updates.slug = slugify(updates.name);
+
+  // Immutable after creation (plan.md #90). /brand/<slug> is an indexable
+  // landing page — sitemap priority 0.9, above products — so renaming a brand
+  // used to orphan a top-ranking URL with no redirect. The display name is free
+  // to change; only the URL is frozen.
+  delete updates.slug;
 
   const brand = await Brand.findByIdAndUpdate(req.params.id, updates, { returnDocument: "after", runValidators: true });
   if (!brand) throw ApiError.notFound("Brand not found");

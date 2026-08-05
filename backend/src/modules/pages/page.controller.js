@@ -93,7 +93,14 @@ export const createPage = asyncHandler(async (req, res) => {
 
 export const updatePage = asyncHandler(async (req, res) => {
   const updates = { ...req.body };
-  if (updates.title) updates.slug = slugify(updates.title);
+
+  // Slugs are immutable after creation — see the matching comment in
+  // product.controller.js and plan.md #90. It matters more here than for
+  // products: a page's slug IS its route (/<slug>), and the four policy pages
+  // are linked from the footer on every page of the site, so a rename would
+  // break those links as well as the indexed URL.
+  delete updates.slug;
+
   if (updates.content !== undefined) updates.content = sanitizePageContent(updates.content);
 
   const page = await Page.findByIdAndUpdate(req.params.id, updates, { returnDocument: "after", runValidators: true });
