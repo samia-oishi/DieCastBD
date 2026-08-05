@@ -1,4 +1,5 @@
 import { Settings } from "./settings.model.js";
+import { env } from "../../config/env.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -41,12 +42,21 @@ export const uploadSettingsImage = asyncHandler(async (req, res) => {
  * og:image there must be a fixed URL — but the image itself is merchant-
  * uploaded and lives at a changing Cloudinary URL. This route bridges the two:
  * the static tag points here, and we redirect to wherever the current upload
- * lives. The FB scraper follows redirects. 404 when unset — crawlers treat
- * that as "no image", which is honest.
+ * lives. The FB scraper follows redirects.
+ *
+ * It MUST NOT 404. It used to, when no image was set — and because every page
+ * of the storefront references it as og:image AND twitter:image, that put a
+ * hard 404 on diecastbd.com/share-image into Search Console's "Not found (404)"
+ * bucket, site-wide. An "honest" 404 is worse than a real fallback, so we fall
+ * back to the shipped app icon: a genuine brand asset already in
+ * frontend/public, not invented artwork (plan.md #11).
+ *
+ * The icon is square, so it letterboxes under twitter:card=summary_large_image.
+ * That's a floor, not the goal — the merchant should still upload a proper
+ * 1200x630 in Admin → Settings → SEO.
  */
 export const getShareImage = asyncHandler(async (req, res) => {
   const settings = await Settings.findOne().select("seoDefaults.shareImage").lean();
-  const url = settings?.seoDefaults?.shareImage?.url;
-  if (!url) throw ApiError.notFound("No share image set");
-  res.redirect(302, url);
+  const fallback = `${env.CLIENT_URL.replace(/\/$/, "")}/android-chrome-512x512.png`;
+  res.redirect(302, settings?.seoDefaults?.shareImage?.url || fallback);
 });

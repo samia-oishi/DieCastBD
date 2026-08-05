@@ -28,6 +28,23 @@ if (isProduction) {
 
 app.disable("x-powered-by");
 app.use(helmet());
+
+// api.diecastbd.com must never appear in search results. It is a JSON API, so
+// every crawled path is either an envelope or a 404 — which is how a Domain
+// property in Search Console fills up with "Not found (404)" and "Page with
+// redirect" entries that look like storefront problems but aren't.
+//
+// The allow-list is load-bearing: diecastbd.com/sitemap.xml is a Vercel rewrite
+// that PROXIES this host, and upstream response headers pass through. A blanket
+// header here would stamp noindex on the production sitemap and quietly deindex
+// the storefront. /share-image is excluded so the social share image stays
+// eligible for Google Images.
+const CRAWLABLE_PATHS = new Set(["/sitemap.xml", "/robots.txt", "/api/v1/settings/share-image"]);
+app.use((req, res, next) => {
+  if (!CRAWLABLE_PATHS.has(req.path)) res.set("X-Robots-Tag", "noindex, nofollow");
+  next();
+});
+
 app.use(
   cors({
     origin: allowedOrigins,
@@ -43,6 +60,17 @@ app.use(sanitizeInput);
 app.use("/api", apiLimiter);
 
 app.get("/health", (req, res) => sendSuccess(res, { data: { uptime: process.uptime() } }));
+
+// This host had no robots.txt at all, so `GET /robots.txt` returned a JSON 404
+// and crawlers read that as "crawl everything". Disallow is the right tool here
+// (unlike on the storefront, where we need noindex — see frontend/public/
+// robots.txt): nothing on the API is indexed, so the goal is simply to stop the
+// crawling. /sitemap.xml stays allowed because the storefront proxies it.
+// Above the connectDB gate for the same reason as /health: it must answer even
+// when the database is unreachable.
+app.get("/robots.txt", (req, res) => {
+  res.type("text/plain").send("User-agent: *\nAllow: /sitemap.xml\nDisallow: /\n");
+});
 
 // On Vercel the Express app itself is the serverless handler (Vercel's runtime
 // auto-detects the exported Express server), so requests never pass through

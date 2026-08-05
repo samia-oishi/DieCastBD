@@ -6,7 +6,8 @@ import { env } from "../../config/env.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
 // Static, always-indexable public routes. Private routes (checkout, account,
-// orders, admin) are intentionally excluded — they're also Disallow'd in robots.txt.
+// orders, admin) are intentionally excluded — they also carry X-Robots-Tag:
+// noindex from frontend/vercel.json.
 const STATIC_PATHS = [
   { path: "/", changefreq: "daily", priority: "1.0" },
   { path: "/shop", changefreq: "daily", priority: "0.9" },
@@ -14,6 +15,17 @@ const STATIC_PATHS = [
   { path: "/contact", changefreq: "monthly", priority: "0.5" },
   { path: "/faq", changefreq: "monthly", priority: "0.5" },
 ];
+
+// CMS pages live at /<slug>, a catch-all the router matches LAST — so a page
+// slugged "shop" or "about" is shadowed by the real route and can never render.
+// Emitting it would advertise a duplicate <loc> for a URL that shows different
+// content, so drop it here. (createPage only checks slug uniqueness against
+// other pages, not against the route table.)
+const RESERVED_SLUGS = new Set([
+  "shop", "products", "brand", "category", "cart", "checkout", "order-confirmation",
+  "about", "contact", "faq", "login", "register", "forgot-password", "account",
+  "wishlist", "orders", "admin", "unauthorized",
+]);
 
 function urlEntry(loc, { lastmod, changefreq, priority } = {}) {
   return [
@@ -70,13 +82,15 @@ export const getSitemap = asyncHandler(async (req, res) => {
         priority: "0.9",
       })
     ),
-    ...pages.map((p) =>
-      urlEntry(`${base}/${p.slug}`, {
-        lastmod: p.updatedAt?.toISOString().slice(0, 10),
-        changefreq: "monthly",
-        priority: "0.6",
-      })
-    ),
+    ...pages
+      .filter((p) => !RESERVED_SLUGS.has(p.slug))
+      .map((p) =>
+        urlEntry(`${base}/${p.slug}`, {
+          lastmod: p.updatedAt?.toISOString().slice(0, 10),
+          changefreq: "monthly",
+          priority: "0.6",
+        })
+      ),
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
