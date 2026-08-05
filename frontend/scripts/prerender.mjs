@@ -1,41 +1,58 @@
-// Post-build static prerender for the stable marketing routes.
+// Post-build static prerender for every indexable route.
 //
-// WHY this exists: the storefront is a client-rendered SPA. Google renders JS
-// so it sees our per-page <title>/description/canonical/JSON-LD fine, but
-// JS-blind crawlers (Facebook/WhatsApp/LinkedIn) only ever saw the generic
-// index.html. This step bakes the fully-rendered HTML for the marketing routes
-// into the build output so those crawlers get real per-route metadata + copy.
+// WHY this exists: the storefront is a client-rendered SPA, so without this
+// step EVERY url — /, /shop, /about, every product — is served the same
+// index.html: one generic <title>, one generic description, and no
+// <link rel="canonical"> at all. That is what Search Console reports as
+// "Alternate page with proper canonical tag": to the crawl that happens before
+// JS renders, ~50 URLs look like the same page. This bakes a real <head> per
+// route into the build output so crawlers see what the page actually is.
 //
-// WHY only these routes: product/shop pages are driven by MongoDB at runtime —
-// prerendering them would freeze prices/stock at build time. They stay CSR (and
-// already emit dynamic client-side meta + Product JSON-LD). See docs/plan.md.
+// WHY NO BROWSER: this used to drive Playwright against `vite preview`. That
+// silently stopped working in production and nobody noticed for months (see
+// "loud failure" below), because a Chromium launch failure escaped a
+// `try/finally` that had no `catch`. Everything that actually matters here is
+// head-level, and a head is a string — so we fetch the API with plain Node and
+// splice tags in. No Chromium download, no CORS workaround, no preview server,
+// ~8 seconds instead of ~3 minutes, and failures are ordinary HTTP errors.
 //
-// HOW it stays safe: this is a pure enhancement that DEGRADES TO TODAY'S
-// BEHAVIOUR. Any failure (no Chromium, API down, a route that renders an error
-// state) is caught — that route simply keeps falling back to the SPA shell, and
-// the build still exits 0. It can never break a deploy.
+// WHY the body stays empty: prices and stock would freeze at build time. Google
+// renders JS and sees live data; the baked head serves the crawlers that don't
+// (Facebook/WhatsApp/LinkedIn), which only ever read og:* anyway. main.jsx
+// removes every [data-prerendered] tag before React's first render, so the two
+// sets never coexist — see the comment there.
 //
-// Serving on Vercel: a real dist/<route>/index.html is served before the SPA
-// rewrite (filesystem beats rewrites). The neutral SPA shell for every dynamic
-// route is preserved as dist/app.html — vercel.json's catch-all points there so
-// product pages keep a neutral head, never the home page's.
+// Serving on Vercel: a real dist/<route>/index.html is served BEFORE the SPA
+// rewrite (filesystem beats rewrites — verified in production against
+// /robots.txt). The neutral shell for every non-prerendered route is preserved
+// as dist/app.html, which vercel.json's catch-all points at, so /cart and
+// friends keep a neutral head rather than the home page's.
 
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir, copyFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { injectHead } from "../src/lib/seo/injectHead.js";
+import {
+  buildCmsPage,
+  buildCollection,
+  buildHome,
+  buildProduct,
+  buildShop,
+  buildStaticPage,
+} from "../src/lib/seo/routes.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.resolve(__dirname, "../dist");
-const PORT = 4183;
 
 /** VITE_* values as the BUNDLE sees them.
  *
  * Vite loads .env; plain Node does not. Reading only process.env meant
  * VITE_SITE_URL was undefined during local builds, so PROD_ORIGIN silently fell
  * back to the production domain while the bundle had localhost baked in — which
- * is how a `localhost:5173` canonical ended up in dist/index.html. Real env vars
- * (Vercel dashboard) still win over the file.
+ * is how a `localhost:5173` canonical once ended up in dist/index.html. Real env
+ * vars (Vercel dashboard) still win over the file.
  */
 function viteEnv(key, fallback = "") {
   if (process.env[key]) return process.env[key];
@@ -53,212 +70,290 @@ function viteEnv(key, fallback = "") {
 const PROD_ORIGIN = viteEnv("VITE_SITE_URL", "https://diecastbd.com").replace(/\/$/, "");
 const API_BASE = viteEnv("VITE_API_BASE_URL").replace(/\/$/, "");
 
-// The stable, indexable marketing routes. Product/shop/account/etc. are
-// intentionally excluded — they're dynamic or private.
-// "/" is processed LAST: writing its snapshot overwrites dist/index.html (also
-// the SPA-fallback shell the other routes render against during the crawl), so
-// we keep that shell neutral until every other route is captured.
-const ROUTES = [
-  "/about",
-  "/contact",
-  "/faq",
-  "/terms-conditions",
-  "/privacy-policy",
-  "/refund-policy",
-  "/shipping-policy",
-  "/",
-];
+// Fail the build rather than ship a site with no per-route metadata. Set on
+// Vercel Production + Preview; off locally so `npm run build` still works with
+// the API unreachable.
+const STRICT = process.env.PRERENDER_STRICT === "1";
+const MIN_ROUTES = Number(process.env.PRERENDER_MIN_ROUTES || 20);
 
-function log(msg) {
-  console.log(`[prerender] ${msg}`);
+// Routes we always attempt, even if the sitemap is unreachable — so an API
+// blip degrades coverage instead of silently emptying it.
+const STATIC_FLOOR = ["/", "/shop", "/about", "/contact", "/faq"];
+
+// A CMS page whose slug collides with a real route would be written over that
+// route's directory. The router matches the real route first, so the file could
+// never be reached anyway — refuse rather than corrupt the build output.
+const RESERVED_SLUGS = new Set([
+  "shop", "products", "brand", "category", "cart", "checkout", "order-confirmation",
+  "about", "contact", "faq", "login", "register", "forgot-password", "account",
+  "wishlist", "orders", "admin", "unauthorized", "assets", "index.html", "app.html",
+]);
+
+const log = (msg) => console.log(`[prerender] ${msg}`);
+const warn = (msg) => console.error(`[prerender] ${msg}`);
+
+const errors = [];
+function fail(msg) {
+  errors.push(msg);
+  warn(`FAILED ${msg}`);
 }
+
+// Routes actually written, and — when we deliberately didn't prerender at all —
+// why. Module scope so the report is written on EVERY exit path, including the
+// early-outs: verify-prerender.mjs runs next in the build chain and needs to be
+// able to tell "skipped on purpose" (a local build) from "silently produced
+// nothing" (the failure mode this whole rewrite exists to make loud).
+const baked = [];
+let skipped = null;
+
+async function writeReport() {
+  await writeFile(
+    path.join(DIST, "prerender-report.json"),
+    JSON.stringify(
+      { ok: errors.length === 0, skipped, origin: PROD_ORIGIN, count: baked.length, routes: baked, errors },
+      null,
+      2
+    ),
+    "utf8"
+  );
+}
+
+/* ------------------------------------------------------------- API access -- */
+
+/** GET an endpoint and return the full `{ success, data, meta }` envelope, or
+ * null once the failure has been recorded. */
+async function apiEnvelope(pathname) {
+  try {
+    const res = await fetch(`${API_BASE}${pathname}`, { headers: { accept: "application/json" } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    fail(`GET ${pathname} — ${err.message}`);
+    return null;
+  }
+}
+
+/** Just the `data` payload — the common case. */
+async function api(pathname) {
+  return (await apiEnvelope(pathname))?.data ?? null;
+}
+
+/** The whole catalogue. The list payload already carries everything a product
+ * head needs (seo, description, thumbnail, gallery, price, salePrice,
+ * availableStock, sku, modelNumber, brand) — no per-product fetch required. */
+async function fetchAllProducts() {
+  const first = await apiEnvelope("/products?limit=100&page=1");
+  if (!first) return [];
+  const all = first.data ?? [];
+  const totalPages = first.meta?.totalPages ?? 1;
+  for (let page = 2; page <= totalPages; page += 1) {
+    const next = await apiEnvelope(`/products?limit=100&page=${page}`);
+    all.push(...(next?.data ?? []));
+  }
+  return all;
+}
+
+/** Every indexable URL, straight from the sitemap the backend already computes
+ * from Mongo (active products, published pages, active brands/categories).
+ * Reading it here means the prerendered set and the sitemap cannot drift, and
+ * works around there being no public "list pages" endpoint. */
+async function discoverRoutes() {
+  const paths = new Set(STATIC_FLOOR);
+  try {
+    const res = await fetch(`${API_BASE.replace(/\/api\/v1$/, "")}/sitemap.xml`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const xml = await res.text();
+    for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
+      const p = m[1].replace(/^https?:\/\/[^/]+/, "") || "/";
+      paths.add(p);
+    }
+  } catch (err) {
+    fail(`sitemap discovery — ${err.message}`);
+  }
+  return [...paths];
+}
+
+/** Run `worker` over `items` with bounded concurrency. */
+async function pool(items, limit, worker) {
+  const results = [];
+  let i = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (i < items.length) {
+        const idx = i++;
+        results[idx] = await worker(items[idx], idx);
+      }
+    })
+  );
+  return results;
+}
+
+/* ------------------------------------------------------------ head models -- */
+
+/** Resolve one route path to a head model, or null to leave it CSR. */
+async function modelFor(route, ctx) {
+  const { settings, productsBySlug, brands, categories } = ctx;
+  const siteUrl = PROD_ORIGIN;
+
+  if (route === "/") return buildHome({ settings, siteUrl });
+  if (route === "/shop") return buildShop({ settings, siteUrl, filters: {} });
+
+  const staticKey = { "/about": "about", "/contact": "contact", "/faq": "faq" }[route];
+  if (staticKey) return buildStaticPage({ key: staticKey, settings, siteUrl });
+
+  const product = route.match(/^\/products\/([^/]+)$/);
+  if (product) {
+    const doc = productsBySlug.get(product[1]);
+    if (!doc) {
+      fail(`product ${product[1]} is in the sitemap but not in /products`);
+      return null;
+    }
+    return buildProduct({ product: doc, settings, siteUrl });
+  }
+
+  const collection = route.match(/^\/(brand|category)\/([^/]+)$/);
+  if (collection) {
+    const [, kind, slug] = collection;
+    const doc = (kind === "brand" ? brands : categories).find((c) => c.slug === slug);
+    if (!doc) {
+      fail(`${kind} ${slug} is in the sitemap but not in /${kind}s`);
+      return null;
+    }
+    // Same query the page itself runs, so the baked ItemList matches the grid.
+    const envelope = await apiEnvelope(`/products?${kind}=${encodeURIComponent(slug)}&limit=24&page=1`);
+    const products = envelope?.data ?? [];
+    return buildCollection({
+      kind,
+      slug,
+      collection: doc,
+      products,
+      total: envelope?.meta?.total ?? products.length,
+      settings,
+      siteUrl,
+    });
+  }
+
+  const cms = route.match(/^\/([^/]+)$/);
+  if (cms) {
+    const slug = cms[1];
+    if (RESERVED_SLUGS.has(slug)) {
+      fail(`CMS slug "${slug}" collides with a real route — rename it in Admin → Pages`);
+      return null;
+    }
+    const page = await api(`/pages/${encodeURIComponent(slug)}`);
+    if (!page) return null; // api() already recorded the failure
+    return buildCmsPage({ slug, page, settings, siteUrl });
+  }
+
+  warn(`no builder for ${route} — leaving it CSR`);
+  return null;
+}
+
+/* -------------------------------------------------------------------- run -- */
 
 async function main() {
   if (!existsSync(path.join(DIST, "index.html"))) {
-    log("dist/index.html not found — did `vite build` run? Skipping.");
+    fail("dist/index.html not found — did `vite build` run?");
     return;
   }
 
   // CRITICAL: dist/app.html is the neutral SPA shell that vercel.json's catch-all
-  // rewrite serves for EVERY dynamic route (products, shop, account, …). It must
-  // exist whenever index.html does — otherwise those routes 404. So create it
-  // FIRST, unconditionally, before any skip path below. (This is just a copy of
-  // the freshly-built neutral index.html; it can't fail and needs no Chromium.)
-  // Only the prerender step later overwrites dist/index.html with the home
-  // snapshot — app.html always stays the neutral shell.
+  // rewrite serves for EVERY non-prerendered route (cart, checkout, account, …).
+  // It must exist whenever index.html does — otherwise those routes 404. Create
+  // it FIRST, unconditionally, before any early-out below. Only the home
+  // snapshot later overwrites dist/index.html; app.html always stays neutral.
+  const SHELL = readFileSync(path.join(DIST, "index.html"), "utf8");
   await copyFile(path.join(DIST, "index.html"), path.join(DIST, "app.html"));
 
   if (process.env.PRERENDER === "false") {
+    skipped = "PRERENDER=false";
     log("PRERENDER=false — neutral app.html written, routes stay CSR.");
     return;
   }
   if (/localhost|127\.0\.0\.1/.test(PROD_ORIGIN)) {
-    log(`⚠ VITE_SITE_URL looks local ("${PROD_ORIGIN}"). Set it to the production origin (e.g. https://diecastbd.com) so baked canonicals are correct. Skipping prerender (app.html written, routes stay CSR).`);
+    skipped = `VITE_SITE_URL is local ("${PROD_ORIGIN}")`;
+    log(`⚠ VITE_SITE_URL looks local ("${PROD_ORIGIN}"). Set it to the production origin so baked canonicals are correct. Skipping prerender (app.html written, routes stay CSR).`);
+    return;
+  }
+  if (!API_BASE) {
+    fail("VITE_API_BASE_URL is not set — cannot fetch the content to bake.");
     return;
   }
 
-  // Lazy-import the heavy deps so a machine without them (or without Chromium)
-  // fails softly instead of crashing the build.
-  let preview, chromium;
-  try {
-    ({ preview } = await import("vite"));
-    ({ chromium } = await import("playwright"));
-  } catch (err) {
-    log(`prerender deps unavailable (${err.message}) — app.html written, routes stay CSR.`);
-    return;
-  }
+  log(`origin ${PROD_ORIGIN} · api ${API_BASE}${STRICT ? " · STRICT" : ""}`);
 
-  let server, browser;
-  try {
-    server = await preview({
-      root: path.resolve(__dirname, ".."),
-      preview: { port: PORT, strictPort: true, host: "127.0.0.1" },
-    });
-    const base = `http://127.0.0.1:${PORT}`;
+  const [settings, products, brands, categories, routes] = await Promise.all([
+    api("/settings"),
+    fetchAllProducts(),
+    api("/brands"),
+    api("/categories"),
+    discoverRoutes(),
+  ]);
 
-    browser = await chromium.launch();
-    const page = await browser.newPage();
+  const productsBySlug = new Map((products ?? []).map((p) => [p.slug, p]));
+  const ctx = { settings, productsBySlug, brands: brands ?? [], categories: categories ?? [] };
 
-    // THE fix that makes prerendering actually work. The preview server runs on
-    // 127.0.0.1:4183, which is not in the API's CORS allowlist — so every
-    // in-page API call was silently discarded by the browser (200, but no
-    // Access-Control-Allow-Origin). That's why the home snapshot baked the
-    // DEFAULT hero with a placeholder box instead of the merchant's real one,
-    // and why the four CMS policy routes timed out and shipped as empty shells.
-    //
-    // Node's fetch isn't subject to CORS, so we answer those requests here.
-    // Build-only: no backend change and no production CORS surface.
-    if (API_BASE) {
-      await page.route("**/api/v1/**", async (route) => {
-        try {
-          const res = await fetch(route.request().url(), { headers: { accept: "application/json" } });
-          await route.fulfill({
-            status: res.status,
-            contentType: res.headers.get("content-type") ?? "application/json",
-            body: await res.text(),
-          });
-        } catch {
-          await route.abort(); // API down — the route just stays CSR, as before
-        }
-      });
-    }
+  log(`discovered ${routes.length} routes · ${productsBySlug.size} products`);
 
-    // Fetched server-side for the same reason, and inlined into the home
-    // snapshot so the client's FIRST render already knows the hero variant.
-    let bakedSettings = null;
-    if (API_BASE) {
-      try {
-        const res = await fetch(`${API_BASE}/settings`, { headers: { accept: "application/json" } });
-        if (res.ok) bakedSettings = (await res.json())?.data ?? null;
-      } catch {
-        log("settings unavailable — home snapshot stays as-is");
+  await pool(routes, 6, async (route) => {
+    try {
+      const model = await modelFor(route, ctx);
+      if (!model) return;
+
+      // Home only: inline the settings the app needs on first paint, and start
+      // the hero image download during HTML parse. The preload matters most —
+      // the hero <img> is the LCP element and, rendered only after the settings
+      // round trip, its request otherwise can't begin until JS has booted.
+      let extra = "";
+      if (route === "/" && settings) {
+        const heroUrl = settings.homepageSections?.hero?.image?.url;
+        extra = [
+          heroUrl ? `<link rel="preload" as="image" fetchpriority="high" href="${heroUrl.replace(/"/g, "&quot;")}">` : "",
+          `<script type="application/json" id="__SETTINGS__">${JSON.stringify(settings).replace(/</g, "\\u003c")}</script>`,
+        ]
+          .filter(Boolean)
+          .join("\n    ");
       }
+
+      const html = injectHead(SHELL, model, extra);
+      const outPath = route === "/" ? path.join(DIST, "index.html") : path.join(DIST, route.replace(/^\//, ""), "index.html");
+      await mkdir(path.dirname(outPath), { recursive: true });
+      await writeFile(outPath, html, "utf8");
+      baked.push({ route, title: model.title, canonical: model.canonical, file: path.relative(DIST, outPath) });
+    } catch (err) {
+      fail(`${route} — ${err.message}`);
     }
+  });
 
-    let done = 0;
-    for (const route of ROUTES) {
-      const url = `${base}${route}`;
-      try {
-        await page.goto(url, { waitUntil: "load", timeout: 20000 });
-        // Wait until react-helmet-async has injected a <link rel="canonical">
-        // whose path equals THIS route. This is both the "React has rendered"
-        // signal and the correctness guard in one: the served SPA shell may
-        // carry a stale baked canonical, so merely-exists isn't enough — we wait
-        // for the value to actually match. A route that renders an error/empty
-        // state (e.g. a CMS page with the API down) never matches and is skipped,
-        // so we never bake a junk snapshot — it just stays CSR.
-        await page.waitForFunction(
-          (expected) => {
-            const el = document.querySelector('link[rel="canonical"]');
-            if (!el) return false;
-            const p = (el.getAttribute("href") || "").replace(/^https?:\/\/[^/]+/, "").replace(/\/$/, "") || "/";
-            return p === expected;
-          },
-          route,
-          { timeout: 15000 }
-        );
-        // Small settle for late JSON-LD / async section content.
-        await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
-
-        // De-dupe the <head>: index.html ships static fallback SEO tags for
-        // JS-blind crawlers, and react-helmet-async ADDS per-route tags rather
-        // than replacing them — leaving a snapshot with two <title>s / two
-        // og:titles, and a crawler may read the generic static one first. The
-        // static tags always sit in the authored <head>; helmet appends its
-        // per-route tags AFTER them, so "keep the last of each key" keeps the
-        // per-route value. Single-occurrence static tags (og:image, twitter:card,
-        // GSC token, og:type) have no per-route equivalent and are left as-is.
-        await page.evaluate(() => {
-          const head = document.head;
-          // <title>: document.title is the authoritative per-route value (helmet
-          // keeps it in sync). The helmet/static title elements don't order
-          // predictably, so collapse to a single element carrying document.title.
-          const desiredTitle = document.title;
-          head.querySelectorAll("title").forEach((t) => t.remove());
-          const titleEl = document.createElement("title");
-          titleEl.textContent = desiredTitle;
-          head.appendChild(titleEl);
-
-          // meta + canonical: helmet appends its per-route tag AFTER the static
-          // fallback, so keep the last of each key; single-occurrence static tags
-          // (og:image, twitter:card, GSC token, og:type) have no per-route
-          // equivalent and survive untouched.
-          const keyOf = (el) => {
-            if (el.tagName === "META" && el.getAttribute("name")) return "meta:name:" + el.getAttribute("name");
-            if (el.tagName === "META" && el.getAttribute("property")) return "meta:prop:" + el.getAttribute("property");
-            if (el.tagName === "LINK" && el.getAttribute("rel") === "canonical") return "link:canonical";
-            return null;
-          };
-          const groups = {};
-          for (const el of head.querySelectorAll("meta[name], meta[property], link[rel='canonical']")) {
-            const k = keyOf(el);
-            if (k) (groups[k] ||= []).push(el);
-          }
-          for (const list of Object.values(groups)) list.slice(0, -1).forEach((el) => el.remove());
-        });
-
-        // Scrub any local preview origin that leaked in via window.location
-        // fallback (belt-and-suspenders — with VITE_SITE_URL set there is none).
-        let html = "<!doctype html>\n" + (await page.evaluate(() => document.documentElement.outerHTML));
-        html = html.split(base).join(PROD_ORIGIN);
-
-        // Home only: inline the settings the app needs on first paint, and tell
-        // the browser to start the hero image download during HTML parse. The
-        // preload matters most — the hero <img> is the LCP element and, being
-        // rendered only after the settings round trip, its request otherwise
-        // can't even begin until JS has booted and fetched.
-        if (route === "/" && bakedSettings) {
-          const heroUrl = bakedSettings.homepageSections?.hero?.image?.url;
-          const tags = [
-            heroUrl
-              ? `<link rel="preload" as="image" fetchpriority="high" href="${heroUrl.replace(/"/g, "&quot;")}">`
-              : "",
-            // </script> inside JSON would close this tag early; escaping the
-            // slash keeps the payload inert to the HTML parser.
-            `<script type="application/json" id="__SETTINGS__">${JSON.stringify(bakedSettings).replace(/</g, "\\u003c")}</script>`,
-          ].filter(Boolean).join("\n    ");
-          html = html.replace("</head>", `    ${tags}\n  </head>`);
-        }
-
-        const outPath =
-          route === "/" ? path.join(DIST, "index.html") : path.join(DIST, route.replace(/^\//, ""), "index.html");
-        await mkdir(path.dirname(outPath), { recursive: true });
-        await writeFile(outPath, html, "utf8");
-        done += 1;
-        log(`✓ ${route} → ${path.relative(DIST, outPath)}`);
-      } catch (err) {
-        log(`skip ${route} — ${err.message.split("\n")[0]}`);
-      }
-    }
-    log(`prerendered ${done}/${ROUTES.length} routes.`);
-  } finally {
-    if (browser) await browser.close().catch(() => {});
-    if (server) await new Promise((r) => server.httpServer.close(r));
-  }
+  baked.sort((a, b) => a.route.localeCompare(b.route));
+  log(`prerendered ${baked.length}/${routes.length} routes.`);
+  if (baked.length < MIN_ROUTES) fail(`only ${baked.length} routes baked, expected at least ${MIN_ROUTES}`);
 }
 
-// Never let prerender failure fail the build — it's an enhancement that
-// gracefully degrades to the (already working) CSR behaviour.
 main()
-  .catch((err) => log(`unexpected error, leaving build as-is: ${err.message}`))
-  .finally(() => process.exit(0));
+  .catch((err) => fail(`unexpected error — ${err.message}`))
+  .finally(async () => {
+    // Written on every path, including the deliberate skips — see writeReport.
+    await writeReport().catch((err) => warn(`could not write report — ${err.message}`));
+
+    // A deliberate skip is a valid local build, but in production it means the
+    // site would ship with no per-route metadata at all — the exact failure this
+    // rewrite exists to prevent — so strict mode treats it as fatal.
+    if (skipped && STRICT) {
+      warn(`PRERENDER_STRICT=1 and prerendering was skipped (${skipped}) — failing the build.`);
+      process.exitCode = 1;
+      return;
+    }
+    if (errors.length === 0) return;
+
+    warn(`${errors.length} problem(s):\n  - ${errors.join("\n  - ")}`);
+    // In strict mode a bad prerender must stop the deploy. Vercel keeps the
+    // CURRENT production deployment serving when a build fails, so the blast
+    // radius is "the deploy doesn't ship", never "the site breaks".
+    if (STRICT) {
+      warn("PRERENDER_STRICT=1 — failing the build.");
+      process.exitCode = 1;
+    } else {
+      warn("not strict — leaving the build as-is; affected routes stay CSR.");
+    }
+  });
