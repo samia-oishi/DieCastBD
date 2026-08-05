@@ -9,7 +9,7 @@ import { useAddToCart } from "@/features/cart/api/useAddToCart";
 import { RestockAlertDialog } from "@/components/shared/RestockAlertDialog";
 import { useRestockAlertStore } from "@/stores/restockAlertStore";
 import { useToggleWishlistMutation } from "../api/useWishlist";
-import { isOnSale } from "@/lib/pricing";
+import { isOnSale, savingsAmount } from "@/lib/pricing";
 
 function Badge({ children, tone }) {
   const cls = tone === "sale" ? "bg-brand text-ink" : "bg-ink text-white";
@@ -102,7 +102,7 @@ export function WishlistCard({ product }) {
           <div className="pointer-events-none absolute left-2.5 top-2.5 flex gap-1.5 md:left-3 md:top-3">
             {isPreOrderActive && <Badge tone="preorder">Pre-order</Badge>}
             {isNewArrival && <Badge tone="new">New</Badge>}
-            {onSale && <Badge tone="sale">Sale</Badge>}
+            {onSale && <Badge tone="sale">Save {formatTaka(savingsAmount(product))}</Badge>}
           </div>
 
           <button

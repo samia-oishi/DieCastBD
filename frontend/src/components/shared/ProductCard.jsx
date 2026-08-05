@@ -9,7 +9,7 @@ import { useAddToCart } from "@/features/cart/api/useAddToCart";
 import { WishlistButton } from "@/features/wishlist/components/WishlistButton";
 import { RestockAlertDialog } from "@/components/shared/RestockAlertDialog";
 import { useRestockAlertStore } from "@/stores/restockAlertStore";
-import { isOnSale } from "@/lib/pricing";
+import { isOnSale, savingsAmount } from "@/lib/pricing";
 
 // Per-variant, per-breakpoint sizing read directly from the design markup.
 const VARIANTS = {
@@ -187,10 +187,15 @@ export function ProductCard({ product, variant = "grid", hidePrice = false, clas
             </div>
           )}
 
-          <div className="pointer-events-none absolute left-2.5 top-2.5 flex gap-1.5 md:left-3 md:top-3">
+          {/* Right edge stops short of the wishlist button (34px + its 10px
+              inset + a gap): the badge row is absolutely positioned, so without
+              this the wider "Save ৳260" badge slid underneath the heart and got
+              clipped on narrow phones. flex-wrap lets a long combination drop
+              to a second line instead of overflowing. */}
+          <div className="pointer-events-none absolute left-2.5 right-[52px] top-2.5 flex flex-wrap gap-1.5 md:left-3 md:right-[54px] md:top-3">
             {isPreOrderActive && <Badge tone="preorder">Pre-order</Badge>}
             {isNewArrival && <Badge tone="new">New</Badge>}
-            {onSale && <Badge tone="sale">Sale</Badge>}
+            {onSale && <Badge tone="sale">Save {formatTaka(savingsAmount(product))}</Badge>}
           </div>
 
           <WishlistButton

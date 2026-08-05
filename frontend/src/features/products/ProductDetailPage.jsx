@@ -26,7 +26,7 @@ import { ProductGallery } from "./components/ProductGallery";
 import { ProductSpecs } from "./components/ProductSpecs";
 import { ReassuranceCard } from "./components/ReassuranceCard";
 import { StickyBuyBar } from "./components/StickyBuyBar";
-import { isOnSale } from "@/lib/pricing";
+import { isOnSale, savingsAmount } from "@/lib/pricing";
 
 const CIRCLE_BTN = "flex size-10 items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:border-brand";
 // Over-the-photo variant: solid white with a soft shadow so it reads on any image.
@@ -171,7 +171,7 @@ export function ProductDetailPage() {
       <div className={cn("flex items-center", size === "lg" ? "gap-3" : "gap-2.5")}>
         <span className={cn("font-display font-extrabold tracking-[-0.01em] text-ink", size === "lg" ? "text-[32px]" : "text-[24px]")}>{formatTaka(price)}</span>
         {onSale && <span className={cn("font-medium text-[#A2A597] line-through", size === "lg" ? "text-[17px]" : "text-sm")}>{formatTaka(product.price)}</span>}
-        {onSale && <span className="rounded-full bg-brand-tint px-3 py-1.5 text-[11px] font-bold text-brand-deep md:text-xs">Save {formatTaka(product.price - price)}</span>}
+        {onSale && <span className="rounded-full bg-brand-tint px-3 py-1.5 text-[11px] font-bold text-brand-deep md:text-xs">Save {formatTaka(savingsAmount(product))}</span>}
       </div>
       {lowStock && (
         <div className={cn("flex items-center gap-2", size === "lg" ? "mt-3.5" : "mt-2.5")}>
