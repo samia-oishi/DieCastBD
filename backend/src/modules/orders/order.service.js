@@ -10,6 +10,7 @@ import { findValidCoupon, calculateDiscount } from "../coupons/coupon.service.js
 import { assertPaymentMethodAllowed, calculateAmountPaid } from "./paymentPlan.service.js";
 import { AuditLog } from "../auditLogs/auditLog.model.js";
 import { recomputeRollupsForOrders } from "../analytics/analytics.service.js";
+import { NON_REVENUE_ORDER_STATUSES } from "../../config/constants.js";
 import { generateOrderNumber } from "../../utils/generateOrderNumber.js";
 import { ApiError } from "../../utils/apiError.js";
 
@@ -436,12 +437,14 @@ export async function transitionOrderStatus({
     session.endSession();
   }
 
-  // The rollup excludes cancelled orders, so cancelling or restoring an order
-  // changes its day's revenue and order count. Only recompute when the order
-  // crosses that boundary — every other transition (packed → shipped) leaves
-  // the numbers identical and doesn't need the work.
-  const CANCELLED = new Set(["cancelled"]);
-  if (CANCELLED.has(previousStatus) !== CANCELLED.has(newStatus)) {
+  // Reports count only orders the store actually earned from, so a transition
+  // changes the numbers exactly when it crosses that line — confirmed →
+  // refunded removes the revenue, refunded → confirmed puts it back. Every
+  // other move (packed → shipped) leaves totals identical and skips the work.
+  // This MUST use the same list the rollup queries with, or a refund would
+  // quietly fail to update the report.
+  const nonRevenue = new Set(NON_REVENUE_ORDER_STATUSES);
+  if (nonRevenue.has(previousStatus) !== nonRevenue.has(newStatus)) {
     await recomputeRollupsForOrders([order]);
   }
 

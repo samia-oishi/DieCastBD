@@ -5,6 +5,7 @@ import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { clearAuthCookies } from "../../utils/cookies.js";
 import { Order } from "../orders/order.model.js";
+import { NON_REVENUE_ORDER_STATUSES } from "../../config/constants.js";
 
 // Explicit whitelist rather than passing req.body wholesale — even though `validate()`
 // strips fields the schema doesn't define, a controller that forwards req.body directly
@@ -42,7 +43,7 @@ const EMPTY_STATS = { orderCount: 0, totalSpent: 0, lastOrderAt: null };
 async function orderStatsFor(userIds) {
   if (userIds.length === 0) return new Map();
   const rows = await Order.aggregate([
-    { $match: { user: { $in: userIds }, status: { $nin: ["cancelled", "refunded"] } } },
+    { $match: { user: { $in: userIds }, status: { $nin: NON_REVENUE_ORDER_STATUSES } } },
     { $group: { _id: "$user", orderCount: { $sum: 1 }, totalSpent: { $sum: "$total" }, lastOrderAt: { $max: "$createdAt" } } },
   ]);
   return new Map(rows.map((r) => [String(r._id), { orderCount: r.orderCount, totalSpent: r.totalSpent, lastOrderAt: r.lastOrderAt }]));

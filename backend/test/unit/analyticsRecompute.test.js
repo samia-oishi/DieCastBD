@@ -39,19 +39,24 @@ describe("recomputeRollupsForOrders — which days get recomputed", () => {
   });
 });
 
-describe("cancelled-status boundary (the condition guarding the recompute)", () => {
-  // The rollup excludes cancelled orders, so only transitions that CROSS that
-  // boundary change a day's numbers. Everything else would be wasted work.
-  const crosses = (from, to) => (from === "cancelled") !== (to === "cancelled");
+describe("revenue boundary (the condition guarding the recompute)", () => {
+  // Reports count only orders the store earned from, so a transition changes a
+  // day's totals exactly when it crosses that line. Must stay in lockstep with
+  // NON_REVENUE_ORDER_STATUSES — if the rollup excluded refunded but this
+  // didn't, marking an order refunded would silently leave the report stale.
+  const NON_REVENUE = new Set(["cancelled", "refunded"]);
+  const crosses = (from, to) => NON_REVENUE.has(from) !== NON_REVENUE.has(to);
 
   it.each([
     ["confirmed", "cancelled", true],
     ["cancelled", "confirmed", true],
     ["pending", "cancelled", true],
+    ["delivered", "refunded", true], // the merchant's case: a refund drops revenue
+    ["refunded", "delivered", true], // and reversing it restores revenue
     ["confirmed", "packed", false],
     ["packed", "shipped", false],
     ["shipped", "delivered", false],
-    ["cancelled", "refunded", true],
+    ["cancelled", "refunded", false], // both already excluded — nothing moves
   ])("%s → %s recomputes: %s", (from, to, expected) => {
     expect(crosses(from, to)).toBe(expected);
   });

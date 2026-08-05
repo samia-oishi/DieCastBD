@@ -2,7 +2,7 @@ import { Order } from "../orders/order.model.js";
 import { Product } from "../products/product.model.js";
 import { User } from "../users/user.model.js";
 import { AnalyticsDaily } from "./analytics.model.js";
-import { LOW_STOCK_THRESHOLD } from "../../config/constants.js";
+import { LOW_STOCK_THRESHOLD, NON_REVENUE_ORDER_STATUSES } from "../../config/constants.js";
 
 function toDateKey(date) {
   return date.toISOString().slice(0, 10);
@@ -13,7 +13,7 @@ export async function computeDailyRollup(dateKey) {
   const endOfDay = new Date(`${dateKey}T23:59:59.999Z`);
 
   const [orders, newCustomers, lowStockCount] = await Promise.all([
-    Order.find({ createdAt: { $gte: startOfDay, $lte: endOfDay }, status: { $ne: "cancelled" } }),
+    Order.find({ createdAt: { $gte: startOfDay, $lte: endOfDay }, status: { $nin: NON_REVENUE_ORDER_STATUSES } }),
     User.countDocuments({ createdAt: { $gte: startOfDay, $lte: endOfDay } }),
     Product.countDocuments({
       status: "active",
@@ -69,7 +69,7 @@ export async function getSummary() {
 
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 6);
-  const weekOrders = await Order.find({ createdAt: { $gte: sevenDaysAgo }, status: { $ne: "cancelled" } });
+  const weekOrders = await Order.find({ createdAt: { $gte: sevenDaysAgo }, status: { $nin: NON_REVENUE_ORDER_STATUSES } });
   const weekRevenue = weekOrders.reduce((sum, o) => sum + o.total, 0);
 
   return {

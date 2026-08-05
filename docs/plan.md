@@ -470,7 +470,14 @@ The admin was the last dark surface in the app. It's now light, sharing the stor
     now equals live orders exactly. Real-email accounts were kept per the
     merchant's decision, for them to review. **Flagged, not changed:**
     `refunded` orders still count toward revenue (only `cancelled` is excluded)
-    — a business call, not a bug.
+    — a business call, not a bug. **Merchant answered: refunds must not count.**
+    `NON_REVENUE_ORDER_STATUSES = ["cancelled", "refunded"]` now lives in
+    config/constants.js and is shared by the daily rollup, the dashboard
+    summary, the per-customer lifetime spend (which already excluded both — so
+    analytics was the outlier, and a refund used to inflate Reports while
+    leaving the customer's totals correct) AND the recompute boundary above,
+    which had to move in lockstep or marking an order refunded would silently
+    leave the report stale.
 
 ---
 
