@@ -6,20 +6,25 @@ import { cn } from "@/lib/utils";
 /** Single-select dropdown with a type-to-filter box, for lists too long to scan
  * (the 64 districts of Bangladesh, or the 55 thanas of Dhaka).
  *
- * The panel opens **in the document flow** rather than as a floating popover,
- * which is the whole reason this exists instead of a Radix popover or cmdk:
+ * **The panel floats on desktop and opens in the document flow on mobile**, and
+ * the split is deliberate — it is also why this isn't a Radix popover or cmdk.
  *
- *  · The address form renders inside ResponsiveModal, whose mobile SheetContent
- *    is `overflow-y-auto` — an absolutely-positioned panel is clipped there.
- *  · Portalling out of that would escape the Sheet/Dialog focus trap, which
- *    then refuses to hand focus to the search box.
- *  · On a phone the virtual keyboard eats the bottom half of the screen, so an
- *    anchored panel routinely has room for two options.
+ * Floating everywhere doesn't work. The address form renders inside
+ * ResponsiveModal, whose mobile SheetContent is `overflow-y-auto`, so an
+ * absolutely-positioned panel is clipped there; portalling out to escape that
+ * leaves the Sheet's focus trap, which then refuses to hand focus to the search
+ * box. On a phone the virtual keyboard also eats the bottom half of the screen,
+ * so an anchored panel routinely has room for about two options. In flow, the
+ * scroll container simply scrolls to reveal the panel and the browser's own
+ * "scroll the focused field into view" handles the keyboard.
  *
- * In flow, the surrounding scroll container just scrolls to reveal it, and the
- * browser's own "scroll the focused field into view" handles the keyboard. The
- * cost is that opening pushes later fields down; the panel is height-capped to
- * keep that small.
+ * None of that applies on desktop: there is no keyboard, and ResponsiveModal
+ * switches to a Dialog that doesn't clip. There, pushing every later field down
+ * is just jarring, so the panel overlays instead.
+ *
+ * The breakpoint is `md` (768px) specifically to match ResponsiveModal's own
+ * `useMediaQuery("(min-width: 768px)")`. At 640–767px it still renders the
+ * clipping bottom sheet, so floating from `sm` would break in that band.
  *
  * @param options  [{ value, label?, keywords? }] — `keywords` also match while
  *                 filtering but are never displayed (old district spellings).
@@ -41,6 +46,7 @@ export function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [dropUp, setDropUp] = useState(false);
 
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
@@ -92,6 +98,22 @@ export function SearchableSelect({
     const active = listRef.current?.querySelector('[data-active="true"]');
     active?.scrollIntoView?.({ block: "nearest" });
   }, [open, activeIndex, filtered]);
+
+  // Desktop only: a floating panel near the bottom of the window would hang off
+  // the edge, so flip it above the trigger when there isn't room below and
+  // there is room above. The mobile panel is in flow and can't overflow, and
+  // matchMedia is absent in jsdom — both fall through to the default.
+  useEffect(() => {
+    if (!open) return;
+    if (!window.matchMedia?.("(min-width: 768px)").matches) {
+      setDropUp(false);
+      return;
+    }
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const PANEL_HEIGHT = 290; // search row + the list's max-h, plus borders
+    setDropUp(rect.bottom + PANEL_HEIGHT > window.innerHeight && rect.top > PANEL_HEIGHT);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -177,7 +199,16 @@ export function SearchableSelect({
       </button>
 
       {open && (
-        <div className="mt-1.5 overflow-hidden rounded-[12px] border border-line bg-white shadow-[0_12px_32px_rgba(16,18,8,0.10)]">
+        <div
+          className={cn(
+            "mt-1.5 overflow-hidden rounded-[12px] border border-line bg-white shadow-[0_12px_32px_rgba(16,18,8,0.10)]",
+            // From md up the panel leaves the flow and overlays what follows.
+            // z-30 sits above sibling fields but below the storefront's docked
+            // bars (z-40) and any dialog (z-50).
+            "md:absolute md:inset-x-0 md:z-30 md:shadow-[0_16px_40px_rgba(16,18,8,0.18)]",
+            dropUp ? "md:bottom-full md:mb-1.5 md:mt-0" : "md:top-full"
+          )}
+        >
           <div className="relative border-b border-line-soft">
             <Search size={15} strokeWidth={2} aria-hidden className="absolute left-3.5 top-1/2 -translate-y-1/2 text-faint" />
             <input
