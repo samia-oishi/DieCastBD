@@ -113,10 +113,47 @@ missing (Zod-validated in `src/config/env.js`).
 | `VITE_API_BASE_URL` | `https://api.diecastbd.com/api/v1` |
 | `VITE_SITE_URL` | `https://diecastbd.com` (canonical URLs / og:url / JSON-LD) |
 | `VITE_FIREBASE_API_KEY` … `VITE_FIREBASE_APP_ID` | Firebase **client** config (public by design) |
+| `PRERENDER_STRICT` | **`1` on Production AND Preview.** Fails the build when prerendering doesn't produce per-route metadata (see below). Not a `VITE_` var — it's read by the build script, not the bundle. |
+| `PRERENDER_MIN_ROUTES` | optional, default `20` — floor below which a build is treated as broken |
 
 > **`VITE_` vars are baked in at build time.** Changing one has no effect until the frontend
 > **rebuilds** — Redeploy the frontend project (or push a commit). A backend env change needs
 > a backend **redeploy**; adding a *domain* does **not** need a rebuild (it just re-aliases).
+
+### Prerendering (`scripts/prerender.mjs`) — read this before touching the build
+
+`npm run build` = `vite build` → `prerender.mjs` → `verify-prerender.mjs`. The prerender fetches
+the live API and bakes a real `<title>`/description/canonical/og/JSON-LD into
+`dist/<route>/index.html` for every indexable URL, discovered from the backend's `/sitemap.xml`.
+Without it **every URL serves one identical shell with no canonical**, which is exactly the state
+Search Console flagged in Jul 2026 (plan.md #88).
+
+- It needs `VITE_SITE_URL` **and** `VITE_API_BASE_URL` at build time. If `VITE_SITE_URL` looks
+  local it skips deliberately (so a laptop build can't bake `localhost` canonicals) — a local
+  `npm run build` therefore succeeds with every route client-rendered, exactly as before.
+- **`PRERENDER_STRICT=1` is the safety net, not a risk.** A failed build produces no deployment,
+  so Vercel keeps the current one serving — the blast radius is "the deploy doesn't ship", never
+  "the site breaks". The previous prerender exited 0 on failure and went unnoticed for months.
+
+  Behaviour matrix (all four verified):
+
+  | Situation | `PRERENDER_STRICT` unset | `PRERENDER_STRICT=1` |
+  |---|---|---|
+  | local build (`VITE_SITE_URL` = localhost) | exit 0, routes stay CSR | **exit 1** — catches a Vercel project missing `VITE_SITE_URL` |
+  | production env, API reachable | exit 0, 48 routes baked | exit 0, 48 routes baked |
+  | production env, **API down** | exit 0, ships a site with no metadata | **exit 1** — refuses to ship it |
+  | a route fails to bake | exit 0, that route stays CSR | **exit 1** |
+- `dist/app.html` is the neutral shell the `/(.*)` rewrite serves for every non-prerendered route.
+  It must never gain a canonical or a per-route title.
+- Escape hatch: `PRERENDER=false` writes `app.html` and leaves all routes client-rendered.
+- No browser is involved. `vercel-build` no longer installs Chromium.
+
+`frontend/vercel.json` now also carries a `redirects` block (`/index.html` → `/`) and route-scoped
+`X-Robots-Tag: noindex` headers for the private/transactional routes. **Promotion gate:** on a
+preview deployment, confirm public pages carry **no** `x-robots-tag`
+(`curl -sI $PREVIEW/products/<slug> | grep -ci x-robots-tag` → `0`) while `/cart`, `/login`,
+`/app.html` do. If a public page picks it up, Vercel is matching headers post-rewrite — fall back
+to `<meta>`-only and do not promote.
 
 ---
 
