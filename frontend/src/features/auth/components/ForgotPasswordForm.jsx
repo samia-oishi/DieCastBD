@@ -21,7 +21,7 @@ export function ForgotPasswordForm() {
 
   return (
     <AuthShell variant="signin" back={{ to: ROUTES.LOGIN, label: "Back to sign in" }}>
-      <Seo title="Reset password" />
+      <Seo title="Reset password" noindex />
       {resetMutation.isSuccess ? (
         <div className="mt-8">
           <div className="inline-flex size-12 items-center justify-center rounded-full bg-[#EFF5DC] text-brand-deep">

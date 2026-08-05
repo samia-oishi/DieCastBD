@@ -33,7 +33,7 @@ export function RegisterForm() {
 
   return (
     <AuthShell variant="register" back={{ to: ROUTES.LOGIN, label: "Back to sign in" }}>
-      <Seo title="Create an account" />
+      <Seo title="Create an account" noindex />
       <h1 className="mt-[22px] font-display text-[30px] font-extrabold tracking-[-0.015em] text-ink">Create an account</h1>
       <p className="mt-2 text-[14.5px] text-muted-foreground">Takes under a minute — then straight back to the shelf.</p>
 

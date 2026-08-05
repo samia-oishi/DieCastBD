@@ -138,7 +138,7 @@ export function OrdersPage() {
 
   return (
     <>
-      <Seo title="My orders" />
+      <Seo title="My orders" noindex />
       <div className="mx-auto w-full max-w-[1060px] px-4 pb-6 pt-6 md:px-10 md:pb-10 md:pt-10">
         <h1 className="font-display text-[26px] font-extrabold tracking-[-0.01em] text-ink md:text-[34px] md:tracking-[-0.02em]">My orders</h1>
         <p className="mt-1.5 hidden text-[14.5px] text-muted-foreground md:block">Track, review, or reorder — every piece you've claimed.</p>

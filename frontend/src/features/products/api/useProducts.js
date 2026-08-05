@@ -30,11 +30,18 @@ export function useInfiniteProducts(params) {
   });
 }
 
+/** A 404 here is a real answer — the product was archived, deleted, or the slug
+ * was renamed — so don't retry it. Retrying spent ~7s (3 attempts with backoff)
+ * parked on the loading spinner before the 404 page could render, which is long
+ * enough that a crawler may give up before ever seeing its `noindex`, leaving a
+ * dead product URL indexed. Other failures ARE transient and still retry, so a
+ * blip never turns a live product into a "page not found". Mirrors usePage. */
 export function useProduct(slug) {
   return useQuery({
     queryKey: productKeys.detail(slug),
     queryFn: () => getProductBySlug(slug),
     enabled: !!slug,
+    retry: (failureCount, error) => error?.response?.status !== 404 && failureCount < 2,
   });
 }
 

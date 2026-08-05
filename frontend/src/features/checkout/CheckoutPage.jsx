@@ -183,7 +183,7 @@ export function CheckoutPage() {
 
   return (
     <>
-      <Seo title="Checkout" />
+      <Seo title="Checkout" noindex />
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mx-auto w-full max-w-[1160px] px-4 pb-24 pt-[18px] md:px-9 md:pb-11 md:pt-[30px]">
         {/* Mobile progress row — the desktop stepper lives in CheckoutHeader */}

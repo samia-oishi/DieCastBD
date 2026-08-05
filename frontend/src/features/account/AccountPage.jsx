@@ -251,7 +251,7 @@ export function AccountPage() {
 
   return (
     <>
-      <Seo title="My account" />
+      <Seo title="My account" noindex />
       <div className="mx-auto w-full max-w-[1160px] px-4 pb-6 pt-5 md:px-10 md:pb-10 md:pt-10">
         {/* Profile — desktop card */}
         <div className="hidden items-center gap-5 rounded-[24px] border border-line bg-white p-[26px_28px] md:flex">

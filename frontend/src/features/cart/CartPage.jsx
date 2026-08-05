@@ -33,7 +33,7 @@ export function CartPage() {
   if (!isLoading && items.length === 0) {
     return (
       <>
-        <Seo title="Your Cart" />
+        <Seo title="Your Cart" noindex />
         <Container className="flex flex-col items-center gap-4 py-24 text-center">
           <div className="flex size-16 items-center justify-center rounded-full bg-tile text-faint">
             <ShoppingBag className="size-7" strokeWidth={1.5} />
@@ -52,7 +52,7 @@ export function CartPage() {
 
   return (
     <>
-      <Seo title="Your Cart" />
+      <Seo title="Your Cart" noindex />
 
       {/* Desktop */}
       <div className="mx-auto hidden w-full max-w-[1160px] px-10 pt-10 md:block">

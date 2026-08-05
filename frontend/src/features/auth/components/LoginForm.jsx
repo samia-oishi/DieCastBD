@@ -36,7 +36,7 @@ export function LoginForm() {
 
   return (
     <AuthShell variant="signin" back={{ to: ROUTES.SHOP, label: "Back to the store" }}>
-      <Seo title="Sign in" />
+      <Seo title="Sign in" noindex />
       <h1 className="mt-[22px] font-display text-[30px] font-extrabold tracking-[-0.015em] text-ink">Sign in</h1>
       <p className="mt-2 text-[14.5px] text-muted-foreground">Welcome back, collector.</p>
 

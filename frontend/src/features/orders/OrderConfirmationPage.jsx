@@ -35,7 +35,7 @@ export function OrderConfirmationPage() {
 
   return (
     <>
-      <Seo title="Order placed" />
+      <Seo title="Order placed" noindex />
       <div className="mx-auto w-full max-w-[1060px] px-4 pb-6 pt-7 md:px-10 md:pb-10 md:pt-[52px]">
         <OrderSuccessHeader />
         <div className="mt-6 md:mt-8">

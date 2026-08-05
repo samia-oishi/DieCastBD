@@ -1,19 +1,22 @@
 User-agent: *
 Allow: /
 
-# Private / transactional routes — no SEO value, keep them out of the index.
-Disallow: /admin
-Disallow: /dashboard
-Disallow: /api
-Disallow: /private
-Disallow: /checkout
-Disallow: /cart
-Disallow: /account
-Disallow: /orders
-Disallow: /wishlist
-Disallow: /unauthorized
-Disallow: /login
-Disallow: /register
-Disallow: /forgot-password
+# DELIBERATELY NO Disallow RULES. Please don't add them back without reading this.
+#
+# The private/transactional routes (/cart, /checkout, /account, /orders,
+# /wishlist, /login, /register, /forgot-password, /unauthorized,
+# /order-confirmation, /admin/*) are kept out of the index with
+# `X-Robots-Tag: noindex`, set per-route in frontend/vercel.json, plus a
+# rendered <meta name="robots"> from the Seo component.
+#
+# Disallow and noindex defeat each other: a URL Google is forbidden to CRAWL is
+# a URL where it can never SEE the noindex that would remove it. A page that is
+# both Disallow-ed and linked from anywhere can still be indexed URL-only
+# ("Indexed, though blocked by robots.txt") and then stays there. To get a URL
+# OUT of the index you have to let Google fetch it and serve noindex — which is
+# what we now do. See docs/plan.md decision #95.
+#
+# Crawl budget is not a reason to reinstate them: every one of those paths
+# returns the same cached app.html shell.
 
 Sitemap: https://diecastbd.com/sitemap.xml

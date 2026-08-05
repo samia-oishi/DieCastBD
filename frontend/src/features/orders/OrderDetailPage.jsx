@@ -19,7 +19,7 @@ export function OrderDetailPage() {
 
   return (
     <>
-      <Seo title={`Order ${order.orderNumber}`} />
+      <Seo title={`Order ${order.orderNumber}`} noindex />
       <div className="mx-auto w-full max-w-[1060px] px-4 pb-8 pt-6 md:px-10 md:pb-10 md:pt-10">
         <Link
           to={ROUTES.ORDERS}

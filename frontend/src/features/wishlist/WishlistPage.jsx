@@ -12,7 +12,7 @@ export function WishlistPage() {
 
   return (
     <>
-      <Seo title="My wishlist" />
+      <Seo title="My wishlist" noindex />
       <div className="mx-auto w-full max-w-[1160px] px-4 pb-6 pt-6 md:px-10 md:pb-10 md:pt-10">
         <h1 className="font-display text-[26px] font-extrabold tracking-[-0.01em] text-ink md:text-[34px] md:tracking-[-0.02em]">My wishlist</h1>
         {!isLoading && count > 0 && (
