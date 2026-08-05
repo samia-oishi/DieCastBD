@@ -2,8 +2,10 @@ import { Link } from "react-router";
 import { ShieldCheck, Package, Truck, Sparkles, CarFront, ArrowRight } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
-import { Seo } from "@/components/shared/Seo";
-import { canonical } from "@/lib/siteUrl";
+import { SeoHead } from "@/components/shared/Seo";
+import { SITE_URL } from "@/lib/siteUrl";
+import { buildStaticPage } from "@/lib/seo/routes";
+import { useSettings } from "@/features/settings/api/useSettings";
 
 const WHY = [
   { icon: ShieldCheck, title: "100% authentic", desc: "Sourced direct and verified before it reaches you — no replicas, ever." },
@@ -13,12 +15,11 @@ const WHY = [
 ];
 
 export function AboutPage() {
+  const { data: settings } = useSettings();
+
   return (
     <>
-      <Seo title="About" description="DiecastBD brings premium 1:64 diecast to Bangladesh — authentic, collector-grade, curated.">
-        <link rel="canonical" href={canonical("/about")} />
-        <meta property="og:url" content={canonical("/about")} />
-      </Seo>
+      <SeoHead model={buildStaticPage({ key: "about", settings, siteUrl: SITE_URL })} />
       <div className="mx-auto w-full max-w-[1160px] px-4 pb-12 pt-9 md:px-6 md:pt-14">
         {/* hero statement */}
         <div className="max-w-[760px]">

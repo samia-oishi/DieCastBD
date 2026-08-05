@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import { Helmet } from "react-helmet-async";
 import { Minus, Plus, ShoppingBag, Share2, Bell, Check } from "lucide-react";
 import toast from "react-hot-toast";
 
-import { canonical } from "@/lib/siteUrl";
+import { SITE_URL } from "@/lib/siteUrl";
+import { buildProduct } from "@/lib/seo/routes";
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
 import { ROUTES } from "@/constants/routes";
-import { Seo } from "@/components/shared/Seo";
+import { SeoHead } from "@/components/shared/Seo";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
+import { PageLoadError } from "@/components/shared/PageLoadError";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { ProductCarousel } from "@/components/shared/ProductCarousel";
 import { Container } from "@/components/shared/Container";
@@ -69,7 +70,7 @@ function ShareCircle({ title, className }) {
 export function ProductDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { data: product, isLoading, isError } = useProduct(slug);
+  const { data: product, isLoading, isError, error } = useProduct(slug);
   const { data: related } = useRelatedProducts(slug);
   const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
   const recentlyViewed = useRecentlyViewedStore((s) => s.items);
@@ -87,7 +88,10 @@ export function ProductDetailPage() {
   useEffect(() => setQty(1), [slug]);
 
   if (isLoading) return <FullPageLoader />;
-  if (isError || !product) return <NotFoundPage />;
+  // Only a genuine 404 means the product is gone. NotFoundPage carries noindex,
+  // so treating an API outage as "not found" would deindex live products.
+  if (isError && error?.response?.status !== 404) return <PageLoadError />;
+  if (!product) return <NotFoundPage />;
 
   const onSale = isOnSale(product);
   const price = onSale ? product.salePrice : product.price;
@@ -102,66 +106,9 @@ export function ProductDetailPage() {
   };
   const onBuyNow = () => navigate(ROUTES.CHECKOUT, { state: { buyNowItem: { product, qty } } });
 
-  const productUrl = canonical(`/products/${product.slug}`);
-  // Shipping + returns for Google merchant listings, from the REAL settings —
-  // one OfferShippingDetails per configured zone, and a return policy only
-  // when the merchant has committed to a window (blank = omitted, never
-  // invented).
-  const shippingDetails = (settings?.shippingZones ?? [])
-    .filter((z) => z?.name)
-    .map((z) => ({
-      "@type": "OfferShippingDetails",
-      name: z.name,
-      shippingRate: { "@type": "MonetaryAmount", value: Number(z.fee) || 0, currency: "BDT" },
-      shippingDestination: { "@type": "DefinedRegion", addressCountry: "BD" },
-    }));
-  const returnDays = Number(settings?.seoDefaults?.returnWindowDays);
-  const returnPolicy =
-    returnDays > 0
-      ? {
-          "@type": "MerchantReturnPolicy",
-          applicableCountry: "BD",
-          returnPolicyCountry: "BD",
-          returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-          merchantReturnDays: returnDays,
-        }
-      : undefined;
-
-  // Mirrors the visible breadcrumb — shapes how the URL renders in results.
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: canonical("/") },
-      { "@type": "ListItem", position: 2, name: "Shop", item: canonical("/shop") },
-      ...(product.brand?.name
-        ? [{ "@type": "ListItem", position: 3, name: product.brand.name, item: canonical(`/brand/${product.brand.slug}`) }]
-        : []),
-      { "@type": "ListItem", position: product.brand?.name ? 4 : 3, name: product.title },
-    ],
-  };
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.title,
-    sku: product.sku,
-    ...(product.modelNumber ? { mpn: product.modelNumber } : {}),
-    brand: product.brand?.name ? { "@type": "Brand", name: product.brand.name } : undefined,
-    image: [product.thumbnail?.url, ...(product.gallery ?? []).map((g) => g.url)].filter(Boolean),
-    description: product.description,
-    offers: {
-      "@type": "Offer",
-      url: productUrl,
-      priceCurrency: "BDT",
-      price,
-      itemCondition: "https://schema.org/NewCondition",
-      availability: outOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-      seller: { "@type": "Organization", name: "DiecastBD" },
-      ...(shippingDetails.length ? { shippingDetails } : {}),
-      ...(returnPolicy ? { hasMerchantReturnPolicy: returnPolicy } : {}),
-    },
-  };
+  // Title/description/canonical/og + Product & BreadcrumbList JSON-LD, built by
+  // the SAME code scripts/prerender.mjs bakes into the HTML — see lib/seo/.
+  const seoModel = buildProduct({ product, settings, siteUrl: SITE_URL });
 
   const kicker = [product.brand?.name, product.sku && `SKU ${product.sku}`].filter(Boolean).join(" · ");
 
@@ -202,22 +149,7 @@ export function ProductDetailPage() {
 
   return (
     <>
-      <Seo
-        title={product.seo?.title ? product.seo.title : `${product.title} — Buy in Bangladesh`}
-        noTemplate={!!product.seo?.title}
-        description={product.seo?.description || `Buy the ${product.title} in Bangladesh at DiecastBD. ${product.description?.slice(0, 100) ?? ""}`.slice(0, 160)}
-        image={product.thumbnail?.url}
-      >
-        <link rel="canonical" href={product.seo?.canonicalUrl || productUrl} />
-        <meta property="og:type" content="product" />
-        <meta property="og:url" content={productUrl} />
-      </Seo>
-      <Helmet>
-        <script type="application/ld+json">{JSON.stringify(breadcrumbJsonLd)}</script>
-      </Helmet>
-      <Helmet>
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-      </Helmet>
+      <SeoHead model={seoModel} />
 
       {/* ---------- Desktop ---------- */}
       <div className="hidden md:block">

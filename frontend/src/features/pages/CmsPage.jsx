@@ -1,11 +1,14 @@
-import { Helmet } from "react-helmet-async";
 import { useParams } from "react-router";
 
 import { cn } from "@/lib/utils";
-import { canonical } from "@/lib/siteUrl";
+import { SITE_URL } from "@/lib/siteUrl";
+import { buildCmsPage } from "@/lib/seo/routes";
+import { SeoHead } from "@/components/shared/Seo";
 import { Container } from "@/components/shared/Container";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
+import { PageLoadError } from "@/components/shared/PageLoadError";
+import { useSettings } from "@/features/settings/api/useSettings";
 import { usePage } from "./api/usePages";
 import { BlockRenderer } from "./components/BlockRenderer";
 
@@ -23,21 +26,21 @@ const PROSE =
  */
 export function CmsPage() {
   const { slug } = useParams();
-  const { data: page, isLoading, isError } = usePage(slug);
+  const { data: page, isLoading, isError, error } = usePage(slug);
+  const { data: settings } = useSettings();
 
   if (isLoading) return <FullPageLoader />;
-  if (isError || !page) return <NotFoundPage />;
+  // Only a real 404 means "no such page" — anything else is transient, and
+  // NotFoundPage carries noindex. See PageLoadError.
+  if (isError && error?.response?.status !== 404) return <PageLoadError />;
+  if (!page) return <NotFoundPage />;
 
   const blocks = page.blocks ?? [];
   const hasContent = page.content && page.content.trim().length > 0;
 
   return (
     <>
-      <Helmet>
-        <title>{page.seo?.title || `${page.title} — DiecastBD`}</title>
-        {page.seo?.description && <meta name="description" content={page.seo.description} />}
-        <link rel="canonical" href={page.seo?.canonicalUrl || canonical(`/${slug}`)} />
-      </Helmet>
+      <SeoHead model={buildCmsPage({ slug, page, settings, siteUrl: SITE_URL })} />
 
       <Container className="pb-14 pt-8 md:pt-11">
         <h1 className="font-display text-[28px] font-extrabold tracking-[-0.02em] text-ink md:text-[clamp(28px,4vw,36px)]">

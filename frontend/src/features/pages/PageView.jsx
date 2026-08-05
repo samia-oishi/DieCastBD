@@ -1,11 +1,14 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "react-router";
 
 import { cn } from "@/lib/utils";
-import { canonical } from "@/lib/siteUrl";
+import { SITE_URL } from "@/lib/siteUrl";
+import { buildCmsPage } from "@/lib/seo/routes";
 import { ROUTES } from "@/constants/routes";
+import { SeoHead } from "@/components/shared/Seo";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
+import { PageLoadError } from "@/components/shared/PageLoadError";
+import { useSettings } from "@/features/settings/api/useSettings";
 import { usePage } from "./api/usePages";
 import { BlockRenderer } from "./components/BlockRenderer";
 
@@ -30,21 +33,21 @@ function formatUpdated(value) {
 // policy BODY is CMS-authored HTML only (sanitized server-side on save); we
 // never hardcode policy copy from the design.
 export function PageView({ slug }) {
-  const { data: page, isLoading, isError } = usePage(slug);
+  const { data: page, isLoading, isError, error } = usePage(slug);
+  const { data: settings } = useSettings();
 
   if (isLoading) return <FullPageLoader />;
-  if (isError || !page) return <NotFoundPage />;
+  // Only a real 404 means "this page doesn't exist". Any other failure is
+  // transient, and NotFoundPage carries noindex — see PageLoadError.
+  if (isError && error?.response?.status !== 404) return <PageLoadError />;
+  if (!page) return <NotFoundPage />;
 
   const updated = formatUpdated(page.updatedAt);
   const hasContent = page.content && page.content.trim().length > 0;
 
   return (
     <>
-      <Helmet>
-        <title>{page.seo?.title || `${page.title} — DiecastBD`}</title>
-        {page.seo?.description && <meta name="description" content={page.seo.description} />}
-        <link rel="canonical" href={page.seo?.canonicalUrl || canonical(`/${slug}`)} />
-      </Helmet>
+      <SeoHead model={buildCmsPage({ slug, page, settings, siteUrl: SITE_URL })} />
 
       <div className="mx-auto w-full max-w-[760px] px-4 pb-10 pt-8 md:px-6 md:pt-11">
         <div className="text-xs font-bold uppercase tracking-[0.14em] text-brand-deep">Policy</div>

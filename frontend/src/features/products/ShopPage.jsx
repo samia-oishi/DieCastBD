@@ -1,15 +1,17 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
-import { canonical } from "@/lib/siteUrl";
+import { SITE_URL } from "@/lib/siteUrl";
+import { buildShop } from "@/lib/seo/routes";
 import { cn } from "@/lib/utils";
-import { Seo } from "@/components/shared/Seo";
+import { SeoHead } from "@/components/shared/Seo";
 import { Container } from "@/components/shared/Container";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { useDragScroll } from "@/hooks/useDragScroll";
 import { useBrands } from "@/features/brands/api/useBrands";
+import { useSettings } from "@/features/settings/api/useSettings";
 import { useInfiniteProducts } from "./api/useProducts";
 import { useShopFilters } from "./hooks/useShopFilters";
 import { FilterSidebar } from "./components/FilterSidebar";
@@ -64,6 +66,7 @@ export function ShopPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const { ref: toolbarRef, dragProps } = useDragScroll();
   const { data: brands } = useBrands();
+  const { data: settings } = useSettings();
   // Short debounce so results filter live as you type (not only after a long
   // pause) while still coalescing rapid keystrokes into one request.
   const debouncedSearch = useDebounce(searchInput, 200);
@@ -162,30 +165,14 @@ export function ShopPage() {
 
   const sidebarProps = { filters, updateFilters, clearFilters, activeFilterCount };
 
-  // A view filtered to exactly one brand or category IS the collection landing
-  // page, so it canonicalises there — that's the URL built to rank, and it
-  // inherits the signal from links pointing at the query form (merchant nav,
-  // anything already indexed). Any other combination stays /shop: multi-facet
-  // and searched views are app state, not pages worth indexing separately.
-  const onlyFacet = (key) => {
-    const others = ["brand", "category", "series", "minPrice", "maxPrice", "q"].filter((k) => k !== key);
-    return filters[key] && !others.some((k) => filters[k]) && !filters.inStock && !filters.featured && !filters.newArrival;
-  };
-  const canonicalPath = onlyFacet("brand")
-    ? `/brand/${filters.brand}`
-    : onlyFacet("category")
-      ? `/category/${filters.category}`
-      : "/shop";
+  // Canonical target depends on the active filters — see shopCanonicalPath in
+  // lib/seo/routes.js for why a single-facet view canonicalises to its
+  // collection landing page and everything else stays on /shop.
+  const seoModel = buildShop({ settings, siteUrl: SITE_URL, filters });
 
   return (
     <>
-      <Seo
-        title="Shop Hot Wheels & MINI GT Diecast Cars in Bangladesh"
-        description="Browse authentic Hot Wheels Premium and MINI GT diecast cars in Bangladesh — Car Culture, F1, JDM and more. 1:64 scale, nationwide delivery, cash on delivery."
-      >
-        <link rel="canonical" href={canonical(canonicalPath)} />
-        <meta property="og:url" content={canonical(canonicalPath)} />
-      </Seo>
+      <SeoHead model={seoModel} />
 
       {/* ---------- Mobile head + toolbar ---------- */}
       <div className="md:hidden">

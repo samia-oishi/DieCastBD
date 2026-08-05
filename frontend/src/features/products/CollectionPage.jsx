@@ -1,59 +1,22 @@
-import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router";
 
-import { canonical } from "@/lib/siteUrl";
+import { SITE_URL } from "@/lib/siteUrl";
+import { buildCollection } from "@/lib/seo/routes";
 import { formatTaka } from "@/lib/currency";
-import { Seo } from "@/components/shared/Seo";
+import { SeoHead } from "@/components/shared/Seo";
 import { Container } from "@/components/shared/Container";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
+import { PageLoadError } from "@/components/shared/PageLoadError";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { ROUTES } from "@/constants/routes";
 import { useBrands } from "@/features/brands/api/useBrands";
 import { useCategories } from "@/features/categories/api/useCategories";
+import { useSettings } from "@/features/settings/api/useSettings";
 import { useProducts } from "./api/useProducts";
 import { ProductGrid } from "./components/ProductGrid";
 
 const PAGE_SIZE = 24;
-
-/** Search-intent copy per collection, keyed by slug.
- *
- * These are TITLE/DESCRIPTION templates, not page content — every claim in them
- * ("authentic", "nationwide delivery", "cash on delivery") is already true of
- * the store and stated on the storefront. Prose *about* a brand belongs in the
- * merchant-editable `description` field on the Brand/Category record, which
- * renders below the H1 when set and is simply absent when not.
- *
- * Each collection owns ONE keyword cluster rather than every page repeating the
- * same terms, which is how they end up competing with each other.
- */
-const SEO_COPY = {
-  "hot-wheels-premium": {
-    title: "Hot Wheels Premium in Bangladesh — Price & Authentic 1:64 Diecast",
-    description:
-      "Buy authentic Hot Wheels Premium diecast in Bangladesh. Real Riders, Car Culture and Boulevard 1:64 castings with collector-grade packaging, cash on delivery and nationwide shipping.",
-  },
-  "mini-gt": {
-    title: "MINI GT in Bangladesh — Price & Authentic 1:64 Scale Models",
-    description:
-      "Buy authentic MINI GT 1:64 diecast in Bangladesh — JDM legends, supercars and race liveries. Verified castings, collector-grade packaging, cash on delivery nationwide.",
-  },
-  "premium-singles": {
-    title: "Premium 1:64 Diecast Singles in Bangladesh",
-    description:
-      "Single premium 1:64 diecast cars in Bangladesh — Hot Wheels Premium and MINI GT, individually inspected, with cash on delivery and nationwide shipping.",
-  },
-  "multi-packs": {
-    title: "Diecast Multi-Packs & Sets in Bangladesh",
-    description:
-      "Sealed diecast multi-packs and themed sets in Bangladesh — more cars per box, collector-grade packaging, cash on delivery nationwide.",
-  },
-  accessories: {
-    title: "Diecast Card Protectors & Display Cases in Bangladesh",
-    description:
-      "Protect your collection — card protectors, blister cases and display cases for 1:64 diecast in Bangladesh. Affordable collector accessories with nationwide delivery.",
-  },
-};
 
 /** Brand and category landing pages: `/brand/:slug` and `/category/:slug`.
  *
@@ -69,8 +32,9 @@ export function CollectionPage({ kind }) {
   const { slug } = useParams();
   const isBrand = kind === "brand";
 
-  const { data: brands, isLoading: brandsLoading } = useBrands();
-  const { data: categories, isLoading: catsLoading } = useCategories();
+  const { data: brands, isLoading: brandsLoading, isError: brandsError } = useBrands();
+  const { data: categories, isLoading: catsLoading, isError: catsError } = useCategories();
+  const { data: settings } = useSettings();
 
   const list = (isBrand ? brands : categories) ?? [];
   const collection = list.find((c) => c.slug === slug);
@@ -83,12 +47,14 @@ export function CollectionPage({ kind }) {
   });
 
   if (listLoading) return <FullPageLoader />;
+  // The collection is looked up in a LIST response, so a failed list request
+  // looks identical to "no such brand". NotFoundPage carries noindex — without
+  // this guard one API blip would deindex every brand and category page.
+  if (isBrand ? brandsError : catsError) return <PageLoadError />;
   if (!collection) return <NotFoundPage />;
 
   const products = data?.data ?? [];
   const total = data?.meta?.total ?? 0;
-  const path = `/${isBrand ? "brand" : "category"}/${slug}`;
-  const url = canonical(path);
 
   // Cheapest live price, for the "from ৳X" line that answers price-intent
   // searches honestly — it's the real catalogue minimum, not a claim.
@@ -97,55 +63,23 @@ export function CollectionPage({ kind }) {
     return min === null || price < min ? price : min;
   }, null);
 
-  const copy = SEO_COPY[slug] ?? {
-    title: `${collection.name} in Bangladesh`,
-    description: `Browse ${collection.name} diecast in Bangladesh at DiecastBD — authentic castings, cash on delivery and nationwide shipping.`,
-  };
-
-  // CollectionPage + ItemList tells Google this is a product listing and what's
-  // on it; BreadcrumbList mirrors the visible trail.
-  const collectionJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    name: copy.title,
-    description: copy.description,
-    url,
-    isPartOf: { "@type": "WebSite", name: "DiecastBD", url: canonical("/") },
-    mainEntity: {
-      "@type": "ItemList",
-      numberOfItems: total,
-      itemListElement: products.slice(0, 24).map((p, i) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        url: canonical(`/products/${p.slug}`),
-        name: p.title,
-      })),
-    },
-  };
-
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: canonical("/") },
-      { "@type": "ListItem", position: 2, name: "Shop", item: canonical("/shop") },
-      { "@type": "ListItem", position: 3, name: collection.name },
-    ],
-  };
+  // Curated title/description + CollectionPage/ItemList/BreadcrumbList JSON-LD,
+  // built by the SAME code scripts/prerender.mjs bakes into the HTML.
+  const seoModel = buildCollection({
+    kind: isBrand ? "brand" : "category",
+    slug,
+    collection,
+    products,
+    total,
+    settings,
+    siteUrl: SITE_URL,
+  });
 
   const shopHref = `${ROUTES.SHOP}?${isBrand ? "brand" : "category"}=${slug}`;
 
   return (
     <>
-      <Seo title={copy.title} noTemplate description={copy.description} image={collection.logo?.url ?? collection.image?.url}>
-        <link rel="canonical" href={url} />
-        <meta property="og:url" content={url} />
-        <meta property="og:type" content="website" />
-      </Seo>
-      <Helmet>
-        <script type="application/ld+json">{JSON.stringify(collectionJsonLd)}</script>
-        <script type="application/ld+json">{JSON.stringify(breadcrumbJsonLd)}</script>
-      </Helmet>
+      <SeoHead model={seoModel} />
 
       <Container className="pt-6">
         <Breadcrumb
