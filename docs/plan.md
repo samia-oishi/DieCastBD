@@ -388,6 +388,35 @@ The admin was the last dark surface in the app. It's now light, sharing the stor
     contact page's URL normalisation, floats at bottom-[86px] on mobile to clear the
     docked bars, z-40 under sheets.
 
+93. **Shop page: numbered pagination → infinite scroll, with a deliberate cap.**
+    `useInfiniteProducts` (key `["products","infinite",params]` — a SIBLING of
+    `list`, never nested, since `useQuery` caches `{data,meta}` while
+    `useInfiniteQuery` caches `{pages,pageParams}` and a colliding key would
+    corrupt the entry CollectionPage/HomePage read). `page` is gone from
+    `useShopFilters` entirely (it would otherwise poison the query key, which
+    spreads `filters`), with a mount-time strip for stale `?page=N` bookmarks;
+    SEO is unaffected because `/shop?page=N` has always canonicalised to
+    `/shop`. Scrolling **auto-loads 2 pages, then requires a tap** (a tap
+    re-arms it) — pure infinite scroll makes the footer, and therefore the
+    internal links to the `/brand` and `/category` landing pages, practically
+    unreachable. The budget is guarded by a **ref**, not state: two
+    intersections can arrive before React re-renders, and a state-only guard
+    let both through — caught by a unit test, not by the browser, where
+    `isFetchingNextPage` masks it. New reusable
+    `hooks/useIntersectionObserver.js` (callback ref because the sentinel
+    renders conditionally; `onIntersect` held in a ref so an inline arrow can't
+    rebuild the observer every render; inert without `IntersectionObserver` so
+    jsdom needs no stub). Two prerequisites shipped first: **`SORT_MAP` gained
+    `_id` tie-breakers** — Mongo's sort is unstable for ties and 3 prices are
+    shared in the live catalogue, so a tie on a page boundary could repeat or
+    drop a product (numbered pagination hid it; appending would render a
+    duplicate card) — and the **product grid now renders once instead of
+    twice** (measured 48 ProductCards for 24 products, each with its own
+    wishlist observer and restock subscription; unbounded once the list grows
+    by scrolling). Client-side de-dupe on `_id` stays for live inventory
+    shifts. Known follow-up: scroll position isn't restored when returning
+    from a PDP (pre-existing; fixing it touches the shared `ScrollToTop`).
+
 ---
 
 ## Admin light redesign: complete

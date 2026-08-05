@@ -1,22 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
 import { canonical } from "@/lib/siteUrl";
 import { cn } from "@/lib/utils";
 import { Seo } from "@/components/shared/Seo";
 import { Container } from "@/components/shared/Container";
-import { Pagination } from "@/components/shared/Pagination";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { useDragScroll } from "@/hooks/useDragScroll";
 import { useBrands } from "@/features/brands/api/useBrands";
-import { useProducts } from "./api/useProducts";
+import { useInfiniteProducts } from "./api/useProducts";
 import { useShopFilters } from "./hooks/useShopFilters";
 import { FilterSidebar } from "./components/FilterSidebar";
 import { SortDropdown } from "./components/SortDropdown";
 import { ProductGrid } from "./components/ProductGrid";
 
 const PAGE_SIZE = 24;
+
+// Scrolling auto-loads this many pages, then a tap is required. Pure infinite
+// scroll makes the footer — which carries the internal links to the /brand and
+// /category landing pages — practically unreachable. A manual tap resets the
+// budget, so the rhythm is auto, auto, tap, auto, auto.
+const AUTO_LOAD_LIMIT = 2;
 
 function SearchPill({ value, onChange, className }) {
   return (
@@ -53,7 +59,7 @@ function Chip({ active, onClick, children }) {
 }
 
 export function ShopPage() {
-  const { filters, updateFilters, setPage, clearFilters, activeFilterCount } = useShopFilters();
+  const { filters, updateFilters, clearFilters, activeFilterCount } = useShopFilters();
   const [searchInput, setSearchInput] = useState(filters.q ?? "");
   const [sheetOpen, setSheetOpen] = useState(false);
   const { ref: toolbarRef, dragProps } = useDragScroll();
@@ -71,19 +77,85 @@ export function ShopPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
 
-  const { data, isLoading, isPlaceholderData } = useProducts({
-    ...filters,
-    q: debouncedSearch || undefined,
-    limit: PAGE_SIZE,
-    page: filters.page,
-  });
+  // No `page` here on purpose — it enters only as useInfiniteQuery's pageParam.
+  const queryParams = { ...filters, q: debouncedSearch || undefined, limit: PAGE_SIZE };
+  const { data, isLoading, isPlaceholderData, isFetchingNextPage, hasNextPage, fetchNextPage } =
+    useInfiniteProducts(queryParams);
 
-  const products = data?.data ?? [];
-  const meta = data?.meta;
+  // De-duped flatten. Offset pagination can repeat an item if the catalogue
+  // shifts mid-scroll; rendering it twice would also trip a duplicate-key
+  // warning. (The backend's _id sort tie-breaker removes the deterministic
+  // case; this covers the live-inventory one.)
+  const products = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    for (const page of data?.pages ?? []) {
+      for (const product of page?.data ?? []) {
+        if (seen.has(product._id)) continue;
+        seen.add(product._id);
+        out.push(product);
+      }
+    }
+    return out;
+  }, [data]);
+
+  const meta = data?.pages?.at(-1)?.meta; // freshest total
   const total = meta?.total ?? 0;
-  const rangeStart = total === 0 ? 0 : (filters.page - 1) * PAGE_SIZE + 1;
-  const rangeEnd = Math.min(filters.page * PAGE_SIZE, total);
-  const showing = total > 0 ? `Showing ${rangeStart}–${rangeEnd} of ${total}` : null;
+  const showing =
+    total > 0
+      ? products.length >= total
+        ? `All ${total} pieces`
+        : `Showing ${products.length} of ${total}`
+      : null;
+
+  // Auto-load budget, reset whenever the result set changes identity. Tracked
+  // in BOTH a ref and state on purpose: the ref is the guard (it updates
+  // synchronously, so two intersections arriving before React re-renders can't
+  // both slip past a stale count), while the state drives `enabled` so the
+  // observer actually disconnects once the budget is spent.
+  const autoLoadsRef = useRef(0);
+  const [autoLoads, setAutoLoads] = useState(0);
+  const paramsKey = JSON.stringify(queryParams);
+  const resultsRef = useRef(null);
+  const firstParamsRef = useRef(paramsKey);
+
+  useEffect(() => {
+    autoLoadsRef.current = 0;
+    setAutoLoads(0);
+  }, [paramsKey]);
+
+  // A filter change collapses a long list to one page, and the browser clamps
+  // the scroll to the bottom of the now-short page. Pull the results back into
+  // view — but only if the user had actually scrolled past them, so tapping a
+  // chip while already at the top doesn't yank the page.
+  useEffect(() => {
+    if (firstParamsRef.current === paramsKey) return; // skip mount
+    firstParamsRef.current = paramsKey;
+    const top = resultsRef.current?.offsetTop ?? 0;
+    if (window.scrollY > top) window.scrollTo({ top, behavior: "smooth" });
+  }, [paramsKey]);
+
+  const loadMore = (auto) => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    if (auto) {
+      if (autoLoadsRef.current >= AUTO_LOAD_LIMIT) return;
+      autoLoadsRef.current += 1;
+    } else {
+      autoLoadsRef.current = 0; // a manual tap re-arms auto-loading
+    }
+    setAutoLoads(autoLoadsRef.current);
+    fetchNextPage();
+  };
+
+  // `enabled` disconnects the observer entirely while a fetch is in flight,
+  // rather than firing and ignoring — that's what stops a fast scroll from
+  // queueing duplicate loads. The isPlaceholderData term matters too: during a
+  // filter change, hasNextPage still describes the PREVIOUS result set.
+  const sentinelRef = useIntersectionObserver({
+    onIntersect: () => loadMore(true),
+    enabled: hasNextPage && !isFetchingNextPage && !isPlaceholderData && autoLoads < AUTO_LOAD_LIMIT,
+    rootMargin: "400px", // start fetching before the user hits the very end
+  });
 
   // Input just drives local state; the debounce effect above feeds the query + URL.
   const onSearch = setSearchInput;
@@ -171,17 +243,36 @@ export function ShopPage() {
         <aside className="sticky top-[98px] hidden rounded-[24px] border border-line bg-white p-6 md:block">
           <FilterSidebar {...sidebarProps} />
         </aside>
-        <div>
+        <div ref={resultsRef}>
           <div className={isPlaceholderData ? "opacity-60 transition-opacity" : ""}>
-            <ProductGrid products={products} isLoading={isLoading && !isPlaceholderData} />
+            <ProductGrid
+              products={products}
+              isLoading={isLoading && !isPlaceholderData}
+              appendingCount={isFetchingNextPage ? Math.min(PAGE_SIZE, Math.max(0, total - products.length)) : 0}
+            />
           </div>
-          {meta && meta.totalPages > 1 && (
-            <div className="mt-6 md:mt-10">
-              <Pagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+
+          {/* Sentinel sits above the button so it enters the viewport first. */}
+          {hasNextPage && <div ref={sentinelRef} aria-hidden className="h-px" />}
+
+          {hasNextPage && (
+            <div className="mt-8 flex justify-center md:mt-10">
+              <button
+                type="button"
+                onClick={() => loadMore(false)}
+                disabled={isFetchingNextPage}
+                className="inline-flex h-11 items-center rounded-full bg-ink px-6 font-display text-[13.5px] font-bold text-white transition-colors hover:bg-[#26301A] disabled:opacity-60"
+              >
+                {isFetchingNextPage ? "Loading…" : "Load more"}
+              </button>
             </div>
           )}
+
+          {/* Auto-appended results are silent to screen readers without this. */}
           {showing && (
-            <p className="mt-2.5 text-center text-[11.5px] text-faint md:mt-3 md:text-[12.5px]">{showing}</p>
+            <p aria-live="polite" className="mt-2.5 text-center text-[11.5px] text-faint md:mt-3 md:text-[12.5px]">
+              {showing}
+            </p>
           )}
         </div>
       </Container>
