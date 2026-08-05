@@ -23,7 +23,7 @@ const HERO_CONTENT_KEY = {
 };
 
 export function HomePage() {
-  const { data: settings } = useSettings();
+  const { data: settings, isLoading: settingsLoading } = useSettings();
   const { data: brands } = useBrands();
   const { data: categories } = useCategories();
 
@@ -110,6 +110,7 @@ export function HomePage() {
           subtitle={settings?.shopByShelfSubtitle}
           brands={brands}
           categories={categories}
+          isLoading={settingsLoading}
         />
       )}
 
@@ -129,6 +130,7 @@ export function HomePage() {
           products={featured.data?.data}
           spotlightConfig={settings?.featuredSpotlight}
           spotlightProduct={spotlightProduct.data}
+          isLoading={settingsLoading}
         />
       )}
 
@@ -146,7 +148,7 @@ export function HomePage() {
       )}
 
       {isEnabled("whyChooseUs") && <TrustStrip />}
-      {isEnabled("testimonials") && <TestimonialsSection testimonials={settings?.testimonials} />}
+      {isEnabled("testimonials") && <TestimonialsSection testimonials={settings?.testimonials} isLoading={settingsLoading} />}
     </div>
   );
 }

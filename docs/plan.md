@@ -417,6 +417,39 @@ The admin was the last dark surface in the app. It's now light, sharing the stor
     shifts. Known follow-up: scroll position isn't restored when returning
     from a PDP (pre-existing; fixing it touches the shared `ScrollToTop`).
 
+94. **Homepage first paint: the hero no longer flashes a wrong variant, and the
+    page no longer blanks.** One root cause behind both symptoms: the prerender
+    crawl runs `vite preview` on `127.0.0.1:4183`, which is **not in the API's
+    CORS allowlist** (verified: 200 response, no `Access-Control-Allow-Origin`
+    → the browser discards it). So every in-page API call during the build
+    failed silently, and `dist/index.html` — which Vercel really serves for `/`,
+    filesystem beating the `app.html` rewrite — baked the **lime default hero
+    with a dashed placeholder** while the live setting was `photo-fullbleed`
+    with a real image. The same failure timed out 4 of 8 routes (all four policy
+    pages shipped as empty shells). Fixed by proxying `**/api/v1/**` through
+    Playwright's `page.route()` to **Node's fetch**, which isn't subject to
+    CORS: build-only, no backend change, no production CORS surface. Now 8/8.
+    On top of that the home snapshot inlines a `__SETTINGS__` payload
+    (`initialData` + `initialDataUpdatedAt: 0`, so it renders instantly *and*
+    revalidates immediately rather than being frozen by the 10-minute
+    staleTime) and a `<link rel="preload" as="image">` for the hero, whose
+    `<img>` previously couldn't even be requested until a round trip finished.
+    `HeroSection` no longer defaults `variant` to lime — unknown is its own
+    state, because the variants are different components at different heights
+    (a swap was also an 80px layout shift). The three sections that returned
+    `null` while loading now reserve their space. **The measured finish:**
+    `React.lazy` suspends for a render pass even with the chunk preloaded, so
+    `createRoot` wiped the prerendered hero and showed the full-page spinner —
+    hero at 110ms, spinner 217→520ms, hero again. HomePage is now the one eager
+    route: hero at 82ms and never disappears (slow-3G: 1840ms → 80ms without a
+    hero), and the main bundle *shrank* 198→116KB as Rollup restructured.
+    Also fixed in passing: the script read `process.env.VITE_SITE_URL`, which
+    Node never populates from `.env`, so it fell back to the production origin
+    while the bundle had localhost baked in — the source of the
+    `localhost:5173` canonical in `dist`. Fonts were **measured, not assumed**:
+    all 8 carry `font-display: swap`, so they never blocked text paint and were
+    left alone.
+
 ---
 
 ## Admin light redesign: complete

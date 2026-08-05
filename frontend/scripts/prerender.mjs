@@ -20,7 +20,7 @@
 // route is preserved as dist/app.html — vercel.json's catch-all points there so
 // product pages keep a neutral head, never the home page's.
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, copyFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,10 +29,29 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.resolve(__dirname, "../dist");
 const PORT = 4183;
 
+/** VITE_* values as the BUNDLE sees them.
+ *
+ * Vite loads .env; plain Node does not. Reading only process.env meant
+ * VITE_SITE_URL was undefined during local builds, so PROD_ORIGIN silently fell
+ * back to the production domain while the bundle had localhost baked in — which
+ * is how a `localhost:5173` canonical ended up in dist/index.html. Real env vars
+ * (Vercel dashboard) still win over the file.
+ */
+function viteEnv(key, fallback = "") {
+  if (process.env[key]) return process.env[key];
+  try {
+    const file = readFileSync(path.resolve(__dirname, "../.env"), "utf8");
+    const line = file.split("\n").find((l) => l.trim().startsWith(`${key}=`));
+    if (line) return line.slice(line.indexOf("=") + 1).trim();
+  } catch {
+    /* no .env (CI) — fall through */
+  }
+  return fallback;
+}
+
 // The absolute origin baked into canonical/og:url/JSON-LD. Must match production.
-// If VITE_SITE_URL was set at build time the app already emits it; this is also
-// used to scrub the local preview origin out of the snapshot as a safety net.
-const PROD_ORIGIN = (process.env.VITE_SITE_URL || "https://diecastbd.com").replace(/\/$/, "");
+const PROD_ORIGIN = viteEnv("VITE_SITE_URL", "https://diecastbd.com").replace(/\/$/, "");
+const API_BASE = viteEnv("VITE_API_BASE_URL").replace(/\/$/, "");
 
 // The stable, indexable marketing routes. Product/shop/account/etc. are
 // intentionally excluded — they're dynamic or private.
@@ -100,6 +119,42 @@ async function main() {
     browser = await chromium.launch();
     const page = await browser.newPage();
 
+    // THE fix that makes prerendering actually work. The preview server runs on
+    // 127.0.0.1:4183, which is not in the API's CORS allowlist — so every
+    // in-page API call was silently discarded by the browser (200, but no
+    // Access-Control-Allow-Origin). That's why the home snapshot baked the
+    // DEFAULT hero with a placeholder box instead of the merchant's real one,
+    // and why the four CMS policy routes timed out and shipped as empty shells.
+    //
+    // Node's fetch isn't subject to CORS, so we answer those requests here.
+    // Build-only: no backend change and no production CORS surface.
+    if (API_BASE) {
+      await page.route("**/api/v1/**", async (route) => {
+        try {
+          const res = await fetch(route.request().url(), { headers: { accept: "application/json" } });
+          await route.fulfill({
+            status: res.status,
+            contentType: res.headers.get("content-type") ?? "application/json",
+            body: await res.text(),
+          });
+        } catch {
+          await route.abort(); // API down — the route just stays CSR, as before
+        }
+      });
+    }
+
+    // Fetched server-side for the same reason, and inlined into the home
+    // snapshot so the client's FIRST render already knows the hero variant.
+    let bakedSettings = null;
+    if (API_BASE) {
+      try {
+        const res = await fetch(`${API_BASE}/settings`, { headers: { accept: "application/json" } });
+        if (res.ok) bakedSettings = (await res.json())?.data ?? null;
+      } catch {
+        log("settings unavailable — home snapshot stays as-is");
+      }
+    }
+
     let done = 0;
     for (const route of ROUTES) {
       const url = `${base}${route}`;
@@ -166,6 +221,24 @@ async function main() {
         // fallback (belt-and-suspenders — with VITE_SITE_URL set there is none).
         let html = "<!doctype html>\n" + (await page.evaluate(() => document.documentElement.outerHTML));
         html = html.split(base).join(PROD_ORIGIN);
+
+        // Home only: inline the settings the app needs on first paint, and tell
+        // the browser to start the hero image download during HTML parse. The
+        // preload matters most — the hero <img> is the LCP element and, being
+        // rendered only after the settings round trip, its request otherwise
+        // can't even begin until JS has booted and fetched.
+        if (route === "/" && bakedSettings) {
+          const heroUrl = bakedSettings.homepageSections?.hero?.image?.url;
+          const tags = [
+            heroUrl
+              ? `<link rel="preload" as="image" fetchpriority="high" href="${heroUrl.replace(/"/g, "&quot;")}">`
+              : "",
+            // </script> inside JSON would close this tag early; escaping the
+            // slash keeps the payload inert to the HTML parser.
+            `<script type="application/json" id="__SETTINGS__">${JSON.stringify(bakedSettings).replace(/</g, "\\u003c")}</script>`,
+          ].filter(Boolean).join("\n    ");
+          html = html.replace("</head>", `    ${tags}\n  </head>`);
+        }
 
         const outPath =
           route === "/" ? path.join(DIST, "index.html") : path.join(DIST, route.replace(/^\//, ""), "index.html");

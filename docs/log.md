@@ -1101,3 +1101,19 @@ The bug worth recording: the auto-load budget was first written as state, and a 
 Verified in Chromium and WebKit at desktop and iPhone widths: 24 products initially, auto-load on real scroll to the full 32, each page requested exactly once, the button disappearing when the list is complete, the footer reachable, and no console errors. 18 new unit tests (9 hook, 9 page) covering the cap, the re-arm, de-duping, the aria-live count, and the in-flight guard — the cap can't be exercised against real data since the catalogue is only two pages.
 
 Known follow-up, unchanged from before: returning from a product page restores the loaded products from cache but not the scroll position. Fixing it touches the shared `ScrollToTop` used by every storefront route, so it deserves its own change.
+
+---
+
+## Homepage first impression (decision #94)
+
+Reported as two bugs — the hero loads a default variation then swaps, and the page looks empty for the first few seconds. Both came from one root cause plus one design gap.
+
+The root cause: the prerender crawl serves the built app on `127.0.0.1:4183` and that origin isn't in the API's CORS allowlist. Verified directly — the API returns 200 but omits `Access-Control-Allow-Origin`, so the browser discards every response. The build therefore baked a homepage with the **lime default hero and a dashed "Hero image" placeholder** while the live setting is `photo-fullbleed` with a real image, and it silently shipped all four policy pages as empty shells. That baked file is what Vercel actually serves for `/` (real files beat the `app.html` rewrite), so the wrong hero was the first thing every visitor saw. Fixed by proxying the crawl's API calls through Node's fetch via `page.route()` — Node isn't subject to CORS, so no backend change and nothing new exposed in production. 4/8 routes became 8/8, and the policy pages went from empty shells to ~18KB of real content.
+
+The design gap: `HeroSection` defaulted an unknown `variant` to lime rather than treating unknown as its own state. Since the variants are different components at different heights, that made the swap a layout shift too. It now reserves space instead of guessing, and the three sections that returned `null` while loading (shelf, spotlight, testimonials) do the same — distinguishing "still loading" from "genuinely empty", which is the same distinction.
+
+What the measurements changed: the fix I expected to be last turned out to matter most. After baking settings in, a timeline sample still showed the hero painting at 110ms, being replaced by the full-page spinner from 217–520ms, then returning — because `React.lazy` suspends for a render pass even when the chunk is already preloaded, and `createRoot` wipes the prerendered DOM. Making HomePage the one eager route removed it: hero at 82ms and never disappears; on throttled 3G the time with no hero fell from ~1840ms to ~80ms. The main bundle shrank from 198KB to 116KB as Rollup restructured around it.
+
+Two things were checked rather than assumed. Fonts: all eight carry `font-display: swap`, so they never blocked text paint — left alone rather than adding preloads for a problem that didn't exist. And the `localhost:5173` canonical in `dist` turned out to be the same class of bug as the CORS one: the script read `process.env.VITE_SITE_URL`, which Node never populates from `.env`, so it fell back to the production origin while the bundle carried localhost. Reading `.env` the way Vite does fixed it — and immediately made the existing "refuse to bake local canonicals" guard fire correctly on local builds.
+
+Trade recorded with the merchant: settings are baked at build time, so for well under a second after changing the hero in admin a visitor may see the previous one before the live fetch corrects it, and the baked copy refreshes on the next deploy.

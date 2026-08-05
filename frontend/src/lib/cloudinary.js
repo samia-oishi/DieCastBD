@@ -36,6 +36,16 @@ export function cloudinaryHero(url) {
   return withTransform(url, HERO_TRANSFORM);
 }
 
+/** Width-stepped sources for the hero. The single w_1600 asset was served to
+ * every device, including phones showing it in a 170px-tall box — by far the
+ * heaviest byte cost on the homepage, on the connection least able to afford
+ * it. Pair with a `sizes` hint so the browser picks before layout. */
+export function cloudinaryHeroSrcSet(url) {
+  return [640, 960, 1280, 1600]
+    .map((w) => `${withTransform(url, `c_limit,w_${w},f_auto,q_auto`)} ${w}w`)
+    .join(", ");
+}
+
 // Small fixed-size thumbnails (cart line items, checkout/receipt line items —
 // all well under 100px tall) don't need the full 800px card image.
 const THUMB_TRANSFORM = "c_limit,w_200,f_auto,q_auto";

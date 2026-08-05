@@ -53,7 +53,9 @@ function Tile({ href, label, image, className }) {
 const DEFAULT_HEADING = "Shop by shelf";
 const DEFAULT_SUBTITLE = "Two brands we trust — and the gear that keeps them mint.";
 
-export function ShopByShelf({ tiles: configuredTiles, heading, subtitle, brands, categories }) {
+const SKEL_CLS = "animate-pulse rounded-[18px] bg-line-soft md:rounded-[20px]";
+
+export function ShopByShelf({ tiles: configuredTiles, heading, subtitle, brands, categories, isLoading }) {
   const { ref, dragProps } = useDragScroll();
 
   // Legacy fallback — only used while Settings → Shop by Shelf is empty.
@@ -70,6 +72,18 @@ export function ShopByShelf({ tiles: configuredTiles, heading, subtitle, brands,
     ? configuredTiles.map((t) => ({ href: t.link, label: t.label, image: t.image }))
     : legacyTiles;
 
+  // Loading and "nothing configured" are different answers: returning null
+  // while settings are in flight collapsed the homepage into gaps, which read
+  // as a broken/empty page. Reserve the space, then show or hide once known.
+  if (isLoading) {
+    return (
+      <section className="pt-6 md:pt-[76px]">
+        <Container>
+          <div className={`h-[210px] ${SKEL_CLS} md:h-[380px]`} />
+        </Container>
+      </section>
+    );
+  }
   if (!tiles.length) return null;
 
   return (

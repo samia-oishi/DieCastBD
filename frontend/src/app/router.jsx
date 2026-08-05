@@ -9,6 +9,13 @@ import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { RequireRole } from "@/components/shared/RequireRole";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { ROLES } from "@/constants/routes";
+// HomePage is EAGER, unlike every other route. It's the landing page, and
+// React.lazy suspends for a render pass even when the chunk is already
+// preloaded — which meant the prerendered hero painted, then createRoot wiped
+// it and showed the full-page spinner for ~300ms before the hero came back.
+// Measured: hero at 110ms → spinner 217-520ms → hero. Bundling it removes the
+// suspend entirely, so the first React render already has the hero.
+import { HomePage } from "@/features/home/HomePage";
 
 // Every page is code-split so a storefront visitor never downloads the admin
 // dashboard (or vice versa). The layout shell + route guards stay eager since
@@ -17,7 +24,6 @@ import { ROLES } from "@/constants/routes";
 // The import() paths stay string literals so Rollup can still statically split them.
 const page = (loader, name) => lazy(() => loader().then((m) => ({ default: m[name] })));
 
-const HomePage = page(() => import("@/features/home/HomePage"), "HomePage");
 const ShopPage = page(() => import("@/features/products/ShopPage"), "ShopPage");
 const ProductDetailPage = page(() => import("@/features/products/ProductDetailPage"), "ProductDetailPage");
 const WishlistPage = page(() => import("@/features/wishlist/WishlistPage"), "WishlistPage");

@@ -15,8 +15,21 @@ function Stars({ size }) {
 
 /** "What collectors say" — real admin-managed testimonials. Mobile: horizontal
  * drag carousel of 280px cards. Desktop: grid. Section hides when empty. */
-export function TestimonialsSection({ testimonials }) {
+const SKEL_CLS = "animate-pulse rounded-[18px] bg-line-soft md:rounded-[20px]";
+
+export function TestimonialsSection({ testimonials, isLoading }) {
   const { ref, dragProps } = useDragScroll();
+  // Reserve space while settings load; a store with no testimonials collected
+  // yet still renders nothing, which is the intended empty state.
+  if (isLoading) {
+    return (
+      <section className="pt-[26px] md:pt-[76px]">
+        <Container>
+          <div className={`h-[180px] ${SKEL_CLS} md:h-[240px]`} />
+        </Container>
+      </section>
+    );
+  }
   if (!testimonials?.length) return null;
 
   return (

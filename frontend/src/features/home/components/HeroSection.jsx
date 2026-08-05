@@ -3,7 +3,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
 import { formatTaka } from "@/lib/currency";
-import { cloudinaryHero } from "@/lib/cloudinary";
+import { cloudinaryHero, cloudinaryHeroSrcSet } from "@/lib/cloudinary";
 import { cn } from "@/lib/utils";
 
 // Shipped design copy for each hero style. This is the real, live content — an
@@ -76,6 +76,10 @@ function HeroImage({ image, className, radius = "rounded-[16px] md:rounded-[24px
     return (
       <img
         src={cloudinaryHero(image.url)}
+        srcSet={cloudinaryHeroSrcSet(image.url)}
+        // PanelHero caps the image at half a 1360px shell on desktop; PhotoHero
+        // runs full-bleed. 100vw below md, ~half the shell above it.
+        sizes="(min-width: 768px) 50vw, 100vw"
         alt=""
         loading="eager"
         fetchPriority="high"
@@ -238,7 +242,26 @@ function PhotoHero({ image, copy }) {
   );
 }
 
-export function HeroSection({ variant = "lime-showroom", image, highlightCard, content }) {
+/** Renders nothing but reserved space until the variant is actually known.
+ *
+ * The variants are DIFFERENT components at different heights (PanelHero
+ * 170/440px, PhotoHero 440/520px), so defaulting an unknown variant to lime
+ * meant a merchant on photo-fullbleed watched the wrong hero paint and then
+ * get replaced — a component swap plus an 80px layout shift. Unknown is its
+ * own state now. In practice this is rarely seen: the homepage ships its
+ * settings inline (see settingsBootstrap.js), so `variant` is known on the
+ * very first render. */
+function HeroSkeleton() {
+  // Same wrapper the real heroes hand-roll, so swapping in costs no shift.
+  return (
+    <div className="mx-auto mt-3 max-w-[1360px] px-4 md:mt-0 md:px-10 md:pt-6">
+      <div className="h-[440px] animate-pulse rounded-[24px] bg-line-soft md:h-[520px] md:rounded-[28px]" />
+    </div>
+  );
+}
+
+export function HeroSection({ variant, image, highlightCard, content }) {
+  if (!variant) return <HeroSkeleton />;
   const copy = resolveCopy(variant, content);
   if (variant === "dark-spotlight") return <PanelHero image={image} highlightCard={highlightCard} tone="dark" copy={copy} />;
   if (variant === "photo-fullbleed") return <PhotoHero image={image} copy={copy} />;

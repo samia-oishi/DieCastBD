@@ -84,9 +84,22 @@ function RowCard({ product, className }) {
  * (`spotlightProduct`) with optional display overrides (`spotlightConfig`);
  * absent → it's the first featured product, as before. The row cards are always
  * the remaining featured products (the spotlight one is de-duped out). */
-export function FeaturedSpotlight({ products, spotlightConfig, spotlightProduct, className }) {
+const SKEL_CLS = "animate-pulse rounded-[18px] bg-line-soft md:rounded-[20px]";
+
+export function FeaturedSpotlight({ products, spotlightConfig, spotlightProduct, className, isLoading }) {
   const list = products ?? [];
   const spotlight = spotlightProduct ?? list[0];
+  // See ShopByShelf: reserve the space while loading rather than collapsing.
+  if (isLoading) {
+    return (
+      <section className={cn("pt-6 md:pt-[76px]", className)}>
+        <Container>
+          <SectionHeader title="Featured products" subtitle="This week's spotlight — one centerpiece, three strong seconds." viewAllHref={ROUTES.SHOP} />
+          <div className={`mt-5 h-[300px] ${SKEL_CLS} md:h-[430px]`} />
+        </Container>
+      </section>
+    );
+  }
   if (!spotlight) return null;
   const rows = list.filter((p) => p._id !== spotlight._id).slice(0, 3);
   return (
