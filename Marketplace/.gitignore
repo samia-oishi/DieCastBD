@@ -1,0 +1,5 @@
+# Cloudinary re-downloads — 15 MB of binaries, fully re-derivable with
+# `python3 download_images.py`. The image-map.csv that names them IS tracked.
+images/
+
+*.xlsx.bak
