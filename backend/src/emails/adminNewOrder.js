@@ -1,5 +1,6 @@
 import { getResendClient } from "./resendClient.js";
 import { env } from "../config/env.js";
+import { formatAddressArea } from "../utils/address.js";
 
 function formatPrice(amount) {
   return `৳${Math.round(amount).toLocaleString("en-US")}`;
@@ -95,7 +96,7 @@ function renderAdminNewOrderHtml(order) {
             <p style="margin: 0; font-size: 13px; color: #555; line-height: 1.6;">
               ${escapeHtml(a.recipientName)}<br />
               ${escapeHtml(a.addressLine1)}${a.addressLine2 ? `, ${escapeHtml(a.addressLine2)}` : ""}<br />
-              ${escapeHtml(a.city)}${a.district ? `, ${escapeHtml(a.district)}` : ""}${a.postalCode ? ` ${escapeHtml(a.postalCode)}` : ""}<br />
+              ${escapeHtml(formatAddressArea(a))}<br />
               ${escapeHtml(order.phone || a.phone)}
             </p>
             ${order.deliveryNote ? `<p style="margin: 8px 0 0; font-size: 13px; color: #9a3412;">Note: ${escapeHtml(order.deliveryNote)}</p>` : ""}

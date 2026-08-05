@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
+import { formatAddressLine } from "@/lib/address";
 import { ROUTES } from "@/constants/routes";
 import { Seo } from "@/components/shared/Seo";
 import { StatusChip } from "@/components/shared/StatusChip";
@@ -159,9 +160,7 @@ function AddressesCard({ addresses, onAdd, onEdit }) {
             <button type="button" onClick={() => onEdit(primary)} className="text-[12px] font-bold text-brand-deep">Edit</button>
           </div>
           <div className="mt-1.5 text-[12.5px] leading-[1.55] text-muted-foreground">
-            {primary.addressLine1}, {primary.city}
-            {primary.district && `, ${primary.district}`}
-            {primary.postalCode && ` ${primary.postalCode}`}
+            {formatAddressLine(primary)}
             <br />
             {primary.phone}
           </div>

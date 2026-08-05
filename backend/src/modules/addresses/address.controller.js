@@ -25,7 +25,18 @@ export const createAddress = asyncHandler(async (req, res) => {
 });
 
 export const updateAddress = asyncHandler(async (req, res) => {
-  const address = await Address.findOneAndUpdate({ _id: req.params.id, user: req.user.id }, req.body, {
+  // This is a $set merge, so an address saved before the district/thana
+  // dropdowns would keep its old free-text city forever. Once a thana arrives
+  // the address is on the new shape — drop the legacy pair rather than leave a
+  // record that reads "Dhaka" next to a district of Khulna. Both keys are
+  // removed from $set first: setting and unsetting the same path in one update
+  // is a MongoDB conflict error.
+  const { city, postalCode, ...rest } = req.body;
+  const update = req.body.thana?.trim()
+    ? { $set: rest, $unset: { city: "", postalCode: "" } }
+    : { $set: req.body };
+
+  const address = await Address.findOneAndUpdate({ _id: req.params.id, user: req.user.id }, update, {
     returnDocument: "after",
     runValidators: true,
   });

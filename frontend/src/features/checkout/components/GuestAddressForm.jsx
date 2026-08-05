@@ -4,15 +4,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { bdPhoneSchema } from "@/lib/validators";
+import { DistrictThanaFields } from "@/features/addresses/components/DistrictThanaFields";
 import { FieldBox, inputCls } from "./parts";
 
 const guestSchema = z.object({
   recipientName: z.string().min(1, "Name is required"),
   phone: bdPhoneSchema,
   addressLine1: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  district: z.string().optional().or(z.literal("")),
-  postalCode: z.string().optional().or(z.literal("")),
+  district: z.string().min(1, "Select your district"),
+  thana: z.string().min(1, "Select your thana"),
   email: z.string().email("Enter a valid email").optional().or(z.literal("")),
 });
 
@@ -23,12 +23,18 @@ export function GuestAddressForm({ onChange }) {
   const {
     register,
     watch,
+    setValue,
     formState: { errors, isValid },
   } = useForm({
     resolver: zodResolver(guestSchema),
     mode: "onChange",
-    defaultValues: { recipientName: "", phone: "", addressLine1: "", city: "", district: "", postalCode: "", email: "" },
+    defaultValues: { recipientName: "", phone: "", addressLine1: "", district: "", thana: "", email: "" },
   });
+
+  // The dropdowns are controlled, so they write through setValue rather than
+  // register. shouldValidate keeps isValid in step on the same tick — this form
+  // reports itself up on every change and has no submit button of its own.
+  const setField = (field) => (v) => setValue(field, v, { shouldValidate: true, shouldDirty: true });
 
   const values = watch();
   const serialized = JSON.stringify(values);
@@ -51,17 +57,15 @@ export function GuestAddressForm({ onChange }) {
       <FieldBox label="Address" error={errors.addressLine1?.message}>
         <input {...register("addressLine1")} placeholder="House, road, area" className={inputCls} />
       </FieldBox>
-      <div className="grid gap-4 md:grid-cols-3">
-        <FieldBox label="City" error={errors.city?.message}>
-          <input {...register("city")} placeholder="Dhaka" className={inputCls} />
-        </FieldBox>
-        <FieldBox label="District">
-          <input {...register("district")} placeholder="Dhaka" className={inputCls} />
-        </FieldBox>
-        <FieldBox label="Postal code">
-          <input {...register("postalCode")} placeholder="1207" className={inputCls} />
-        </FieldBox>
-      </div>
+      <DistrictThanaFields
+        district={values.district}
+        thana={values.thana}
+        onDistrictChange={setField("district")}
+        onThanaChange={setField("thana")}
+        districtError={errors.district?.message}
+        thanaError={errors.thana?.message}
+        FieldWrapper={FieldBox}
+      />
       <FieldBox label="Email" hint="(optional — for your order confirmation)" error={errors.email?.message}>
         <input {...register("email")} type="email" placeholder="you@email.com" className={inputCls} />
       </FieldBox>

@@ -44,8 +44,11 @@ export const createOrder = asyncHandler(async (req, res) => {
         phone: address.phone,
         addressLine1: address.addressLine1,
         addressLine2: address.addressLine2,
-        city: address.city,
         district: address.district,
+        thana: address.thana,
+        // Carried over so an address saved before the district/thana switch
+        // still snapshots a usable area onto the order.
+        city: address.city,
         postalCode: address.postalCode,
       };
     } else if (rawShippingAddress) {

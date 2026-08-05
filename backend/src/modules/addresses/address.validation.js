@@ -7,11 +7,17 @@ export const createAddressSchema = {
     phone: z.string().min(1, "Phone is required"),
     addressLine1: z.string().min(1, "Address is required"),
     addressLine2: z.string().optional(),
-    city: z.string().min(1, "City is required"),
     district: z.string().optional(),
+    thana: z.string().optional(),
+    // See the note on order.validation.js — old clients post {city, postalCode}.
+    city: z.string().optional(),
     postalCode: z.string().optional(),
     isDefault: z.coerce.boolean().optional(),
-  }),
+  })
+    .refine((a) => Boolean(a.thana?.trim() || a.city?.trim()), {
+      message: "Select your thana",
+      path: ["thana"],
+    }),
 };
 
 export const updateAddressSchema = {
@@ -22,8 +28,9 @@ export const updateAddressSchema = {
     phone: z.string().min(1).optional(),
     addressLine1: z.string().min(1).optional(),
     addressLine2: z.string().optional(),
-    city: z.string().min(1).optional(),
     district: z.string().optional(),
+    thana: z.string().optional(),
+    city: z.string().optional(),
     postalCode: z.string().optional(),
     isDefault: z.coerce.boolean().optional(),
   }),

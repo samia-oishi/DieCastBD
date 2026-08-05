@@ -1,14 +1,25 @@
 import { z } from "zod";
 
-const shippingAddressBodySchema = z.object({
-  recipientName: z.string().min(1, "Recipient name is required"),
-  phone: z.string().min(1, "Phone is required"),
-  addressLine1: z.string().min(1, "Address is required"),
-  addressLine2: z.string().optional(),
-  city: z.string().min(1, "City is required"),
-  district: z.string().optional(),
-  postalCode: z.string().optional(),
-});
+// Deliberately looser than the checkout form, which requires both dropdowns.
+// A browser tab opened before the district/thana switch still posts the old
+// {city, postalCode} shape, and rejecting those would lose real orders in the
+// window after a deploy. The refine is the floor that actually matters: an
+// address with no area at all can't be delivered.
+const shippingAddressBodySchema = z
+  .object({
+    recipientName: z.string().min(1, "Recipient name is required"),
+    phone: z.string().min(1, "Phone is required"),
+    addressLine1: z.string().min(1, "Address is required"),
+    addressLine2: z.string().optional(),
+    district: z.string().optional(),
+    thana: z.string().optional(),
+    city: z.string().optional(),
+    postalCode: z.string().optional(),
+  })
+  .refine((a) => Boolean(a.thana?.trim() || a.city?.trim()), {
+    message: "Select your thana",
+    path: ["thana"],
+  });
 
 // Every combination of fields here is valid Zod-wise; which combination is
 // actually required depends on auth state (logged in + addressId vs. logged in

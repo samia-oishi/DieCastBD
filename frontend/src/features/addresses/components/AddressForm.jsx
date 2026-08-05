@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { addressSchema } from "../schemas/addressSchema";
+import { DistrictThanaFields } from "./DistrictThanaFields";
 
 // Matches the guest checkout form (GuestAddressForm / checkout parts.jsx) so the
 // logged-in "add address" form is visually identical to the guest one.
@@ -22,8 +23,15 @@ export function AddressForm({ onSubmit, isSubmitting, onCancel, defaultValues, s
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({ resolver: zodResolver(addressSchema), defaultValues });
+
+  // Controlled dropdowns write through setValue. Editing an address saved
+  // before the district/thana switch leaves both blank, so the customer picks
+  // them once — the old free-text city is never guessed into a thana.
+  const setField = (field) => (v) => setValue(field, v, { shouldValidate: true, shouldDirty: true });
 
   // Not a <form> — this renders inside the checkout page's own <form>, and a nested
   // <form> is invalid HTML: the submit event bubbles to the outer form's onSubmit
@@ -52,17 +60,15 @@ export function AddressForm({ onSubmit, isSubmitting, onCancel, defaultValues, s
         <input {...register("addressLine1")} placeholder="House, road, area" className={inputCls} />
       </Field>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Field label="City" error={errors.city?.message}>
-          <input {...register("city")} placeholder="Dhaka" className={inputCls} />
-        </Field>
-        <Field label="District">
-          <input {...register("district")} placeholder="Dhaka" className={inputCls} />
-        </Field>
-        <Field label="Postal code">
-          <input {...register("postalCode")} placeholder="1207" className={inputCls} />
-        </Field>
-      </div>
+      <DistrictThanaFields
+        district={watch("district")}
+        thana={watch("thana")}
+        onDistrictChange={setField("district")}
+        onThanaChange={setField("thana")}
+        districtError={errors.district?.message}
+        thanaError={errors.thana?.message}
+        FieldWrapper={Field}
+      />
 
       <div className="flex items-center justify-end gap-1">
         {onCancel && (

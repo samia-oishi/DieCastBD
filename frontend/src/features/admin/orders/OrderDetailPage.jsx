@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router";
 import { ChevronLeft, MapPin, Printer } from "lucide-react";
 
 import { formatTaka } from "@/lib/currency";
+import { formatAddressLine } from "@/lib/address";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
@@ -203,13 +204,8 @@ export function OrderDetailPage() {
             bodyClassName="pt-3 text-[13px] text-ink-soft"
           >
             <p className="font-semibold text-ink">{addr.recipientName}</p>
-            <p>
-              {addr.addressLine1}
-              {addr.addressLine2 && `, ${addr.addressLine2}`}, {addr.city}
-              {addr.district && `, ${addr.district}`}
-            </p>
+            <p>{formatAddressLine(addr)}</p>
             <p>{addr.phone}</p>
-            <p className="mt-1">Postal code: <Provided value={addr.postalCode} /></p>
             <p>Email: <Provided value={order.user?.email} /></p>
             {order.deliveryNote && (
               <div className="mt-3 rounded-[10px] border border-brand-soft-border bg-brand-soft p-3 text-[12.5px] text-ink">

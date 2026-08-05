@@ -42,10 +42,15 @@ const order = {
     recipientName: "Test Buyer",
     phone: "01711111111",
     addressLine1: "House 1, Road 2",
-    city: "Dhaka",
     district: "Dhaka",
-    postalCode: "1207",
+    thana: "Dhanmondi",
   },
+};
+
+// An order placed before checkout switched to the district/thana dropdowns.
+const legacyOrder = {
+  ...order,
+  shippingAddress: { ...order.shippingAddress, thana: undefined, city: "Dhaka", postalCode: "1207" },
 };
 
 beforeEach(() => sendMock.mockClear());
@@ -83,6 +88,17 @@ describe("sendAdminNewOrderEmail", () => {
     const { html } = sendMock.mock.calls[0][0];
     expect(html).not.toContain("<script>alert(1)</script>");
     expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("prints the thana and district the customer picked", async () => {
+    await sendAdminNewOrderEmail(order, "x@y.z");
+    expect(sendMock.mock.calls[0][0].html).toContain("Dhanmondi, Dhaka");
+  });
+
+  it("still prints a full area line for orders placed before the dropdowns existed", async () => {
+    await sendAdminNewOrderEmail(legacyOrder, "x@y.z");
+    // city stands in for thana, and the old postcode is not silently dropped
+    expect(sendMock.mock.calls[0][0].html).toContain("Dhaka, Dhaka 1207");
   });
 
   it("silently skips when there is no recipient — the order already succeeded", async () => {

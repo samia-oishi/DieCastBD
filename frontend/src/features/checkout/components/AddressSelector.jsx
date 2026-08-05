@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { cn } from "@/lib/utils";
+import { formatAddressLine } from "@/lib/address";
 import { useAddresses, useCreateAddressMutation } from "@/features/addresses/api/useAddresses";
 import { AddressForm } from "@/features/addresses/components/AddressForm";
 import { OptionCard, Radio } from "./parts";
@@ -56,9 +57,7 @@ export function AddressSelector({ selectedId, onSelect, collapsed = false }) {
                   </div>
                   <div className="mt-[3px] text-[13px] text-[#6B6E60]">{address.phone}</div>
                   <div className="mt-0.5 text-[13px] leading-[1.5] text-[#6B6E60]">
-                    {address.addressLine1}, {address.city}
-                    {address.district && `, ${address.district}`}
-                    {address.postalCode && ` ${address.postalCode}`}
+                    {formatAddressLine(address)}
                   </div>
                 </div>
               </div>

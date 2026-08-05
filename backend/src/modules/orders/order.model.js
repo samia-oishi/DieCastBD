@@ -20,8 +20,12 @@ const shippingAddressSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     addressLine1: { type: String, required: true },
     addressLine2: String,
-    city: { type: String, required: true },
     district: String,
+    thana: String,
+    // Pre-dropdown checkout collected a free-text city and postcode instead of
+    // district+thana. Kept (and no longer required) so orders placed then still
+    // load and print; nothing writes them any more.
+    city: String,
     postalCode: String,
   },
   { _id: false }

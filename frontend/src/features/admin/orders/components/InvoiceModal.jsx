@@ -1,6 +1,7 @@
 import { X, Printer } from "lucide-react";
 
 import { formatTaka } from "@/lib/currency";
+import { formatAddressLine } from "@/lib/address";
 import { StatusChip } from "@/components/shared/StatusChip";
 import { AdminButton } from "@/features/admin/shell/AdminButton";
 import logo from "@/assets/logo/diecastbdLight.png";
@@ -61,10 +62,7 @@ export function InvoiceModal({ order, contact, onClose }) {
             <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.07em] text-faint">Deliver to</div>
             <div className="font-semibold">{addr.recipientName}</div>
             <div className="text-ink-soft">
-              {addr.addressLine1}
-              {addr.addressLine2 && `, ${addr.addressLine2}`}, {addr.city}
-              {addr.district && `, ${addr.district}`}
-              {addr.postalCode && ` ${addr.postalCode}`}
+              {formatAddressLine(addr)}
             </div>
             <div className="text-ink-soft">{addr.phone}</div>
             {order.user?.email && <div className="text-ink-soft">{order.user.email}</div>}

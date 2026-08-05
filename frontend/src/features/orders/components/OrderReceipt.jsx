@@ -4,6 +4,7 @@ import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
 import { cloudinaryThumb } from "@/lib/cloudinary";
+import { formatAddressLine } from "@/lib/address";
 import { ROUTES } from "@/constants/routes";
 import { StatusChip } from "@/components/shared/StatusChip";
 import { OrderTracker } from "@/components/shared/OrderTracker";
@@ -72,9 +73,7 @@ function AddressCard({ order, zoneName }) {
           {a.recipientName} · {a.phone}
         </div>
         <div className="mt-1 text-[11.5px] leading-[1.55] text-ink-soft md:text-[13px]">
-          {a.addressLine1}, {a.city}
-          {a.district && `, ${a.district}`}
-          {a.postalCode && ` ${a.postalCode}`}
+          {formatAddressLine(a)}
           {zoneName && (
             <>
               <br />
