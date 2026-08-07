@@ -5,7 +5,7 @@ import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { clearAuthCookies } from "../../utils/cookies.js";
 import { Order } from "../orders/order.model.js";
-import { NON_REVENUE_ORDER_STATUSES } from "../../config/constants.js";
+import { REVENUE_ORDER_STATUSES } from "../../config/constants.js";
 
 // Explicit whitelist rather than passing req.body wholesale — even though `validate()`
 // strips fields the schema doesn't define, a controller that forwards req.body directly
@@ -38,12 +38,14 @@ export const deactivateMe = asyncHandler(async (req, res) => {
 const EMPTY_STATS = { orderCount: 0, totalSpent: 0, lastOrderAt: null };
 
 /** Per-user order count / lifetime spend / last order date, in one grouped query.
- * Lifetime spend deliberately EXCLUDES cancelled and refunded orders — that money
- * was never kept, so counting it would overstate what a customer is worth. */
+ * Counts the same statuses Reports counts (REVENUE_ORDER_STATUSES) — confirmed
+ * onward — so a customer's worth and the store's revenue can never tell two
+ * different stories. That means an unconfirmed order isn't spend yet, and a
+ * cancelled or refunded one stops being spend. */
 async function orderStatsFor(userIds) {
   if (userIds.length === 0) return new Map();
   const rows = await Order.aggregate([
-    { $match: { user: { $in: userIds }, status: { $nin: NON_REVENUE_ORDER_STATUSES } } },
+    { $match: { user: { $in: userIds }, status: { $in: REVENUE_ORDER_STATUSES } } },
     { $group: { _id: "$user", orderCount: { $sum: 1 }, totalSpent: { $sum: "$total" }, lastOrderAt: { $max: "$createdAt" } } },
   ]);
   return new Map(rows.map((r) => [String(r._id), { orderCount: r.orderCount, totalSpent: r.totalSpent, lastOrderAt: r.lastOrderAt }]));

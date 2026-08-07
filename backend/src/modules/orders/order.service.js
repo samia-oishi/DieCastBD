@@ -10,7 +10,7 @@ import { findValidCoupon, calculateDiscount } from "../coupons/coupon.service.js
 import { assertPaymentMethodAllowed, calculateAmountPaid } from "./paymentPlan.service.js";
 import { AuditLog } from "../auditLogs/auditLog.model.js";
 import { recomputeRollupsForOrders } from "../analytics/analytics.service.js";
-import { NON_REVENUE_ORDER_STATUSES } from "../../config/constants.js";
+import { countsAsRevenue } from "../../config/constants.js";
 import { generateOrderNumber } from "../../utils/generateOrderNumber.js";
 import { ApiError } from "../../utils/apiError.js";
 
@@ -62,6 +62,11 @@ async function reserveStockForItems(normalizedItems, session) {
       title: product.title,
       thumbnail: product.thumbnail,
       price,
+      // costPrice is select:false on Product, so both callers of this function
+      // have to ask for it explicitly (see createOrderFromCart /
+      // createOrderFromItems). ?? null keeps "not selected" and "no cost
+      // recorded" as the same honest answer instead of an implicit 0.
+      costPrice: product.costPrice ?? null,
       qty,
     });
     subtotal += price * qty;
@@ -184,7 +189,10 @@ export async function createOrderFromCart({
   banglaQrReference,
   shippingZone,
 }) {
-  const cart = await Cart.findOne({ user: userId }).populate("items.product");
+  // "+costPrice" is required, not cosmetic: costPrice is select:false on
+  // Product, so without it reserveStockForItems snapshots a null cost and every
+  // order placed through the cart reports unknown profit forever after.
+  const cart = await Cart.findOne({ user: userId }).populate({ path: "items.product", select: "+costPrice" });
   if (!cart || cart.items.length === 0) throw ApiError.badRequest("Your cart is empty");
 
   const activeItems = cart.items.filter(
@@ -249,7 +257,9 @@ export async function createOrderFromItems({
   if (!items || items.length === 0) throw ApiError.badRequest("No items to order");
 
   const productIds = items.map((i) => i.productId);
-  const products = await Product.find({ _id: { $in: productIds }, status: "active", isDeleted: false });
+  // "+costPrice" for the same reason as the cart path above — this is the Buy
+  // Now / guest-checkout route into the identical snapshot code.
+  const products = await Product.find({ _id: { $in: productIds }, status: "active", isDeleted: false }).select("+costPrice");
   const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
   const normalizedItems = items
@@ -438,13 +448,13 @@ export async function transitionOrderStatus({
   }
 
   // Reports count only orders the store actually earned from, so a transition
-  // changes the numbers exactly when it crosses that line — confirmed →
-  // refunded removes the revenue, refunded → confirmed puts it back. Every
-  // other move (packed → shipped) leaves totals identical and skips the work.
-  // This MUST use the same list the rollup queries with, or a refund would
-  // quietly fail to update the report.
-  const nonRevenue = new Set(NON_REVENUE_ORDER_STATUSES);
-  if (nonRevenue.has(previousStatus) !== nonRevenue.has(newStatus)) {
+  // changes the numbers exactly when it crosses that line — pending →
+  // confirmed books the sale, confirmed → cancelled/refunded takes it back
+  // out, and a restore puts it back. Every other move (packed → shipped)
+  // leaves totals identical and skips the work. This MUST use the same
+  // predicate the rollup queries with, or confirming an order would quietly
+  // fail to update the report.
+  if (countsAsRevenue(previousStatus) !== countsAsRevenue(newStatus)) {
     await recomputeRollupsForOrders([order]);
   }
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { DollarSign, BarChart3, UserPlus, TriangleAlert, Plus, Ticket, ArrowRight } from "lucide-react";
+import { DollarSign, BarChart3, UserPlus, TriangleAlert, Plus, Ticket, ArrowRight, ShoppingBag, TrendingUp, Clock, Boxes } from "lucide-react";
 
 import { formatTaka } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ import { StatusChip } from "@/components/shared/StatusChip";
 import { AdminPageHeader } from "@/features/admin/shell/AdminPageHeader";
 import { AdminButton } from "@/features/admin/shell/AdminButton";
 import { KpiCard } from "@/features/admin/shell/KpiCard";
+import { FilterChips } from "@/features/admin/shell/FilterChips";
 import { SectionPanel } from "@/features/admin/shell/SectionPanel";
 import { useAnalyticsSummary, useAnalyticsDaily } from "@/features/admin/analytics/api/useAnalytics";
 import { useAdminOrders } from "@/features/admin/orders/api/useAdminOrders";
@@ -16,11 +17,25 @@ import { useAdminInventory } from "@/features/admin/inventory/api/useAdminInvent
 import { RevenueChart } from "@/features/admin/analytics/components/RevenueChart";
 import { useOrderPipeline } from "./useOrderPipeline";
 
+// One control for the whole page: the KPI row and the chart both read this.
+// `days` is what the chart's daily-history query wants; `range` is what the
+// summary endpoint wants. Today has no meaningful multi-day chart, so it
+// borrows the 7-day series while the KPIs show just today.
 const RANGE_CHIPS = [
-  { value: 7, label: "7 days" },
-  { value: 30, label: "30 days" },
-  { value: 90, label: "90 days" },
+  { value: "today", label: "Today", days: 7 },
+  { value: "7", label: "7 days", days: 7 },
+  { value: "30", label: "30 days", days: 30 },
+  { value: "90", label: "90 days", days: 90 },
 ];
+
+const RANGE_NOUN = {
+  today: "today",
+  7: "in the last 7 days",
+  30: "in the last 30 days",
+  90: "in the last 90 days",
+};
+
+const PRIOR_LABEL = { today: "vs yesterday", 7: "vs prior week", 30: "vs prior month", 90: "vs prior quarter" };
 
 const PIPELINE_LABELS = {
   pending: "Pending",
@@ -40,14 +55,9 @@ function todayEyebrow() {
   return new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
-// UTC date key (YYYY-MM-DD) `offset` days before today — matches the backend's
-// rollup keys (toDateKey), so lookups against the daily history line up.
-function utcKey(offset = 0) {
-  const n = new Date();
-  return new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() - offset)).toISOString().slice(0, 10);
-}
-
-/** Period-over-period delta, computed from REAL daily-rollup revenue. When the
+/** Period-over-period delta, computed from REAL prior-window figures the
+ * summary endpoint returns (it was assembled here from daily rows before; the
+ * server does it now, so the comparison window always matches the chip). When the
  * prior period had zero revenue a percentage is undefined, so it shows a plain
  * "▲ vs …" growth marker instead of a fabricated number; nothing when both are 0. */
 function DeltaPill({ current, prior, period }) {
@@ -67,20 +77,24 @@ function DeltaPill({ current, prior, period }) {
 }
 
 export function DashboardPage() {
-  const { data: summary, isLoading } = useAnalyticsSummary();
-  const [days, setDays] = useState(30);
-  const { data: dailyRows, isLoading: chartLoading } = useAnalyticsDaily(days);
-  // Fixed 30-day window for the KPI deltas / month-to-date, independent of the
-  // chart's range chip (dedupes with the chart query when days === 30).
-  const { data: kpiRows } = useAnalyticsDaily(30);
+  const [range, setRange] = useState("today");
+  const chip = RANGE_CHIPS.find((c) => c.value === range) ?? RANGE_CHIPS[0];
+
+  const { data: summary, isLoading } = useAnalyticsSummary(range);
+  const { data: dailyRows, isLoading: chartLoading } = useAnalyticsDaily(chip.days);
   const { data: recentOrders } = useAdminOrders({ limit: 5 });
   const { data: lowStock } = useAdminInventory({ lowStockOnly: true, limit: 5 });
   const pipeline = useOrderPipeline();
 
-  if (isLoading) return <FullPageLoader />;
+  if (isLoading && !summary) return <FullPageLoader />;
 
-  const today = summary?.today;
-  const week = summary?.last7Days;
+  // Every money figure comes from the summary endpoint, which reads orders
+  // live — so a confirmation made a second ago is already reflected, without
+  // waiting for the nightly rollup.
+  const s = summary ?? {};
+  const prior = s.prior ?? {};
+  const profit = (s.revenue ?? 0) - (s.cogs ?? 0);
+  const margin = s.revenue ? Math.round((profit / s.revenue) * 1000) / 10 : null;
   const rows = dailyRows ?? [];
   const chartRevenue = rows.reduce((sum, r) => sum + r.revenue, 0);
   const chartOrders = rows.reduce((sum, r) => sum + r.ordersCount, 0);
@@ -88,20 +102,8 @@ export function DashboardPage() {
   const orders = recentOrders?.data ?? [];
   const lowItems = lowStock?.data ?? [];
   const lowTotal = lowStock?.meta?.total ?? 0;
-  const topProducts = today?.topProducts ?? [];
-  const topMax = Math.max(1, ...topProducts.map((p) => p.unitsSold));
-
-  // Real KPI deltas from the daily rollup: revenue vs yesterday, this week vs
-  // the prior 7 days, and month-to-date new customers.
-  const histByDate = new Map((kpiRows ?? []).map((r) => [r.date, r]));
-  const yesterdayRevenue = histByDate.get(utcKey(1))?.revenue ?? 0;
-  let priorWeekRevenue = 0;
-  for (let i = 7; i <= 13; i++) priorWeekRevenue += histByDate.get(utcKey(i))?.revenue ?? 0;
-  const thisMonth = utcKey(0).slice(0, 7);
-  let monthCustomers = today?.newCustomers ?? 0;
-  for (const r of kpiRows ?? []) {
-    if (r.date.slice(0, 7) === thisMonth && r.date !== utcKey(0)) monthCustomers += r.newCustomers ?? 0;
-  }
+  const topProducts = s.topProducts ?? [];
+  const topMax = Math.max(1, ...topProducts.map((p) => Math.abs(p.profit ?? 0)));
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -124,65 +126,101 @@ export function DashboardPage() {
         }
       />
 
-      {/* KPI row */}
+      {/* One range control for the whole page */}
+      <FilterChips chips={RANGE_CHIPS} value={range} onChange={setRange} />
+
+      {/* Money row. Total sales is what customers paid; revenue takes off the
+          delivery charge the courier keeps; profit takes off what the goods
+          cost us. Three different numbers that used to be one. */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          icon={ShoppingBag}
+          label="Total sales"
+          value={formatTaka(s.totalSales ?? 0)}
+          delta={<DeltaPill current={s.totalSales ?? 0} prior={prior.totalSales ?? 0} period={PRIOR_LABEL[range]} />}
+          sub={`incl. ${formatTaka(s.shippingFees ?? 0)} delivery collected`}
+        />
         <KpiCard
           icon={DollarSign}
           tone="lime"
-          label="Today's revenue"
-          value={formatTaka(today?.revenue ?? 0)}
-          delta={<DeltaPill current={today?.revenue ?? 0} prior={yesterdayRevenue} period="vs yesterday" />}
-          sub={`${today?.ordersCount ?? 0} order${today?.ordersCount === 1 ? "" : "s"} today`}
+          label="Revenue"
+          value={formatTaka(s.revenue ?? 0)}
+          delta={<DeltaPill current={s.revenue ?? 0} prior={prior.revenue ?? 0} period={PRIOR_LABEL[range]} />}
+          sub="after delivery charge"
+        />
+        <KpiCard
+          icon={TrendingUp}
+          tone={profit < 0 ? "red" : "lime"}
+          label="Profit"
+          value={formatTaka(profit)}
+          delta={<DeltaPill current={profit} prior={prior.profit ?? 0} period={PRIOR_LABEL[range]} />}
+          sub={
+            s.unitsMissingCost > 0
+              ? `${s.unitsMissingCost} unit${s.unitsMissingCost === 1 ? "" : "s"} without a cost price`
+              : margin != null
+                ? `${margin}% margin · ${formatTaka(s.cogs ?? 0)} cost`
+                : "No sales yet"
+          }
         />
         <KpiCard
           icon={BarChart3}
-          label="Last 7 days"
-          value={formatTaka(week?.revenue ?? 0)}
-          delta={<DeltaPill current={week?.revenue ?? 0} prior={priorWeekRevenue} period="vs prior week" />}
-          sub={`${week?.ordersCount ?? 0} order${week?.ordersCount === 1 ? "" : "s"}`}
+          label="Orders"
+          value={s.ordersCount ?? 0}
+          delta={<DeltaPill current={s.ordersCount ?? 0} prior={prior.ordersCount ?? 0} period={PRIOR_LABEL[range]} />}
+          sub={`${s.unitsSold ?? 0} item${s.unitsSold === 1 ? "" : "s"} sold ${RANGE_NOUN[range]}`}
+        />
+      </div>
+
+      {/* Operational row */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          icon={Clock}
+          tone="amber"
+          label="Awaiting confirmation"
+          value={formatTaka(s.pending?.value ?? 0)}
+          delta={
+            s.pending?.count > 0 ? (
+              <Link
+                to="/admin/orders?status=pending"
+                className="inline-block rounded-full bg-[#FDF3E7] px-2 py-[3px] text-[11px] font-bold text-[#B45309] hover:bg-[#FBE8D0]"
+              >
+                Review {s.pending.count} order{s.pending.count === 1 ? "" : "s"}
+              </Link>
+            ) : null
+          }
+          sub={s.pending?.count > 0 ? "Not counted as sales until confirmed" : "Nothing waiting"}
+        />
+        <KpiCard
+          icon={Boxes}
+          label="Stock at cost"
+          value={formatTaka(s.inventory?.atCost ?? 0)}
+          sub={`${s.inventory?.unitsInStock ?? 0} units · ${formatTaka(s.inventory?.atRetail ?? 0)} at retail`}
         />
         <KpiCard
           icon={UserPlus}
           tone="teal"
-          label="New customers today"
-          value={today?.newCustomers ?? 0}
-          sub={`${monthCustomers} total this month`}
+          label="New customers"
+          value={s.newCustomers ?? 0}
+          sub={RANGE_NOUN[range]}
         />
         <KpiCard
           icon={TriangleAlert}
           tone="amber"
           label="Low stock products"
-          value={today?.lowStockCount ?? 0}
+          value={s.lowStockCount ?? 0}
           delta={
-            today?.lowStockCount > 0 ? (
+            s.lowStockCount > 0 ? (
               <span className="inline-block rounded-full bg-[#FDF3E7] px-2 py-[3px] text-[11px] font-bold text-[#B45309]">Needs restock</span>
             ) : null
           }
-          sub={today?.lowStockCount > 0 ? "≤ 2 units left" : "All healthy"}
+          sub={s.lowStockCount > 0 ? "≤ 2 units left" : "All healthy"}
         />
       </div>
 
-      {/* Revenue chart */}
+      {/* Revenue chart — follows the same range chip as the KPIs above */}
       <SectionPanel
         title="Revenue & orders"
-        description={`${formatTaka(chartRevenue)} · ${chartOrders} order${chartOrders === 1 ? "" : "s"} over the last ${days} days`}
-        action={
-          <div className="flex gap-1.5">
-            {RANGE_CHIPS.map((chip) => (
-              <button
-                key={chip.value}
-                type="button"
-                onClick={() => setDays(chip.value)}
-                className={cn(
-                  "rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors duration-150",
-                  days === chip.value ? "bg-ink text-white" : "text-ink-soft hover:bg-tile"
-                )}
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
-        }
+        description={`${formatTaka(chartRevenue)} · ${chartOrders} order${chartOrders === 1 ? "" : "s"} over the last ${chip.days} days`}
       >
         {chartLoading ? (
           <div className="flex h-60 items-center justify-center text-sm text-faint">Loading…</div>
@@ -259,7 +297,9 @@ export function DashboardPage() {
           </SectionPanel>
 
           {topProducts.length > 0 && (
-            <SectionPanel title="Top products today" bodyClassName="pt-3">
+            /* Ranked by profit, not units — a cheap bestseller can top the
+               volume chart while earning the least in the catalogue. */
+            <SectionPanel title="Top products by profit" bodyClassName="pt-3">
               <ul className="flex flex-col gap-3">
                 {topProducts.map((p) => (
                   <li key={p.product}>
@@ -267,10 +307,18 @@ export function DashboardPage() {
                       <Link to={`/admin/products/${p.product}`} className="min-w-0 truncate text-[12.5px] text-ink hover:text-brand-deep" title={p.title}>
                         {p.title}
                       </Link>
-                      <span className="shrink-0 text-[12px] font-bold text-ink-soft">{p.unitsSold} sold</span>
+                      <span className={cn("shrink-0 text-[12px] font-bold", p.profit < 0 ? "text-[#B3261E]" : "text-ink")}>
+                        {formatTaka(p.profit ?? 0)}
+                      </span>
+                    </div>
+                    <div className="mb-1 text-[11px] text-faint">
+                      {p.unitsSold} sold · {formatTaka(p.revenue ?? 0)} revenue
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-tile">
-                      <div className="h-full rounded-full bg-brand" style={{ width: `${(p.unitsSold / topMax) * 100}%` }} />
+                      <div
+                        className={cn("h-full rounded-full", p.profit < 0 ? "bg-[#B3261E]" : "bg-brand")}
+                        style={{ width: `${(Math.abs(p.profit ?? 0) / topMax) * 100}%` }}
+                      />
                     </div>
                   </li>
                 ))}

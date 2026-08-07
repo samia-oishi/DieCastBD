@@ -9,6 +9,14 @@ const orderItemSchema = new mongoose.Schema(
     title: { type: String, required: true },
     thumbnail: { url: String, cloudinaryId: String },
     price: { type: Number, required: true },
+    // What the item cost US at purchase time — the other half of the snapshot,
+    // and the whole basis of profit reporting. Deliberately stored rather than
+    // read live off the Product: editing a cost price must not silently rewrite
+    // last month's profit, exactly as editing a price must not rewrite what a
+    // customer was charged. Null for orders placed before profit reporting
+    // existed and for any product with no cost recorded — analytics reports
+    // that as "cost unknown" rather than treating it as free stock.
+    costPrice: { type: Number, default: null },
     qty: { type: Number, required: true, min: 1 },
   },
   { _id: false }

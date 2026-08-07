@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAnalyticsSummary, getAnalyticsDaily, getAnalyticsDailyRange } from "./analyticsApi";
 
-export function useAnalyticsSummary() {
+export function useAnalyticsSummary(range = "today") {
   return useQuery({
-    queryKey: ["admin", "analytics", "summary"],
-    queryFn: getAnalyticsSummary,
+    queryKey: ["admin", "analytics", "summary", range],
+    // Keeps the previous range's numbers on screen while the next one loads,
+    // so switching a chip doesn't blank the whole KPI row.
+    placeholderData: (prev) => prev,
+    queryFn: () => getAnalyticsSummary(range),
   });
 }
 

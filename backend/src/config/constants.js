@@ -5,13 +5,30 @@
 // things in two different places.
 export const LOW_STOCK_THRESHOLD = 2;
 
-/** Order statuses that do NOT count as revenue.
+/** Order statuses that DO count as a sale.
  *
- * A cancelled order was never fulfilled; a refunded one gave the money back —
- * neither is income, so reporting them as revenue overstates what the store
- * actually earned. Shared so the daily rollup, the dashboard summary and the
- * per-customer lifetime spend can never drift into three different answers
- * (they briefly did: customer stats excluded both while analytics excluded
- * only cancelled, so a refund inflated Reports but not the customer's totals).
+ * A sale is booked the moment the admin confirms the order, and comes back out
+ * if it is later cancelled, returned or refunded — merchant's rule, so the
+ * numbers track the order's live status rather than a single moment in time.
+ *
+ * `pending` is excluded on purpose: it is an unvetted order that nobody has
+ * accepted yet. It used to count (the old list excluded only cancelled and
+ * refunded), which was one of two reasons reported revenue read high — the
+ * other being the delivery charge, see REVENUE excluding shippingFee in
+ * analytics.service.js.
+ *
+ * Written as a positive list rather than an exclusion list so that a status
+ * added later defaults to NOT counting, instead of silently counting until
+ * someone notices.
+ *
+ * Shared so the daily rollup, the dashboard summary and the per-customer
+ * lifetime spend can never drift into three different answers (they briefly
+ * did: customer stats excluded refunds while analytics didn't, so a refund
+ * inflated Reports but not the customer's totals).
  */
-export const NON_REVENUE_ORDER_STATUSES = ["cancelled", "refunded"];
+export const REVENUE_ORDER_STATUSES = ["confirmed", "packed", "shipped", "delivered"];
+
+/** True when an order in this status counts toward sales, revenue and profit. */
+export function countsAsRevenue(status) {
+  return REVENUE_ORDER_STATUSES.includes(status);
+}

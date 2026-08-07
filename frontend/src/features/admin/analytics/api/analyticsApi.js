@@ -1,7 +1,7 @@
 import { api } from "@/lib/axios";
 
-export async function getAnalyticsSummary() {
-  const { data } = await api.get("/admin/analytics/summary");
+export async function getAnalyticsSummary(range = "today") {
+  const { data } = await api.get("/admin/analytics/summary", { params: { range } });
   return data.data;
 }
 

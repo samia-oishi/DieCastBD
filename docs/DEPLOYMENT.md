@@ -232,6 +232,22 @@ Quick reference if any recur:
 - **Real policy copy** — the 4 CMS policy pages are seeded from the design; the merchant should
   replace them with genuine legal text via Admin → Pages.
 
+## 9. One-off data scripts
+
+Run from `backend/`, against whichever database `MONGODB_URI` points at — which is the **live
+Atlas cluster**, so read the dry run before applying.
+
+- **`node scripts/backfill-order-costs.mjs`** (profit reporting, plan.md #92) — snapshots each
+  product's current `costPrice` onto order items placed before cost snapshots existed, then
+  recomputes every daily rollup. Required after deploying #92: `AnalyticsDaily.revenue` changed
+  meaning (now net of the delivery charge) and the counted statuses changed (confirmed-onward),
+  so stored rows hold stale numbers until recomputed. Dry run by default; `--apply` writes.
+  Idempotent — safe to re-run. **Already applied to the live cluster on 2026-08-07.**
+
+Still outstanding from the admin light redesign (see
+`docs/context/2026-07-18-admin-light-redesign-complete.md`): the announcement-bar `$set` to the
+new shape, and the hero `$set hero.image` / `$unset heroBanner` + autoplay fields.
+
 ---
 
 For architecture and history, see `docs/plan.md` (§7 decision #50 covers this deployment) and

@@ -7,6 +7,7 @@ vi.mock("../../src/modules/products/product.model.js", () => ({ Product: {} }));
 vi.mock("../../src/modules/users/user.model.js", () => ({ User: {} }));
 
 const { recomputeRollupsForOrders } = await import("../../src/modules/analytics/analytics.service.js");
+const { countsAsRevenue, REVENUE_ORDER_STATUSES } = await import("../../src/config/constants.js");
 
 // Stub the upsert so the test covers the date-selection logic (which is where
 // the bugs live) without needing a database.
@@ -40,24 +41,30 @@ describe("recomputeRollupsForOrders — which days get recomputed", () => {
 });
 
 describe("revenue boundary (the condition guarding the recompute)", () => {
-  // Reports count only orders the store earned from, so a transition changes a
-  // day's totals exactly when it crosses that line. Must stay in lockstep with
-  // NON_REVENUE_ORDER_STATUSES — if the rollup excluded refunded but this
-  // didn't, marking an order refunded would silently leave the report stale.
-  const NON_REVENUE = new Set(["cancelled", "refunded"]);
-  const crosses = (from, to) => NON_REVENUE.has(from) !== NON_REVENUE.has(to);
+  // Imports the REAL predicate rather than re-declaring the status list here.
+  // The previous version of this test kept its own copy, which meant it would
+  // have passed unchanged even if production and the rollup disagreed — the one
+  // thing it exists to catch.
+  const crosses = (from, to) => countsAsRevenue(from) !== countsAsRevenue(to);
 
   it.each([
+    ["pending", "confirmed", true], // the merchant's rule: confirming books the sale
+    ["confirmed", "pending", true], // un-confirming takes it back out
     ["confirmed", "cancelled", true],
     ["cancelled", "confirmed", true],
-    ["pending", "cancelled", true],
-    ["delivered", "refunded", true], // the merchant's case: a refund drops revenue
+    ["delivered", "refunded", true], // a refund drops revenue
     ["refunded", "delivered", true], // and reversing it restores revenue
     ["confirmed", "packed", false],
     ["packed", "shipped", false],
     ["shipped", "delivered", false],
     ["cancelled", "refunded", false], // both already excluded — nothing moves
+    ["pending", "cancelled", false], // never counted, so cancelling changes no total
   ])("%s → %s recomputes: %s", (from, to, expected) => {
     expect(crosses(from, to)).toBe(expected);
+  });
+
+  it("counts confirmed onward and nothing else", () => {
+    expect(REVENUE_ORDER_STATUSES).toEqual(["confirmed", "packed", "shipped", "delivered"]);
+    for (const s of ["pending", "cancelled", "refunded"]) expect(countsAsRevenue(s)).toBe(false);
   });
 });
