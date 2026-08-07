@@ -6,6 +6,8 @@ import { sumOrderMetrics, topProductsByProfit, profitMargin } from "../../src/mo
 // carry the price and cost snapshotted at purchase time.
 const order = ({ subtotal, discount = 0, shippingFee, items }) => ({
   total: subtotal - discount + shippingFee,
+  subtotal,
+  discount,
   shippingFee,
   items,
 });
@@ -109,6 +111,53 @@ describe("topProductsByProfit", () => {
     const ranked = topProductsByProfit([order({ subtotal: 1000, shippingFee: 0, items: [item(1000, null)] })]);
     expect(ranked[0].revenue).toBe(1000);
     expect(ranked[0].profit).toBe(0);
+  });
+
+  it("spreads an order-level coupon across the lines by value", () => {
+    // ৳60 off an order of ৳1,490 + ৳1,690: each line carries its share, not the
+    // whole discount and not none of it.
+    const o = order({
+      subtotal: 3180,
+      discount: 60,
+      shippingFee: 60,
+      items: [
+        { product: "supra", title: "Supra", price: 1490, costPrice: 909, qty: 1 },
+        { product: "bmw", title: "BMW", price: 1690, costPrice: 937, qty: 1 },
+      ],
+    });
+    const ranked = topProductsByProfit([o]);
+    const supra = ranked.find((p) => p.title === "Supra");
+    const bmw = ranked.find((p) => p.title === "BMW");
+    expect(supra.revenue).toBe(1462); // 1490 − 60×(1490/3180)
+    expect(bmw.revenue).toBe(1658); // 1690 − 60×(1690/3180)
+    expect(supra.revenue + bmw.revenue).toBe(3120); // = subtotal − discount
+  });
+
+  // The invariant the merchant's question exposed: before this, per-product
+  // profit summed to MORE than the order made, by exactly the discount, so the
+  // "Top products" panel contradicted the profit headline next to it.
+  it.each([
+    ["one coupon, two lines", { subtotal: 3180, discount: 60, shippingFee: 60, items: [item(1490, 909), item(1690, 937)] }],
+    ["one coupon, one line", { subtotal: 1630, discount: 40, shippingFee: 70, items: [item(1630, 894)] }],
+    ["no coupon", { subtotal: 1960, discount: 0, shippingFee: 70, items: [item(1960, 1114)] }],
+    ["uneven split", { subtotal: 1000, discount: 333, shippingFee: 50, items: [item(700, 300), item(300, 100)] }],
+    ["discount exceeds one line", { subtotal: 900, discount: 500, shippingFee: 0, items: [item(100, 40), item(800, 300)] }],
+  ])("per-product profit reconciles to order profit — %s", (_label, spec) => {
+    const o = order(spec);
+    const perProduct = topProductsByProfit([o], 99).reduce((n, p) => n + p.profit, 0);
+    // ±1 taka: each product is rounded once for display.
+    expect(Math.abs(perProduct - sumOrderMetrics([o]).profit)).toBeLessThanOrEqual(1);
+  });
+
+  it("uses the discount stored on the order, so editing the coupon later changes nothing", () => {
+    // order.discount is snapshotted at checkout (order.model.js) and never
+    // recalculated — two identical orders differing only in stored discount
+    // must report differently, proving nothing is re-derived from the coupon.
+    const items = [item(2000, 1000)];
+    const asCharged = topProductsByProfit([order({ subtotal: 2000, discount: 500, shippingFee: 0, items })]);
+    const ifCouponVanished = topProductsByProfit([order({ subtotal: 2000, discount: 0, shippingFee: 0, items })]);
+    expect(asCharged[0].revenue).toBe(1500);
+    expect(ifCouponVanished[0].revenue).toBe(2000);
   });
 
   it("honours the limit", () => {

@@ -64,28 +64,50 @@ export function sumOrderMetrics(orders) {
  *
  * Ranked by profit rather than units on purpose: a cheap item can top the
  * units chart while earning the least of anything in the catalogue.
+ *
+ * A coupon discount is charged against the ORDER, not against any one line, so
+ * it is spread across the lines in proportion to their value. Without that,
+ * these per-product profits sum to MORE than the order actually made — the
+ * whole discount goes unaccounted for, and the panel quietly contradicts the
+ * headline profit beside it.
+ *
+ * The discount used is `order.discount`, the amount stored on the order at
+ * checkout. It is never recalculated from the coupon: editing or deleting
+ * FREEDHK later must not change what a July order earned.
  */
 export function topProductsByProfit(orders, limit = 5) {
   const byProduct = new Map();
 
   for (const order of orders) {
+    // Summed from the lines rather than read from order.subtotal, so the shares
+    // provably add to 1 and the allocation can't leak a taka.
+    const lineTotal = (order.items ?? []).reduce((n, i) => n + (i.price ?? 0) * (i.qty ?? 0), 0);
+    const discount = order.discount ?? 0;
+
     for (const item of order.items ?? []) {
       const key = item.product?.toString();
       if (!key) continue;
       const entry = byProduct.get(key) ?? { product: item.product, title: item.title, unitsSold: 0, revenue: 0, profit: 0 };
       const qty = item.qty ?? 0;
-      const lineRevenue = (item.price ?? 0) * qty;
+      const gross = (item.price ?? 0) * qty;
+      const net = lineTotal ? gross - discount * (gross / lineTotal) : gross;
+
       entry.unitsSold += qty;
-      entry.revenue += lineRevenue;
+      entry.revenue += net;
       // Unknown cost contributes revenue but no profit, rather than pretending
       // the margin is 100%.
-      entry.profit += item.costPrice == null ? 0 : lineRevenue - item.costPrice * qty;
+      entry.profit += item.costPrice == null ? 0 : net - item.costPrice * qty;
       entry.title = item.title ?? entry.title;
       byProduct.set(key, entry);
     }
   }
 
-  return [...byProduct.values()].sort((a, b) => b.profit - a.profit || b.unitsSold - a.unitsSold).slice(0, limit);
+  // Rounded once at the end, after every order's exact share has accumulated —
+  // rounding per line would drift away from the order total.
+  return [...byProduct.values()]
+    .map((e) => ({ ...e, revenue: Math.round(e.revenue), profit: Math.round(e.profit) }))
+    .sort((a, b) => b.profit - a.profit || b.unitsSold - a.unitsSold)
+    .slice(0, limit);
 }
 
 /** Profit as a share of revenue, rounded to one decimal.
