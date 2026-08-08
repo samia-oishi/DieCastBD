@@ -651,7 +651,7 @@ export const products = [
     features: ["TSM Models premium build", "Blister card packaging", "Rubber tyres"],
     tags: ["jdm", "mazda", "rx-7", "re amemiya", "rotary", "mini gt", "tsm", "bd exclusive"],
     specifications: { Weight: "125 g" },
-    price: 2275,
+    price: 2250,
     costPrice: 1553,
     stock: 1,
     isFeatured: false,
