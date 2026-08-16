@@ -1,6 +1,7 @@
 export const ROUTES = {
   HOME: "/",
   SHOP: "/shop",
+  COLLECTIONS: "/collections",
   PRODUCT: "/products/:slug",
   CART: "/cart",
   CHECKOUT: "/checkout",

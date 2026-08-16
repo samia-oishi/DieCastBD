@@ -45,6 +45,7 @@ const FaqPage = page(() => import("@/features/about-contact/FaqPage"), "FaqPage"
 const PageView = page(() => import("@/features/pages/PageView"), "PageView");
 const CmsPage = page(() => import("@/features/pages/CmsPage"), "CmsPage");
 const CollectionPage = page(() => import("@/features/products/CollectionPage"), "CollectionPage");
+const CollectionsIndexPage = page(() => import("@/features/collections/CollectionsIndexPage"), "CollectionsIndexPage");
 
 const DashboardPage = page(() => import("@/features/admin/dashboard/DashboardPage"), "DashboardPage");
 const ProductsPage = page(() => import("@/features/admin/products/ProductsPage"), "ProductsPage");
@@ -81,6 +82,10 @@ export const router = createBrowserRouter([
       // can rank for "<collection> bangladesh" on their own.
       { path: "/brand/:slug", element: <CollectionPage kind="brand" /> },
       { path: "/category/:slug", element: <CollectionPage kind="category" /> },
+      // The crawlable catalogue index — the ONE page whose raw HTML carries
+      // real <a href> links for every product/brand/category/guide (its body
+      // is baked by scripts/prerender.mjs). See lib/seo/collectionsIndex.js.
+      { path: "/collections", element: <CollectionsIndexPage /> },
       { path: "/cart", element: <CartPage /> },
       { path: "/about", element: <AboutPage /> },
       { path: "/contact", element: <ContactPage /> },

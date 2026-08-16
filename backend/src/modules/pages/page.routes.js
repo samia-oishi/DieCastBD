@@ -2,10 +2,12 @@ import { Router } from "express";
 import { validate } from "../../middlewares/validate.js";
 import { auditLog } from "../../middlewares/auditLog.js";
 import { createPageSchema, updatePageSchema, idParamSchema, slugParamSchema } from "./page.validation.js";
-import { getPageBySlug, listPagesAdmin, getPageAdmin, createPage, updatePage, deletePage } from "./page.controller.js";
+import { getPageBySlug, listPublishedPages, listPagesAdmin, getPageAdmin, createPage, updatePage, deletePage } from "./page.controller.js";
 import { Page } from "./page.model.js";
 
 export const publicRouter = Router();
+// List before /:slug, or "GET /pages" would match the slug route with slug="".
+publicRouter.get("/", listPublishedPages);
 publicRouter.get("/:slug", validate(slugParamSchema), getPageBySlug);
 
 export const adminRouter = Router();

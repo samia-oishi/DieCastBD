@@ -11,6 +11,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 const STATIC_PATHS = [
   { path: "/", changefreq: "daily", priority: "1.0" },
   { path: "/shop", changefreq: "daily", priority: "0.9" },
+  { path: "/collections", changefreq: "weekly", priority: "0.7" },
   { path: "/about", changefreq: "monthly", priority: "0.5" },
   { path: "/contact", changefreq: "monthly", priority: "0.5" },
   { path: "/faq", changefreq: "monthly", priority: "0.5" },
@@ -22,9 +23,9 @@ const STATIC_PATHS = [
 // content, so drop it here. (createPage only checks slug uniqueness against
 // other pages, not against the route table.)
 const RESERVED_SLUGS = new Set([
-  "shop", "products", "brand", "category", "cart", "checkout", "order-confirmation",
-  "about", "contact", "faq", "login", "register", "forgot-password", "account",
-  "wishlist", "orders", "admin", "unauthorized",
+  "shop", "products", "brand", "category", "collections", "cart", "checkout",
+  "order-confirmation", "about", "contact", "faq", "login", "register",
+  "forgot-password", "account", "wishlist", "orders", "admin", "unauthorized",
 ]);
 
 function urlEntry(loc, { lastmod, changefreq, priority } = {}) {

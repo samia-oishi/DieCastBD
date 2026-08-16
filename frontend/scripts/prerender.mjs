@@ -33,7 +33,9 @@ import { mkdir, copyFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { injectHead } from "../src/lib/seo/injectHead.js";
+import { injectHead, injectRoot } from "../src/lib/seo/injectHead.js";
+import { buildCollectionsIndex, renderCollectionBody, renderCollectionsIndexBody } from "../src/lib/seo/collectionsIndex.js";
+import { collectionCopy } from "../src/lib/seo/collectionCopy.js";
 import {
   buildCmsPage,
   buildCollection,
@@ -78,15 +80,16 @@ const MIN_ROUTES = Number(process.env.PRERENDER_MIN_ROUTES || 20);
 
 // Routes we always attempt, even if the sitemap is unreachable — so an API
 // blip degrades coverage instead of silently emptying it.
-const STATIC_FLOOR = ["/", "/shop", "/about", "/contact", "/faq"];
+const STATIC_FLOOR = ["/", "/shop", "/collections", "/about", "/contact", "/faq"];
 
 // A CMS page whose slug collides with a real route would be written over that
 // route's directory. The router matches the real route first, so the file could
 // never be reached anyway — refuse rather than corrupt the build output.
 const RESERVED_SLUGS = new Set([
-  "shop", "products", "brand", "category", "cart", "checkout", "order-confirmation",
-  "about", "contact", "faq", "login", "register", "forgot-password", "account",
-  "wishlist", "orders", "admin", "unauthorized", "assets", "index.html", "app.html",
+  "shop", "products", "brand", "category", "collections", "cart", "checkout",
+  "order-confirmation", "about", "contact", "faq", "login", "register",
+  "forgot-password", "account", "wishlist", "orders", "admin", "unauthorized",
+  "assets", "index.html", "app.html",
 ]);
 
 const log = (msg) => console.log(`[prerender] ${msg}`);
@@ -190,13 +193,24 @@ async function pool(items, limit, worker) {
 
 /* ------------------------------------------------------------ head models -- */
 
-/** Resolve one route path to a head model, or null to leave it CSR. */
+/** Resolve one route path to { model, body }, or null to leave it CSR.
+ * `model` is the head; `body` (usually null) is raw HTML for the routes whose
+ * BODY is baked too — the /collections hub and the brand/category landing
+ * pages, i.e. the pages whose raw-HTML links and copy are the ranking surface. */
 async function modelFor(route, ctx) {
-  const { settings, productsBySlug, brands, categories } = ctx;
+  const { settings, productsBySlug, products, brands, categories, guides } = ctx;
   const siteUrl = PROD_ORIGIN;
 
   if (route === "/") return buildHome({ settings, siteUrl });
   if (route === "/shop") return buildShop({ settings, siteUrl, filters: {} });
+  if (route === "/collections") {
+    return {
+      model: buildCollectionsIndex({ settings, siteUrl }),
+      // The hub's whole job is putting real <a href> links into raw HTML — the
+      // sitemap is otherwise the only signal our URLs exist.
+      body: renderCollectionsIndexBody({ brands, categories, products, pages: guides }),
+    };
+  }
 
   const staticKey = { "/about": "about", "/contact": "contact", "/faq": "faq" }[route];
   if (staticKey) return buildStaticPage({ key: staticKey, settings, siteUrl });
@@ -222,15 +236,12 @@ async function modelFor(route, ctx) {
     // Same query the page itself runs, so the baked ItemList matches the grid.
     const envelope = await apiEnvelope(`/products?${kind}=${encodeURIComponent(slug)}&limit=24&page=1`);
     const products = envelope?.data ?? [];
-    return buildCollection({
-      kind,
-      slug,
-      collection: doc,
-      products,
-      total: envelope?.meta?.total ?? products.length,
-      settings,
-      siteUrl,
-    });
+    const total = envelope?.meta?.total ?? products.length;
+    const model = buildCollection({ kind, slug, collection: doc, products, total, settings, siteUrl });
+    // Landing pages bake their body too: H1 + product links + merchant content
+    // + FAQ text. Before this, their raw HTML had no H1 and zero anchors.
+    const body = renderCollectionBody({ copy: collectionCopy(slug, doc), collection: doc, products, total });
+    return { model, body };
   }
 
   const cms = route.match(/^\/([^/]+)$/);
@@ -282,23 +293,43 @@ async function main() {
 
   log(`origin ${PROD_ORIGIN} · api ${API_BASE}${STRICT ? " · STRICT" : ""}`);
 
-  const [settings, products, brands, categories, routes] = await Promise.all([
+  const [settings, products, brands, categories, guides, routes] = await Promise.all([
     api("/settings"),
     fetchAllProducts(),
     api("/brands"),
     api("/categories"),
+    // Published guides for the /collections hub. Plain fetch, NOT apiEnvelope:
+    // a failure here must not hit fail() (which is fatal under STRICT) — an
+    // older backend deploy without GET /pages just means the hub omits its
+    // Guides section, which is not worth blocking a deploy over.
+    fetch(`${API_BASE}/pages`, { headers: { accept: "application/json" } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j?.data ?? [])
+      .catch(() => []),
     discoverRoutes(),
   ]);
 
   const productsBySlug = new Map((products ?? []).map((p) => [p.slug, p]));
-  const ctx = { settings, productsBySlug, brands: brands ?? [], categories: categories ?? [] };
+  const ctx = {
+    settings,
+    products: products ?? [],
+    productsBySlug,
+    brands: brands ?? [],
+    categories: categories ?? [],
+    guides: guides ?? [],
+  };
 
   log(`discovered ${routes.length} routes · ${productsBySlug.size} products`);
 
   await pool(routes, 6, async (route) => {
     try {
-      const model = await modelFor(route, ctx);
-      if (!model) return;
+      const resolved = await modelFor(route, ctx);
+      if (!resolved) return;
+      // Branches return either a bare head model or { model, body } for the
+      // routes whose body is baked too. Head models never carry a `model` key,
+      // so this normalization is unambiguous.
+      const model = resolved.model ?? resolved;
+      const body = resolved.body ?? null;
 
       // Home only: inline the settings the app needs on first paint, and start
       // the hero image download during HTML parse. The preload matters most —
@@ -315,7 +346,9 @@ async function main() {
           .join("\n    ");
       }
 
-      const html = injectHead(SHELL, model, extra);
+      let html = injectHead(SHELL, model, extra);
+      if (body) html = injectRoot(html, body);
+
       const outPath = route === "/" ? path.join(DIST, "index.html") : path.join(DIST, route.replace(/^\//, ""), "index.html");
       await mkdir(path.dirname(outPath), { recursive: true });
       await writeFile(outPath, html, "utf8");

@@ -1,0 +1,102 @@
+/** The /collections hub: head model + baked BODY for the one page whose job is
+ * to put real <a href> links into raw HTML.
+ *
+ * WHY a baked body exists at all: the prerenderer bakes <head> only, so every
+ * page body in served HTML is an empty <div id="root"> — zero anchors anywhere
+ * on the site. The sitemap was the ONLY signal telling Google our URLs exist,
+ * and Search Console showed the entire catalogue sitting in "Discovered –
+ * currently not indexed", never crawled. Sitemap-only URLs with no internal
+ * links stalling exactly there is a well-known pattern; this page is the fix.
+ *
+ * WHY the baked body is NOT tagged data-prerendered: main.jsx strips tagged
+ * elements before React's first render. Head tags must hand off (helmet
+ * appends, so duplicates would result) — but body content is REPLACED wholesale
+ * by createRoot's first commit, so untagged content simply stays visible until
+ * React paints the same lists. Longest visibility, no duplication, no mismatch
+ * (createRoot replaces; it never hydrates).
+ *
+ * Node imports this file — no JSX, no @/ aliases, no import.meta.env.
+ */
+import { escapeAttr, escapeText } from "./injectHead.js";
+import { SITE_NAME, absoluteUrl, resolveDescription, resolveImage, resolveTitle } from "./constants.js";
+
+export const COLLECTIONS_TITLE = "All Collections & Products";
+export const COLLECTIONS_DESCRIPTION =
+  "Browse the full DiecastBD catalogue — every Hot Wheels Premium and MINI GT diecast, multi-packs and accessories in stock in Bangladesh, on one page.";
+
+export function buildCollectionsIndex({ settings, siteUrl }) {
+  const url = absoluteUrl(siteUrl, "/collections");
+  return {
+    title: resolveTitle({ title: COLLECTIONS_TITLE, settings }),
+    description: resolveDescription({ description: COLLECTIONS_DESCRIPTION, settings }),
+    canonical: url,
+    ogUrl: url,
+    image: resolveImage({ settings }),
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl(siteUrl, "/") },
+          { "@type": "ListItem", position: 2, name: COLLECTIONS_TITLE },
+        ],
+      },
+    ],
+  };
+}
+
+const link = (href, label) => `<a href="${escapeAttr(href)}">${escapeText(label)}</a>`;
+
+function section(title, items) {
+  if (!items.length) return "";
+  return `<section><h2>${escapeText(title)}</h2><ul>${items.map((i) => `<li>${i}</li>`).join("")}</ul></section>`;
+}
+
+/** Baked body for /brand/<slug> and /category/<slug> — H1, intro, product
+ * links, the merchant's landing content and FAQ text as raw HTML, so the money
+ * pages carry real substance before JS runs (their raw HTML previously had no
+ * H1 and zero links). `collection.content` arrives ALREADY sanitized by the
+ * backend (utils/sanitizeContent.js) and is embedded as-is; everything else is
+ * escaped here. Same handoff rule as the hub: untagged, replaced wholesale by
+ * React's first paint. */
+export function renderCollectionBody({ copy, collection, products = [], total = 0 }) {
+  const faqs = (collection.faqs ?? []).filter((f) => f?.question && f?.answer);
+  const parts = [
+    `<main style="max-width:760px;margin:0 auto;padding:32px 16px;font-family:system-ui,sans-serif">`,
+    `<h1>${escapeText(copy.title)}</h1>`,
+    `<p>${escapeText(copy.description)}</p>`,
+    collection.description ? `<p>${escapeText(collection.description)}</p>` : "",
+    section(
+      total > products.length ? `Products (${products.length} of ${total})` : "Products",
+      products.map((p) => link(`/products/${p.slug}`, p.title))
+    ),
+    collection.content || "",
+    faqs.length
+      ? `<section><h2>Frequently asked questions</h2>${faqs
+          .map((f) => `<h3>${escapeText(f.question)}</h3><p>${escapeText(f.answer)}</p>`)
+          .join("")}</section>`
+      : "",
+    `<p>${link("/collections", "Browse all collections & products")}</p>`,
+    `</main>`,
+  ];
+  return parts.filter(Boolean).join("\n");
+}
+
+/** The crawlable body. Semantic, unstyled-beyond-defaults HTML on purpose —
+ * it shows only until React's first paint, and its audience is crawlers and
+ * the reader who lands with JS still loading. Every entry is a REAL catalogue
+ * record passed in from the API; nothing here is invented. */
+export function renderCollectionsIndexBody({ brands = [], categories = [], products = [], pages = [] }) {
+  const parts = [
+    `<main style="max-width:760px;margin:0 auto;padding:32px 16px;font-family:system-ui,sans-serif">`,
+    `<h1>${escapeText(COLLECTIONS_TITLE)}</h1>`,
+    `<p>${escapeText(COLLECTIONS_DESCRIPTION)}</p>`,
+    section("Brands", brands.map((b) => link(`/brand/${b.slug}`, `${b.name} in Bangladesh`))),
+    section("Categories", categories.map((c) => link(`/category/${c.slug}`, `${c.name} in Bangladesh`))),
+    section("All products", products.map((p) => link(`/products/${p.slug}`, p.title))),
+    section("Guides", pages.map((g) => link(`/${g.slug}`, g.title))),
+    `<p>${link("/shop", `Shop the full ${SITE_NAME} catalogue`)}</p>`,
+    `</main>`,
+  ];
+  return parts.filter(Boolean).join("\n");
+}

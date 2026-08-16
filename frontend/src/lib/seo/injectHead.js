@@ -123,6 +123,21 @@ function removeSupersededTags(head, keys) {
  * @param {string} [extraHtml] raw HTML appended inside <head> (hero preload,
  *                             the __SETTINGS__ bootstrap payload)
  */
+/** Replace the empty SPA mount point with prerendered body HTML.
+ *
+ * Used only for routes whose raw-HTML BODY matters to crawlers (the
+ * /collections link hub, and collection landing pages). The injected content
+ * is deliberately NOT tagged data-prerendered: createRoot's first commit
+ * replaces #root's children wholesale, so the baked content shows until React
+ * paints and is then superseded — tagging it would make main.jsx strip it at
+ * JS boot and leave a blank gap instead.
+ */
+export function injectRoot(shellHtml, bodyHtml) {
+  const marker = /<div id="root">\s*<\/div>/;
+  if (!marker.test(shellHtml)) throw new Error('shell has no empty <div id="root"> — refusing to inject body');
+  return shellHtml.replace(marker, `<div id="root">${bodyHtml}</div>`);
+}
+
 export function injectHead(shellHtml, model, extraHtml = "") {
   const headMatch = shellHtml.match(/(<head\b[^>]*>)([\s\S]*?)(<\/head>)/i);
   if (!headMatch) throw new Error("shell has no <head> — refusing to inject");

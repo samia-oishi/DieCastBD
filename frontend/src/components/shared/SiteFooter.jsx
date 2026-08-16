@@ -150,6 +150,10 @@ function BigFooter() {
         <div className="mt-4"><Socials social={social} size={32} icon={14} /></div>
         <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs">
           {policyLinks.map((l) => <FooterLink key={l.label} link={l} />)}
+          {/* Unconditional: /collections is the site's crawlable catalogue index
+              (see lib/seo/collectionsIndex.js) — merchant nav settings replace the
+              default link arrays, so it must never live in one of them. */}
+          <FooterLink link={{ label: "All products", url: ROUTES.COLLECTIONS }} />
         </div>
         <div className="mt-4 border-t border-white/10 pt-3.5 text-[11px] text-[#8A8D80]">© 2026 DiecastBD. All rights reserved.</div>
       </div>
@@ -185,7 +189,7 @@ function BigFooter() {
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 py-5 text-[12.5px] text-[#8A8D80]">
             <span>© 2026 DiecastBD. All rights reserved.</span>
             <span className="flex flex-wrap gap-[22px]">
-              {policyLinks.map((l) => (
+              {[...policyLinks, { label: "All products", url: ROUTES.COLLECTIONS }].map((l) => (
                 <span key={l.label} className="[&_a]:!text-[#8A8D80] [&_a:hover]:!text-white">
                   <FooterLink link={l} />
                 </span>
@@ -211,7 +215,7 @@ function SlimFooter() {
       <div className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-between gap-4 px-10 py-6 text-[12.5px]">
         <span>© 2026 DiecastBD. All rights reserved.</span>
         <span className="flex flex-wrap gap-[22px]">
-          {policyLinks.map((l) => (
+          {[...policyLinks, { label: "All products", url: ROUTES.COLLECTIONS }].map((l) => (
             <span key={l.label} className="[&_a]:!text-[#8A8D80] [&_a:hover]:!text-white">
               <FooterLink link={l} />
             </span>

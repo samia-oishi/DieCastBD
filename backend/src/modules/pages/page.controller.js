@@ -1,25 +1,15 @@
-import sanitizeHtml from "sanitize-html";
 import { Page } from "./page.model.js";
 import { Product } from "../products/product.model.js";
 import { PUBLIC_CARD_FIELDS, withComputedVirtuals } from "../products/product.view.js";
 import { slugify } from "../../utils/slugify.js";
+import { sanitizeRichContent } from "../../utils/sanitizeContent.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
-// Matches the tag set @tiptap/starter-kit actually produces — admin-authored
-// rich text is still untrusted input (this renders via dangerouslySetInnerHTML
-// on the public page), so this is deliberately not sanitize-html's full default
-// allow-list.
-const ALLOWED_TAGS = [
-  "p", "br", "strong", "em", "s", "code", "pre", "blockquote", "hr",
-  "ul", "ol", "li", "h1", "h2", "h3", "h4", "h5", "h6", "a",
-];
-const ALLOWED_ATTRIBUTES = { a: ["href", "target", "rel"] };
-
-function sanitizePageContent(html) {
-  return sanitizeHtml(html ?? "", { allowedTags: ALLOWED_TAGS, allowedAttributes: ALLOWED_ATTRIBUTES });
-}
+// Sanitization lives in utils/sanitizeContent.js — shared with brand/category
+// landing-page content so both surfaces enforce the same Tiptap allow-list.
+const sanitizePageContent = sanitizeRichContent;
 
 /** Products referenced by a page's blocks, resolved server-side.
  *
@@ -66,6 +56,19 @@ export const getPageBySlug = asyncHandler(async (req, res) => {
 
   const products = await resolveBlockProducts(page.blocks);
   sendSuccess(res, { data: { ...page, blockProducts: products } });
+});
+
+/** Published guides, for the /collections hub's "Guides" section (both the
+ * React page and the prerenderer call this). The four policy pages are
+ * excluded — they have their own hardcoded routes and footer links, and
+ * listing them under "Guides" would misdescribe them. Slim payload on
+ * purpose: this feeds link lists, not page rendering. */
+export const listPublishedPages = asyncHandler(async (req, res) => {
+  const pages = await Page.find({ isPublished: true, slug: { $nin: [...SYSTEM_PAGE_SLUGS] } })
+    .select("slug title updatedAt")
+    .sort({ updatedAt: -1 })
+    .lean();
+  sendSuccess(res, { data: pages });
 });
 
 export const listPagesAdmin = asyncHandler(async (req, res) => {

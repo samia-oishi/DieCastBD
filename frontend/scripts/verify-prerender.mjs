@@ -136,6 +136,23 @@ async function main() {
     });
   }
 
+  // /collections exists to put real product links into raw HTML — the fix for
+  // the whole catalogue sitting in "Discovered – currently not indexed" with
+  // zero internal links. A hub page that silently baked without its links
+  // would look green while removing the feature's entire point, so count them.
+  {
+    const productRoutes = (report.routes ?? []).filter((r) => r.route.startsWith("/products/")).length;
+    const { html } = await loadRoute("/collections");
+    if (check(html, "/collections — not baked")) {
+      const anchors = countOf(html, /href="\/products\//g);
+      check(
+        anchors >= productRoutes,
+        `/collections — only ${anchors} product links in raw HTML, expected ≥ ${productRoutes}`
+      );
+      check(countOf(html, /href="\/brand\//g) >= 1, "/collections — no brand links in raw HTML");
+    }
+  }
+
   // Titles must be distinct — identical titles across URLs is the exact defect
   // that put this site in Search Console's "Alternate page" bucket.
   const titles = new Map();
