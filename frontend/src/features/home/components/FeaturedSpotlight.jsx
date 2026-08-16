@@ -31,7 +31,22 @@ function Spotlight({ product, overrides }) {
       className="flex cursor-pointer flex-col overflow-hidden rounded-[20px] border border-line bg-white transition-shadow duration-[180ms] md:hover:shadow-[0_12px_32px_rgba(16,18,8,0.1)] md:rounded-[24px]"
     >
       <div className="relative flex h-[190px] items-center justify-center overflow-hidden bg-brand-tint md:h-[330px]">
-        {imageUrl && <img src={cloudinaryCard(imageUrl)} alt={title} loading="lazy" decoding="async" className="h-full w-auto max-w-none" />}
+        {/* object-contain, not the `h-full w-auto max-w-none` used by the small
+            product tiles. This slot is filled with wide promo artwork (the
+            Ferrari 5-Pack banner is 800×372, aspect 2.15) while the box is
+            fixed-height and about 1.79 — so height-filling clipped 17% of it off
+            the sides on desktop, cutting through the product's own title. The
+            card keeps one consistent height for the grid; the image just fits
+            inside it whole, with the tint showing above and below. */}
+        {imageUrl && (
+          <img
+            src={cloudinaryCard(imageUrl)}
+            alt={title}
+            loading="lazy"
+            decoding="async"
+            className="max-h-full max-w-full object-contain"
+          />
+        )}
         {badge && (
           <span className="pointer-events-none absolute left-2.5 top-2.5 rounded-full bg-ink px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-white md:left-3.5 md:top-3.5 md:px-[11px] md:py-[5px] md:text-[10.5px] md:tracking-[0.07em]">
             {badge}
