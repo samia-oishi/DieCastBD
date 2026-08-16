@@ -1243,3 +1243,17 @@ Verified: three runs per variant (the effects are consistent, not noise); all fi
 The cost of a query not baking is that its carousel loads at runtime, exactly as it did before the optimization existed. Nothing about that justifies blocking a deploy, and `prerender.mjs` already states this rule for the guides fetch — I simply didn't follow it. Those three queries now use a plain non-failing fetch and a `warn()`; missing route *metadata* still fails the build, because that damage is invisible and lasting, whereas this is only slower.
 
 Proven rather than reasoned: with one query deliberately pointed at an invalid limit so it cannot bake, a `PRERENDER_STRICT=1` build against the live API exits 0, warns, and bakes the other two. A clean run of the same production-simulating build (real origin, real API, STRICT on) prerenders 51/51 routes, bakes 3/3 queries, and passes verify-prerender.
+
+---
+
+## 2026-08-16 — Shop: sold-out items last, clear photo, one red badge
+
+Merchant, three asks on the shop listing: sold-out items should always sort to the end; their image should be fully visible instead of washed out; and when sold out, other tags ("New", "Save ৳X") should hide so only a red Sold Out shows. Reasoning in `docs/plan.md` #94.
+
+The ordering had to be server-side. `availableStock` is a virtual, so it can't appear in `.sort()` — and sorting the loaded page on the client would leave a sold-out item on page 1 above in-stock items on page 2, which with infinite scroll is worse than doing nothing. Done as two ordered partitions rather than rewriting the endpoint as an aggregation, which would have meant swapping both `.populate()` calls for `$lookup` on the busiest read path.
+
+Pulled the page-boundary arithmetic into `product.pagination.js` and tested it directly, because that is where this kind of change silently goes wrong: an off-by-one repeats a product on two pages or drops one, with no error anywhere. A parametrised test walks every page of ten catalogue shapes and checks the reconstructed list is complete, duplicate-free and correctly ordered.
+
+**Scoped to the shop deliberately.** `soldOutLast` is opt-in, so the brand/category landing pages keep their current order — their `ItemList` structured data is built from it, and the merchant has asked to approve any SEO change before it ships. Worth asking whether they want it on those pages too.
+
+Verified against the live catalogue: sold-out at indices 30–31 of 32 at page sizes 4, 7, 10 and 24, always 32 unique products with zero duplicates; the straddling page (limit 4, page 8) reads two in-stock then two sold-out. In the browser after scrolling the full grid: sold-out cards carry `["SOLD OUT"]` alone, in-stock cards still show `["NEW","SAVE ৳10"]`. Backend 180/180 (15 new), frontend 146/146, lint and build clean.

@@ -81,7 +81,11 @@ export function ShopPage() {
   }, [debouncedSearch]);
 
   // No `page` here on purpose — it enters only as useInfiniteQuery's pageParam.
-  const queryParams = { ...filters, q: debouncedSearch || undefined, limit: PAGE_SIZE };
+  // soldOutLast is a shop-listing rule: sold-out pieces sink below everything
+  // buyable across the whole result set, not just within the loaded page.
+  // Deliberately not sent by the homepage carousels or the brand/category
+  // landing pages, which keep their existing order.
+  const queryParams = { ...filters, q: debouncedSearch || undefined, limit: PAGE_SIZE, soldOutLast: true };
   const { data, isLoading, isPlaceholderData, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useInfiniteProducts(queryParams);
 

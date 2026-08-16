@@ -1,6 +1,7 @@
 import { Product } from "./product.model.js";
 import { effectivePrice } from "../../utils/pricing.js";
 import { withComputedVirtuals } from "./product.view.js";
+import { partitionPage } from "./product.pagination.js";
 import { Brand } from "../brands/brand.model.js";
 import { Category } from "../categories/category.model.js";
 import { slugify } from "../../utils/slugify.js";
@@ -22,6 +23,14 @@ const SORT_MAP = {
   "price-desc": { price: -1, _id: 1 },
   "title-asc": { title: 1, _id: 1 },
 };
+
+// availableStock is a VIRTUAL (stock − reservedStock), so it exists nowhere on
+// disk and cannot appear in .sort() or a plain filter — every availability test
+// has to be this expression. Defined once because the `inStock` filter and the
+// sold-out-last ordering must agree on what "available" means; two copies would
+// eventually disagree and show an item as in stock in one place and not the other.
+const IS_AVAILABLE = { $gt: [{ $subtract: ["$stock", { $ifNull: ["$reservedStock", 0] }] }, 0] };
+const IS_SOLD_OUT = { $lte: [{ $subtract: ["$stock", { $ifNull: ["$reservedStock", 0] }] }, 0] };
 
 async function buildPublicFilter({
   brand,
@@ -54,7 +63,7 @@ async function buildPublicFilter({
   // `stock > 0` would wrongly keep a fully-reserved item that the card shows as
   // "Out of stock". availableStock is a virtual (not stored), so filter via
   // $expr; $ifNull guards any legacy doc missing reservedStock.
-  if (inStock) filter.$expr = { $gt: [{ $subtract: ["$stock", { $ifNull: ["$reservedStock", 0] }] }, 0] };
+  if (inStock) filter.$expr = IS_AVAILABLE;
   if (featured) filter.isFeatured = true;
   if (hero) filter.isHeroProduct = true;
   if (newArrival) filter.isNewArrival = true;
@@ -86,6 +95,7 @@ export const listProducts = asyncHandler(async (req, res) => {
     q,
     page,
     limit,
+    soldOutLast,
   } = req.query;
   const filter = await buildPublicFilter({
     brand,
@@ -101,16 +111,47 @@ export const listProducts = asyncHandler(async (req, res) => {
   });
 
   const skip = (page - 1) * limit;
-  const [items, total] = await Promise.all([
-    Product.find(filter)
+  const query = (where, offset, take) =>
+    Product.find(where)
       .sort(SORT_MAP[sort])
-      .skip(skip)
-      .limit(limit)
+      .skip(offset)
+      .limit(take)
       .populate("brand", "name slug")
       .populate("category", "name slug")
-      .lean(),
-    Product.countDocuments(filter),
-  ]);
+      .lean();
+
+  let items;
+  let total;
+
+  if (soldOutLast) {
+    // Sold-out items sink below every in-stock one, across the WHOLE result set
+    // rather than within a page — sorting a single page client-side would still
+    // leave a sold-out item on page 1 ahead of stock on page 2.
+    //
+    // Done as two ordered partitions instead of an aggregation: sorting by the
+    // availability expression needs $addFields + $sort, and moving this endpoint
+    // to aggregate() would mean replacing both .populate() calls with $lookup
+    // and re-deriving the lean/virtuals handling — a lot of risk on the busiest
+    // read path for an ordering tweak. Nesting `filter` under $and keeps the
+    // caller's own $expr (the `inStock` filter) intact instead of clobbering it.
+    const availableFilter = { $and: [filter, { $expr: IS_AVAILABLE }] };
+    const soldOutFilter = { $and: [filter, { $expr: IS_SOLD_OUT }] };
+
+    const [availableTotal, grandTotal] = await Promise.all([
+      Product.countDocuments(availableFilter),
+      Product.countDocuments(filter),
+    ]);
+
+    const { availableSkip, fromAvailable, soldOutSkip, fromSoldOut } = partitionPage({ skip, limit, availableTotal });
+    const [head, tail] = await Promise.all([
+      fromAvailable > 0 ? query(availableFilter, availableSkip, fromAvailable) : [],
+      fromSoldOut > 0 ? query(soldOutFilter, soldOutSkip, fromSoldOut) : [],
+    ]);
+    items = [...head, ...tail];
+    total = grandTotal;
+  } else {
+    [items, total] = await Promise.all([query(filter, skip, limit), Product.countDocuments(filter)]);
+  }
 
   sendSuccess(res, {
     data: items.map(withComputedVirtuals),

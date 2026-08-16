@@ -34,7 +34,8 @@ const VARIANTS = {
 };
 
 function Badge({ children, tone }) {
-  const cls = tone === "sale" ? "bg-brand text-ink" : "bg-ink text-white";
+  const cls =
+    tone === "sale" ? "bg-brand text-ink" : tone === "soldout" ? "bg-danger text-white" : "bg-ink text-white";
   return (
     <span className={cn("pointer-events-none rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] md:px-[11px] md:py-[5px] md:text-[10.5px] md:tracking-[0.07em]", cls)}>
       {children}
@@ -192,10 +193,20 @@ export function ProductCard({ product, variant = "grid", hidePrice = false, clas
               this the wider "Save ৳260" badge slid underneath the heart and got
               clipped on narrow phones. flex-wrap lets a long combination drop
               to a second line instead of overflowing. */}
+          {/* Sold out speaks alone. "New" or "Save ৳260" beside it advertises
+              something the customer can't buy, and the row reads as noise —
+              merchant's call, and the badge is the only sold-out signal now that
+              the image is no longer washed out. */}
           <div className="pointer-events-none absolute left-2.5 right-[52px] top-2.5 flex flex-wrap gap-1.5 md:left-3 md:right-[54px] md:top-3">
-            {isPreOrderActive && <Badge tone="preorder">Pre-order</Badge>}
-            {isNewArrival && <Badge tone="new">New</Badge>}
-            {onSale && <Badge tone="sale">Save {formatTaka(savingsAmount(product))}</Badge>}
+            {outOfStock ? (
+              <Badge tone="soldout">Sold Out</Badge>
+            ) : (
+              <>
+                {isPreOrderActive && <Badge tone="preorder">Pre-order</Badge>}
+                {isNewArrival && <Badge tone="new">New</Badge>}
+                {onSale && <Badge tone="sale">Save {formatTaka(savingsAmount(product))}</Badge>}
+              </>
+            )}
           </div>
 
           <WishlistButton
@@ -203,13 +214,10 @@ export function ProductCard({ product, variant = "grid", hidePrice = false, clas
             className="absolute right-2.5 top-2.5 size-[34px] border-0 bg-white/[0.94] text-ink shadow-[0_1px_4px_rgba(16,18,8,0.12)] hover:bg-white"
           />
 
-          {outOfStock && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[rgba(250,250,247,0.55)]">
-              <span className="rounded-full border border-line bg-white px-2.5 py-[5px] text-[9px] font-bold uppercase tracking-[0.06em] text-ink-soft md:px-3.5 md:py-[7px] md:text-[11px] md:tracking-[0.07em]">
-                Sold Out
-              </span>
-            </div>
-          )}
+          {/* The 55%-opaque wash that used to cover this image is gone: it made
+              the photo hard to see, and a sold-out piece is still the thing a
+              collector is deciding to wait for. The red badge above carries the
+              status instead. */}
         </div>
 
         <div className={cn("flex flex-1 flex-col", v.pad)}>

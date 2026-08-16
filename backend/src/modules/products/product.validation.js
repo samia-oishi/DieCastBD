@@ -13,6 +13,11 @@ export const listProductsQuerySchema = {
     newArrival: z.coerce.boolean().optional(),
     sort: z.enum(["newest", "price-asc", "price-desc", "title-asc"]).optional().default("newest"),
     q: z.string().optional(),
+    // Shop listing only: pushes sold-out items below every in-stock one across
+    // the whole result set. Opt-in rather than default so the homepage
+    // carousels and the brand/category landing pages keep the exact ordering
+    // they have today (their ItemList structured data is built from it).
+    soldOutLast: z.coerce.boolean().optional(),
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).max(100).optional().default(24),
   }),
