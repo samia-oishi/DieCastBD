@@ -1221,3 +1221,19 @@ The build followed the research. The catalogue was sitting uncrawled because ser
 Content shipped as drafts, not as published copy — docs/content-drafts/ holds 5 collection packages, 4 guides and 32 product descriptions, every claim traceable to the catalogue, settings, or the store's own existing copy, with ⚠ VERIFY markers where only the merchant can confirm. Mid-session the merchant added that mainlines and CCA/MSZ/Bburago/Tomica are coming: recorded in the drafts and decision #91 — new brands flow through the whole system with zero code, and the broad "hot wheels price in bangladesh" head term moves from month-4-deferred to directly winnable once mainline price points exist on-site.
 
 Verified: frontend 134/134, backend 165/165, strict prerender 48/48 with distinct titles/canonicals, /collections carrying 32 product anchors in raw HTML, brand bodies up from ~158 to 326+ words, hydration parity green on both body-baked route types.
+
+---
+
+## 2026-08-07 — Homepage: product cards paint with the shell, and a 335 KB preload bug
+
+Merchant: the header and other sections appear but product cards take time — "it should load everything at the same time. Image loader can be image but text & all card information should be load at the same time."
+
+Measured before touching anything. On the live site the shell painted at ~807 ms with skeletons, and the first product card arrived at ~1043 ms; on fast-3G that gap was ~830 ms. Cause: the settings bake from the earlier first-paint work covered the shell and hero, but each carousel still made its own round trip once JS booted.
+
+Fixed by extending the same bake to the homepage's product queries — `__HOME_DATA__` alongside `__SETTINGS__`, read as TanStack `initialData`. Full reasoning in `docs/plan.md` #93. **Result, A/B'd on identical build/server/port/API: gap 830 ms → 1 ms, and the skeleton phase gone entirely.**
+
+**The unplanned find was worth more than the planned work.** The hero `<link rel="preload">` I added earlier emitted the *raw* Cloudinary URL, while the `<img>` requests `f_auto,q_auto` variants via srcSet. So every visitor downloaded two different images: a 335 KB untransformed PNG that was never displayed, plus the 19 KB one that was. The preload meant to accelerate the LCP was starving it of ~1.7 s of fast-3G bandwidth. Now it carries `imagesrcset`/`imagesizes` matching the element, with the `sizes` string shared as `HERO_SIZES` so they can't drift again. Settings imagery 449 KB → 114 KB; **fast-3G LCP ~10.6 s → ~8.06 s**.
+
+Two process notes. First, my initial A/B was invalid — the un-baked variant showed "cards never load", which I nearly reported as a result; it was the preview origin missing from the backend CORS allowlist, the same trap that caused the original prerender bug. Rebuilt against a same-origin proxy so the comparison held only one variable. Second, I nearly shipped a `ReferenceError`: `HERO_SIZES` was used in HeroSection without being imported — caught by the identifier audit, which is the third time that audit has caught exactly this.
+
+Verified: three runs per variant (the effects are consistent, not noise); all five queries still refetch after the bake, so prices and stock are revalidated rather than frozen; a malformed payload degrades to a normal fetch. Frontend 146/146 (12 new), backend 165/165, lint and build clean.

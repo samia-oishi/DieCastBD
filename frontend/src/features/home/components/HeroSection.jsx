@@ -3,7 +3,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
 import { formatTaka } from "@/lib/currency";
-import { cloudinaryHero, cloudinaryHeroSrcSet } from "@/lib/cloudinary";
+import { cloudinaryHero, cloudinaryHeroSrcSet, HERO_SIZES } from "@/lib/cloudinary";
 import { cn } from "@/lib/utils";
 
 // Shipped design copy for each hero style. This is the real, live content — an
@@ -77,9 +77,8 @@ function HeroImage({ image, className, radius = "rounded-[16px] md:rounded-[24px
       <img
         src={cloudinaryHero(image.url)}
         srcSet={cloudinaryHeroSrcSet(image.url)}
-        // PanelHero caps the image at half a 1360px shell on desktop; PhotoHero
-        // runs full-bleed. 100vw below md, ~half the shell above it.
-        sizes="(min-width: 768px) 50vw, 100vw"
+        // Shared with the prerendered preload's `imagesizes` — see HERO_SIZES.
+        sizes={HERO_SIZES}
         alt=""
         loading="eager"
         fetchPriority="high"

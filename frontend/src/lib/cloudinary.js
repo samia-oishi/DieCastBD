@@ -46,6 +46,16 @@ export function cloudinaryHeroSrcSet(url) {
     .join(", ");
 }
 
+/** The hero <img>'s `sizes`. PanelHero caps the image at half a 1360px shell on
+ * desktop; PhotoHero runs full-bleed. 100vw below md, ~half the shell above it.
+ *
+ * Exported because scripts/prerender.mjs puts the identical value in the
+ * homepage's `<link rel="preload" imagesizes>`. When the two disagreed the
+ * browser preloaded one candidate and the element requested another, so the
+ * hero was downloaded twice — keep them reading from this one constant.
+ */
+export const HERO_SIZES = "(min-width: 768px) 50vw, 100vw";
+
 // Small fixed-size thumbnails (cart line items, checkout/receipt line items —
 // all well under 100px tall) don't need the full 800px card image.
 const THUMB_TRANSFORM = "c_limit,w_200,f_auto,q_auto";

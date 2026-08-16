@@ -47,6 +47,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { injectHead, injectRoot } from "../src/lib/seo/injectHead.js";
+import { paramsKey } from "../src/lib/paramsKey.js";
+import { HOME_PRODUCT_QUERIES } from "../src/features/home/homeQueries.js";
+import { cloudinaryHero, cloudinaryHeroSrcSet, HERO_SIZES } from "../src/lib/cloudinary.js";
 import {
   buildCollectionsIndex,
   renderCollectionBody,
@@ -163,6 +166,35 @@ async function api(pathname) {
 /** The whole catalogue. The list payload already carries everything a product
  * head needs (seo, description, thumbnail, gallery, price, salePrice,
  * availableStock, sku, modelNumber, brand) — no per-product fetch required. */
+/** Fields a product card provably cannot render, dropped from the baked
+ * homepage payload — `description` alone is a sixth of a product's JSON.
+ *
+ * Deliberately a DENYLIST, not an allowlist of card fields. ProductCard
+ * destructures nine fields but also hands the whole product to WishlistButton,
+ * useAddToCart and the pricing helpers, so an allowlist that missed one would
+ * break the card for the moment before the live refetch replaces it — a bug
+ * that only appears in the first second of a cold load and would be miserable
+ * to find. Everything here is prose, SEO or bookkeeping that no card path
+ * touches; when in doubt a field stays, since the cost is only bytes.
+ */
+const NON_CARD_FIELDS = [
+  "description",
+  "features",
+  "specifications",
+  "seo",
+  "tags",
+  "createdAt",
+  "updatedAt",
+  "isDeleted",
+  "__v",
+];
+
+function trimForCard(product) {
+  const out = { ...product };
+  for (const field of NON_CARD_FIELDS) delete out[field];
+  return out;
+}
+
 async function fetchAllProducts() {
   const first = await apiEnvelope("/products?limit=100&page=1");
   if (!first) return [];
@@ -347,6 +379,34 @@ async function main() {
 
   log(`discovered ${routes.length} routes · ${productsBySlug.size} products`);
 
+  // Everything the homepage needs on first paint, fetched from the SAME
+  // endpoints the browser would call. Settings alone left the carousels showing
+  // skeletons while their own round trips completed; this puts the card text
+  // and prices in the HTML so they paint with the shell and only images stream.
+  //
+  // Deliberately re-queries the API per homepage query rather than filtering
+  // the already-fetched `products` list: "featured"/"newArrival"/"hero" and the
+  // sort order are the server's definitions, and re-implementing them here
+  // would drift the first time one changed. A failed query is simply omitted —
+  // that carousel falls back to today's runtime fetch rather than baking junk.
+  const homeData = { products: {}, brands: brands ?? undefined, categories: categories ?? undefined };
+  await Promise.all(
+    Object.values(HOME_PRODUCT_QUERIES).map(async (params) => {
+      const qs = new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "")
+      ).toString();
+      const envelope = await apiEnvelope(`/products?${qs}`);
+      if (envelope?.data) {
+        homeData.products[paramsKey(params)] = { ...envelope, data: envelope.data.map(trimForCard) };
+      }
+    })
+  );
+  const bakedQueries = Object.keys(homeData.products).length;
+  log(`home payload: ${bakedQueries}/${Object.keys(HOME_PRODUCT_QUERIES).length} product queries · ${homeData.brands?.length ?? 0} brands · ${homeData.categories?.length ?? 0} categories`);
+  if (bakedQueries < Object.keys(HOME_PRODUCT_QUERIES).length) {
+    fail(`only ${bakedQueries} of ${Object.keys(HOME_PRODUCT_QUERIES).length} homepage product queries baked — carousels will load late`);
+  }
+
   await pool(routes, 6, async (route) => {
     try {
       const resolved = await modelFor(route, ctx);
@@ -365,8 +425,19 @@ async function main() {
       if (route === "/" && settings) {
         const heroUrl = settings.homepageSections?.hero?.image?.url;
         extra = [
-          heroUrl ? `<link rel="preload" as="image" fetchpriority="high" href="${heroUrl.replace(/"/g, "&quot;")}">` : "",
+          // The preload MUST describe the same candidates as the <img> in
+          // HeroSection, or the browser downloads one image for the preload and
+          // a different one for the element. It did exactly that: the raw
+          // Cloudinary URL was preloaded at 335 KB while the <img> requested a
+          // 19 KB `f_auto,q_auto` variant — a wasted third of a megabyte, about
+          // 1.7s of fast-3G bandwidth, stolen from the render it was meant to
+          // accelerate. imagesrcset/imagesizes mirror the element's srcSet and
+          // sizes so the preload resolves to the identical candidate.
+          heroUrl
+            ? `<link rel="preload" as="image" fetchpriority="high" imagesrcset="${cloudinaryHeroSrcSet(heroUrl).replace(/"/g, "&quot;")}" imagesizes="${HERO_SIZES}" href="${cloudinaryHero(heroUrl).replace(/"/g, "&quot;")}">`
+            : "",
           `<script type="application/json" id="__SETTINGS__">${JSON.stringify(settings).replace(/</g, "\\u003c")}</script>`,
+          homeData ? `<script type="application/json" id="__HOME_DATA__">${JSON.stringify(homeData).replace(/</g, "\\u003c")}</script>` : "",
         ]
           .filter(Boolean)
           .join("\n    ");

@@ -7,6 +7,7 @@ import { useSettings } from "@/features/settings/api/useSettings";
 import { useProducts, useProduct } from "@/features/products/api/useProducts";
 import { useBrands } from "@/features/brands/api/useBrands";
 import { useCategories } from "@/features/categories/api/useCategories";
+import { HOME_PRODUCT_QUERIES } from "./homeQueries";
 import { HeroSection } from "./components/HeroSection";
 import { ShopByShelf } from "./components/ShopByShelf";
 import { FeaturedSpotlight } from "./components/FeaturedSpotlight";
@@ -26,9 +27,12 @@ export function HomePage() {
   const { data: brands } = useBrands();
   const { data: categories } = useCategories();
 
-  const featured = useProducts({ featured: true, limit: 4 });
-  const newArrivals = useProducts({ newArrival: true, limit: 8, sort: "newest" });
-  const collectorPicks = useProducts({ hero: true, limit: 8 });
+  // Params come from homeQueries.js because scripts/prerender.mjs fetches
+  // exactly these at build time and bakes the responses into the HTML — a
+  // literal here that drifted from that list would silently disable the bake.
+  const featured = useProducts(HOME_PRODUCT_QUERIES.featured);
+  const newArrivals = useProducts(HOME_PRODUCT_QUERIES.newArrivals);
+  const collectorPicks = useProducts(HOME_PRODUCT_QUERIES.collectorPicks);
   // Admin can pin a specific product to the Featured spotlight card; resolve it
   // (with brand + all fields) via the same by-slug endpoint the PDP uses.
   const spotlightProduct = useProduct(settings?.featuredSpotlight?.productSlug);

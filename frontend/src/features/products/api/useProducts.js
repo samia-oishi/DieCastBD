@@ -1,12 +1,24 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { paramsKey } from "@/lib/paramsKey";
+import { bakedProductList } from "@/lib/bakedData";
 import { productKeys } from "./productKeys";
 import { listProducts, getProductBySlug, getRelatedProducts, getFilterOptions } from "./productApi";
 
 export function useProducts(params) {
+  // On the prerendered homepage, this query's response is already in the HTML,
+  // so the cards render with the shell instead of after a round trip. Any query
+  // that wasn't baked (every other page) gets undefined and behaves as before.
+  const baked = bakedProductList(paramsKey(params));
+
   return useQuery({
     queryKey: productKeys.list(params),
     queryFn: () => listProducts(params),
     placeholderData: (previous) => previous, // keeps the grid from flashing empty between pages/filters
+    initialData: baked,
+    // Build-time data, so treat it as instantly stale: TanStack refetches on
+    // mount and swaps in live stock/prices, while the baked copy is what paints
+    // first. Without this the page could sit on deploy-time data.
+    initialDataUpdatedAt: baked ? 0 : undefined,
   });
 }
 
