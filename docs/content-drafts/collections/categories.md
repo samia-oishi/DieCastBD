@@ -105,9 +105,13 @@ A: Right here — we stock folding blister cases, PVC display cases and top-open
 shells from ৳150, sold per piece with nationwide delivery. They fit standard Hot Wheels
 premium and Car Culture cards.
 
-**Q: Do protectors fit MINI GT blister cards?**
-A: ⚠ VERIFY — confirm which of your protector models fit MINI GT blisters before
-answering this publicly, then state it plainly (collectors will ask).
+**Q: Do these protectors fit MINI GT blister cards?**
+A: No. Our current protectors are sized for standard Hot Wheels premium and Car Culture
+cards — MINI GT blister cards are a different size and won't fit. If you collect MINI GT
+on blister, a closed display cabinet with silica gel is the better protection route for
+now; we'll say so here the moment we stock a protector that does fit.
+*(Merchant-confirmed 2026-08-16. Answering this honestly prevents returns and is exactly
+the kind of question collectors trust a shop for.)*
 
 **Q: Why do carded collectors use protectors?**
 A: The card IS the collectible. Mint-on-card pieces hold value; bent or sun-faded cards
