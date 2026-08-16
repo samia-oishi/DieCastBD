@@ -395,16 +395,30 @@ async function main() {
       const qs = new URLSearchParams(
         Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "")
       ).toString();
-      const envelope = await apiEnvelope(`/products?${qs}`);
+      // Plain fetch rather than apiEnvelope(), which calls fail() on any error
+      // — and fail() is fatal under PRERENDER_STRICT. These three queries are a
+      // speed optimization; losing one must degrade to a runtime fetch, never
+      // take the deploy down. (A build-time 429 from the rate limiter is a very
+      // real way for that to happen — it happened while developing this.)
+      const envelope = await fetch(`${API_BASE}/products?${qs}`, { headers: { accept: "application/json" } })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
       if (envelope?.data) {
         homeData.products[paramsKey(params)] = { ...envelope, data: envelope.data.map(trimForCard) };
       }
     })
   );
   const bakedQueries = Object.keys(homeData.products).length;
-  log(`home payload: ${bakedQueries}/${Object.keys(HOME_PRODUCT_QUERIES).length} product queries · ${homeData.brands?.length ?? 0} brands · ${homeData.categories?.length ?? 0} categories`);
-  if (bakedQueries < Object.keys(HOME_PRODUCT_QUERIES).length) {
-    fail(`only ${bakedQueries} of ${Object.keys(HOME_PRODUCT_QUERIES).length} homepage product queries baked — carousels will load late`);
+  const wantedQueries = Object.keys(HOME_PRODUCT_QUERIES).length;
+  log(`home payload: ${bakedQueries}/${wantedQueries} product queries · ${homeData.brands?.length ?? 0} brands · ${homeData.categories?.length ?? 0} categories`);
+  // warn(), NOT fail(): fail() is fatal under PRERENDER_STRICT, which is on for
+  // Production and Preview. A query that didn't bake costs that carousel a
+  // round trip — exactly the behaviour before this optimization existed — and
+  // no deploy should be blocked over a page loading the way it used to. Same
+  // reasoning as the guides fetch above. Missing route METADATA still fails,
+  // because that damage is invisible and lasting; this is just slower.
+  if (bakedQueries < wantedQueries) {
+    warn(`only ${bakedQueries} of ${wantedQueries} homepage product queries baked — those carousels fall back to loading at runtime.`);
   }
 
   await pool(routes, 6, async (route) => {
