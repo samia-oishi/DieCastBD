@@ -44,6 +44,22 @@ function Badge({ tone, children }) {
   );
 }
 
+/** Description text split on blank lines into real paragraphs. The admin
+ * textarea accepts newlines, but a single <p> collapses them — so the 120–200
+ * word descriptions written for SEO (plan.md #91) would render as one blob. */
+function DescriptionParagraphs({ text, className }) {
+  return text
+    .split(/\n{2,}/)
+    .map((para) => para.trim())
+    .filter(Boolean)
+    .map((para, i) => (
+      // eslint-disable-next-line react/no-array-index-key -- order IS the identity
+      <p key={i} className={className}>
+        {para}
+      </p>
+    ));
+}
+
 function ShareCircle({ title, className }) {
   const onShare = async () => {
     const url = window.location.href;
@@ -216,7 +232,7 @@ export function ProductDetailPage() {
             {product.description && (
               <div className="mt-7">
                 <div className="font-display text-lg font-bold text-ink">Description</div>
-                <p className="mt-2.5 text-[14.5px] leading-[1.7] text-ink-soft">{product.description}</p>
+                <DescriptionParagraphs text={product.description} className="mt-2.5 text-[14.5px] leading-[1.7] text-ink-soft" />
               </div>
             )}
 
@@ -246,7 +262,9 @@ export function ProductDetailPage() {
           <h1 className="mt-2 font-display text-[23px] font-extrabold leading-[1.2] tracking-[-0.01em] text-ink">{product.title}</h1>
           <div className="mt-3"><PriceBlock size="sm" /></div>
           {outOfStock && <NotifyButton className="mt-4 h-12 w-full text-[14px]" />}
-          {product.description && <p className="mt-3.5 text-[13.5px] leading-[1.65] text-ink-soft">{product.description}</p>}
+          {product.description && (
+            <DescriptionParagraphs text={product.description} className="mt-3.5 text-[13.5px] leading-[1.65] text-ink-soft" />
+          )}
         </div>
         <ReassuranceCard className="mx-4 mt-[18px]" />
         <ProductSpecs product={product} className="mx-4 mt-6" />

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router";
 import { SITE_URL } from "@/lib/siteUrl";
 import { buildCollection } from "@/lib/seo/routes";
 import { formatTaka } from "@/lib/currency";
+import { PROSE } from "@/components/shared/prose";
 import { SeoHead } from "@/components/shared/Seo";
 import { Container } from "@/components/shared/Container";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
@@ -135,6 +136,81 @@ export function CollectionPage({ kind }) {
             >
               See all {collection.name} — filter &amp; sort
             </Link>
+          </div>
+        )}
+
+        {/* Live price table — the answer to "<collection> price in bangladesh",
+            rendered from the SAME products query as the grid, so it is honest
+            by construction: real catalogue, live prices, live availability.
+            (Covers the current page of 24; the full catalogue is 32 products.) */}
+        {products.length > 0 && (
+          <div className="mx-auto mt-12 max-w-[760px]">
+            <h2 className="font-display text-[20px] font-bold text-ink">
+              {collection.name} price list in Bangladesh
+            </h2>
+            <div className="mt-4 overflow-x-auto rounded-[14px] border border-line">
+              <table className="w-full text-left text-[13.5px]">
+                <thead>
+                  <tr className="border-b border-line bg-[#FCFCF9] text-[12px] uppercase tracking-[0.08em] text-faint">
+                    <th className="px-4 py-3 font-semibold">Model</th>
+                    <th className="px-4 py-3 font-semibold">Price (BDT)</th>
+                    <th className="px-4 py-3 font-semibold">Availability</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((p) => {
+                    const price = p.salePrice > 0 && p.salePrice < p.price ? p.salePrice : p.price;
+                    const inStock = (p.availableStock ?? 0) > 0;
+                    return (
+                      <tr key={p.slug} className="border-b border-line last:border-0">
+                        <td className="px-4 py-3">
+                          <Link to={`/products/${p.slug}`} className="font-medium text-brand-deep hover:underline">
+                            {p.title}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-ink">{formatTaka(price)}</td>
+                        <td className="px-4 py-3">
+                          {inStock ? (
+                            <span className="text-ink-soft">In stock</span>
+                          ) : (
+                            <span className="text-faint">Out of stock</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2.5 text-[12.5px] text-faint">
+              Live prices from the current catalogue — cash on delivery, nationwide shipping across Bangladesh.
+            </p>
+          </div>
+        )}
+
+        {/* Merchant-authored landing content (Admin → Brands/Categories →
+            Landing page content). Sanitized server-side; absent until written. */}
+        {collection.content && (
+          <div className="mx-auto mt-10 max-w-[760px]">
+            <div className={PROSE} dangerouslySetInnerHTML={{ __html: collection.content }} />
+          </div>
+        )}
+
+        {/* Collection FAQs — real merchant answers only; the section (and its
+            FAQPage JSON-LD, added in buildCollection) don't exist until then. */}
+        {(collection.faqs ?? []).filter((f) => f?.question && f?.answer).length > 0 && (
+          <div className="mx-auto mt-10 max-w-[760px]">
+            <h2 className="font-display text-[20px] font-bold text-ink">Frequently asked questions</h2>
+            <div className="mt-4 flex flex-col gap-5">
+              {collection.faqs
+                .filter((f) => f?.question && f?.answer)
+                .map((f) => (
+                  <div key={f.question}>
+                    <h3 className="text-[15px] font-bold text-ink">{f.question}</h3>
+                    <p className="mt-1.5 text-[14px] leading-[1.7] text-ink-soft">{f.answer}</p>
+                  </div>
+                ))}
+            </div>
           </div>
         )}
       </Container>

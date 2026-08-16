@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 
 import { cn } from "@/lib/utils";
+import { PROSE } from "@/components/shared/prose";
 import { SITE_URL } from "@/lib/siteUrl";
 import { buildCmsPage } from "@/lib/seo/routes";
 import { ROUTES } from "@/constants/routes";
@@ -19,9 +20,6 @@ const POLICIES = [
   { slug: "privacy-policy", label: "Privacy", to: ROUTES.PRIVACY },
   { slug: "terms-conditions", label: "Terms", to: ROUTES.TERMS },
 ];
-
-const PROSE =
-  "flex flex-col gap-3 text-[14.5px] leading-[1.7] text-ink-soft [&_a]:font-semibold [&_a]:text-brand-deep [&_h2]:mt-6 [&_h2]:font-display [&_h2]:text-[17.5px] [&_h2]:font-bold [&_h2]:text-ink [&_h3]:mt-4 [&_h3]:font-display [&_h3]:font-bold [&_h3]:text-ink [&_li]:ml-5 [&_ol]:list-decimal [&_strong]:font-semibold [&_strong]:text-ink [&_ul]:list-disc";
 
 function formatUpdated(value) {
   if (!value) return null;

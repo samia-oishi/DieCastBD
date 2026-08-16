@@ -1,4 +1,5 @@
 import { Category } from "./category.model.js";
+import { sanitizeRichContent } from "../../utils/sanitizeContent.js";
 import { Product } from "../products/product.model.js";
 import { slugify } from "../../utils/slugify.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
@@ -29,19 +30,21 @@ export const listAllCategories = asyncHandler(async (req, res) => {
 });
 
 export const createCategory = asyncHandler(async (req, res) => {
-  const { name, description, parentCategory, sortOrder } = req.body;
+  const { name, description, parentCategory, sortOrder, content, faqs } = req.body;
   const slug = slugify(name);
 
   if (await Category.exists({ slug })) {
     throw ApiError.conflict("A category with this name already exists");
   }
 
-  const category = await Category.create({ name, slug, description, parentCategory, sortOrder });
+  const category = await Category.create({ name, slug, description, parentCategory, sortOrder, content: sanitizeRichContent(content), faqs });
   sendSuccess(res, { data: category, status: 201, message: "Category created" });
 });
 
 export const updateCategory = asyncHandler(async (req, res) => {
   const updates = { ...req.body };
+  // Landing-page content renders via dangerouslySetInnerHTML on the storefront.
+  if (updates.content !== undefined) updates.content = sanitizeRichContent(updates.content);
 
   // Immutable after creation (plan.md #90) — same reasoning as brands:
   // /category/<slug> is an indexed landing page, and a rename had no redirect.

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router";
 import { Pencil, Trash2, ImageUp, Plus } from "lucide-react";
@@ -25,6 +25,7 @@ import { AdminButton } from "@/features/admin/shell/AdminButton";
 import { AdminModal } from "@/features/admin/shell/AdminModal";
 import { adminToast } from "@/features/admin/shell/adminToast";
 import { adminInputCls, adminTextareaCls } from "@/features/admin/shell/adminFieldCls";
+import { RichTextEditor } from "@/features/admin/pages/components/RichTextEditor";
 import { catalogItemSchema } from "../schemas/catalogSchemas";
 
 const GRID = "md:grid-cols-[52px_minmax(160px,1fr)_minmax(140px,1fr)_90px_90px_110px]";
@@ -84,20 +85,31 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
     handleSubmit,
     reset,
     watch,
+    control,
     formState: { errors },
-  } = useForm({ resolver: zodResolver(catalogItemSchema), defaultValues: { name: "", description: "", sortOrder: 0 } });
+  } = useForm({
+    resolver: zodResolver(catalogItemSchema),
+    defaultValues: { name: "", description: "", sortOrder: 0, content: "", faqs: [] },
+  });
+  const faqArray = useFieldArray({ control, name: "faqs" });
 
   const nameValue = watch("name");
 
   const openCreate = () => {
     setEditingItem(null);
-    reset({ name: "", description: "", sortOrder: 0 });
+    reset({ name: "", description: "", sortOrder: 0, content: "", faqs: [] });
     setModalOpen(true);
   };
 
   const openEdit = (item) => {
     setEditingItem(item);
-    reset({ name: item.name, description: item.description ?? "", sortOrder: item.sortOrder ?? 0 });
+    reset({
+      name: item.name,
+      description: item.description ?? "",
+      sortOrder: item.sortOrder ?? 0,
+      content: item.content ?? "",
+      faqs: item.faqs ?? [],
+    });
     setModalOpen(true);
   };
 
@@ -307,6 +319,60 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
               <span className="text-[12.5px] font-semibold text-ink">Sort order</span>
               <Input type="number" className={adminInputCls} {...register("sortOrder")} />
             </label>
+
+            {/* Landing page content — the depth that lets /brand/<slug> and
+                /category/<slug> rank for "<name> price in bangladesh" queries.
+                Renders below the product grid; the sections don't exist on the
+                storefront until real copy is saved here. */}
+            <div className="flex flex-col gap-1.5 border-t border-line-soft pt-4">
+              <span className="text-[12.5px] font-semibold text-ink">Landing page content</span>
+              <span className="-mt-1 text-[11.5px] text-faint">
+                Long-form copy for the {singular.toLowerCase()}&apos;s landing page — series background, buying
+                information, what collectors should know. Shown under the product grid and price list.
+              </span>
+              <Controller
+                control={control}
+                name="content"
+                render={({ field }) => <RichTextEditor value={field.value} onChange={field.onChange} />}
+              />
+              {errors.content && <span className="text-[11.5px] text-danger">{errors.content.message}</span>}
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              <span className="text-[12.5px] font-semibold text-ink">FAQs</span>
+              <span className="-mt-2 text-[11.5px] text-faint">
+                Real questions customers ask about this {singular.toLowerCase()} — authenticity, COD, delivery.
+                Rendered on the landing page and emitted as FAQ schema.
+              </span>
+              {faqArray.fields.map((field, i) => (
+                <div key={field.id} className="flex flex-col gap-2 rounded-[12px] border border-line-soft bg-[#FCFCF9] p-3">
+                  <Input className={adminInputCls} placeholder="Question" {...register(`faqs.${i}.question`)} />
+                  {errors.faqs?.[i]?.question && (
+                    <span className="text-[11.5px] text-danger">{errors.faqs[i].question.message}</span>
+                  )}
+                  <Textarea rows={2} className={adminTextareaCls} placeholder="Answer" {...register(`faqs.${i}.answer`)} />
+                  {errors.faqs?.[i]?.answer && (
+                    <span className="text-[11.5px] text-danger">{errors.faqs[i].answer.message}</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => faqArray.remove(i)}
+                    className="self-start text-[11.5px] font-semibold text-danger hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              {faqArray.fields.length < 15 && (
+                <button
+                  type="button"
+                  onClick={() => faqArray.append({ question: "", answer: "" })}
+                  className="self-start text-[12px] font-semibold text-brand-deep hover:underline"
+                >
+                  + Add FAQ
+                </button>
+              )}
+            </div>
           </form>
         </AdminModal>
       )}

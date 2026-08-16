@@ -268,6 +268,9 @@ export function buildCollectionJsonLd({ kind, slug, collection, products = [], t
 export function buildCollection({ kind, slug, collection, products, total, settings, siteUrl }) {
   const copy = collectionCopy(slug, collection);
   const url = absoluteUrl(siteUrl, `/${kind}/${slug}`);
+  // FAQPage rides along only when the merchant has written real Q&As for this
+  // collection (buildFaqJsonLdFromList returns null on empty — never fabricated).
+  const faqLd = buildFaqJsonLdFromList(collection.faqs ?? []);
   return {
     title: resolveTitle({ title: copy.title, noTemplate: true, settings }),
     description: resolveDescription({ description: copy.description, settings }),
@@ -275,7 +278,7 @@ export function buildCollection({ kind, slug, collection, products, total, setti
     ogUrl: url,
     ogType: "website",
     image: resolveImage({ image: collection.logo?.url ?? collection.image?.url, settings }),
-    jsonLd: buildCollectionJsonLd({ kind, slug, collection, products, total, siteUrl }),
+    jsonLd: [...buildCollectionJsonLd({ kind, slug, collection, products, total, siteUrl }), ...(faqLd ? [faqLd] : [])],
   };
 }
 
@@ -289,15 +292,26 @@ export function buildCmsPage({ slug, page, settings, siteUrl }) {
     description: resolveDescription({ description: page.seo?.description || undefined, settings }),
     canonical: page.seo?.canonicalUrl || absoluteUrl(siteUrl, `/${slug}`),
     ogUrl: absoluteUrl(siteUrl, `/${slug}`),
+    // Guides and policy pages are documents, not storefronts — og:type article
+    // plus a real modified time (the sitemap already emits it as lastmod).
+    ogType: "article",
     image: resolveImage({ settings }),
+    extraMeta: page.updatedAt
+      ? [{ property: "article:modified_time", content: new Date(page.updatedAt).toISOString() }]
+      : [],
     jsonLd: [],
   };
 }
 
 /* ------------------------------------------------------- static marketing -- */
 
-export function buildFaqJsonLd({ settings }) {
-  const faqs = settings?.faqs ?? [];
+/** FAQPage JSON-LD from any list of real Q&As — the site-wide /faq page passes
+ * settings.faqs, collection landing pages pass their own. Honest caveat,
+ * recorded in plan.md #91: Google has shown FAQ rich results almost only for
+ * government/health sites since 2023, so the on-page FAQ TEXT is the value
+ * (it answers the long-tail queries); the schema is a cheap consistency bonus,
+ * not a CTR play. */
+export function buildFaqJsonLdFromList(faqs = []) {
   const mainEntity = faqs
     .filter((f) => f?.question && f?.answer)
     .map((f) => ({
@@ -308,6 +322,10 @@ export function buildFaqJsonLd({ settings }) {
   // No content = no schema (never fabricate to match a mock).
   if (!mainEntity.length) return null;
   return { "@context": "https://schema.org", "@type": "FAQPage", mainEntity };
+}
+
+export function buildFaqJsonLd({ settings }) {
+  return buildFaqJsonLdFromList(settings?.faqs ?? []);
 }
 
 /** `key` is one of the STATIC_PAGE_COPY keys: "about" | "contact" | "faq". */

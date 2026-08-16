@@ -1,4 +1,5 @@
 import { Brand } from "./brand.model.js";
+import { sanitizeRichContent } from "../../utils/sanitizeContent.js";
 import { Product } from "../products/product.model.js";
 import { slugify } from "../../utils/slugify.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
@@ -28,19 +29,21 @@ export const listAllBrands = asyncHandler(async (req, res) => {
 });
 
 export const createBrand = asyncHandler(async (req, res) => {
-  const { name, description, sortOrder } = req.body;
+  const { name, description, sortOrder, content, faqs } = req.body;
   const slug = slugify(name);
 
   if (await Brand.exists({ slug })) {
     throw ApiError.conflict("A brand with this name already exists");
   }
 
-  const brand = await Brand.create({ name, slug, description, sortOrder });
+  const brand = await Brand.create({ name, slug, description, sortOrder, content: sanitizeRichContent(content), faqs });
   sendSuccess(res, { data: brand, status: 201, message: "Brand created" });
 });
 
 export const updateBrand = asyncHandler(async (req, res) => {
   const updates = { ...req.body };
+  // Landing-page content renders via dangerouslySetInnerHTML on the storefront.
+  if (updates.content !== undefined) updates.content = sanitizeRichContent(updates.content);
 
   // Immutable after creation (plan.md #90). /brand/<slug> is an indexable
   // landing page — sitemap priority 0.9, above products — so renaming a brand

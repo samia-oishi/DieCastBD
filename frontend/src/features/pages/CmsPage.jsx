@@ -1,6 +1,7 @@
 import { useParams } from "react-router";
 
 import { cn } from "@/lib/utils";
+import { PROSE } from "@/components/shared/prose";
 import { SITE_URL } from "@/lib/siteUrl";
 import { buildCmsPage } from "@/lib/seo/routes";
 import { SeoHead } from "@/components/shared/Seo";
@@ -11,9 +12,6 @@ import { PageLoadError } from "@/components/shared/PageLoadError";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { usePage } from "./api/usePages";
 import { BlockRenderer } from "./components/BlockRenderer";
-
-const PROSE =
-  "flex flex-col gap-3 text-[14.5px] leading-[1.7] text-ink-soft [&_a]:font-semibold [&_a]:text-brand-deep [&_h2]:mt-6 [&_h2]:font-display [&_h2]:text-[17.5px] [&_h2]:font-bold [&_h2]:text-ink [&_h3]:mt-4 [&_h3]:font-display [&_h3]:font-bold [&_h3]:text-ink [&_li]:ml-5 [&_ol]:list-decimal [&_strong]:font-semibold [&_strong]:text-ink [&_ul]:list-disc";
 
 /** Any merchant-built CMS page, reached at `/<slug>`.
  *
@@ -46,6 +44,14 @@ export function CmsPage() {
         <h1 className="font-display text-[28px] font-extrabold tracking-[-0.02em] text-ink md:text-[clamp(28px,4vw,36px)]">
           {page.title}
         </h1>
+        {/* Real freshness signal for guides — matches the article:modified_time
+            the head emits. No author byline: single-merchant store, and an
+            invented persona would violate the no-fabrication rule. */}
+        {page.updatedAt && (
+          <div className="mt-2 text-[13px] text-faint">
+            Updated {new Date(page.updatedAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+          </div>
+        )}
 
         <BlockRenderer blocks={blocks} products={page.blockProducts} className="mt-8" />
 
