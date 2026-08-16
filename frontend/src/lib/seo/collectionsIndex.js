@@ -18,6 +18,9 @@
  * Node imports this file — no JSX, no @/ aliases, no import.meta.env.
  */
 import { escapeAttr, escapeText } from "./injectHead.js";
+import { formatTaka } from "../currency.js";
+import { isOnSale } from "../pricing.js";
+import { collectionCopy } from "./collectionCopy.js";
 import { SITE_NAME, absoluteUrl, resolveDescription, resolveImage, resolveTitle } from "./constants.js";
 
 export const COLLECTIONS_TITLE = "All Collections & Products";
@@ -76,6 +79,60 @@ export function renderCollectionBody({ copy, collection, products = [], total = 
           .map((f) => `<h3>${escapeText(f.question)}</h3><p>${escapeText(f.answer)}</p>`)
           .join("")}</section>`
       : "",
+    `<p>${link("/collections", "Browse all collections & products")}</p>`,
+    `</main>`,
+  ];
+  return parts.filter(Boolean).join("\n");
+}
+
+/** Baked body for /products/<slug>.
+ *
+ * WHY products need this most: URL Inspection on a product showed
+ * "Referring page: None detected" and "Last crawl: N/A" — Google knew the URL
+ * from the sitemap alone, had never fetched it, and would have found an empty
+ * <div id="root"> if it had. Products are the pages that must rank for
+ * "<casting> price in bangladesh" queries, so they get an H1, the real price,
+ * stock state, the description, and — just as important — outbound links to
+ * their brand and to /collections, which turns the catalogue from a flat list
+ * of orphans into a connected graph.
+ *
+ * Prices and stock here are baked at build time; the React render replaces
+ * them with live values on first paint. That is the accepted trade recorded in
+ * plan.md #91 (rebuilds are manual by merchant decision), and Google renders JS
+ * so it sees the live figures — the baked numbers serve the pre-render pass.
+ */
+export function renderProductBody({ product, siteUrl }) {
+  const onSale = isOnSale(product);
+  const price = onSale ? product.salePrice : product.price;
+  const inStock = (product.availableStock ?? 0) > 0;
+  const brand = product.brand;
+
+  const crumbs = [
+    link("/", "Home"),
+    link("/shop", "Shop"),
+    brand?.slug ? link(`/brand/${brand.slug}`, brand.name) : "",
+  ].filter(Boolean);
+
+  const paragraphs = String(product.description ?? "")
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p>${escapeText(p)}</p>`)
+    .join("");
+
+  const parts = [
+    `<main style="max-width:760px;margin:0 auto;padding:32px 16px;font-family:system-ui,sans-serif">`,
+    `<nav>${crumbs.join(" › ")}</nav>`,
+    `<h1>${escapeText(product.title)}</h1>`,
+    `<p><strong>${escapeText(formatTaka(price))}</strong>${
+      onSale ? ` <span>(was ${escapeText(formatTaka(product.price))})</span>` : ""
+    } — ${inStock ? "In stock" : "Out of stock"}${
+      product.sku ? ` · SKU ${escapeText(product.sku)}` : ""
+    }</p>`,
+    paragraphs,
+    product.series ? `<p>Series: ${escapeText(product.series)}</p>` : "",
+    `<p>Cash on delivery · nationwide shipping across Bangladesh.</p>`,
+    brand?.slug ? `<p>${link(`/brand/${brand.slug}`, `More ${brand.name} in Bangladesh`)}</p>` : "",
     `<p>${link("/collections", "Browse all collections & products")}</p>`,
     `</main>`,
   ];

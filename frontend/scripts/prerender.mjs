@@ -34,7 +34,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { injectHead, injectRoot } from "../src/lib/seo/injectHead.js";
-import { buildCollectionsIndex, renderCollectionBody, renderCollectionsIndexBody } from "../src/lib/seo/collectionsIndex.js";
+import {
+  buildCollectionsIndex,
+  renderCollectionBody,
+  renderCollectionsIndexBody,
+  renderProductBody,
+} from "../src/lib/seo/collectionsIndex.js";
 import { collectionCopy } from "../src/lib/seo/collectionCopy.js";
 import {
   buildCmsPage,
@@ -222,7 +227,13 @@ async function modelFor(route, ctx) {
       fail(`product ${product[1]} is in the sitemap but not in /products`);
       return null;
     }
-    return buildProduct({ product: doc, settings, siteUrl });
+    // Body baked too: URL Inspection showed products with "Referring page:
+    // None detected" and an empty <div id="root"> — no content AND no inbound
+    // links. The body gives them both.
+    return {
+      model: buildProduct({ product: doc, settings, siteUrl }),
+      body: renderProductBody({ product: doc, siteUrl }),
+    };
   }
 
   const collection = route.match(/^\/(brand|category)\/([^/]+)$/);

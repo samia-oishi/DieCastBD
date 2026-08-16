@@ -153,6 +153,24 @@ async function main() {
     }
   }
 
+  // Product pages must carry a real body: an H1 and outbound links. Google's
+  // URL Inspection reported "Referring page: None detected" on every product —
+  // orphaned pages with empty bodies is exactly what leaves 32 URLs sitting in
+  // "Discovered – currently not indexed".
+  {
+    const sample = (report.routes ?? []).find((r) => r.route.startsWith("/products/"));
+    if (sample) {
+      const { html } = await loadRoute(sample.route);
+      if (check(html, `${sample.route} — not baked`)) {
+        check(countOf(html, /<h1[\s>]/g) === 1, `${sample.route} — expected exactly 1 <h1> in the baked body`);
+        check(
+          countOf(html, /<a href="\//g) >= 3,
+          `${sample.route} — expected at least 3 internal links (breadcrumb + brand + hub)`
+        );
+      }
+    }
+  }
+
   // Titles must be distinct — identical titles across URLs is the exact defect
   // that put this site in Search Console's "Alternate page" bucket.
   const titles = new Map();
