@@ -21,8 +21,9 @@
 // anywhere — Search Console duly reported "Referring page: None detected" on
 // products and parked the whole catalogue in "Discovered - currently not
 // indexed". So the pages that must rank now bake bodies too: /collections (the
-// link hub), /brand/* and /category/* (the landing pages), and /products/*
-// (which needed both content AND inbound links). /shop is skipped — its content
+// link hub), /brand/* and /category/* (the landing pages), /products/* (which
+// needed both content AND inbound links), and /:slug CMS guides — a guide IS
+// its text, so an empty body there is the worst case of all. /shop is skipped — its content
 // is filter-state dependent — and the home page is skipped because the LCP
 // work below (hero preload + inlined settings) is a measured optimization worth
 // more than body text there.
@@ -50,6 +51,7 @@ import {
   buildCollectionsIndex,
   renderCollectionBody,
   renderCollectionsIndexBody,
+  renderCmsPageBody,
   renderProductBody,
 } from "../src/lib/seo/collectionsIndex.js";
 import { collectionCopy } from "../src/lib/seo/collectionCopy.js";
@@ -276,7 +278,8 @@ async function modelFor(route, ctx) {
     }
     const page = await api(`/pages/${encodeURIComponent(slug)}`);
     if (!page) return null; // api() already recorded the failure
-    return buildCmsPage({ slug, page, settings, siteUrl });
+    // Guides are pure text — an empty body here is the worst case of all.
+    return { model: buildCmsPage({ slug, page, settings, siteUrl }), body: renderCmsPageBody({ page }) };
   }
 
   warn(`no builder for ${route} — leaving it CSR`);

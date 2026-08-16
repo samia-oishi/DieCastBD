@@ -138,6 +138,37 @@ export function renderProductBody({ product }) {
   return parts.filter(Boolean).join("\n");
 }
 
+/** Baked body for CMS pages at /<slug> — the guides.
+ *
+ * These matter more than any other body: a guide IS its text, so shipping one
+ * as an empty <div id="root"> means a 700-word article looks like a blank page
+ * to anything that reads HTML before running JS. `page.content` arrives already
+ * sanitized by the backend (utils/sanitizeContent.js) and is embedded as-is.
+ *
+ * Returns null for block-builder pages with no `content` — those are assembled
+ * by BlockRenderer at runtime and can't be reproduced here. Better to bake
+ * nothing than to bake a heading with no article under it.
+ */
+export function renderCmsPageBody({ page }) {
+  if (!page.content || !page.content.trim()) return null;
+
+  const updated = page.updatedAt
+    ? new Date(page.updatedAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    : null;
+
+  return [
+    `<main style="max-width:760px;margin:0 auto;padding:32px 16px;font-family:system-ui,sans-serif">`,
+    `<h1>${escapeText(page.title)}</h1>`,
+    updated ? `<p>Updated ${escapeText(updated)}</p>` : "",
+    page.tldr ? `<p>${escapeText(page.tldr)}</p>` : "",
+    page.content,
+    `<p>${link("/collections", "Browse all collections & products")}</p>`,
+    `</main>`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 /** The crawlable body. Semantic, unstyled-beyond-defaults HTML on purpose —
  * it shows only until React's first paint, and its audience is crawlers and
  * the reader who lands with JS still loading. Every entry is a REAL catalogue
