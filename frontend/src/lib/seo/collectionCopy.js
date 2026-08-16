@@ -18,6 +18,16 @@ export const SEO_COPY = {
     description:
       "Buy authentic Hot Wheels Premium diecast in Bangladesh. Real Riders, Car Culture and Boulevard 1:64 castings with collector-grade packaging, cash on delivery and nationwide shipping.",
   },
+  // Deliberately owns the BROAD head term "hot wheels price in bangladesh"
+  // rather than a mainline-qualified variant: someone searching the generic
+  // phrase is almost always price-shopping the toy-aisle cars, and mainline is
+  // what answers that intent. The premium page above keeps the narrower
+  // "hot wheels premium price" cluster, so the two don't compete.
+  "hot-wheels-mainline": {
+    title: "Hot Wheels Price in Bangladesh — Original Mainline Diecast",
+    description:
+      "Buy original Hot Wheels mainline diecast cars in Bangladesh — authentic Mattel 1:64 castings, Treasure Hunt chases, cash on delivery nationwide.",
+  },
   "mini-gt": {
     title: "MINI GT in Bangladesh — Price & Authentic 1:64 Scale Models",
     description:

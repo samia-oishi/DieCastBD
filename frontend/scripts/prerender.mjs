@@ -16,11 +16,23 @@
 // splice tags in. No Chromium download, no CORS workaround, no preview server,
 // ~8 seconds instead of ~3 minutes, and failures are ordinary HTTP errors.
 //
-// WHY the body stays empty: prices and stock would freeze at build time. Google
-// renders JS and sees live data; the baked head serves the crawlers that don't
-// (Facebook/WhatsApp/LinkedIn), which only ever read og:* anyway. main.jsx
-// removes every [data-prerendered] tag before React's first render, so the two
-// sets never coexist — see the comment there.
+// WHICH BODIES GET BAKED, and why not all of them: heads alone left every page
+// serving an empty <div id="root">, so the site had ZERO crawlable <a href>
+// anywhere — Search Console duly reported "Referring page: None detected" on
+// products and parked the whole catalogue in "Discovered - currently not
+// indexed". So the pages that must rank now bake bodies too: /collections (the
+// link hub), /brand/* and /category/* (the landing pages), and /products/*
+// (which needed both content AND inbound links). /shop is skipped — its content
+// is filter-state dependent — and the home page is skipped because the LCP
+// work below (hero preload + inlined settings) is a measured optimization worth
+// more than body text there.
+//
+// Baked prices/stock freeze at build time; React replaces them on first paint
+// and Google renders JS, so the baked figures only ever serve the pre-render
+// pass. Note baked BODIES are not tagged data-prerendered (unlike head tags):
+// createRoot REPLACES #root's children rather than hydrating, so untagged
+// content survives until React paints and cannot duplicate. See main.jsx and
+// lib/seo/collectionsIndex.js.
 //
 // Serving on Vercel: a real dist/<route>/index.html is served BEFORE the SPA
 // rewrite (filesystem beats rewrites — verified in production against
@@ -232,7 +244,7 @@ async function modelFor(route, ctx) {
     // links. The body gives them both.
     return {
       model: buildProduct({ product: doc, settings, siteUrl }),
-      body: renderProductBody({ product: doc, siteUrl }),
+      body: renderProductBody({ product: doc }),
     };
   }
 

@@ -20,7 +20,6 @@
 import { escapeAttr, escapeText } from "./injectHead.js";
 import { formatTaka } from "../currency.js";
 import { isOnSale } from "../pricing.js";
-import { collectionCopy } from "./collectionCopy.js";
 import { SITE_NAME, absoluteUrl, resolveDescription, resolveImage, resolveTitle } from "./constants.js";
 
 export const COLLECTIONS_TITLE = "All Collections & Products";
@@ -101,7 +100,7 @@ export function renderCollectionBody({ copy, collection, products = [], total = 
  * plan.md #91 (rebuilds are manual by merchant decision), and Google renders JS
  * so it sees the live figures — the baked numbers serve the pre-render pass.
  */
-export function renderProductBody({ product, siteUrl }) {
+export function renderProductBody({ product }) {
   const onSale = isOnSale(product);
   const price = onSale ? product.salePrice : product.price;
   const inStock = (product.availableStock ?? 0) > 0;
