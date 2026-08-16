@@ -1,0 +1,5 @@
+# macOS Finder metadata — never useful in a repo, and it churns on every
+# folder you open. frontend/ and backend/ have their own .gitignore files;
+# this one covers the repo root and docs/.
+.DS_Store
+**/.DS_Store
