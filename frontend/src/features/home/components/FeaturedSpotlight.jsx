@@ -30,21 +30,27 @@ function Spotlight({ product, overrides }) {
       onClick={() => navigate(`/products/${product.slug}`)}
       className="flex cursor-pointer flex-col overflow-hidden rounded-[20px] border border-line bg-white transition-shadow duration-[180ms] md:hover:shadow-[0_12px_32px_rgba(16,18,8,0.1)] md:rounded-[24px]"
     >
-      <div className="relative flex h-[190px] items-center justify-center overflow-hidden bg-brand-tint md:h-[330px]">
-        {/* object-contain, not the `h-full w-auto max-w-none` used by the small
-            product tiles. This slot is filled with wide promo artwork (the
-            Ferrari 5-Pack banner is 800×372, aspect 2.15) while the box is
-            fixed-height and about 1.79 — so height-filling clipped 17% of it off
-            the sides on desktop, cutting through the product's own title. The
-            card keeps one consistent height for the grid; the image just fits
-            inside it whole, with the tint showing above and below. */}
+      {/* The slot is shaped by RATIO, not by a fixed pixel height. Featured
+          artwork is a wide promo banner (200:93 — i.e. 800×372, the size to
+          export at); a fixed height forced a different shape at every
+          breakpoint, so the image either lost its sides to the crop or sat in
+          empty bands. Tying the box to the artwork's own ratio makes it fill
+          edge to edge, exactly, at every width — phone and desktop alike.
+
+          object-contain rather than cover is the safety net: artwork uploaded
+          at some other ratio is shown WHOLE (with a little tint showing) rather
+          than silently cut. At the 200:93 spec there is nothing to show.
+
+          This applies to the featured card only — the small product tiles below
+          and in the grid keep filling their tiles as before. */}
+      <div className="relative flex aspect-[200/93] w-full items-center justify-center overflow-hidden bg-brand-tint">
         {imageUrl && (
           <img
             src={cloudinaryCard(imageUrl)}
             alt={title}
             loading="lazy"
             decoding="async"
-            className="max-h-full max-w-full object-contain"
+            className="h-full w-full object-contain"
           />
         )}
         {badge && (
