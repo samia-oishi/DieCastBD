@@ -11,6 +11,7 @@
     "prerender": "node scripts/prerender.mjs",
     "verify:prerender": "node scripts/verify-prerender.mjs",
     "verify:hydration": "node scripts/verify-hydration-parity.mjs",
+    "verify:offline": "node scripts/verify-offline-render.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",

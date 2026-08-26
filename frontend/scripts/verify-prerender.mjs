@@ -171,6 +171,24 @@ async function main() {
     }
   }
 
+  // Every baked route must carry its bootstrap payloads: __SETTINGS__ always,
+  // __ROUTE_DATA__ on content routes. These are what keep the RENDERED page
+  // from degrading to an error screen when the API is unreachable inside
+  // Google's renderer — the Soft-404 failure (plan.md #92).
+  {
+    const samples = [
+      (report.routes ?? []).find((r) => r.route.startsWith('/products/')),
+      (report.routes ?? []).find((r) => r.route.startsWith('/brand/')),
+      (report.routes ?? []).find((r) => r.route === '/collections'),
+    ].filter(Boolean);
+    for (const s of samples) {
+      const { html } = await loadRoute(s.route);
+      if (!check(html, s.route + ' — not baked')) continue;
+      check(html.includes('id="__SETTINGS__"'), s.route + ' — missing __SETTINGS__ payload');
+      check(html.includes('id="__ROUTE_DATA__"'), s.route + ' — missing __ROUTE_DATA__ payload');
+    }
+  }
+
   // Titles must be distinct — identical titles across URLs is the exact defect
   // that put this site in Search Console's "Alternate page" bucket.
   const titles = new Map();

@@ -34,11 +34,15 @@ export function PageView({ slug }) {
   const { data: page, isLoading, isError, error } = usePage(slug);
   const { data: settings } = useSettings();
 
-  if (isLoading) return <FullPageLoader />;
-  // Only a real 404 means "this page doesn't exist". Any other failure is
-  // transient, and NotFoundPage carries noindex — see PageLoadError.
-  if (isError && error?.response?.status !== 404) return <PageLoadError />;
-  if (!page) return <NotFoundPage />;
+  // Data-first guards — see the identical block in CmsPage (plan.md #92):
+  // a page we already hold (baked or fetched) must render even if the refetch
+  // failed; error states are only for having nothing at all.
+  if (error?.response?.status === 404) return <NotFoundPage />;
+  if (!page) {
+    if (isLoading) return <FullPageLoader />;
+    if (isError) return <PageLoadError />;
+    return <NotFoundPage />;
+  }
 
   const updated = formatUpdated(page.updatedAt);
   const hasContent = page.content && page.content.trim().length > 0;

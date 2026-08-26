@@ -26,35 +26,67 @@
  */
 let cached;
 
+function readEl(id) {
+  if (typeof document === "undefined") return null;
+  const el = document.getElementById(id);
+  if (!el?.textContent) return null;
+  try {
+    return JSON.parse(el.textContent);
+  } catch {
+    return null; // malformed payload must never break boot
+  }
+}
+
 function read() {
   if (cached !== undefined) return cached;
-  cached = null;
-
-  if (typeof document !== "undefined") {
-    const el = document.getElementById("__HOME_DATA__");
-    if (el?.textContent) {
-      try {
-        cached = JSON.parse(el.textContent);
-      } catch {
-        cached = null; // malformed payload must never break boot
-      }
-    }
-  }
-
+  // __HOME_DATA__ is the homepage's carousel payload; __ROUTE_DATA__ is the
+  // per-route payload every prerendered page now carries (see
+  // scripts/prerender.mjs). Merged so one set of accessors serves both.
+  //
+  // WHY __ROUTE_DATA__ exists — the Soft-404 incident (plan.md #92): Google
+  // renders JS, and when its renderer couldn't reach api.diecastbd.com the app
+  // wiped the baked body and painted PageLoadError — so Google classified
+  // fully-written guides as Soft 404 and refused to index them. With the
+  // route's data in the HTML, the first render always has real content and a
+  // failed refetch can only leave slightly stale data, never an error page.
+  const home = readEl("__HOME_DATA__");
+  const route = readEl("__ROUTE_DATA__");
+  cached = home || route ? { home, route } : null;
   return cached;
 }
 
 /** Baked `{ data, meta }` envelope for a product list, by `paramsKey(params)`. */
 export function bakedProductList(key) {
-  return read()?.products?.[key] ?? undefined;
+  const d = read();
+  return d?.home?.products?.[key] ?? d?.route?.productLists?.[key] ?? undefined;
 }
 
 /** Baked brand list, or undefined. */
 export function bakedBrands() {
-  return read()?.brands ?? undefined;
+  const d = read();
+  return d?.route?.brands ?? d?.home?.brands ?? undefined;
 }
 
 /** Baked category list, or undefined. */
 export function bakedCategories() {
-  return read()?.categories ?? undefined;
+  const d = read();
+  return d?.route?.categories ?? d?.home?.categories ?? undefined;
+}
+
+/** Baked CMS page document for THIS route (slug-checked so client-side
+ * navigation to a different page never reuses the wrong payload). */
+export function bakedPage(slug) {
+  const page = read()?.route?.page;
+  return page?.slug === slug ? page : undefined;
+}
+
+/** Baked full product document for THIS route, slug-checked like bakedPage. */
+export function bakedProduct(slug) {
+  const product = read()?.route?.product;
+  return product?.slug === slug ? product : undefined;
+}
+
+/** Baked published-guides list (the /collections hub payload). */
+export function bakedPublishedPages() {
+  return read()?.route?.publishedPages ?? undefined;
 }

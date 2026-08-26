@@ -47,12 +47,16 @@ export function CollectionPage({ kind }) {
     page: 1,
   });
 
-  if (listLoading) return <FullPageLoader />;
-  // The collection is looked up in a LIST response, so a failed list request
-  // looks identical to "no such brand". NotFoundPage carries noindex — without
-  // this guard one API blip would deindex every brand and category page.
-  if (isBrand ? brandsError : catsError) return <PageLoadError />;
-  if (!collection) return <NotFoundPage />;
+  // Data-first guards (plan.md #92): with the brand/category lists baked into
+  // prerendered HTML, `collection` usually exists before any network — render
+  // it even if the refetch failed. Error/loading states only apply when the
+  // list itself is missing; and a missing collection in a LOADED list is a
+  // genuine 404 (NotFoundPage carries noindex, so the order matters).
+  if (!collection) {
+    if (listLoading) return <FullPageLoader />;
+    if (isBrand ? brandsError : catsError) return <PageLoadError />;
+    return <NotFoundPage />;
+  }
 
   const products = data?.data ?? [];
   const total = data?.meta?.total ?? 0;

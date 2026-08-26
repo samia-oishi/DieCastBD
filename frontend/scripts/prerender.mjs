@@ -260,6 +260,17 @@ async function modelFor(route, ctx) {
       // The hub's whole job is putting real <a href> links into raw HTML — the
       // sitemap is otherwise the only signal our URLs exist.
       body: renderCollectionsIndexBody({ brands, categories, products, pages: guides }),
+      // `data` feeds __ROUTE_DATA__ (see the writer): the queries this route's
+      // React page runs, baked so its first render always has content — even
+      // inside Google's renderer with the API unreachable (plan.md #92).
+      data: {
+        brands,
+        categories,
+        publishedPages: guides,
+        productLists: {
+          [paramsKey({ limit: 100, page: 1 })]: { data: products.map(trimForCard), meta: { total: products.length } },
+        },
+      },
     };
   }
 
@@ -279,6 +290,10 @@ async function modelFor(route, ctx) {
     return {
       model: buildProduct({ product: doc, settings, siteUrl }),
       body: renderProductBody({ product: doc }),
+      // Full document, not trimForCard — the detail page renders description,
+      // gallery and specs, and this payload is what keeps it renderable when
+      // the API is unreachable in Google's renderer (plan.md #92).
+      data: { product: doc },
     };
   }
 
@@ -298,7 +313,19 @@ async function modelFor(route, ctx) {
     // Landing pages bake their body too: H1 + product links + merchant content
     // + FAQ text. Before this, their raw HTML had no H1 and zero anchors.
     const body = renderCollectionBody({ copy: collectionCopy(slug, doc), collection: doc, products, total });
-    return { model, body };
+    return {
+      model,
+      body,
+      // The page's own three queries (brands, categories, its product page),
+      // so the grid + landing content render without the API (plan.md #92).
+      data: {
+        brands,
+        categories,
+        productLists: envelope
+          ? { [paramsKey({ [kind]: slug, limit: 24, page: 1 })]: { ...envelope, data: products.map(trimForCard) } }
+          : {},
+      },
+    };
   }
 
   const cms = route.match(/^\/([^/]+)$/);
@@ -311,7 +338,13 @@ async function modelFor(route, ctx) {
     const page = await api(`/pages/${encodeURIComponent(slug)}`);
     if (!page) return null; // api() already recorded the failure
     // Guides are pure text — an empty body here is the worst case of all.
-    return { model: buildCmsPage({ slug, page, settings, siteUrl }), body: renderCmsPageBody({ page }) };
+    // `page` includes blockProducts resolved server-side, so BlockRenderer
+    // works from the baked payload too.
+    return {
+      model: buildCmsPage({ slug, page, settings, siteUrl }),
+      body: renderCmsPageBody({ page }),
+      data: { page },
+    };
   }
 
   warn(`no builder for ${route} — leaving it CSR`);
@@ -430,15 +463,27 @@ async function main() {
       // so this normalization is unambiguous.
       const model = resolved.model ?? resolved;
       const body = resolved.body ?? null;
+      const routeData = resolved.data ?? null;
 
-      // Home only: inline the settings the app needs on first paint, and start
-      // the hero image download during HTML parse. The preload matters most —
-      // the hero <img> is the LCP element and, rendered only after the settings
-      // round trip, its request otherwise can't begin until JS has booted.
-      let extra = "";
+      // Baked bootstrap payloads. __SETTINGS__ goes on EVERY route (header/
+      // footer/FAQ content paints with the shell); __ROUTE_DATA__ carries the
+      // route's own query responses. This is the Soft-404 fix (plan.md #92):
+      // Google indexes the RENDERED page, and when its renderer couldn't reach
+      // the API, React replaced the baked body with an error screen — with the
+      // data in the HTML, the first render always has real content, API or not.
+      const jsonTag = (id, value) =>
+        `<script type="application/json" id="${id}">${JSON.stringify(value).replace(/</g, "\\u003c")}</script>`;
+      const extraTags = [];
+      if (settings) extraTags.push(jsonTag("__SETTINGS__", settings));
+      if (routeData) extraTags.push(jsonTag("__ROUTE_DATA__", routeData));
+
+      // Home additionally gets the hero preload + carousel payload. The preload
+      // matters most — the hero <img> is the LCP element and, rendered only
+      // after the settings round trip, its request otherwise can't begin until
+      // JS has booted.
       if (route === "/" && settings) {
         const heroUrl = settings.homepageSections?.hero?.image?.url;
-        extra = [
+        extraTags.push(...[
           // The preload MUST describe the same candidates as the <img> in
           // HeroSection, or the browser downloads one image for the preload and
           // a different one for the element. It did exactly that: the raw
@@ -450,12 +495,10 @@ async function main() {
           heroUrl
             ? `<link rel="preload" as="image" fetchpriority="high" imagesrcset="${cloudinaryHeroSrcSet(heroUrl).replace(/"/g, "&quot;")}" imagesizes="${HERO_SIZES}" href="${cloudinaryHero(heroUrl).replace(/"/g, "&quot;")}">`
             : "",
-          `<script type="application/json" id="__SETTINGS__">${JSON.stringify(settings).replace(/</g, "\\u003c")}</script>`,
-          homeData ? `<script type="application/json" id="__HOME_DATA__">${JSON.stringify(homeData).replace(/</g, "\\u003c")}</script>` : "",
-        ]
-          .filter(Boolean)
-          .join("\n    ");
+          homeData ? jsonTag("__HOME_DATA__", homeData) : "",
+        ].filter(Boolean));
       }
+      const extra = extraTags.join("\n    ");
 
       let html = injectHead(SHELL, model, extra);
       if (body) html = injectRoot(html, body);

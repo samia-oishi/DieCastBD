@@ -27,11 +27,17 @@ export function CmsPage() {
   const { data: page, isLoading, isError, error } = usePage(slug);
   const { data: settings } = useSettings();
 
-  if (isLoading) return <FullPageLoader />;
-  // Only a real 404 means "no such page" — anything else is transient, and
-  // NotFoundPage carries noindex. See PageLoadError.
-  if (isError && error?.response?.status !== 404) return <PageLoadError />;
-  if (!page) return <NotFoundPage />;
+  // Order matters (plan.md #92). A definitive 404 wins. Otherwise, if we HAVE
+  // a document — from the API or the baked __ROUTE_DATA__ payload — render it,
+  // even when a background refetch failed: an error screen must never replace
+  // content we already hold (that exact replacement is what Google indexed as
+  // a Soft 404). Loader/error states are only for having NOTHING to show.
+  if (error?.response?.status === 404) return <NotFoundPage />;
+  if (!page) {
+    if (isLoading) return <FullPageLoader />;
+    if (isError) return <PageLoadError />;
+    return <NotFoundPage />;
+  }
 
   const blocks = page.blocks ?? [];
   const hasContent = page.content && page.content.trim().length > 0;

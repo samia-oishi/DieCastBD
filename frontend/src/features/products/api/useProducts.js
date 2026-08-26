@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { paramsKey } from "@/lib/paramsKey";
-import { bakedProductList } from "@/lib/bakedData";
+import { bakedProduct, bakedProductList } from "@/lib/bakedData";
 import { productKeys } from "./productKeys";
 import { listProducts, getProductBySlug, getRelatedProducts, getFilterOptions } from "./productApi";
 
@@ -49,11 +49,18 @@ export function useInfiniteProducts(params) {
  * dead product URL indexed. Other failures ARE transient and still retry, so a
  * blip never turns a live product into a "page not found". Mirrors usePage. */
 export function useProduct(slug) {
+  // Prerendered product pages bake the full document into the HTML, so the
+  // detail page renders even when the API is unreachable — the failure mode
+  // that had Google classifying rendered pages as Soft 404 (plan.md #92).
+  const baked = bakedProduct(slug);
+
   return useQuery({
     queryKey: productKeys.detail(slug),
     queryFn: () => getProductBySlug(slug),
     enabled: !!slug,
     retry: (failureCount, error) => error?.response?.status !== 404 && failureCount < 2,
+    initialData: baked,
+    initialDataUpdatedAt: baked ? 0 : undefined,
   });
 }
 

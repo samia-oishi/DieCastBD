@@ -103,11 +103,15 @@ export function ProductDetailPage() {
 
   useEffect(() => setQty(1), [slug]);
 
-  if (isLoading) return <FullPageLoader />;
-  // Only a genuine 404 means the product is gone. NotFoundPage carries noindex,
-  // so treating an API outage as "not found" would deindex live products.
-  if (isError && error?.response?.status !== 404) return <PageLoadError />;
-  if (!product) return <NotFoundPage />;
+  // Data-first guards — see CmsPage (plan.md #92). A baked product must render
+  // even when the live refetch fails; only a definitive 404 may say "gone",
+  // because NotFoundPage carries noindex.
+  if (error?.response?.status === 404) return <NotFoundPage />;
+  if (!product) {
+    if (isLoading) return <FullPageLoader />;
+    if (isError) return <PageLoadError />;
+    return <NotFoundPage />;
+  }
 
   const onSale = isOnSale(product);
   const price = onSale ? product.salePrice : product.price;
