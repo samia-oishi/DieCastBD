@@ -56,3 +56,10 @@ Merchant decision 2026-08-16: mainlines and new brands are coming. What that mea
 - /category/premium-singles → "hot wheels car culture bangladesh", "jdm diecast bangladesh"
 - /category/multi-packs → "hot wheels 5 pack bangladesh"
 - Guides → see each file's header
+
+## ⚠ Lesson from the 2026-08-16 injection (fixed 2026-08-26)
+
+Direct MongoDB writes bypass Mongoose timestamps, so `updatedAt` — which the sitemap
+serves as `<lastmod>` — did NOT move when the content changed. For 10 days the sitemap
+told Google the most-changed pages were unchanged. Any future direct content write must
+also `$set updatedAt: new Date()` on the same document.
