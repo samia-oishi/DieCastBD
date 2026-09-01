@@ -4,6 +4,7 @@ import { ChevronLeft, MapPin, Printer } from "lucide-react";
 
 import { formatTaka } from "@/lib/currency";
 import { formatAddressLine } from "@/lib/address";
+import { steadfastLocation } from "@/lib/bdGeo";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
@@ -71,6 +72,8 @@ export function OrderDetailPage() {
   };
 
   const addr = order.shippingAddress;
+  // Null for orders placed before the address dropdowns existed (free-text city).
+  const steadfast = addr?.district && addr?.thana ? steadfastLocation(addr.district, addr.thana) : null;
 
   return (
     <div className="flex flex-col gap-[18px] pb-10">
@@ -207,6 +210,23 @@ export function OrderDetailPage() {
             <p>{formatAddressLine(addr)}</p>
             <p>{addr.phone}</p>
             <p>Email: <Provided value={order.user?.email} /></p>
+
+            {/* What to select in Steadfast's panel. The zone already matches
+                theirs verbatim, but the district label doesn't — we display
+                modern names while they use pre-2018 ones, and they split the
+                capital into Dhaka City / Dhaka Sub-Urban, which is not
+                guessable (Savar and Ashulia are Sub-Urban). Showing the pair
+                makes the handoff copy-paste rather than translation. */}
+            {steadfast && (
+              <div className="mt-3 rounded-[10px] border border-line bg-[#FCFCF9] p-3">
+                <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-faint">Enter in Steadfast</div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
+                  <span className="rounded-[6px] bg-white px-2 py-[3px] font-semibold text-ink ring-1 ring-line">{steadfast.district}</span>
+                  <span className="text-faint">/</span>
+                  <span className="rounded-[6px] bg-white px-2 py-[3px] font-semibold text-ink ring-1 ring-line">{steadfast.zone}</span>
+                </div>
+              </div>
+            )}
             {order.deliveryNote && (
               <div className="mt-3 rounded-[10px] border border-brand-soft-border bg-brand-soft p-3 text-[12.5px] text-ink">
                 <span className="font-semibold">Customer note: </span>{order.deliveryNote}
