@@ -19,15 +19,16 @@ describe("BD_DISTRICTS", () => {
     }
   });
 
-  it("covers Dhaka city — the reason the metro thanas are merged in at all", () => {
-    // The official upazila list for Dhaka district is only Savar, Dhamrai,
-    // Keraniganj, Nawabganj and Dohar, so on that data alone none of these
-    // (where most orders actually go) would be selectable.
+  it("covers Dhaka city — where most orders actually go", () => {
     const dhaka = thanasForDistrict("Dhaka");
-    for (const t of ["Dhanmondi", "Gulshan", "Uttara East", "Mirpur Model", "Mohammadpur", "Banani"]) {
+    for (const t of ["Dhanmondi", "Gulshan", "Mohammadpur", "Banani", "Mirpur", "Uttara"]) {
       expect(dhaka, `Dhaka is missing ${t}`).toContain(t);
     }
-    expect(dhaka).toContain("Savar"); // ...without losing the real upazilas
+    expect(dhaka).toContain("Savar"); // ...without losing the outlying upazilas
+    // The official police names are reachable as aliases rather than as list
+    // values, because the value stored is the one the courier expects.
+    expect(dhaka).not.toContain("Mirpur Model");
+    expect(isThanaInDistrict("Dhaka", "Mirpur Model")).toBe(true);
   });
 
   it("covers Chattogram city as well as its upazilas", () => {
@@ -37,38 +38,48 @@ describe("BD_DISTRICTS", () => {
     expect(ctg).toContain("Sitakunda");
   });
 
-  // Khulna and Rajshahi are the regression this guards: on official upazila
-  // data alone neither district had ANY entry for its own city, so customers in
-  // the 3rd and 4th largest cities in the country could not say where they live.
-  it.each([
-    ["Khulna", ["Khulna Sadar", "Sonadanga", "Khalishpur", "Daulatpur"], "Dumuria"],
-    ["Rajshahi", ["Boalia", "Rajpara", "Motihar", "Shah Makhdum"], "Godagari"],
-    ["Sylhet", ["Kotwali Model", "Jalalabad", "South Surma"], "Beanibazar"],
-    ["Gazipur", ["Joydebpur", "Tongi East", "Tongi West", "Kashimpur"], "Kaliakair"],
-    ["Barisal", ["Kotwali Model", "Kawnia", "Bandar"], "Gournadi"],
-    ["Rangpur", ["Kotwali", "Tajhat", "Mahiganj"], "Mithapukur"],
-  ])("covers %s city (metro thanas) without losing its upazilas", (district, metro, upazila) => {
-    const list = thanasForDistrict(district);
-    for (const t of metro) expect(list, `${district} is missing ${t}`).toContain(t);
-    expect(list, `${district} lost upazila ${upazila}`).toContain(upazila);
+  it("finds a place by its official spelling even though the courier spells it differently", () => {
+    // The aliases exist so a customer never has to know the courier's spelling.
+    expect(isThanaInDistrict("Dhaka", "Jatrabari")).toBe(true);   // -> "Jattrabari"
+    expect(isThanaInDistrict("Dhaka", "Mirpur Model")).toBe(true); // -> "Mirpur"
+    expect(isThanaInDistrict("Dhaka", "Uttara East")).toBe(true);  // -> "Uttara"
+    expect(isThanaInDistrict("Chattogram", "Bayazid")).toBe(true); // -> "Bayazid Bostami"
+  });
+
+  it("never aliases one real place to a different real place", () => {
+    // Edit distance proposed Gulistan<-Gulshan, Lama<-Ruma, Amtali<-Taltali and
+    // Ramganj<-Ramgati. All are distinct places; an alias would misroute a parcel.
+    const aliasesOf = (district, name) =>
+      BD_DISTRICTS.find((d) => d.name === district)?.thanas.find((t) => t.n === name)?.a ?? [];
+    expect(aliasesOf("Dhaka", "Gulistan")).not.toContain("Gulshan");
+    expect(aliasesOf("Bandarban", "Lama")).not.toContain("Ruma");
+    expect(aliasesOf("Barguna", "Amtali")).not.toContain("Taltali");
+    expect(aliasesOf("Lakshmipur", "Ramganj")).not.toContain("Ramgati");
+    expect(aliasesOf("Chandpur", "Matlab North")).not.toContain("Matlab South");
   });
 
   it("gives every district somewhere to deliver to", () => {
     for (const d of BD_DISTRICTS) expect(d.thanas.length, `${d.name} has no thanas`).toBeGreaterThan(0);
   });
 
-  it("names each Sadar after its own district, so searching the district finds it", () => {
-    // "Bogra Sadar" under a district displayed as "Bogura" was unfindable by
-    // anyone typing the name they had just picked.
-    expect(thanasForDistrict("Bogura")).toContain("Bogura Sadar");
-    expect(thanasForDistrict("Jashore")).toContain("Jashore Sadar");
+  it("offers the courier's own zones, not just administrative thanas", () => {
+    // The reason this list is Steadfast's: these are places they deliver to and
+    // no upazila dataset contains, which is what the merchant reported missing.
+    const dhaka = thanasForDistrict("Dhaka");
+    for (const z of ["Bashundhara R/A", "Panthapath", "Gulistan", "Purbachal"]) {
+      expect(dhaka, `Dhaka is missing courier zone ${z}`).toContain(z);
+    }
   });
 
-  it("offers no station that does not exist yet", () => {
-    // Barisal Metropolitan Police has four approved-but-unbuilt stations.
-    for (const t of ["Rupatali", "Barisal University", "Char Monai", "Kashipur"]) {
-      expect(thanasForDistrict("Barisal")).not.toContain(t);
-    }
+  it("drops Steadfast's catch-all row", () => {
+    expect(BD_DISTRICTS.flatMap((d) => d.thanas.map((t) => t.n))).not.toContain("Zone Not Clear");
+  });
+
+  it("merges Dhaka City and Dhaka Sub-Urban into one Dhaka", () => {
+    const dhaka = thanasForDistrict("Dhaka");
+    expect(dhaka).toContain("Dhanmondi");   // Dhaka City
+    expect(dhaka).toContain("Savar");       // Dhaka Sub-Urban
+    expect(BD_DISTRICTS.filter((d) => /dhaka/i.test(d.name))).toHaveLength(1);
   });
 });
 

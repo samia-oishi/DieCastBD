@@ -1,114 +1,115 @@
-/** Bangladesh districts and their thanas/upazilas, for the checkout address picker.
+/** Bangladesh districts and their delivery zones, for the checkout address picker.
  *
- * Checkout used to ask for a free-text "City", "District" and "Postal code",
- * which produced addresses a courier can't route ("dhaka", "Dhak", blank) and
- * asked the customer for a postcode almost nobody knows. This replaces all three
- * with two dependent dropdowns: pick a district, then a thana inside it.
+ * THE LIST IS STEADFAST'S OWN, fetched from their `GET /police_stations`
+ * endpoint (portal.packzy.com/api/v1) with the merchant's API credentials.
+ * That is deliberate and is the whole point: DiecastBD ships via Steadfast, so
+ * the merchant re-types every customer address into Steadfast's panel. When our
+ * names were the official administrative ones they did not match — we said
+ * "Jatrabari", "Mirpur Model", "Hazaribagh"; Steadfast says "Jattrabari",
+ * "Mirpur", "Hazaribag" — and areas the courier delivers to, like
+ * Bashundhara R/A, Panthapath and Gulistan, were not offered at all because
+ * they are zones rather than thanas. Now what the customer picks is verbatim
+ * what the merchant selects at the courier.
  *
- * Sources — this data is copied from public datasets, never recalled:
- *  · 64 districts, 8 divisions and 494 upazilas: the `bd-geodata` package
- *    (MIT), itself derived from the bangladesh.gov.bd district portals.
- *  · The thanas of all EIGHT metropolitan police forces, each from that force's
- *    Wikipedia article: Dhaka (50), Chattogram (16), Rajshahi (12), Khulna (8),
- *    Gazipur (7), Sylhet (6), Rangpur (6), Barisal (4).
+ * Shape: each thana is { n } — the Steadfast name — plus optional { a }, the
+ * OFFICIAL spellings that mean the same place. Those are search aliases only:
+ * they are never displayed and never stored, they just let a customer who types
+ * "Jatrabari" or "Uttara East" find the courier's entry. 142 are attached.
  *
- * Why the metro merge is load-bearing, not padding: a city that has its own
- * metropolitan police is NOT divided into upazilas, so it appears in no upazila
- * dataset at all. Dhaka district officially contains five upazilas (Savar,
- * Dhamrai, Keraniganj, Nawabganj, Dohar) and Dhanmondi, Gulshan, Mirpur and
- * Uttara are in none of them. Khulna and Rajshahi were worse: on upazilas alone
- * they had no entry for their own city whatsoever, so a customer in either —
- * the 3rd and 4th largest cities in the country — could not select where they
- * live. Only Dhaka and Chattogram were merged originally, on the mistaken
- * assumption that every other district's city was covered by a "Sadar" upazila.
- * It isn't; hence all eight.
+ * How the aliases were derived, and the trap avoided: edit distance alone
+ * proposed pairs like Gulistan<-Gulshan (opposite ends of Dhaka), Lama<-Ruma,
+ * Amtali<-Taltali and Ramganj<-Ramgati. Aliasing those would let someone search
+ * their own area and be handed a different one, so a name Steadfast already
+ * lists independently is never treated as a misspelling of another. Bengali/
+ * English equivalents no string metric can see (South Surma = Dakshinsurma,
+ * Motlab dokkhin = Matlab South) are a short hand-reviewed list in the
+ * generator, and every pairing was read before shipping.
  *
- * Barisal's four proposed-but-not-yet-operational stations are excluded — this
- * list offers only places that exist.
+ * Steadfast splits the capital into "Dhaka City" and "Dhaka Sub-Urban"; those
+ * are merged into one Dhaka, since a customer picks a district and does not
+ * know which side of that line they live on. Their pre-2018 district spellings
+ * (Bogra, Chittagong, Cumilla) are kept as `aka` search terms while we display
+ * the modern names. Their "Zone Not Clear" catch-all row is dropped, and their
+ * duplicate rows collapsed.
  *
- * Where a metro thana duplicates an upazila of the same name (Karnaphuli, Paba),
- * the two collapse to one entry — a street address disambiguates them, and two
- * near-identical rows in a dropdown only confuse.
+ * 28 official thanas have no Steadfast equivalent (most of Khulna's and
+ * Rangpur's metropolitan thanas). That is not data loss: Steadfast covers those
+ * cities under its own zone names — Khulna city is Khulna Sadar, Circuit House,
+ * Gollamari and Mujgunni — and a place the courier does not list is a place it
+ * will not collect from, so offering it would be the real error.
  *
- * `aka` carries the pre-2018 government spellings so a customer typing
- * "Chittagong" or "Jessore" still finds their district. The two Sadar upazilas
- * that still carried the old district spelling ("Bogra Sadar", "Jessore Sadar")
- * were renamed to match, since a customer who picked "Bogura" then searched
- * "Bogura" in the thana box found nothing.
+ * To refresh: re-run scratchpad/gen-sf.mjs against the endpoint. Credentials
+ * live outside the repo and are never committed.
  *
- * Coverage note: this is the country's real administrative geography, which is
- * what a courier's own coverage is built on — Steadfast publishes no public
- * area list or API to map against, so parity is achieved by covering every
- * upazila and every metropolitan thana rather than by mirroring their table.
- *
- * Bundle note: only the checkout and account routes import this (~11 KB raw,
- * ~4 KB gzipped), and both are lazy — it never reaches the storefront bundle.
+ * Bundle note: only the checkout and account routes import this, and both are
+ * lazy — it never reaches the storefront bundle.
  */
 export const BD_DISTRICTS = [
-  { name: "Bagerhat", division: "Khulna", thanas: ["Bagerhat Sadar","Chitalmari","Fakirhat","Kachua","Mollahat","Mongla","Morrelganj","Rampal","Sarankhola"] },
-  { name: "Bandarban", division: "Chattogram", thanas: ["Alikadam","Bandarban Sadar","Lama","Naikhongchhari","Rowangchhari","Ruma","Thanchi"] },
-  { name: "Barguna", division: "Barisal", thanas: ["Amtali","Bamna","Barguna Sadar","Betagi","Pathorghata","Taltali"] },
-  { name: "Barisal", division: "Barisal", aka: ["Barishal"], thanas: ["Agailjhara","Airport","Babuganj","Bakerganj","Banaripara","Bandar","Barisal Sadar","Gournadi","Hizla","Kawnia","Kotwali Model","Mehendiganj","Muladi","Wazirpur"] },
-  { name: "Bhola", division: "Barisal", thanas: ["Bhola Sadar","Borhan Sddin","Charfesson","Doulatkhan","Lalmohan","Monpura","Tazumuddin"] },
-  { name: "Bogura", division: "Rajshahi", aka: ["Bogra"], thanas: ["Adamdighi","Bogura Sadar","Dhunot","Dupchanchia","Gabtali","Kahaloo","Nondigram","Shajahanpur","Shariakandi","Sherpur","Shibganj","Sonatala"] },
-  { name: "Brahmanbaria", division: "Chattogram", thanas: ["Akhaura","Ashuganj","Bancharampur","Bijoynagar","Brahmanbaria Sadar","Kasba","Nabinagar","Nasirnagar","Sarail"] },
-  { name: "Chandpur", division: "Chattogram", thanas: ["Chandpur Sadar","Faridgonj","Haimchar","Hajiganj","Kachua","Matlab North","Matlab South","Shahrasti"] },
-  { name: "Chapainawabganj", division: "Rajshahi", thanas: ["Bholahat","Chapainawabganj Sadar","Gomostapur","Nachol","Shibganj"] },
-  { name: "Chattogram", division: "Chattogram", aka: ["Chittagong"], thanas: ["Akbarshah","Anwara","Bakoliya","Bandar","Banshkhali","Bayazid","Boalkhali","Chandanaish","Chandgaon","Chawkbazar","Double Mooring","EPZ","Fatikchhari","Halishahar","Hathazari","Karnaphuli","Khulshi","Kotwali","Lohagara","Mirsharai","Pahartali","Panchlaish","Patenga","Patiya","Rangunia","Raozan","Sadarghat","Sandwip","Satkania","Sitakunda"] },
-  { name: "Chuadanga", division: "Khulna", thanas: ["Alamdanga","Chuadanga Sadar","Damurhuda","Jibannagar"] },
-  { name: "Comilla", division: "Chattogram", aka: ["Cumilla"], thanas: ["Barura","Brahmanpara","Burichang","Chandina","Chauddagram","Comilla Sadar","Daudkandi","Debidwar","Homna","Laksam","Lalmai","Meghna","Monohargonj","Muradnagar","Nangalkot","Sadar South","Titas"] },
-  { name: "Cox's Bazar", division: "Chattogram", aka: ["Cox's Bazar"], thanas: ["Chakaria","Coxsbazar Sadar","Eidgaon","Kutubdia","Moheshkhali","Pekua","Ramu","Teknaf","Ukhiya"] },
-  { name: "Dhaka", division: "Dhaka", thanas: ["Adabor","Airport","Badda","Banani","Bangshal","Bhashantek","Cantonment","Chawkbazar","Dakshinkhan","Darus Salam","Demra","Dhamrai","Dhanmondi","Dohar","Gandaria","Gulshan","Hatirjheel","Hazaribagh","Jatrabari","Kadamtoli","Kafrul","Kalabagan","Kamrangirchar","Keraniganj","Khilgaon","Khilkhet","Kotwali","Lalbagh","Mirpur Model","Mohammadpur","Motijheel","Mugda","Nawabganj","New Market","Pallabi","Paltan Model","Ramna Model","Rampura","Rupnagar","Sabujbagh","Savar","Shah Ali","Shahbagh","Shahjahanpur","Sher-e-Bangla Nagar","Shyampur","Sutrapur","Tejgaon","Tejgaon Industrial Area","Turag","Uttara East","Uttara West","Uttarkhan","Vatara","Wari"] },
-  { name: "Dinajpur", division: "Rangpur", thanas: ["Birampur","Birganj","Birol","Bochaganj","Chirirbandar","Dinajpur Sadar","Fulbari","Ghoraghat","Hakimpur","Kaharol","Khansama","Nawabganj","Parbatipur"] },
-  { name: "Faridpur", division: "Dhaka", thanas: ["Alfadanga","Bhanga","Boalmari","Charbhadrasan","Faridpur Sadar","Madhukhali","Nagarkanda","Sadarpur","Saltha"] },
-  { name: "Feni", division: "Chattogram", thanas: ["Chhagalnaiya","Daganbhuiyan","Feni Sadar","Fulgazi","Parshuram","Sonagazi"] },
-  { name: "Gaibandha", division: "Rangpur", thanas: ["Gaibandha Sadar","Gobindaganj","Palashbari","Phulchari","Sadullapur","Saghata","Sundarganj"] },
-  { name: "Gazipur", division: "Dhaka", thanas: ["Bason","Gacha","Gazipur Sadar","Joydebpur","Kaliakair","Kaliganj","Kapasia","Kashimpur","Pubail","Sreepur","Tongi East","Tongi West"] },
-  { name: "Gopalganj", division: "Dhaka", thanas: ["Gopalganj Sadar","Kashiani","Kotalipara","Muksudpur","Tungipara"] },
-  { name: "Habiganj", division: "Sylhet", thanas: ["Ajmiriganj","Bahubal","Baniachong","Chunarughat","Habiganj Sadar","Lakhai","Madhabpur","Nabiganj"] },
-  { name: "Jamalpur", division: "Mymensingh", thanas: ["Bokshiganj","Dewangonj","Islampur","Jamalpur Sadar","Madarganj","Melandah","Sarishabari"] },
-  { name: "Jashore", division: "Khulna", aka: ["Jessore"], thanas: ["Abhaynagar","Bagherpara","Chougachha","Jashore Sadar","Jhikargacha","Keshabpur","Manirampur","Sharsha"] },
-  { name: "Jhalakathi", division: "Barisal", thanas: ["Jhalakathi Sadar","Kathalia","Nalchity","Rajapur"] },
-  { name: "Jhenaidah", division: "Khulna", thanas: ["Harinakundu","Jhenaidah Sadar","Kaliganj","Kotchandpur","Moheshpur","Shailkupa"] },
-  { name: "Joypurhat", division: "Rajshahi", thanas: ["Akkelpur","Joypurhat Sadar","Kalai","Khetlal","Panchbibi"] },
-  { name: "Khagrachhari", division: "Chattogram", thanas: ["Dighinala","Guimara","Khagrachhari Sadar","Laxmichhari","Manikchari","Matiranga","Mohalchari","Panchari","Ramgarh"] },
-  { name: "Khulna", division: "Khulna", thanas: ["Aranghata","Botiaghata","Dakop","Daulatpur","Digholia","Dumuria","Fultola","Harintana","Khalishpur","Khan Jahan Ali","Khulna Sadar","Koyra","Labanchara","Paikgasa","Rupsha","Sonadanga","Terokhada"] },
-  { name: "Kishoreganj", division: "Dhaka", thanas: ["Austagram","Bajitpur","Bhairab","Hossainpur","Itna","Karimgonj","Katiadi","Kishoreganj Sadar","Kuliarchar","Mithamoin","Nikli","Pakundia","Tarail"] },
-  { name: "Kurigram", division: "Rangpur", thanas: ["Bhurungamari","Charrajibpur","Chilmari","Kurigram Sadar","Nageshwari","Phulbari","Rajarhat","Rowmari","Ulipur"] },
-  { name: "Kushtia", division: "Khulna", thanas: ["Bheramara","Daulatpur","Khoksa","Kumarkhali","Kushtia Sadar","Mirpur"] },
-  { name: "Lakshmipur", division: "Chattogram", thanas: ["Kamalnagar","Lakshmipur Sadar","Raipur","Ramganj","Ramgati"] },
-  { name: "Lalmonirhat", division: "Rangpur", thanas: ["Aditmari","Hatibandha","Kaliganj","Lalmonirhat Sadar","Patgram"] },
-  { name: "Madaripur", division: "Dhaka", thanas: ["Dasar","Kalkini","Madaripur Sadar","Rajoir","Shibchar"] },
-  { name: "Magura", division: "Khulna", thanas: ["Magura Sadar","Mohammadpur","Shalikha","Sreepur"] },
-  { name: "Manikganj", division: "Dhaka", thanas: ["Doulatpur","Gior","Harirampur","Manikganj Sadar","Saturia","Shibaloy","Singiar"] },
-  { name: "Meherpur", division: "Khulna", thanas: ["Gangni","Meherpur Sadar","Mujibnagar"] },
-  { name: "Moulvibazar", division: "Sylhet", thanas: ["Barlekha","Juri","Kamolganj","Kulaura","Moulvibazar Sadar","Rajnagar","Sreemangal"] },
-  { name: "Munshiganj", division: "Dhaka", thanas: ["Gajaria","Louhajanj","Munshiganj Sadar","Sirajdikhan","Sreenagar","Tongibari"] },
-  { name: "Mymensingh", division: "Mymensingh", thanas: ["Bhaluka","Dhobaura","Fulbaria","Gafargaon","Gouripur","Haluaghat","Iswarganj","Muktagacha","Mymensingh Sadar","Nandail","Phulpur","Tarakanda","Trishal"] },
-  { name: "Naogaon", division: "Rajshahi", thanas: ["Atrai","Badalgachi","Dhamoirhat","Manda","Mohadevpur","Naogaon Sadar","Niamatpur","Patnitala","Porsha","Raninagar","Sapahar"] },
-  { name: "Narail", division: "Khulna", thanas: ["Kalia","Lohagara","Narail Sadar"] },
-  { name: "Narayanganj", division: "Dhaka", thanas: ["Araihazar","Bandar","Narayanganj Sadar","Rupganj","Sonargaon"] },
-  { name: "Narsingdi", division: "Dhaka", thanas: ["Belabo","Monohardi","Narsingdi Sadar","Palash","Raipura","Shibpur"] },
-  { name: "Natore", division: "Rajshahi", thanas: ["Bagatipara","Baraigram","Gurudaspur","Lalpur","Naldanga","Natore Sadar","Singra"] },
-  { name: "Netrokona", division: "Mymensingh", thanas: ["Atpara","Barhatta","Durgapur","Kalmakanda","Kendua","Khaliajuri","Madan","Mohongonj","Netrokona Sadar","Purbadhala"] },
-  { name: "Nilphamari", division: "Rangpur", thanas: ["Dimla","Domar","Jaldhaka","Kishorganj","Nilphamari Sadar","Syedpur"] },
-  { name: "Noakhali", division: "Chattogram", thanas: ["Begumganj","Chatkhil","Companiganj","Hatia","Kabirhat","Noakhali Sadar","Senbug","Sonaimori","Subarnachar"] },
-  { name: "Pabna", division: "Rajshahi", thanas: ["Atghoria","Bera","Bhangura","Chatmohar","Faridpur","Ishurdi","Pabna Sadar","Santhia","Sujanagar"] },
-  { name: "Panchagarh", division: "Rangpur", thanas: ["Atwari","Boda","Debiganj","Panchagarh Sadar","Tetulia"] },
-  { name: "Patuakhali", division: "Barisal", thanas: ["Bauphal","Dashmina","Dumki","Galachipa","Kalapara","Mirzaganj","Patuakhali Sadar","Rangabali"] },
-  { name: "Pirojpur", division: "Barisal", thanas: ["Bhandaria","Kawkhali","Mathbaria","Nazirpur","Nesarabad","Pirojpur Sadar","Zianagar"] },
-  { name: "Rajbari", division: "Dhaka", thanas: ["Baliakandi","Goalanda","Kalukhali","Pangsa","Rajbari Sadar"] },
-  { name: "Rajshahi", division: "Rajshahi", thanas: ["Airport","Bagha","Bagmara","Belpukur","Boalia","Chandrima","Charghat","Damkura","Durgapur","Godagari","Karnahar","Kasiadanga","Katakhali","Mohonpur","Motihar","Paba","Puthia","Rajpara","Shah Makhdum","Tanore"] },
-  { name: "Rangamati", division: "Chattogram", thanas: ["Baghaichari","Barkal","Belaichari","Juraichari","Kaptai","Kawkhali","Langadu","Naniarchar","Rajasthali","Rangamati Sadar"] },
-  { name: "Rangpur", division: "Rangpur", thanas: ["Badargonj","Gangachara","Haragach","Hazirhat","Kaunia","Kotwali","Mahiganj","Mithapukur","Parshuram","Pirgacha","Pirgonj","Rangpur Sadar","Tajhat","Taragonj"] },
-  { name: "Satkhira", division: "Khulna", thanas: ["Assasuni","Debhata","Kalaroa","Kaliganj","Satkhira Sadar","Shyamnagar","Tala"] },
-  { name: "Shariatpur", division: "Dhaka", thanas: ["Bhedarganj","Damudya","Gosairhat","Naria","Shariatpur Sadar","Zajira"] },
-  { name: "Sherpur", division: "Mymensingh", thanas: ["Jhenaigati","Nalitabari","Nokla","Sherpur Sadar","Sreebordi"] },
-  { name: "Sirajganj", division: "Rajshahi", thanas: ["Belkuchi","Chauhali","Kamarkhand","Kazipur","Raigonj","Shahjadpur","Sirajganj Sadar","Tarash","Ullapara"] },
-  { name: "Sunamganj", division: "Sylhet", thanas: ["Bishwambarpur","Chhatak","Derai","Dharmapasha","Dowarabazar","Jagannathpur","Jamalganj","Madhyanagar","Shalla","South Sunamganj","Sunamganj Sadar","Tahirpur"] },
-  { name: "Sylhet", division: "Sylhet", thanas: ["Balaganj","Beanibazar","Bimanbandar","Bishwanath","Companiganj","Dakshinsurma","Fenchuganj","Golapganj","Gowainghat","Jaintiapur","Jalalabad","Kanaighat","Kotwali Model","Moglabazar","Osmaninagar","Shah Poran","South Surma","Sylhet Sadar","Zakiganj"] },
-  { name: "Tangail", division: "Dhaka", thanas: ["Basail","Bhuapur","Delduar","Dhanbari","Ghatail","Gopalpur","Kalihati","Madhupur","Mirzapur","Nagarpur","Sakhipur","Tangail Sadar"] },
-  { name: "Thakurgaon", division: "Rangpur", thanas: ["Baliadangi","Haripur","Pirganj","Ranisankail","Thakurgaon Sadar"] },];
+  { name: "Bagerhat", division: "Khulna", thanas: [{"n":"Bagerhat sadar"},{"n":"Chitalmari"},{"n":"Fakirhat"},{"n":"Kachua upazila","a":["Kachua"]},{"n":"Mollahat"},{"n":"Mongla"},{"n":"Morrelganj"},{"n":"Nul"},{"n":"Null"},{"n":"Rampal"},{"n":"Sarankhola"},{"n":"test thana"}] },
+  { name: "Bandarban", division: "Chattogram", thanas: [{"n":"Ali Kadam","a":["Alikadam"]},{"n":"Bandarban sadar"},{"n":"Lama"},{"n":"Naikhongchari","a":["Naikhongchhari"]},{"n":"Rowangchhari"},{"n":"Ruma"},{"n":"Thanchi"}] },
+  { name: "Barguna", division: "Barisal", thanas: [{"n":"Amtali"},{"n":"Bamna"},{"n":"Barguna sadar"},{"n":"Betagi"},{"n":"Patharghata","a":["Pathorghata"]},{"n":"Taltali"}] },
+  { name: "Barisal", division: "Barisal", aka: ["Barishal"], thanas: [{"n":"Agailjhara"},{"n":"Babuganj"},{"n":"Bakerganj"},{"n":"Banaripara"},{"n":"Barishal Sadar","a":["Barisal Sadar"]},{"n":"Charkaua"},{"n":"Goriarpar"},{"n":"Gouronadi","a":["Gournadi"]},{"n":"Hizla"},{"n":"Mehendiganj"},{"n":"Muladi"},{"n":"Natun Bazar"},{"n":"Wazirpur"}] },
+  { name: "Bhola", division: "Barisal", thanas: [{"n":"Bhola Sadar"},{"n":"Borhanuddin","a":["Borhan Sddin"]},{"n":"Char fasson","a":["Charfesson"]},{"n":"Daulatkhan","a":["Doulatkhan"]},{"n":"Dularhat (Charfession)"},{"n":"KunjerHat"},{"n":"Lalmohan"},{"n":"Manpura","a":["Monpura"]},{"n":"Soshivusion"},{"n":"Tazumuddin"}] },
+  { name: "Bogura", division: "Rajshahi", aka: ["Bogra"], thanas: [{"n":"Alamdighi","a":["Adamdighi"]},{"n":"Baropur (Bogura)"},{"n":"Bogura Sadar"},{"n":"Dhunat","a":["Dhunot"]},{"n":"Dhupchancia","a":["Dupchanchia"]},{"n":"Gabtoli","a":["Gabtali"]},{"n":"Kahaloo"},{"n":"Nandigram","a":["Nondigram"]},{"n":"Saraikandi"},{"n":"Shajahanpur"},{"n":"Sherpur"},{"n":"Shibganj"},{"n":"Sonatola","a":["Sonatala"]}] },
+  { name: "Brahmanbaria", division: "Chattogram", thanas: [{"n":"Akhaura"},{"n":"Aruail (Sarail)"},{"n":"Ashuganj"},{"n":"Bancharampur"},{"n":"Bijoynagar"},{"n":"Brahmanbaria Sadar"},{"n":"Chargach (Kasba)"},{"n":"Chatalpar Nasirnagar"},{"n":"Kasba"},{"n":"Krishnanagar (Nabinagar)"},{"n":"Nabinagar"},{"n":"Nasirnagar"},{"n":"Radhika (B Baria)"},{"n":"Rupasdi (Banchrampur)"},{"n":"Sarail"},{"n":"Shibpur (Brahmanbaria)"},{"n":"Shyamgram (Nabinagar)"}] },
+  { name: "Chandpur", division: "Chattogram", thanas: [{"n":"Babur Hat (Chandpur)"},{"n":"Chandpur Sadar"},{"n":"Chowrangi (Faridganj)"},{"n":"Dhakirgaon"},{"n":"Faridganj","a":["Faridgonj"]},{"n":"Haimchar"},{"n":"Hajiganj"},{"n":"Kachua"},{"n":"Matlab North"},{"n":"Motlab dokkhin","a":["Matlab South"]},{"n":"Palakhal (Kachua)"},{"n":"Shahrasti"}] },
+  { name: "Chapainawabganj", division: "Rajshahi", thanas: [{"n":"Bholahat"},{"n":"Chapainawabganj sadar"},{"n":"Gomastapur","a":["Gomostapur"]},{"n":"Nachole","a":["Nachol"]},{"n":"Shibganj sadar","a":["Shibganj"]}] },
+  { name: "Chattogram", division: "Chattogram", aka: ["Chittagong"], thanas: [{"n":"Akbar Shah","a":["Akbarshah"]},{"n":"Anwara"},{"n":"Bakolia","a":["Bakoliya"]},{"n":"Bandar - CTG","a":["Bandar"]},{"n":"Banskhali","a":["Banshkhali"]},{"n":"Bayazid Bostami","a":["Bayazid"]},{"n":"Bhujpur"},{"n":"Boalkhali"},{"n":"CEPZ","a":["EPZ"]},{"n":"Chandanaish"},{"n":"Chandgaon"},{"n":"Chawk Bazar","a":["Chawkbazar"]},{"n":"Chittagong Sadar"},{"n":"Doublemooring","a":["Double Mooring"]},{"n":"Fatikchori","a":["Fatikchhari"]},{"n":"Halishahar"},{"n":"Hathazari"},{"n":"Karnaphuli"},{"n":"KeraniHat"},{"n":"Khulshi"},{"n":"Kotwali - CTG","a":["Kotwali"]},{"n":"Lohagara"},{"n":"Mirsharai"},{"n":"Pahartali"},{"n":"Panchlaish"},{"n":"Patenga"},{"n":"Patiya"},{"n":"Rangunia"},{"n":"Raozan"},{"n":"Sadarghat - CTG","a":["Sadarghat"]},{"n":"Sandwip"},{"n":"Satkania"},{"n":"Shantirhat(Patiya)-CTG"},{"n":"Sitakunda"},{"n":"Sitakunda ( Citygate)"},{"n":"Time Bazar (Banskhali)"},{"n":"Zorarganj"}] },
+  { name: "Chuadanga", division: "Khulna", thanas: [{"n":"Alamdanga"},{"n":"Chuadanga Sadar"},{"n":"Damurhuda"},{"n":"Darshana"},{"n":"Jibannagar"}] },
+  { name: "Comilla", division: "Chattogram", aka: ["Cumilla"], thanas: [{"n":"Bangora-Bazar"},{"n":"Barura"},{"n":"Batisha (Chauddagram)"},{"n":"Bottali (Nangalkot)"},{"n":"Brahmanpara"},{"n":"Burichang"},{"n":"Cantonment ( Cumilla)"},{"n":"Chandina"},{"n":"Chauddagram"},{"n":"Cumilla Sadar South Model"},{"n":"Daudkandi"},{"n":"Debidwar"},{"n":"Gouripur (Cumilla)"},{"n":"Homna"},{"n":"Jahapur (Muradnagar)"},{"n":"Kandirpar"},{"n":"Kotbari"},{"n":"Kotwali Model"},{"n":"Laksam"},{"n":"Lalmai"},{"n":"Meghna"},{"n":"Metanghar(Muradnagar)"},{"n":"Monoharganj","a":["Monohargonj"]},{"n":"Mudafargonj"},{"n":"Muradnagar"},{"n":"Nangalkot"},{"n":"Nawabpur (Chandina)"},{"n":"Titas"}] },
+  { name: "Cox's Bazar", division: "Chattogram", thanas: [{"n":"Badarkhali (Chakaria)"},{"n":"Baraitoli (Chakaria)"},{"n":"Chakaria"},{"n":"Cox's Bazar Sadar","a":["Coxsbazar Sadar"]},{"n":"Dulahazara (Chakaria)"},{"n":"Eidgaon"},{"n":"Eidgor(Ramu)"},{"n":"Garjania (Ramu)"},{"n":"Gorakghata(Moheshkhali)"},{"n":"Khurushkul"},{"n":"Kutubdia"},{"n":"Link Road"},{"n":"Moheskhali","a":["Moheshkhali"]},{"n":"Nhila (Teknaf)"},{"n":"Palongkhali (Ukhiya)"},{"n":"Pekua"},{"n":"Ramu"},{"n":"Shamlapur (Teknaf)"},{"n":"Sonarpara(Ukhiya)"},{"n":"Teknaf,টেকনাফ","a":["Teknaf"]},{"n":"Ukhiya"}] },
+  { name: "Dhaka", division: "Dhaka", thanas: [{"n":"Adabor"},{"n":"Airport"},{"n":"Ashulia"},{"n":"Ati Bazar (Keraniganj)"},{"n":"Azompur"},{"n":"Badda"},{"n":"Banani"},{"n":"Bangshal"},{"n":"Bashundhara R/A"},{"n":"Battery Section"},{"n":"Bhashantek"},{"n":"Cantonment"},{"n":"Chalkbazar","a":["Chawkbazar"]},{"n":"Dakshin khan","a":["Dakshinkhan"]},{"n":"Darus Salam"},{"n":"Demra"},{"n":"Dhamrai"},{"n":"Dhanmondi"},{"n":"Dohar"},{"n":"Gandaria"},{"n":"Gulistan"},{"n":"Gulshan"},{"n":"Hatirjheel"},{"n":"Hazaribag","a":["Hazaribagh"]},{"n":"Hemayetpur"},{"n":"Jattrabari","a":["Jatrabari"]},{"n":"Kadamtali","a":["Kadamtoli"]},{"n":"Kafrul"},{"n":"Kalabagan"},{"n":"Kamrangirchar"},{"n":"Keraniganj Model","a":["Keraniganj"]},{"n":"Khilgaon"},{"n":"Khilkhet"},{"n":"Kotwali"},{"n":"Lalbagh"},{"n":"Mirpur","a":["Mirpur Model"]},{"n":"Mohammadpur"},{"n":"Motijheel"},{"n":"Mugda"},{"n":"Nawabganj"},{"n":"New Market"},{"n":"Pallabi"},{"n":"Paltan","a":["Paltan Model"]},{"n":"Panthapath"},{"n":"Purbachal"},{"n":"Ramna","a":["Ramna Model"]},{"n":"Rampura"},{"n":"Rupnagar"},{"n":"Sabujbag","a":["Sabujbagh"]},{"n":"Savar"},{"n":"Shah Ali"},{"n":"Shah Ali Market"},{"n":"Shahbag","a":["Shahbagh"]},{"n":"Shahjahanpur"},{"n":"Sher-e-Bangla Nagar"},{"n":"Shyampur"},{"n":"South Keraniganj"},{"n":"Sutrapur"},{"n":"Tejgaon"},{"n":"Tejgaon Industrial Area"},{"n":"Turag"},{"n":"Uttara","a":["Uttara East","Uttara West"]},{"n":"Uttarkhan"},{"n":"Vasantek"},{"n":"Vatara"},{"n":"Wari"}] },
+  { name: "Dinajpur", division: "Rangpur", thanas: [{"n":"Biral","a":["Birol"]},{"n":"Birampur"},{"n":"Birganj"},{"n":"Bochaganj"},{"n":"Chirirbandar"},{"n":"Dinajpur Sadar"},{"n":"Fulbari // ফুলবাড়ি","a":["Fulbari"]},{"n":"Ghoraghat"},{"n":"Hakimpur"},{"n":"Kaharole","a":["Kaharol"]},{"n":"Khansama"},{"n":"Khulahati"},{"n":"Nawabganj Upazila","a":["Nawabganj"]},{"n":"Parbatipur"}] },
+  { name: "Faridpur", division: "Dhaka", thanas: [{"n":"Alfadanga"},{"n":"Bhanga"},{"n":"Boalmari"},{"n":"Charbhadrasan"},{"n":"Faridpur Sadar"},{"n":"Madhukhali"},{"n":"Nagarkanda"},{"n":"Niltuli"},{"n":"Sadarpur"},{"n":"Shaltha","a":["Saltha"]}] },
+  { name: "Feni", division: "Chattogram", thanas: [{"n":"Chagalnaiya","a":["Chhagalnaiya"]},{"n":"Dagunbhuiyan","a":["Daganbhuiyan"]},{"n":"Feni sadar"},{"n":"Fulgazi"},{"n":"Mohipal"},{"n":"Parshuram"},{"n":"Sonagazi"}] },
+  { name: "Gaibandha", division: "Rangpur", thanas: [{"n":"Dariapur"},{"n":"Fulchari","a":["Phulchari"]},{"n":"Gabindaganj","a":["Gobindaganj"]},{"n":"Gaibandha Sadar"},{"n":"Palashbari"},{"n":"Sadullapur"},{"n":"Saghata"},{"n":"Sundarganj"}] },
+  { name: "Gazipur", division: "Dhaka", thanas: [{"n":"Gazipur Sadar"},{"n":"Kaliakair"},{"n":"Kaliakair Upazila"},{"n":"Kaliganj upazila","a":["Kaliganj"]},{"n":"kapasia"},{"n":"Kashimpur"},{"n":"Memberbari (Gazipur)"},{"n":"Nayanpur (Sreepur)"},{"n":"Rajendrapur"},{"n":"Sreepur"},{"n":"Tongi","a":["Tongi East","Tongi West"]}] },
+  { name: "Gopalganj", division: "Dhaka", thanas: [{"n":"Boultali"},{"n":"Gopalganj Sadar"},{"n":"kasiani","a":["Kashiani"]},{"n":"Kotalipara"},{"n":"Muksudpur"},{"n":"tungipara"}] },
+  { name: "Habiganj", division: "Sylhet", thanas: [{"n":"Ajmiriganj"},{"n":"Aushkandi (Nabiganj)"},{"n":"Bahubal"},{"n":"Baniachong"},{"n":"Chunarughat"},{"n":"Habiganj Sadar"},{"n":"Lakhai"},{"n":"Madhobpur","a":["Madhabpur"]},{"n":"Markuli (Nabiganj)"},{"n":"Nabiganj"},{"n":"Shayestaganj"}] },
+  { name: "Jamalpur", division: "Mymensingh", thanas: [{"n":"Baksiganj","a":["Bokshiganj"]},{"n":"Dewanganj","a":["Dewangonj"]},{"n":"Digpait"},{"n":"Islampur"},{"n":"Jamalpur Sadar"},{"n":"Madarganj"},{"n":"Melandaha","a":["Melandah"]},{"n":"Nandina"},{"n":"Sarishabari"}] },
+  { name: "Jashore", division: "Khulna", aka: ["Jessore"], thanas: [{"n":"Abhaynagar"},{"n":"Bagharpara","a":["Bagherpara"]},{"n":"Bakchar"},{"n":"Chaugacha","a":["Chougachha"]},{"n":"Jashore Sadar"},{"n":"Jikhargacha","a":["Jhikargacha"]},{"n":"keshobpur","a":["Keshabpur"]},{"n":"Manirampur"},{"n":"Sharsha"}] },
+  { name: "Jhalakathi", division: "Barisal", aka: ["Jhalokati"], thanas: [{"n":"Jhalokati sadar","a":["Jhalakathi Sadar"]},{"n":"Kathalia"},{"n":"Nalchity"},{"n":"Rajapur"}] },
+  { name: "Jhenaidah", division: "Khulna", thanas: [{"n":"Dakbangla"},{"n":"Harinakunda","a":["Harinakundu"]},{"n":"Hatgopalpur"},{"n":"Jhenaidah Sadar"},{"n":"Kaliganj"},{"n":"Kotchandpur"},{"n":"Maheshpur","a":["Moheshpur"]},{"n":"Shailkupa"}] },
+  { name: "Joypurhat", division: "Rajshahi", thanas: [{"n":"Akkelpur"},{"n":"Joypurhat Sadar"},{"n":"Kalai"},{"n":"Khetlal"},{"n":"Panchbibi"}] },
+  { name: "Khagrachhari", division: "Chattogram", aka: ["Khagrachori"], thanas: [{"n":"Dighinala"},{"n":"Guimara"},{"n":"khagrachari sadar","a":["Khagrachhari Sadar"]},{"n":"Laxmichari","a":["Laxmichhari"]},{"n":"Mahalchari","a":["Mohalchari"]},{"n":"Manikchhari","a":["Manikchari"]},{"n":"Matiranga"},{"n":"Panchari"},{"n":"Ramgarh"}] },
+  { name: "Khulna", division: "Khulna", thanas: [{"n":"Batiaghata","a":["Botiaghata"]},{"n":"Circuit House"},{"n":"Dacope","a":["Dakop"]},{"n":"Daulatpur (Khulna)","a":["Daulatpur"]},{"n":"Dighalia","a":["Digholia"]},{"n":"Dumuria"},{"n":"Gollamari (Khulna)"},{"n":"Khulna Sadar"},{"n":"Koyra"},{"n":"Mujgunni"},{"n":"Paikgacha","a":["Paikgasa"]},{"n":"Phultala","a":["Fultola"]},{"n":"Rupsha"},{"n":"Terokhada"}] },
+  { name: "Kishoreganj", division: "Dhaka", thanas: [{"n":"Abdullahpur (Austagram)"},{"n":"Austagram"},{"n":"Bajitpur"},{"n":"Bhairab"},{"n":"Hossainpur"},{"n":"Itna"},{"n":"Karimganj","a":["Karimgonj"]},{"n":"Katiadi"},{"n":"kishoreganj Sadar"},{"n":"Kuliarchar"},{"n":"Mithamain","a":["Mithamoin"]},{"n":"Nikli"},{"n":"Pakundia"},{"n":"Tarail"}] },
+  { name: "Kurigram", division: "Rangpur", thanas: [{"n":"Bhurungamari"},{"n":"Char Rajibpur","a":["Charrajibpur"]},{"n":"Chilmari"},{"n":"fulbari"},{"n":"Kachakata"},{"n":"kurigram sadar"},{"n":"Nageshwari"},{"n":"Phulbari"},{"n":"Rajarhat"},{"n":"Raomari","a":["Rowmari"]},{"n":"Ulipur"}] },
+  { name: "Kushtia", division: "Khulna", aka: ["Kustia"], thanas: [{"n":"Bheramara"},{"n":"Bittipara EB"},{"n":"Daulatpur"},{"n":"Khoksa"},{"n":"Kumarkhali"},{"n":"Kushtia Sadar"},{"n":"Mirpur upazila","a":["Mirpur"]}] },
+  { name: "Lakshmipur", division: "Chattogram", aka: ["Laxmipur"], thanas: [{"n":"Banchanagar (Laxmipur)"},{"n":"Chandraganj"},{"n":"Kamalnagar"},{"n":"Laxmipur Sadar"},{"n":"Raipur"},{"n":"Ramganj"},{"n":"Ramgati"}] },
+  { name: "Lalmonirhat", division: "Rangpur", thanas: [{"n":"Aditmari"},{"n":"Hatibandha"},{"n":"Kaliganj sadar","a":["Kaliganj"]},{"n":"Lalmonirhat Sadar"},{"n":"Patgram"}] },
+  { name: "Madaripur", division: "Dhaka", thanas: [{"n":"Dasar"},{"n":"Kalkini"},{"n":"Madaripur sadar"},{"n":"Rajoir"},{"n":"Shibchar"}] },
+  { name: "Magura", division: "Khulna", thanas: [{"n":"Magura sadar"},{"n":"Mohammadpur upazila","a":["Mohammadpur"]},{"n":"Shalikha"},{"n":"Sreepur upazila","a":["Sreepur"]}] },
+  { name: "Manikganj", division: "Dhaka", thanas: [{"n":"Boro Sorundi (Manikganj)"},{"n":"Daulatpur upazila","a":["Doulatpur"]},{"n":"Ghior","a":["Gior"]},{"n":"Harirampur"},{"n":"Jamirta, Singair"},{"n":"Manikganj Sadar"},{"n":"Saturia"},{"n":"Shivalaya"},{"n":"Singair","a":["Singiar"]}] },
+  { name: "Meherpur", division: "Khulna", thanas: [{"n":"Gangni"},{"n":"Meherpur sadar"},{"n":"Mujibnagar"}] },
+  { name: "Moulvibazar", division: "Sylhet", thanas: [{"n":"Barlekha (Moulvibazar)","a":["Barlekha"]},{"n":"Dakshinbhag"},{"n":"Juri"},{"n":"Kamolganj"},{"n":"Kulaura"},{"n":"Moulvibazar Sadar"},{"n":"Rajnagar"},{"n":"Robirbazar (Moulvibazar)"},{"n":"Sherpur Moulvibazar"},{"n":"Sreemangal"}] },
+  { name: "Munshiganj", division: "Dhaka", thanas: [{"n":"Gazaria","a":["Gajaria"]},{"n":"Louhajang","a":["Louhajanj"]},{"n":"Munshiganj Sadar"},{"n":"Sirajdikhan"},{"n":"Sreenagar"},{"n":"Tongibari"}] },
+  { name: "Mymensingh", division: "Mymensingh", thanas: [{"n":"Bhaluka"},{"n":"Dhobaura"},{"n":"Fulbaria"},{"n":"Gafargaon"},{"n":"Gouripur"},{"n":"Haluaghat"},{"n":"Ishwarganj","a":["Iswarganj"]},{"n":"Muktagacha"},{"n":"Mymensingh Sadar"},{"n":"Nandail"},{"n":"Pagla"},{"n":"Phulpur"},{"n":"Shambhuganj"},{"n":"Square Masterbari (Bhaluka)"},{"n":"Tarakanda"},{"n":"Trishal"}] },
+  { name: "Naogaon", division: "Rajshahi", thanas: [{"n":"Atrai"},{"n":"Badolgachi","a":["Badalgachi"]},{"n":"Dhamoirhat"},{"n":"Manda"},{"n":"Mohadevpur"},{"n":"Naogaon sadar"},{"n":"Niamatpur"},{"n":"Patnitala"},{"n":"Porsha"},{"n":"Raninagar"},{"n":"Sapahar"}] },
+  { name: "Narail", division: "Khulna", thanas: [{"n":"Kalia"},{"n":"Lohagara"},{"n":"Naragati"},{"n":"Narail Sadar"}] },
+  { name: "Narayanganj", division: "Dhaka", thanas: [{"n":"Araihajar","a":["Araihazar"]},{"n":"Bandar"},{"n":"Fatullah"},{"n":"Kanchpur Highway"},{"n":"Narayanganj Sadar"},{"n":"Rupganj"},{"n":"Shiddhirganj"},{"n":"Sonargaon"}] },
+  { name: "Narsingdi", division: "Dhaka", aka: ["Narshindi"], thanas: [{"n":"Belabo"},{"n":"Ghorashal"},{"n":"Madhobdi"},{"n":"Monohardi"},{"n":"Narsingdi Sadar"},{"n":"Palash"},{"n":"Raipura"},{"n":"Shibpur"}] },
+  { name: "Natore", division: "Rajshahi", thanas: [{"n":"Bagatipara"},{"n":"Baraigram"},{"n":"Bonpara Pourosova"},{"n":"Gopalpur Pourosova"},{"n":"Gurudaspur"},{"n":"Lalpur"},{"n":"Naldanga"},{"n":"Natore Sadar"},{"n":"Singra"}] },
+  { name: "Netrokona", division: "Mymensingh", thanas: [{"n":"Atpara"},{"n":"Barhatta"},{"n":"Durgapur"},{"n":"Kalmakanda"},{"n":"Kendua"},{"n":"Khaliajuri"},{"n":"Madan"},{"n":"Mohonganj","a":["Mohongonj"]},{"n":"Netrokona Sadar"},{"n":"Parbadhala","a":["Purbadhala"]},{"n":"Shyamganj"}] },
+  { name: "Nilphamari", division: "Rangpur", thanas: [{"n":"Dimla"},{"n":"Domar"},{"n":"jaldhaka"},{"n":"kishoreganj","a":["Kishorganj"]},{"n":"Nilphamari Sadar"},{"n":"Saidpur","a":["Syedpur"]}] },
+  { name: "Noakhali", division: "Chattogram", thanas: [{"n":"Amishapara (Sonaimuri)"},{"n":"Begamganj","a":["Begumganj"]},{"n":"Chaprashirhat (Companiganj)"},{"n":"Chatkhil"},{"n":"Chhayani (Begumganj)"},{"n":"Companyganj","a":["Companiganj"]},{"n":"Hatiya","a":["Hatia"]},{"n":"Jamidarhat(Begumganj)"},{"n":"Kabir Hat","a":["Kabirhat"]},{"n":"Khalifarhat"},{"n":"Maijdee Bazar"},{"n":"Nijhum Dwip"},{"n":"Noakhali Sadar"},{"n":"Senbagh","a":["Senbug"]},{"n":"Sonaimuri","a":["Sonaimori"]},{"n":"Subarnachar"}] },
+  { name: "Pabna", division: "Rajshahi", thanas: [{"n":"Ataikula (Pabna)"},{"n":"Atgharia","a":["Atghoria"]},{"n":"Bera"},{"n":"Bhangura"},{"n":"Chatmohar"},{"n":"Foridpur (Pabna)","a":["Faridpur"]},{"n":"Ishwardi","a":["Ishurdi"]},{"n":"Pabna Sadar"},{"n":"Santhia"},{"n":"Sujanagar"}] },
+  { name: "Panchagarh", division: "Rangpur", aka: ["Panchgarh"], thanas: [{"n":"Atwari"},{"n":"Boda"},{"n":"Debiganj"},{"n":"Panchgarh sadar Thana","a":["Panchagarh Sadar"]},{"n":"Tetulia"}] },
+  { name: "Patuakhali", division: "Barisal", thanas: [{"n":"Bablatola"},{"n":"Bauphal"},{"n":"Dashmina"},{"n":"Dumki"},{"n":"Galachipa"},{"n":"Kalapara"},{"n":"Kalisuri"},{"n":"Mahipur"},{"n":"Mirzaganj"},{"n":"Patuakhali Sadar"},{"n":"Rangabali"}] },
+  { name: "Pirojpur", division: "Barisal", thanas: [{"n":"Bhandaria"},{"n":"Inderhat"},{"n":"Kawkhali"},{"n":"Mathbaria"},{"n":"Nazirpur"},{"n":"Nesarabad"},{"n":"Pirojpur Sadar"},{"n":"Safa (Mathbaria)"},{"n":"Swarupkati"},{"n":"Zianagar"}] },
+  { name: "Rajbari", division: "Dhaka", thanas: [{"n":"(Goalanda Mor) Rajbari Office"},{"n":"Baliakandi"},{"n":"Goalananda","a":["Goalanda"]},{"n":"Kalukhali"},{"n":"pangsha","a":["Pangsa"]},{"n":"Rajbari Sadar"}] },
+  { name: "Rajshahi", division: "Rajshahi", thanas: [{"n":"Airport (Rajshahi)","a":["Airport"]},{"n":"Bagha"},{"n":"Bagmara"},{"n":"Belpukur"},{"n":"Boalia"},{"n":"Chandrima Thana","a":["Chandrima"]},{"n":"Charghat"},{"n":"Damkura"},{"n":"Durgapur"},{"n":"Godagari"},{"n":"Kashiadanga","a":["Kasiadanga"]},{"n":"Katakhali"},{"n":"Kornohar","a":["Karnahar"]},{"n":"Matihar Thana","a":["Motihar"]},{"n":"Mohanpur","a":["Mohonpur"]},{"n":"Paba"},{"n":"Puthia"},{"n":"Rajpara"},{"n":"Rajshahi Sadar"},{"n":"Shah Makdam","a":["Shah Makhdum"]},{"n":"Tanore"}] },
+  { name: "Rangamati", division: "Chattogram", thanas: [{"n":"Bagaichhari","a":["Baghaichari"]},{"n":"Barkal"},{"n":"Belaichhari","a":["Belaichari"]},{"n":"Juraichhari","a":["Juraichari"]},{"n":"Kaptai"},{"n":"Kawkhali upazila","a":["Kawkhali"]},{"n":"Langadu"},{"n":"Naniarchar"},{"n":"Rajasthali"},{"n":"Rangamati Sadar"},{"n":"Sajek (Rangamati)"}] },
+  { name: "Rangpur", division: "Rangpur", thanas: [{"n":"Badarganj","a":["Badargonj"]},{"n":"Gangachara"},{"n":"Kaunia"},{"n":"Mitapukur","a":["Mithapukur"]},{"n":"Pirgacha"},{"n":"Pirganj","a":["Pirgonj"]},{"n":"Rangpur Sadar"},{"n":"Shatibari"},{"n":"Taraganj","a":["Taragonj"]}] },
+  { name: "Satkhira", division: "Khulna", aka: ["Shatkhira"], thanas: [{"n":"Assasuni"},{"n":"Debhata"},{"n":"Kalaroa"},{"n":"Kaliganj"},{"n":"Patkelghata"},{"n":"Shatkhira sadar","a":["Satkhira Sadar"]},{"n":"Shyamnagar"},{"n":"Tala"}] },
+  { name: "Shariatpur", division: "Dhaka", thanas: [{"n":"Bhedarganj"},{"n":"Damudya"},{"n":"Gosairhat"},{"n":"Naria"},{"n":"Shakipur"},{"n":"Shariatpur sadar"},{"n":"Zajira"}] },
+  { name: "Sherpur", division: "Mymensingh", thanas: [{"n":"Jhenaigati"},{"n":"Nakla","a":["Nokla"]},{"n":"Nalitabari"},{"n":"Sherpur sadar"},{"n":"Sreebardi","a":["Sreebordi"]}] },
+  { name: "Sirajganj", division: "Rajshahi", thanas: [{"n":"Belkuchi"},{"n":"Chowhali","a":["Chauhali"]},{"n":"Enayetpur"},{"n":"Kamarkhanda","a":["Kamarkhand"]},{"n":"Kazipur"},{"n":"Raiganj","a":["Raigonj"]},{"n":"Salanga"},{"n":"Shahjadpur"},{"n":"Sirajganj Sadar"},{"n":"Tarash"},{"n":"Ullapara"}] },
+  { name: "Sunamganj", division: "Sylhet", thanas: [{"n":"Bishwamvapur","a":["Bishwambarpur"]},{"n":"chhatak"},{"n":"Derai"},{"n":"Dharmapasha"},{"n":"Dowarabazar"},{"n":"Jagannathpur"},{"n":"Jamalganj"},{"n":"Jauabazar (Chatok)"},{"n":"Moddonagar"},{"n":"Norshingpur"},{"n":"Raniganj"},{"n":"Shalla"},{"n":"Shantiganj"},{"n":"Sunamganj Sadar"},{"n":"Tahirpur"}] },
+  { name: "Sylhet", division: "Sylhet", thanas: [{"n":"Ambarkhana"},{"n":"Balaganj"},{"n":"Beanibazar"},{"n":"Bishanath","a":["Bishwanath"]},{"n":"Burhan Uddin Bazar, Kanaighat"},{"n":"Companyganj upazila","a":["Companiganj"]},{"n":"Dhakadakshin (Golapganj)"},{"n":"Fenchuganj"},{"n":"gobindaganj"},{"n":"Golapganj"},{"n":"Gowainghat"},{"n":"Jalalabad","a":["Bimanbandar"]},{"n":"Jalalabad cantonment"},{"n":"Jintiapur","a":["Jaintiapur"]},{"n":"Kanaighat"},{"n":"Modina Market"},{"n":"Moglabazar"},{"n":"Osmaninagar"},{"n":"Shaheb Bazar"},{"n":"Shahporan","a":["Shah Poran"]},{"n":"South Surma","a":["Dakshinsurma"]},{"n":"Sylhet sadar"},{"n":"Uposhahar"},{"n":"Zakiganj"}] },
+  { name: "Tangail", division: "Dhaka", thanas: [{"n":"Bara Chaona (Sakhipur)"},{"n":"Basail"},{"n":"Bastail, Mirzapur"},{"n":"Bhuapur"},{"n":"Bolla Rampur Kalihati"},{"n":"Delduar"},{"n":"Dhanbari"},{"n":"Elenga Kalihati"},{"n":"Ghatail"},{"n":"Gopalpur"},{"n":"Kalihati"},{"n":"Kedarpur Nagarpur"},{"n":"Madhupur"},{"n":"Mirzapur"},{"n":"Nagarpur"},{"n":"Sabalia"},{"n":"Sagardighi, Ghatail"},{"n":"Sakhipur"},{"n":"Tangail Sadar"}] },
+  { name: "Thakurgaon", division: "Rangpur", thanas: [{"n":"Baliadangi"},{"n":"Haripur"},{"n":"Pirganj upazila","a":["Pirganj"]},{"n":"Ranisankail"},{"n":"Thakurgaon Sadar"}] },
+];
 
 /** Normalised match key: case-, space- and punctuation-insensitive. */
 const key = (s) => (s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -124,15 +125,20 @@ export function findDistrict(name) {
   return BY_KEY.get(key(name));
 }
 
-/** Thanas of a district, or [] when the district is unknown/unset — so a caller
- * can render the dependent dropdown without null-checking first. */
+/** Thana NAMES for a district — the strings that get stored on an order. */
 export function thanasForDistrict(name) {
-  return findDistrict(name)?.thanas ?? [];
+  return (findDistrict(name)?.thanas ?? []).map((t) => t.n);
 }
 
-/** True when `thana` belongs to `district`. Used to clear a stale thana when the
- * district changes, and to validate an address loaded from an older order. */
+/** Dropdown options: the Steadfast name, plus its official spellings as hidden
+ * search keywords so "Jatrabari" finds "Jattrabari". */
+export function thanaOptionsForDistrict(name) {
+  return (findDistrict(name)?.thanas ?? []).map((t) => ({ value: t.n, label: t.n, keywords: t.a }));
+}
+
+/** True when `thana` belongs to `district` — by its own name or any alias, so
+ * an address saved under an older spelling still validates. */
 export function isThanaInDistrict(district, thana) {
   const k = key(thana);
-  return thanasForDistrict(district).some((t) => key(t) === k);
+  return (findDistrict(district)?.thanas ?? []).some((t) => key(t.n) === k || (t.a ?? []).some((a) => key(a) === k));
 }

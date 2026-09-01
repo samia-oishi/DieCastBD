@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { BD_DISTRICTS, isThanaInDistrict, thanasForDistrict } from "@/lib/bdGeo";
+import { BD_DISTRICTS, isThanaInDistrict, thanaOptionsForDistrict } from "@/lib/bdGeo";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
 
 const DISTRICT_OPTIONS = BD_DISTRICTS.map((d) => ({
@@ -23,10 +23,10 @@ const DISTRICT_OPTIONS = BD_DISTRICTS.map((d) => ({
  *   ({ label, error, children }) signature.
  */
 export function DistrictThanaFields({ district, thana, onDistrictChange, onThanaChange, districtError, thanaError, FieldWrapper }) {
-  const thanaOptions = useMemo(
-    () => thanasForDistrict(district).map((t) => ({ value: t, label: t })),
-    [district]
-  );
+  // Options carry the courier's own name as the label, plus the official
+  // spellings as hidden search keywords — so someone who types "Jatrabari" or
+  // "Uttara East" still lands on Steadfast's "Jattrabari" / "Uttara".
+  const thanaOptions = useMemo(() => thanaOptionsForDistrict(district), [district]);
 
   const handleDistrict = (next) => {
     onDistrictChange(next);
