@@ -180,3 +180,52 @@ describe("profitMargin", () => {
     expect(profitMargin({ revenue: 1000, profit: -200 })).toBe(-20);
   });
 });
+
+/** Merchant's stated rule, pinned so it cannot drift:
+ *  "Discount will always deduct from the sale price & profit will be calculated
+ *   after minus the discount price."
+ *
+ * It already held on every path when they said it — these lock it down. The
+ * failure mode being guarded against is subtle: a change that computed revenue
+ * from `subtotal` instead of `total - shippingFee` would still look right on
+ * every order that happens to have no discount.
+ */
+describe("business rule — a discount comes off the sale price, and profit follows", () => {
+  const withDiscount = (discount) =>
+    order({ subtotal: 1890, discount, shippingFee: 70, items: [item(1890, 1054)] });
+
+  it("deducts the discount from revenue", () => {
+    expect(sumOrderMetrics([withDiscount(0)]).revenue).toBe(1890);
+    expect(sumOrderMetrics([withDiscount(270)]).revenue).toBe(1620); // 1890 − 270
+  });
+
+  it("computes profit AFTER the discount, not before it", () => {
+    const m = sumOrderMetrics([withDiscount(270)]);
+    expect(m.profit).toBe(1620 - 1054);
+    // The bug this rules out: profit taken off the pre-discount sale price.
+    expect(m.profit).not.toBe(1890 - 1054);
+  });
+
+  it("moves revenue and profit by exactly the discount, and never the cost", () => {
+    const before = sumOrderMetrics([withDiscount(70)]);
+    const after = sumOrderMetrics([withDiscount(270)]);
+    expect(before.revenue - after.revenue).toBe(200);
+    expect(before.profit - after.profit).toBe(200);
+    expect(after.cogs).toBe(before.cogs); // a discount is not a cost
+  });
+
+  it("keeps the delivery charge out of it — the courier's cut is separate", () => {
+    const m = sumOrderMetrics([withDiscount(270)]);
+    expect(m.totalSales).toBe(1690); // 1890 − 270 + 70 delivery
+    expect(m.revenue).toBe(1620); // delivery removed as well
+    expect(m.shippingFees).toBe(70);
+  });
+
+  it("applies the same rule to per-product profit, so the panels agree", () => {
+    // Without the order-level discount being allocated across lines, the
+    // "top products" figures would sum to more than the order actually made.
+    const o = withDiscount(270);
+    const perProduct = topProductsByProfit([o], 99).reduce((n, p) => n + p.profit, 0);
+    expect(Math.abs(perProduct - sumOrderMetrics([o]).profit)).toBeLessThanOrEqual(1);
+  });
+});
