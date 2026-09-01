@@ -36,6 +36,40 @@ describe("BD_DISTRICTS", () => {
     expect(ctg).toContain("Halishahar");
     expect(ctg).toContain("Sitakunda");
   });
+
+  // Khulna and Rajshahi are the regression this guards: on official upazila
+  // data alone neither district had ANY entry for its own city, so customers in
+  // the 3rd and 4th largest cities in the country could not say where they live.
+  it.each([
+    ["Khulna", ["Khulna Sadar", "Sonadanga", "Khalishpur", "Daulatpur"], "Dumuria"],
+    ["Rajshahi", ["Boalia", "Rajpara", "Motihar", "Shah Makhdum"], "Godagari"],
+    ["Sylhet", ["Kotwali Model", "Jalalabad", "South Surma"], "Beanibazar"],
+    ["Gazipur", ["Joydebpur", "Tongi East", "Tongi West", "Kashimpur"], "Kaliakair"],
+    ["Barisal", ["Kotwali Model", "Kawnia", "Bandar"], "Gournadi"],
+    ["Rangpur", ["Kotwali", "Tajhat", "Mahiganj"], "Mithapukur"],
+  ])("covers %s city (metro thanas) without losing its upazilas", (district, metro, upazila) => {
+    const list = thanasForDistrict(district);
+    for (const t of metro) expect(list, `${district} is missing ${t}`).toContain(t);
+    expect(list, `${district} lost upazila ${upazila}`).toContain(upazila);
+  });
+
+  it("gives every district somewhere to deliver to", () => {
+    for (const d of BD_DISTRICTS) expect(d.thanas.length, `${d.name} has no thanas`).toBeGreaterThan(0);
+  });
+
+  it("names each Sadar after its own district, so searching the district finds it", () => {
+    // "Bogra Sadar" under a district displayed as "Bogura" was unfindable by
+    // anyone typing the name they had just picked.
+    expect(thanasForDistrict("Bogura")).toContain("Bogura Sadar");
+    expect(thanasForDistrict("Jashore")).toContain("Jashore Sadar");
+  });
+
+  it("offers no station that does not exist yet", () => {
+    // Barisal Metropolitan Police has four approved-but-unbuilt stations.
+    for (const t of ["Rupatali", "Barisal University", "Char Monai", "Kashipur"]) {
+      expect(thanasForDistrict("Barisal")).not.toContain(t);
+    }
+  });
 });
 
 describe("findDistrict", () => {

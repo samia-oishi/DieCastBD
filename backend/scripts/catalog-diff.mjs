@@ -19,10 +19,12 @@ import { Product } from "../src/modules/products/product.model.js";
 import { products as incoming } from "../src/seeds/data/catalog.data.js";
 
 const FIELDS = [
-  // salePrice intentionally excluded: the generator omits it, so the seed never
-  // changes it (owner manages sale prices manually).
+  // salePrice and stock are both intentionally excluded: the generator omits them,
+  // so a seed never changes them. The owner sets sale prices manually, and stock is
+  // owned by the admin (the catalog's qty is the ORIGINAL landed quantity, so seeding
+  // it would resurrect sold-out cars).
   "title", "series", "modelNumber", "manufacturer", "scale", "material", "color",
-  "description", "price", "costPrice", "stock",
+  "description", "price", "costPrice",
 ];
 
 const args = process.argv.slice(2);
