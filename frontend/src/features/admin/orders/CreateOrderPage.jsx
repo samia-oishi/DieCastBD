@@ -4,6 +4,8 @@ import { ChevronLeft, Search, Plus, Minus, X, UserCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
+import { findDistrict } from "@/lib/bdGeo";
+import { resolveZoneForDistrict } from "@/lib/shippingZone";
 import { ROUTES } from "@/constants/routes";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -50,7 +52,7 @@ export function CreateOrderPage() {
   const [district, setDistrict] = useState("");
   const [thana, setThana] = useState("");
   const [note, setNote] = useState("");
-  const [zone, setZone] = useState("");
+
   const [advance, setAdvance] = useState("");
   const [discount, setDiscount] = useState("");
   const [lines, setLines] = useState([]); // [{ product, qty }]
@@ -65,9 +67,6 @@ export function CreateOrderPage() {
   // Memoised: `settings?.shippingZones ?? []` is a new array identity every
   // render, which would re-fire the default-zone effect endlessly.
   const zones = useMemo(() => settings?.shippingZones ?? [], [settings]);
-  useEffect(() => {
-    if (!zone && zones.length) setZone(zones[0].name);
-  }, [zones, zone]);
 
   // Fill from the last order, once per match, and only into fields the admin
   // hasn't already typed into — retyping over their input would be worse than
@@ -98,7 +97,14 @@ export function CreateOrderPage() {
 
   const priceOf = (p) => (p.salePrice != null && p.salePrice > 0 && p.salePrice < p.price ? p.salePrice : p.price);
   const subtotal = useMemo(() => lines.reduce((n, l) => n + priceOf(l.product) * l.qty, 0), [lines]);
-  const shippingFee = zones.find((z) => z.name === zone)?.charge ?? 0;
+  // The zone follows the district, exactly as it does at checkout — and the
+  // server re-derives it from the address anyway, so offering the admin a
+  // separate choice here would only let this preview disagree with the order
+  // that actually gets written. findDistrict() first so an older spelling
+  // pulled in by the phone lookup still resolves.
+  const zoneData = district ? resolveZoneForDistrict(zones, findDistrict(district)?.name ?? district) : null;
+  const zone = zoneData?.name ?? "";
+  const shippingFee = zoneData?.fee ?? 0;
   const num = (v) => (v === "" ? 0 : Number(v));
   const total = Math.max(0, subtotal - num(discount)) + shippingFee;
   const due = Math.max(0, total - num(advance));
@@ -220,15 +226,16 @@ export function CreateOrderPage() {
         <SectionPanel title="Delivery & payment" bodyClassName="pt-3">
           <div className="flex flex-col gap-4">
             <Field label="Delivery zone">
-              <div className="flex flex-col gap-2">
-                {zones.map((z) => (
-                  <button key={z.name} type="button" onClick={() => setZone(z.name)} className={cn("flex items-center justify-between rounded-[12px] border px-3.5 py-2.5 text-left text-[13px] transition-colors", zone === z.name ? "border-brand bg-brand-soft" : "border-line hover:border-ink")}>
-                    <span className="font-semibold text-ink">{z.name}</span>
-                    <span className="text-ink-soft">{formatTaka(z.charge ?? 0)}</span>
-                  </button>
-                ))}
-                {!zones.length && <p className="text-[12.5px] text-faint">No delivery zones configured — add them in Settings.</p>}
-              </div>
+              {!zones.length ? (
+                <p className="text-[12.5px] text-faint">No delivery zones configured — add them in Settings.</p>
+              ) : !district ? (
+                <p className="text-[12.5px] text-faint">Pick the district above to set the delivery charge.</p>
+              ) : (
+                <div className="flex items-center justify-between rounded-[12px] border border-line bg-[#FCFCF9] px-3.5 py-2.5 text-[13px]">
+                  <span className="font-semibold text-ink">{zoneData?.name ?? "No charge"}</span>
+                  <span className="text-ink-soft">{formatTaka(shippingFee)}</span>
+                </div>
+              )}
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Advance received"><Input type="number" min="0" value={advance} onChange={(e) => setAdvance(e.target.value)} className={adminInputCls} placeholder="0" /></Field>

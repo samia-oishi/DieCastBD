@@ -11,6 +11,7 @@ import { assertPaymentMethodAllowed, calculateAmountPaid } from "./paymentPlan.s
 import { AuditLog } from "../auditLogs/auditLog.model.js";
 import { recomputeRollupsForOrders } from "../analytics/analytics.service.js";
 import { countsAsRevenue } from "../../config/constants.js";
+import { resolveZoneForDistrict } from "../settings/shippingZone.js";
 import { generateOrderNumber } from "../../utils/generateOrderNumber.js";
 import { ApiError } from "../../utils/apiError.js";
 
@@ -103,7 +104,14 @@ async function buildAndSaveOrder({
   }
 
   const settings = await Settings.findOne().session(session);
-  const zone = settings?.shippingZones?.find((z) => z.name === shippingZone);
+  const zones = settings?.shippingZones ?? [];
+  // Derive the zone from the ADDRESS, not from what the client sent. The fee is
+  // a function of where the parcel is going, so letting the request choose it
+  // meant a Rangpur address could be submitted with the Inside-Dhaka zone and
+  // pay the city rate. Falls back to the requested name only when the address
+  // has no district (an order placed before the district dropdowns existed).
+  const derived = shippingAddress?.district ? resolveZoneForDistrict(zones, shippingAddress.district) : null;
+  const zone = derived ?? zones.find((z) => z.name === shippingZone);
   // Falls back to 0 (not a throw) if the zone doesn't match any configured
   // zone — e.g. stale admin config — so a checkout never hard-fails over a
   // shipping-fee lookup miss; it just ships free rather than blocking the order.

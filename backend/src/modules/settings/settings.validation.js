@@ -44,6 +44,12 @@ const shippingZone = z.object({
   fee: z.coerce.number().min(0),
   eta: z.string().optional(),
   requiresPrepay: z.coerce.boolean().optional(),
+  // Which districts this zone covers, by the courier's own district names.
+  // Checkout derives the zone from the address rather than asking the customer
+  // to classify their own district; see settings/shippingZone.js.
+  districts: z.array(z.string().trim().min(1)).optional(),
+  // Catch-all for every district no zone lists.
+  isDefault: z.coerce.boolean().optional(),
 });
 
 const bkashConfig = z.object({

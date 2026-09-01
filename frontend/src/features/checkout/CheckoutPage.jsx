@@ -20,6 +20,8 @@ import { CheckoutSteps } from "./components/CheckoutSteps";
 import { SectionCard, inputCls } from "./components/parts";
 import { AddressSelector } from "./components/AddressSelector";
 import { GuestAddressForm } from "./components/GuestAddressForm";
+import { findDistrict } from "@/lib/bdGeo";
+import { resolveZoneForDistrict } from "@/lib/shippingZone";
 import { DeliveryOptions } from "./components/DeliveryOptions";
 import { PaymentMethods } from "./components/PaymentMethods";
 import { CheckoutSummary } from "./components/CheckoutSummary";
@@ -61,6 +63,10 @@ export function CheckoutPage() {
 
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [guestData, setGuestData] = useState(null);
+  // Tracked apart from guestData because that only lands once the WHOLE address
+  // form is valid, and the delivery charge should appear the moment the
+  // district is picked.
+  const [guestDistrict, setGuestDistrict] = useState("");
   // Mobile-only: the address list starts collapsed to the chosen address (a
   // "Change" pill reveals the rest). Purely presentational.
   const [addressExpanded, setAddressExpanded] = useState(false);
@@ -75,20 +81,32 @@ export function CheckoutPage() {
   const paymentMethodValue = watch("paymentMethod");
   const paymentOptionValue = watch("paymentOption");
 
+  // The zone is DERIVED from the district on the address, never chosen — see
+  // lib/shippingZone.js. It's still carried in the form because the API
+  // requires shippingZone, but the server re-derives it from the saved address
+  // and ignores this value, so a tampered request can't buy the city rate for a
+  // Rangpur delivery.
+  // findDistrict() first, so an address saved under an older spelling
+  // ("Dhaka", "Barisal", "Chattogram") — or with a Dhaka thana typed into the
+  // district box by the old free-text form — still lands in the right zone.
+  const rawArea = (user ? selectedAddress?.district || selectedAddress?.city : guestDistrict) || "";
+  const deliveryDistrict = rawArea ? findDistrict(rawArea)?.name ?? rawArea : "";
+  const selectedZoneData = deliveryDistrict ? resolveZoneForDistrict(shippingZones, deliveryDistrict) : null;
+
   useEffect(() => {
-    if (!selectedZone && shippingZones.length > 0) setValue("shippingZone", shippingZones[0].name);
-  }, [shippingZones, selectedZone, setValue]);
+    const derived = selectedZoneData?.name ?? "";
+    if (derived !== selectedZone) setValue("shippingZone", derived);
+  }, [selectedZoneData, selectedZone, setValue]);
 
   const hasStockIssue = items.some((item) => item.stockIssue);
   const freeThreshold = settings?.freeShippingThreshold ?? 0;
-  const selectedZoneData = shippingZones.find((z) => z.name === selectedZone);
   const zoneFee = selectedZoneData?.fee ?? 0;
   const zoneRequiresPrepay = selectedZoneData?.requiresPrepay ?? false;
   const freeShipping = freeThreshold > 0 && subtotal >= freeThreshold;
   const shippingFee = freeShipping ? 0 : zoneFee;
   const discount = couponDiscount(coupon, subtotal);
   const total = Math.max(0, subtotal - discount) + shippingFee;
-  const shipping = { name: selectedZone || (shippingZones[0]?.name ?? "Standard"), fee: zoneFee, free: freeShipping };
+  const shipping = { name: selectedZoneData?.name ?? "Delivery", fee: zoneFee, free: freeShipping };
 
   // Per-product paymentOptions + the zone's requiresPrepay flag together decide
   // which order-level paymentOption(s) the whole cart can use — preview only,
@@ -141,6 +159,15 @@ export function CheckoutPage() {
     return <Navigate to={ROUTES.CART} replace />;
   }
 
+  // Two of the fields the schema validates have no visible input on this page
+  // (shippingZone is derived from the address; paymentOption is a card group),
+  // so an error on one used to make "Place order" do nothing at all. Say what's
+  // wrong instead of going quiet.
+  const onInvalid = (formErrors) => {
+    const first = Object.values(formErrors).find((e) => e?.message);
+    toast.error(first?.message ?? "Please check the highlighted fields");
+  };
+
   const onSubmit = (values) => {
     if (user && !selectedAddress) return toast.error("Please select or add a shipping address");
     if (!user && !guestData) return toast.error("Please complete your shipping address");
@@ -184,7 +211,7 @@ export function CheckoutPage() {
     <>
       <Seo title="Checkout" noindex />
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mx-auto w-full max-w-[1160px] px-4 pb-24 pt-[18px] md:px-9 md:pb-11 md:pt-[30px]">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate className="mx-auto w-full max-w-[1160px] px-4 pb-24 pt-[18px] md:px-9 md:pb-11 md:pt-[30px]">
         {/* Mobile progress row — the desktop stepper lives in CheckoutHeader */}
         <CheckoutSteps className="justify-center text-[11.5px] md:hidden" />
 
@@ -230,7 +257,7 @@ export function CheckoutPage() {
                   collapsed={addressCollapsed}
                 />
               ) : (
-                <GuestAddressForm onChange={setGuestData} />
+                <GuestAddressForm onChange={setGuestData} onDistrictChange={setGuestDistrict} />
               )}
             </SectionCard>
 
@@ -239,7 +266,7 @@ export function CheckoutPage() {
               title="Delivery"
               aside={<span className="hidden text-[12.5px] text-faint md:inline">Tracked door-to-door, nationwide</span>}
             >
-              <DeliveryOptions zones={shippingZones} value={selectedZone} onChange={(z) => setValue("shippingZone", z)} />
+              <DeliveryOptions zone={selectedZoneData} district={deliveryDistrict} freeShipping={freeShipping} />
               <textarea
                 {...register("deliveryNote")}
                 rows={2}

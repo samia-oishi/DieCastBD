@@ -67,9 +67,18 @@ export const settingsSeed = {
   // Both zones seeded at the same ৳120 the site already charged flat, so this
   // migration doesn't silently change real prices — adjust the real per-zone
   // rates via Admin → Settings once known (not fabricated here).
+  // Checkout no longer asks the customer which zone they are in — it derives it
+  // from the district they already picked (settings/shippingZone.js). "Dhaka
+  // City" is Steadfast's own name for the metro area; Dhaka Sub-Urban (Savar,
+  // Ashulia, Keraniganj, Dohar…) is a separate district in their list and is
+  // deliberately NOT inside-Dhaka, per the merchant: "Dhaka City only".
   shippingZones: [
-    { name: "Inside Dhaka", fee: 120 },
-    { name: "Outside Dhaka", fee: 120 },
+    // "Dhaka" as well as "Dhaka City": addresses saved before the district
+    // dropdown existed store the older plain name, and matching is a literal
+    // string compare on both server and client. Without the alias in the DATA,
+    // those customers would silently be charged the outside-Dhaka rate.
+    { name: "Inside Dhaka", fee: 120, requiresPrepay: false, districts: ["Dhaka City", "Dhaka"], isDefault: false },
+    { name: "Outside Dhaka", fee: 120, requiresPrepay: true, districts: [], isDefault: true },
   ],
   freeShippingThreshold: 5000,
   // Deliberately empty — no real bKash merchant number/QR to seed with; fill in

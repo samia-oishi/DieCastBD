@@ -19,7 +19,7 @@ const guestSchema = z.object({
 /** Inline guest address form. Reports the valid values up (or null) as they
  * change, so the single "Place order" button can submit without a separate
  * "save address" step. */
-export function GuestAddressForm({ onChange }) {
+export function GuestAddressForm({ onChange, onDistrictChange }) {
   const {
     register,
     watch,
@@ -43,6 +43,16 @@ export function GuestAddressForm({ onChange }) {
     onChange(isValid ? values : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serialized, isValid]);
+
+  // The district goes up on its own, not gated on the whole form being valid.
+  // Checkout derives the delivery charge from it, and waiting for isValid meant
+  // the customer picked their district and the Delivery section still said
+  // "pick your district" until they'd also filled in the thana.
+  const district = values.district;
+  useEffect(() => {
+    onDistrictChange?.(district ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [district]);
 
   return (
     <div className="mt-5 flex flex-col gap-4">

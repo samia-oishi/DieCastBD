@@ -14,7 +14,7 @@ export const checkoutSchema = z
     paymentOption: z.enum(["cod", "deliveryOnly", "partialAdvance", "full"]).optional().default("cod"),
     bkashTransactionId: z.string().optional().or(z.literal("")),
     banglaQrReference: z.string().optional().or(z.literal("")),
-    shippingZone: z.string().min(1, "Please select a delivery zone"),
+    shippingZone: z.string().min(1, "Choose your district above so we can add the delivery charge"),
   })
   // Both manual-payment fields now hold the LAST 4 DIGITS of the number/account the
   // customer paid from (the merchant matches that against their bKash/bank statement),

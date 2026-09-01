@@ -49,6 +49,21 @@ const shippingZoneSchema = new mongoose.Schema(
     // field), so string-matching would silently break if a zone is renamed.
     // Default false — dormant until Phase 4 wires it into order creation.
     requiresPrepay: { type: Boolean, default: false },
+
+    // Districts this zone covers, using the courier's own district names (see
+    // frontend/src/lib/bdGeo.js). Checkout derives the zone from the address
+    // instead of asking the customer to classify their own district — one less
+    // decision, and it cannot be got wrong.
+    //
+    // Storing the districts on the ZONE, rather than hardcoding "Dhaka"
+    // anywhere, is the same reasoning as requiresPrepay above: zone names are
+    // admin-renamable free text, so any string match on the name would break
+    // silently the moment a zone is renamed.
+    districts: { type: [String], default: [] },
+
+    // The zone every unlisted district falls into. Exactly one should carry it;
+    // without it, an address in a district nobody listed has no zone at all.
+    isDefault: { type: Boolean, default: false },
   },
   { _id: false }
 );

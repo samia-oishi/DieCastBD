@@ -1,9 +1,9 @@
 import { createContext, useContext, useState } from "react";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import {
   Plus, Trash2, ImageUp, ChevronDown, Sparkles, Megaphone, LayoutGrid, Star, ShieldCheck,
-  Quote, HelpCircle, AtSign, Truck, CreditCard, Link2, Search, Image as ImageIcon, QrCode,
+  Quote, HelpCircle, AtSign, Truck, CreditCard, Link2, Search, Image as ImageIcon, QrCode, X,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FullPageLoader } from "@/components/shared/FullPageLoader";
 import { ICON_MAP } from "@/components/shared/settingsIcons";
+import { SearchableSelect } from "@/components/shared/SearchableSelect";
+import { BD_DISTRICTS } from "@/lib/bdGeo";
 import { useProducts } from "@/features/products/api/useProducts";
 import { useAdminSettingsQuery, useUpdateSettingsMutation, useUploadSettingsImageMutation } from "./api/useAdminSettings";
 
@@ -234,6 +236,67 @@ function RemoveRowButton({ onClick, children }) {
     >
       <Trash2 size={13} strokeWidth={1.9} /> {children}
     </button>
+  );
+}
+
+/** The districts one delivery zone covers.
+ *
+ * Checkout no longer asks the customer which zone they're in — it reads their
+ * district off the address and looks it up here (lib/shippingZone.js). So this
+ * list is what actually sets the fee, which is why it's editable rather than
+ * hardcoded: "Inside Dhaka" is a label the merchant can rename at will, and any
+ * code that matched on that string would break the moment they did.
+ *
+ * Districts are Steadfast's own names (lib/bdGeo.js), the same list the
+ * checkout dropdown offers, so a zone can never be pinned to a district no
+ * customer is able to select.
+ */
+export function ZoneDistricts({ control, setValue, index, zones }) {
+  const districts = useWatch({ control, name: `shippingZones.${index}.districts` }) ?? [];
+
+  // A district listed on two zones would resolve to whichever comes first —
+  // silently, and only for customers there. Take the ones already spoken for
+  // out of the picker so it can't be set up that way in the first place.
+  const takenElsewhere = new Set(
+    (zones ?? []).flatMap((z, i) => (i === index ? [] : z?.districts ?? [])).map((d) => d.toLowerCase())
+  );
+  const options = BD_DISTRICTS
+    .filter((d) => !districts.includes(d.name) && !takenElsewhere.has(d.name.toLowerCase()))
+    .map((d) => ({ value: d.name, label: d.name, keywords: d.aka }));
+
+  const set = (next) => setValue(`shippingZones.${index}.districts`, next, { shouldDirty: true });
+
+  return (
+    <div>
+      <L hint="— customers in these districts get this zone's fee automatically">Districts</L>
+      {districts.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {districts.map((d) => (
+            <span key={d} className="inline-flex items-center gap-1 rounded-full border border-line-soft bg-[#F5F6F0] py-1 pl-2.5 pr-1 text-[12px] font-semibold text-ink">
+              {d}
+              <button
+                type="button"
+                onClick={() => set(districts.filter((x) => x !== d))}
+                aria-label={`Remove ${d}`}
+                className="grid size-[18px] place-items-center rounded-full text-faint transition-colors hover:bg-[#E7E8DF] hover:text-[#B3261E]"
+              >
+                <X size={11} strokeWidth={2.4} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="max-w-[300px]">
+        <SearchableSelect
+          options={options}
+          value=""
+          onChange={(d) => d && set([...districts, d])}
+          placeholder="Add a district…"
+          searchPlaceholder="Search 65 districts…"
+          emptyMessage="No district left to add"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -466,6 +529,7 @@ export function SettingsPage() {
     register,
     control,
     watch,
+    setValue,
     handleSubmit,
     reset,
     formState: { dirtyFields },
@@ -1147,7 +1211,7 @@ export function SettingsPage() {
               </Card>
 
               {/* ---------------------------- SHIPPING ----------------------------- */}
-              <Card section="shipping" title="Shipping" description="Delivery zones and their flat fees — e.g. Inside Dhaka vs. Outside Dhaka.">
+              <Card section="shipping" title="Shipping" description="Delivery zones and their flat fees. Checkout picks the zone from the customer's district, so every zone needs its districts listed — plus one zone marked as covering everywhere else.">
                 <div className="flex flex-col gap-2.5">
                   {shippingZones.fields.map((field, index) => (
                     <Row
@@ -1164,6 +1228,16 @@ export function SettingsPage() {
                               Prepay required
                             </span>
                           )}
+                          {zoneW[index]?.isDefault && (
+                            <span className="shrink-0 rounded-full border border-line-soft bg-[#F5F6F0] px-2 py-[3px] text-[10px] font-bold text-[#6B6E60]">
+                              Everywhere else
+                            </span>
+                          )}
+                          {!zoneW[index]?.isDefault && (zoneW[index]?.districts?.length ?? 0) > 0 && (
+                            <span className="truncate text-[11.5px] text-faint">
+                              {zoneW[index].districts.join(", ")}
+                            </span>
+                          )}
                         </>
                       }
                     >
@@ -1177,15 +1251,21 @@ export function SettingsPage() {
                           <Input className={adminInputCls} type="number" {...register(`shippingZones.${index}.fee`, { required: true })} />
                         </div>
                       </div>
+                      <ZoneDistricts control={control} setValue={setValue} index={index} zones={zoneW} />
                       <ToggleRow control={control} name={`shippingZones.${index}.requiresPrepay`}>
                         <span className="text-[12.5px] font-medium text-ink-soft">
                           Require prepaying the delivery charge before placing an order
                         </span>
                       </ToggleRow>
+                      <ToggleRow control={control} name={`shippingZones.${index}.isDefault`}>
+                        <span className="text-[12.5px] font-medium text-ink-soft">
+                          Everywhere else — any district not listed on a zone above uses this one
+                        </span>
+                      </ToggleRow>
                       <RemoveRowButton onClick={() => shippingZones.remove(index)}>Remove zone</RemoveRowButton>
                     </Row>
                   ))}
-                  <AddRowButton onClick={() => appendOpen(shippingZones, "zn", { name: "", fee: 0, requiresPrepay: false })}>
+                  <AddRowButton onClick={() => appendOpen(shippingZones, "zn", { name: "", fee: 0, requiresPrepay: false, districts: [], isDefault: false })}>
                     Add zone
                   </AddRowButton>
                 </div>
