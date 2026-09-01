@@ -46,24 +46,41 @@ describe("DistrictThanaFields", () => {
     render(<Harness />);
 
     await user.click(districtTrigger());
-    await user.type(screen.getByRole("combobox"), "chatt");
+    await user.type(screen.getByRole("combobox"), "chittagong");
 
     const options = screen.getAllByRole("option");
     expect(options).toHaveLength(1);
     await user.click(options[0]);
 
-    expect(screen.getByTestId("value")).toHaveTextContent("Chattogram|");
+    // The courier's spelling is what gets stored, so the merchant never translates.
+    expect(screen.getByTestId("value")).toHaveTextContent("Chittagong|");
   });
 
-  it("finds a renamed district under its old spelling", async () => {
+  it("finds a district under the modern spelling customers know", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
     await user.click(districtTrigger());
-    await user.type(screen.getByRole("combobox"), "chittagong");
+    await user.type(screen.getByRole("combobox"), "chattogram");
 
-    // The old name matches, but the current name is what's displayed and stored.
-    expect(screen.getByRole("option")).toHaveTextContent("Chattogram");
+    // Typing the name they know surfaces the courier's, which is what we store.
+    expect(screen.getByRole("option")).toHaveTextContent("Chittagong");
+  });
+
+  it("lets a Dhaka customer type Dhaka, or just their own area", async () => {
+    // Steadfast splits the capital; nobody knows which half they live in, so
+    // both halves answer to "Dhaka" and to their own zone names.
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    await user.click(districtTrigger());
+    await user.type(screen.getByRole("combobox"), "dhaka");
+    const names = await Promise.all((await screen.findAllByRole("option")).map((o) => o.textContent));
+    expect(names).toEqual(expect.arrayContaining(["Dhaka City", "Dhaka Sub-Urban"]));
+
+    await user.clear(screen.getByRole("combobox"));
+    await user.type(screen.getByRole("combobox"), "savar");
+    expect(screen.getByRole("option")).toHaveTextContent("Dhaka Sub-Urban");
   });
 
   it("keeps the thana dropdown disabled until a district is chosen", async () => {
@@ -83,18 +100,18 @@ describe("DistrictThanaFields", () => {
 
   it("offers Dhaka's metro thanas, which no official upazila list contains", async () => {
     const user = userEvent.setup();
-    render(<Harness initial={{ district: "Dhaka", thana: "" }} />);
+    render(<Harness initial={{ district: "Dhaka City", thana: "" }} />);
 
     await user.click(triggers()[1]);
     await user.type(screen.getByRole("combobox"), "dhanmondi");
     await user.click(screen.getByRole("option"));
 
-    expect(screen.getByTestId("value")).toHaveTextContent("Dhaka|Dhanmondi");
+    expect(screen.getByTestId("value")).toHaveTextContent("Dhaka City|Dhanmondi");
   });
 
   it("clears a thana that does not exist in the newly chosen district", async () => {
     const user = userEvent.setup();
-    render(<Harness initial={{ district: "Dhaka", thana: "Dhanmondi" }} />);
+    render(<Harness initial={{ district: "Dhaka City", thana: "Dhanmondi" }} />);
 
     await user.click(districtTrigger());
     await user.type(screen.getByRole("combobox"), "khulna");
@@ -147,23 +164,23 @@ describe("DistrictThanaFields", () => {
 
   it("closes on Escape without clearing the current selection", async () => {
     const user = userEvent.setup();
-    render(<Harness initial={{ district: "Dhaka", thana: "Gulshan" }} />);
+    render(<Harness initial={{ district: "Dhaka City", thana: "Gulshan" }} />);
 
     await user.click(districtTrigger());
     expect(screen.getByRole("combobox")).toBeInTheDocument();
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.getByTestId("value")).toHaveTextContent("Dhaka|Gulshan");
+    expect(screen.getByTestId("value")).toHaveTextContent("Dhaka City|Gulshan");
   });
 
   it("marks the current selection so reopening shows what is chosen", async () => {
     const user = userEvent.setup();
-    render(<Harness initial={{ district: "Dhaka", thana: "" }} />);
+    render(<Harness initial={{ district: "Dhaka City", thana: "" }} />);
 
     await user.click(districtTrigger());
     const selected = screen.getAllByRole("option", { selected: true });
     expect(selected).toHaveLength(1);
-    expect(within(selected[0]).getByText("Dhaka")).toBeInTheDocument();
+    expect(within(selected[0]).getByText("Dhaka City")).toBeInTheDocument();
   });
 });

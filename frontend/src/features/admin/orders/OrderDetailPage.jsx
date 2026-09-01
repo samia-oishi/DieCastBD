@@ -72,8 +72,12 @@ export function OrderDetailPage() {
   };
 
   const addr = order.shippingAddress;
-  // Null for orders placed before the address dropdowns existed (free-text city).
-  const steadfast = addr?.district && addr?.thana ? steadfastLocation(addr.district, addr.thana) : null;
+  // New orders store Steadfast's own district and zone, so there is nothing to
+  // translate and nothing to show. This only surfaces for orders placed before
+  // that — when we stored "Dhaka"/"Chattogram" and the courier wants
+  // "Dhaka City"/"Chittagong".
+  const sf = addr?.district && addr?.thana ? steadfastLocation(addr.district, addr.thana) : null;
+  const steadfast = sf && (sf.district !== addr.district || sf.zone !== addr.thana) ? sf : null;
 
   return (
     <div className="flex flex-col gap-[18px] pb-10">
@@ -211,15 +215,12 @@ export function OrderDetailPage() {
             <p>{addr.phone}</p>
             <p>Email: <Provided value={order.user?.email} /></p>
 
-            {/* What to select in Steadfast's panel. The zone already matches
-                theirs verbatim, but the district label doesn't — we display
-                modern names while they use pre-2018 ones, and they split the
-                capital into Dhaka City / Dhaka Sub-Urban, which is not
-                guessable (Savar and Ashulia are Sub-Urban). Showing the pair
-                makes the handoff copy-paste rather than translation. */}
+            {/* Only for pre-parity orders: the address itself is now already in
+                Steadfast's own wording, so this stays hidden unless the stored
+                values differ from what the courier expects. */}
             {steadfast && (
               <div className="mt-3 rounded-[10px] border border-line bg-[#FCFCF9] p-3">
-                <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-faint">Enter in Steadfast</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-faint">Enter in Steadfast instead</div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
                   <span className="rounded-[6px] bg-white px-2 py-[3px] font-semibold text-ink ring-1 ring-line">{steadfast.district}</span>
                   <span className="text-faint">/</span>
