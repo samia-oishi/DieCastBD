@@ -1309,3 +1309,23 @@ The cost was flagged before shipping and accepted: Steadfast splits the capital,
 One ordering bug caught on the way: with both halves aliased to "Dhaka", the later one won the key, so a legacy order stored as plain "Dhaka" resolved to Dhaka Sub-Urban — the 8-zone half. `findDistrict` now registers exact names first and never lets an alias overwrite, so "Dhaka" lands on Dhaka City where 58 of the 66 zones are. The admin "Enter in Steadfast" block became redundant for new orders and now shows only when the stored values actually differ from the courier's.
 
 Verified live in checkout: chattogram→Chittagong, bogura→Bogra, comilla→Cumilla, savar→Dhaka Sub-Urban, dhaka→both halves offered; zone aliases still resolve bashundhara→Bashundhara R/A, jatrabari→Jattrabari, mirpur model→Mirpur. 154/154, lint and build clean.
+
+---
+
+## 2026-09-01 — Steadfast parcels from the admin order list
+
+Merchant asked for three things off their API key: a delivery-success number by phone, courier progress on each order, and the ability to create a parcel from the order list. Reasoning in `docs/plan.md` #97.
+
+**The first one was dropped on evidence.** Steadfast has no phone-based lookup — their documented API is create/status/balance/returns/payments/police_stations, with no fraud check or customer history. Told the merchant before building anything; their call was "skip for now if steadfast not providing". Recorded so it doesn't later look like an oversight.
+
+The other two shipped. `src/modules/courier/` wraps the API; credentials are two optional env vars so an unconfigured deploy hides the controls rather than offering buttons that can only fail.
+
+**The line that mattered most is `cod_amount = order.amountDue`, not `order.total`.** Orders can be partly prepaid by bKash, and sending the total would have the rider collect money the customer already paid — at their door, in cash, with no way to unwind it. The payload builder is a pure module specifically so that is testable offline; 37 tests cover it before a single parcel exists.
+
+Two deliberate refusals: creating a parcel does **not** touch the order status (handing a box to a courier is not the merchant marking it shipped, and routing it through `transitionOrderStatus` would shift stock buckets as a side effect), and a second send is a hard 409 rather than something absorbed, because a duplicate consignment is a second real parcel.
+
+Steadfast's `delivery_status` is stored verbatim rather than mapped onto ours — collapsing them would lose the four `*_approval_pending` states, which are the ones needing action. `CourierChip` styles those amber; treating `delivered_approval_pending` as delivered is how money goes uncollected.
+
+**The browser pass earned its keep.** Lint passed, build passed, 154 frontend tests passed — and the send dialog still never appeared, because the edit had landed it inside the `meta.totalPages > 1` branch and there is only one page of orders. Nothing but opening the page would have caught that.
+
+Verified without dispatching anything: 230 backend tests (50 new), credentials confirmed through the read-only balance call (৳16,191), the cancelled-order guard confirmed against a real order, no overflow at 390px or 1440px. **No test parcel created** — `create_order` books a real collection, so that one live write waits on the merchant's go-ahead.

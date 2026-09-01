@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router";
-import { ChevronLeft, MapPin, Printer } from "lucide-react";
+import { ChevronLeft, MapPin, Printer, Truck, RefreshCw } from "lucide-react";
 
 import { formatTaka } from "@/lib/currency";
 import { formatAddressLine } from "@/lib/address";
@@ -16,6 +16,9 @@ import { AdminButton } from "@/features/admin/shell/AdminButton";
 import { adminToast } from "@/features/admin/shell/adminToast";
 import { useAdminOrder, useUpdateOrderStatusMutation } from "./api/useAdminOrders";
 import { InvoiceModal } from "./components/InvoiceModal";
+import { CourierChip } from "./components/CourierChip";
+import { SendToCourierDialog } from "./components/SendToCourierDialog";
+import { useCourierStatus, useSendToCourierMutation, useSyncCourierMutation } from "./api/useCourier";
 import { ROUTES } from "@/constants/routes";
 import { adminSelectCls } from "@/features/admin/shell/adminFieldCls";
 
@@ -51,6 +54,10 @@ export function OrderDetailPage() {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [courierName, setCourierName] = useState("");
   const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [courierOpen, setCourierOpen] = useState(false);
+  const { data: courier } = useCourierStatus();
+  const sendToCourier = useSendToCourierMutation();
+  const syncCourier = useSyncCourierMutation();
 
   if (isLoading || !order) return <FullPageLoader />;
 
@@ -233,6 +240,57 @@ export function OrderDetailPage() {
                 <span className="font-semibold">Customer note: </span>{order.deliveryNote}
               </div>
             )}
+
+            {/* Courier. Hidden entirely when Steadfast isn't configured, rather
+                than offering a button that can only fail. */}
+            {courier?.configured && (
+              <div className="mt-3 rounded-[10px] border border-line bg-[#FCFCF9] p-3">
+                {order.courier?.consignmentId ? (
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.07em] text-faint">Steadfast</span>
+                      <CourierChip status={order.courier.status} />
+                    </div>
+                    <div className="mt-2 flex flex-col gap-0.5 text-[12.5px]">
+                      <span>Consignment <span className="font-semibold text-ink">{order.courier.consignmentId}</span></span>
+                      {order.courier.trackingCode && (
+                        <span>Tracking <span className="font-semibold text-ink">{order.courier.trackingCode}</span></span>
+                      )}
+                      {order.courier.lastSyncedAt && (
+                        <span className="text-faint">Checked {formatDateTime(order.courier.lastSyncedAt)}</span>
+                      )}
+                    </div>
+                    <AdminButton
+                      variant="outline"
+                      size="sm"
+                      className="mt-2.5"
+                      disabled={syncCourier.isPending}
+                      onClick={() =>
+                        syncCourier.mutate([order._id], {
+                          onSuccess: (u) => adminToast(u?.length ? `Updated to ${u[0].status}` : "Already up to date"),
+                          onError: (err) => adminToast(err.response?.data?.message ?? "Could not reach Steadfast"),
+                        })
+                      }
+                    >
+                      <RefreshCw size={14} strokeWidth={2.2} className={syncCourier.isPending ? "animate-spin" : undefined} />
+                      {syncCourier.isPending ? "Checking…" : "Refresh status"}
+                    </AdminButton>
+                  </>
+                ) : ["cancelled", "refunded"].includes(order.status) ? (
+                  <p className="text-[12.5px] text-faint">This order is {order.status} — no parcel to send.</p>
+                ) : (
+                  <>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-faint">Steadfast</div>
+                    <p className="mt-1 text-[12.5px]">
+                      Not sent yet — the rider will collect {formatTaka(order.amountDue ?? 0)}.
+                    </p>
+                    <AdminButton variant="primary" size="sm" className="mt-2.5" onClick={() => setCourierOpen(true)}>
+                      <Truck size={14} strokeWidth={2.2} /> Send parcel
+                    </AdminButton>
+                  </>
+                )}
+              </div>
+            )}
           </SectionPanel>
 
           <SectionPanel title="Status history" bodyClassName="pt-3">
@@ -252,6 +310,21 @@ export function OrderDetailPage() {
           </SectionPanel>
         </div>
       </div>
+
+      <SendToCourierDialog
+        order={order}
+        open={courierOpen}
+        onOpenChange={setCourierOpen}
+        isPending={sendToCourier.isPending}
+        onConfirm={() =>
+          sendToCourier.mutate(order._id, {
+            onSuccess: (res) =>
+              adminToast(res?.courier?.consignmentId ? `Parcel created — consignment ${res.courier.consignmentId}` : "Parcel created"),
+            onError: (err) => adminToast(err.response?.data?.message ?? "Could not create the parcel"),
+            onSettled: () => setCourierOpen(false),
+          })
+        }
+      />
 
       {invoiceOpen && <InvoiceModal order={order} contact={settings?.contactInfo} onClose={() => setInvoiceOpen(false)} />}
     </div>

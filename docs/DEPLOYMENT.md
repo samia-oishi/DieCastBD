@@ -113,6 +113,8 @@ missing (Zod-validated in `src/config/env.js`).
 | `VITE_API_BASE_URL` | `https://api.diecastbd.com/api/v1` |
 | `VITE_SITE_URL` | `https://diecastbd.com` (canonical URLs / og:url / JSON-LD) |
 | `VITE_FIREBASE_API_KEY` … `VITE_FIREBASE_APP_ID` | Firebase **client** config (public by design) |
+| `STEADFAST_API_KEY` | From Settings → API in the Steadfast merchant panel. Optional — unset simply hides the courier controls in the admin. |
+| `STEADFAST_SECRET_KEY` | The **second, different** value on that screen. Steadfast locks the account after repeated auth failures, so a wrong pair is not harmless. |
 | `PRERENDER_STRICT` | **`1` on Production AND Preview.** Fails the build when prerendering doesn't produce per-route metadata (see below). Not a `VITE_` var — it's read by the build script, not the bundle. |
 | `PRERENDER_MIN_ROUTES` | optional, default `20` — floor below which a build is treated as broken |
 

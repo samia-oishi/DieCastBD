@@ -39,6 +39,25 @@ const shippingAddressSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// What the courier knows about this parcel. `status` holds Steadfast's own
+// delivery_status verbatim (pending, in_review, hold, delivered,
+// partial_delivered, cancelled, unknown, and the four *_approval_pending
+// variants) rather than being mapped onto our order status: they answer
+// different questions — ours is "what have we done", theirs is "where is the
+// box" — and collapsing them would lose the approval-pending states, which are
+// exactly the ones the merchant has to act on.
+const courierSchema = new mongoose.Schema(
+  {
+    provider: { type: String, default: "steadfast" },
+    consignmentId: { type: String, default: null },
+    trackingCode: { type: String, default: null },
+    status: { type: String, default: null },
+    sentAt: { type: Date, default: null },
+    lastSyncedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
 const statusHistoryEntrySchema = new mongoose.Schema(
   {
     status: { type: String, required: true },
@@ -114,6 +133,10 @@ const orderSchema = new mongoose.Schema(
     statusHistory: { type: [statusHistoryEntrySchema], default: [] },
     trackingNumber: { type: String, default: null },
     courierName: { type: String, default: null },
+    // Steadfast consignment for this order, set when the merchant sends the
+    // parcel from the admin. Default null (not a subdocument) so every existing
+    // order reads as "not sent" without a migration.
+    courier: { type: courierSchema, default: null },
   },
   { timestamps: true }
 );

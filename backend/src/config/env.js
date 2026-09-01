@@ -66,6 +66,14 @@ const envSchema = z.object({
   BKASH_APP_KEY: z.string().optional(),
   BKASH_APP_SECRET: z.string().optional(),
   BKASH_BASE_URL: z.string().optional(),
+
+  // Steadfast courier. Optional: unset simply hides the courier controls in the
+  // admin rather than stopping the server, matching RESEND_API_KEY. Note their
+  // API locks the account after repeated auth failures, so these must be the
+  // real pair from the merchant panel — the API key and secret are different
+  // values, not the same string twice.
+  STEADFAST_API_KEY: z.string().optional(),
+  STEADFAST_SECRET_KEY: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

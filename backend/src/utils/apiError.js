@@ -24,4 +24,11 @@ export class ApiError extends Error {
   static conflict(message = "Conflict") {
     return new ApiError(409, message);
   }
+
+  /** An upstream service we depend on failed or answered unusably. Distinct
+   * from 500 so the client can say "the courier is unreachable" rather than
+   * implying our own bug. */
+  static badGateway(message = "Upstream service error") {
+    return new ApiError(502, message);
+  }
 }

@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Link } from "react-router";
-import { Trash2, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Trash2, ChevronRight, Truck, RefreshCw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
@@ -26,6 +26,9 @@ import { AdminButton } from "@/features/admin/shell/AdminButton";
 import { adminToast } from "@/features/admin/shell/adminToast";
 import { useAdminOrders, useDeleteOrdersMutation } from "./api/useAdminOrders";
 import { useOrderStatusCounts } from "./api/useOrderStatusCounts";
+import { useCourierStatus, useSendToCourierMutation, useSyncCourierMutation } from "./api/useCourier";
+import { CourierChip } from "./components/CourierChip";
+import { SendToCourierDialog } from "./components/SendToCourierDialog";
 
 // Mirrors the backend's stockBucket() "released" set (order.service.js) — used
 // only to preview how many units a delete hands back; the backend recomputes the
@@ -33,7 +36,7 @@ import { useOrderStatusCounts } from "./api/useOrderStatusCounts";
 const RELEASED_STATUSES = ["cancelled", "refunded"];
 const STATUSES = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
 
-const GRID = "md:grid-cols-[auto_1.3fr_1.7fr_1fr_0.9fr_128px_28px]";
+const GRID = "md:grid-cols-[auto_1.2fr_1.5fr_0.9fr_0.8fr_112px_132px_28px]";
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
@@ -47,6 +50,7 @@ export function OrdersPage() {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [courierTarget, setCourierTarget] = useState(null);
   const debouncedSearch = useDebounce(search, 400);
 
   const { data, isLoading } = useAdminOrders({
@@ -57,9 +61,28 @@ export function OrdersPage() {
   });
   const counts = useOrderStatusCounts();
   const deleteMutation = useDeleteOrdersMutation();
+  const { data: courier } = useCourierStatus();
+  const sendToCourier = useSendToCourierMutation();
+  const syncCourier = useSyncCourierMutation();
 
   const orders = data?.data ?? [];
   const meta = data?.meta;
+
+  // Refresh courier progress when the visible set of parcels changes. Keyed on
+  // the ids so paging or filtering re-syncs, while a re-render does not; the
+  // backend additionally skips finished parcels and anything checked in the
+  // last five minutes, so this stays cheap.
+  const sentIds = orders.filter((o) => o.courier?.consignmentId).map((o) => o._id);
+  const syncKey = sentIds.join(",");
+  const lastSyncKey = useRef(null);
+  useEffect(() => {
+    if (!courier?.configured || !syncKey || lastSyncKey.current === syncKey) return;
+    lastSyncKey.current = syncKey;
+    syncCourier.mutate(syncKey.split(","));
+    // syncCourier is a stable mutation object; including it would re-fire on
+    // every render as its internal state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncKey, courier?.configured]);
   const selected = orders.filter((o) => selectedIds.includes(o._id));
 
   // Only live orders (pending = reserved, confirmed..delivered = committed) still
@@ -93,6 +116,16 @@ export function OrdersPage() {
     });
   };
 
+  const onSendToCourier = () => {
+    sendToCourier.mutate(courierTarget._id, {
+      onSuccess: (res) => {
+        adminToast(res?.courier?.consignmentId ? `Parcel created — consignment ${res.courier.consignmentId}` : "Parcel created");
+        setCourierTarget(null);
+      },
+      onError: (err) => adminToast(err.response?.data?.message ?? "Could not create the parcel"),
+    });
+  };
+
   const chips = [
     { value: "all", label: "All", count: counts.all },
     ...STATUSES.map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1), count: counts[s] })),
@@ -100,7 +133,27 @@ export function OrdersPage() {
 
   return (
     <div className="flex flex-col gap-[18px]">
-      <AdminPageHeader eyebrow={meta ? `${meta.total} order${meta.total === 1 ? "" : "s"}` : "Orders"} title="Orders" />
+      <AdminPageHeader
+        eyebrow={meta ? `${meta.total} order${meta.total === 1 ? "" : "s"}` : "Orders"}
+        title="Orders"
+        actions={
+          courier?.configured ? (
+            <AdminButton
+              variant="outline"
+              onClick={() => {
+                lastSyncKey.current = null;
+                syncCourier.mutate(sentIds, {
+                  onSuccess: (u) => adminToast(u?.length ? `${u.length} parcel(s) updated` : "All parcels up to date"),
+                });
+              }}
+              disabled={!sentIds.length || syncCourier.isPending}
+            >
+              <RefreshCw size={15} strokeWidth={2.2} className={syncCourier.isPending ? "animate-spin" : undefined} />
+              {syncCourier.isPending ? "Checking…" : "Refresh courier"}
+            </AdminButton>
+          ) : null
+        }
+      />
 
       <div className="flex flex-col gap-3">
         <AdminSearch
@@ -128,6 +181,7 @@ export function OrdersPage() {
             <span>Date</span>
             <span>Total</span>
             <span>Status</span>
+            <span>Courier</span>
             <span />
           </div>
 
@@ -166,6 +220,30 @@ export function OrdersPage() {
                   <div className="text-[12.5px] text-ink-soft">{formatDate(o.createdAt)}</div>
                   <div className="text-[13px] font-bold text-ink">{formatTaka(o.total)}</div>
                   <div><StatusChip status={o.status} size="sm" /></div>
+                  <div className="min-w-0">
+                    {!courier?.configured ? (
+                      <span className="text-[11.5px] text-faint">—</span>
+                    ) : o.courier?.consignmentId ? (
+                      <div className="flex flex-col items-start gap-0.5">
+                        <CourierChip status={o.courier.status} />
+                        {o.courier.trackingCode && (
+                          <span className="truncate text-[10.5px] text-faint" title={`Consignment ${o.courier.consignmentId}`}>
+                            {o.courier.trackingCode}
+                          </span>
+                        )}
+                      </div>
+                    ) : ["cancelled", "refunded"].includes(o.status) ? (
+                      <span className="text-[11.5px] text-faint">—</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setCourierTarget(o)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-2.5 py-[5px] text-[11px] font-bold text-ink-soft transition-colors hover:border-ink hover:text-ink"
+                      >
+                        <Truck size={13} strokeWidth={2.2} /> Send
+                      </button>
+                    )}
+                  </div>
                   <Link to={o._id} className="flex justify-end text-faint hover:text-ink">
                     <ChevronRight size={18} strokeWidth={2} />
                   </Link>
@@ -189,6 +267,14 @@ export function OrdersPage() {
           })}
         </div>
       </section>
+
+      <SendToCourierDialog
+        order={courierTarget}
+        open={Boolean(courierTarget)}
+        onOpenChange={(o) => !o && setCourierTarget(null)}
+        onConfirm={onSendToCourier}
+        isPending={sendToCourier.isPending}
+      />
 
       {meta && meta.totalPages > 1 && (
         <div className="flex items-center justify-between gap-3">
