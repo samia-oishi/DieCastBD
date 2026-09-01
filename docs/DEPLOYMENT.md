@@ -106,6 +106,8 @@ missing (Zod-validated in `src/config/env.js`).
 | `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY` | service account (keep `\n` escapes in the key) |
 | `CLOUDINARY_*` · `RESEND_API_KEY` · `EMAIL_FROM` (`noreply@diecastbd.com`) | as provisioned |
 | `ADMIN_EMAILS` | comma-separated; auto-promoted to `admin` on first **verified** sign-in |
+| `STEADFAST_API_KEY` | Steadfast courier — Settings → API in their merchant panel. **Optional**: unset hides the courier controls in the admin instead of showing buttons that can only fail. |
+| `STEADFAST_SECRET_KEY` | The **second, different** value on that screen — the key and secret are not the same string. Steadfast locks the account after repeated auth failures, so a wrong pair is not harmless. |
 
 ### Frontend project (all `VITE_`-prefixed → inlined at build time)
 | Var | Value |
@@ -113,8 +115,6 @@ missing (Zod-validated in `src/config/env.js`).
 | `VITE_API_BASE_URL` | `https://api.diecastbd.com/api/v1` |
 | `VITE_SITE_URL` | `https://diecastbd.com` (canonical URLs / og:url / JSON-LD) |
 | `VITE_FIREBASE_API_KEY` … `VITE_FIREBASE_APP_ID` | Firebase **client** config (public by design) |
-| `STEADFAST_API_KEY` | From Settings → API in the Steadfast merchant panel. Optional — unset simply hides the courier controls in the admin. |
-| `STEADFAST_SECRET_KEY` | The **second, different** value on that screen. Steadfast locks the account after repeated auth failures, so a wrong pair is not harmless. |
 | `PRERENDER_STRICT` | **`1` on Production AND Preview.** Fails the build when prerendering doesn't produce per-route metadata (see below). Not a `VITE_` var — it's read by the build script, not the bundle. |
 | `PRERENDER_MIN_ROUTES` | optional, default `20` — floor below which a build is treated as broken |
 
