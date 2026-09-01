@@ -22,3 +22,10 @@ export async function syncCourier(ids) {
   const { data } = await api.post("/admin/courier/sync", { ids });
   return data.data;
 }
+
+/** Attaches a consignment the merchant booked directly in Steadfast's panel.
+ * The backend validates the id against Steadfast before saving it. */
+export async function linkCourier(id, payload) {
+  const { data } = await api.post(`/admin/courier/orders/${id}/link`, payload);
+  return data.data;
+}

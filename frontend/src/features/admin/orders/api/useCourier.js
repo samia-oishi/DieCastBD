@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getCourierStatus, sendOrderToCourier, syncCourier } from "./courierApi";
+import { getCourierStatus, sendOrderToCourier, syncCourier, linkCourier } from "./courierApi";
 
 export function useCourierStatus() {
   return useQuery({
@@ -27,5 +27,13 @@ export function useSyncCourierMutation() {
     onSuccess: (updated) => {
       if (updated?.length) queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
     },
+  });
+}
+
+export function useLinkCourierMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...payload }) => linkCourier(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "orders"] }),
   });
 }

@@ -14,3 +14,12 @@ export const syncSchema = {
       .max(100, "You can sync at most 100 orders at a time"),
   }),
 };
+
+/** Linking a consignment created directly in Steadfast's panel. */
+export const linkSchema = {
+  params: z.object({ id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid order id") }),
+  body: z.object({
+    consignmentId: z.string().trim().min(1, "Enter the consignment ID from Steadfast").max(32),
+    trackingCode: z.string().trim().max(64).optional(),
+  }),
+};

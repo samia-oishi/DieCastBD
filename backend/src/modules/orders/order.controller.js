@@ -5,6 +5,7 @@ import { findOrCreateGuestUser } from "../users/user.service.js";
 import { createOrderFromCart, createOrderFromItems, transitionOrderStatus, deleteOrders } from "./order.service.js";
 import { sendOrderConfirmationEmail } from "../../emails/orderConfirmation.js";
 import { recomputeRollupsForOrders } from "../analytics/analytics.service.js";
+import { applyOrderAdjustment, describeAdjustment } from "./orderAdjustment.js";
 import { sendAdminNewOrderEmail } from "../../emails/adminNewOrder.js";
 import { sendOrderConfirmedEmail, shouldSendOrderConfirmedEmail } from "../../emails/orderConfirmed.js";
 import { Settings } from "../settings/settings.model.js";
@@ -187,4 +188,47 @@ export const deleteOrdersAdmin = asyncHandler(async (req, res) => {
     data: { deletedCount, unitsReturnedToStock },
     message: `${deletedCount} order(s) deleted${stockNote}`,
   });
+});
+
+/** Records money that arrived outside checkout, or a discount agreed in
+ * conversation — the Facebook/Messenger case, where a customer sends part of
+ * the payment by bKash before the parcel goes out.
+ *
+ * Deliberately does NOT touch subtotal, shippingFee or the items: an adjustment
+ * describes money, not a re-order. `paymentOption` is also left alone — it
+ * records which option was chosen at checkout, and the amountPaid/amountDue
+ * pair already tells the truth about what has actually been collected.
+ */
+export const adjustOrderPaymentAdmin = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+  if (!order) throw ApiError.notFound("Order not found");
+  if (["cancelled", "refunded"].includes(order.status)) {
+    throw ApiError.conflict(`This order is ${order.status} — its payment can no longer be adjusted`);
+  }
+
+  const before = { discount: order.discount, total: order.total, amountPaid: order.amountPaid, amountDue: order.amountDue };
+
+  let next;
+  try {
+    next = applyOrderAdjustment(order, {
+      advanceReceived: req.body.advanceReceived,
+      discount: req.body.discount,
+    });
+  } catch (err) {
+    throw ApiError.badRequest(err.message);
+  }
+
+  const summary = describeAdjustment(before, next, req.body.reason);
+  if (!summary) return sendSuccess(res, { data: order, message: "Nothing to change" });
+
+  Object.assign(order, next);
+  // The order's own timeline is where a merchant looks to answer "why is this
+  // number different from the invoice"; auditLog covers who/when separately.
+  order.statusHistory.push({ status: order.status, note: summary, changedBy: req.user?.id, at: new Date() });
+  await order.save();
+
+  // The total moved, so this day's revenue and profit did too.
+  await recomputeRollupsForOrders([order]);
+
+  sendSuccess(res, { data: order, message: summary });
 });

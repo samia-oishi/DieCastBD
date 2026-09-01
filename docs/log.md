@@ -1329,3 +1329,17 @@ Steadfast's `delivery_status` is stored verbatim rather than mapped onto ours �
 **The browser pass earned its keep.** Lint passed, build passed, 154 frontend tests passed — and the send dialog still never appeared, because the edit had landed it inside the `meta.totalPages > 1` branch and there is only one page of orders. Nothing but opening the page would have caught that.
 
 Verified without dispatching anything: 230 backend tests (50 new), credentials confirmed through the read-only balance call (৳16,191), the cancelled-order guard confirmed against a real order, no overflow at 390px or 1440px. **No test parcel created** — `create_order` books a real collection, so that one live write waits on the merchant's go-ahead.
+
+---
+
+## 2026-09-01 — Admin payment adjustments and manual parcel linking
+
+Merchant: orders arrive via Facebook/Messenger where the customer sends advance money, and parcels are sometimes booked in Steadfast's panel directly. Both were gaps in yesterday's courier work, which assumed every order was paid the way checkout said and every parcel started here. Reasoning in `docs/plan.md` #98.
+
+`PATCH /admin/orders/:id/payment` records an advance and/or a discount, with the arithmetic in a pure module that enforces both money invariants on the way out. An advance above the total is refused rather than clamped — clamping would leave a mistyped order looking settled — and it is re-checked against the *new* total, so a discount plus an advance can't drive `amountDue` negative. Merchant picked "advance received" as the input with COD derived, and a free discount amount rather than a coupon code, since a Messenger deal has no code.
+
+**The find that mattered: Steadfast returns 401 for an unknown consignment id, with perfectly valid credentials.** Verified live — `get_balance` straight afterwards still returns 200. The only difference between that and a real credential failure is the body: bad credentials return JSON carrying an `attempts_left` countdown that genuinely locks the account; an unknown consignment returns the bare text `Unauthorized Access`. My client called `res.json()`, discarded the text body, and reported "HTTP 401" for both.
+
+That mattered in two ways. A typo when linking a parcel blamed the merchant's credentials instead of their typing. And far worse, if credentials ever did go bad, the sync that runs on every orders-list open would have fired one lockout-counting 401 per in-flight parcel — walking the account straight into a lock. `classifySteadfastError()` now separates the two, and sync aborts the whole batch on the first real auth failure instead of continuing.
+
+Verified against a real order: advance ৳500 → collect ৳1,390; a ৳200 discount → total ৳1,890 → ৳1,760, collect ৳1,260; invariants held at each step; ৳99,999 advance and a bogus consignment both refused with accurate messages. The order was restored to its exact original figures afterwards — though its timeline now carries the verification entries, which is honest but worth knowing. 250 backend tests (33 new), 154 frontend, lint and build clean, no overflow at 390px.

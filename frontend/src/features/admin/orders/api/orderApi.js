@@ -21,3 +21,10 @@ export async function deleteOrders(ids) {
   const { data } = await api.delete("/admin/orders", { data: { ids } });
   return data;
 }
+
+/** Records money received outside checkout, or a discount agreed in
+ * conversation. The backend keeps amountPaid + amountDue === total. */
+export async function adjustOrderPayment(id, payload) {
+  const { data } = await api.patch(`/admin/orders/${id}/payment`, payload);
+  return data;
+}

@@ -57,3 +57,48 @@ describe("which parcels get re-polled", () => {
     expect(orders.filter((o) => shouldSync(o, now + 1000))).toHaveLength(0);
   });
 });
+
+// -----------------------------------------------------------------------------
+
+import { classifySteadfastError } from "../../src/modules/courier/steadfast.client.js";
+
+/** Steadfast answers 401 for two unrelated things. Getting this wrong either
+ * locks the merchant's courier account or blames their credentials for a typo,
+ * so the distinction is pinned here. Both shapes were observed live. */
+describe("classifySteadfastError — telling a lockout apart from a typo", () => {
+  it("treats a credential 401 as an auth failure, carrying the lockout counter", () => {
+    const c = classifySteadfastError(401, {
+      status: 401,
+      message: "Unauthorized Access (invalid API credentials)",
+      attempts_left: 8,
+    });
+    expect(c.kind).toBe("auth");
+    expect(c.attemptsLeft).toBe(8);
+    expect(c.message).toMatch(/8 attempts left/);
+  });
+
+  it("treats a 401 with no counter as an unknown consignment, NOT an auth failure", () => {
+    // Verified against the live API: this shape comes back as bare text for a
+    // bogus consignment id, and a get_balance straight afterwards still
+    // succeeds — so it costs nothing against the lockout budget.
+    const c = classifySteadfastError(401, null);
+    expect(c.kind).toBe("not_found");
+    expect(c.message).toMatch(/does not recognise/);
+  });
+
+  it("treats 404 the same way", () => {
+    expect(classifySteadfastError(404, null).kind).toBe("not_found");
+  });
+
+  it("passes through Steadfast's own message for other failures", () => {
+    expect(classifySteadfastError(422, { message: "Invoice must be unique" }).message).toBe("Invoice must be unique");
+    expect(classifySteadfastError(500, null).message).toBe("HTTP 500");
+  });
+
+  it("never reports auth failure without a counter to justify it", () => {
+    // The guard that stops a typo from looking like a credentials problem.
+    for (const body of [null, {}, { message: "Unauthorized Access" }]) {
+      expect(classifySteadfastError(401, body).kind).not.toBe("auth");
+    }
+  });
+});

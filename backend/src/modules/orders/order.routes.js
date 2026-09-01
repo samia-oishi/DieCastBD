@@ -10,6 +10,7 @@ import {
   updateStatusSchema,
   idParamSchema,
   deleteOrdersSchema,
+  adjustPaymentSchema,
 } from "./order.validation.js";
 import {
   createOrder,
@@ -19,6 +20,7 @@ import {
   getOrderAdmin,
   updateOrderStatusAdmin,
   deleteOrdersAdmin,
+  adjustOrderPaymentAdmin,
 } from "./order.controller.js";
 import { Order } from "./order.model.js";
 
@@ -40,6 +42,15 @@ adminRouter.patch(
   validate(updateStatusSchema),
   auditLog("Order", Order),
   updateOrderStatusAdmin
+);
+
+// Money changes are audited like any other admin mutation — this one moves what
+// a customer is charged at their door.
+adminRouter.patch(
+  "/:id/payment",
+  validate(adjustPaymentSchema),
+  auditLog("Order", Order),
+  adjustOrderPaymentAdmin
 );
 
 // Bulk delete. No auditLog() middleware here on purpose — that helper keys off a

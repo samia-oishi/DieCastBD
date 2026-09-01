@@ -81,8 +81,13 @@ export async function syncCourierStatuses(orderIds) {
           await order.save();
           updated.push({ id: String(order._id), status, terminal: isTerminal(status) });
         } catch (err) {
-          // One unreachable consignment must not blank the whole list — the
-          // order keeps its last known status and is retried next time.
+          // A credential failure is not per-parcel — it will hit every single
+          // one, and each 401 burns a slot in Steadfast's lockout counter. Stop
+          // the whole batch on the first, rather than working through the list
+          // and locking the merchant's courier account.
+          if (err.isAuthFailure) throw err;
+          // Anything else is local to this consignment: keep the last known
+          // status, retry next time, and don't blank the rest of the list.
           console.error(`Courier sync failed for order ${order._id}: ${err.message}`);
         }
       })
@@ -90,4 +95,49 @@ export async function syncCourierStatuses(orderIds) {
   }
 
   return updated;
+}
+
+/** Attaches a consignment the merchant created directly in Steadfast's panel.
+ *
+ * Not every parcel starts here — a Facebook or phone order often gets booked in
+ * Steadfast first. Linking it lets the same order show live progress without
+ * pretending we created it.
+ *
+ * The id is checked against Steadfast before it is saved. A typo would
+ * otherwise sit on the order looking authoritative while tracking silently
+ * never worked, which is worse than refusing it now.
+ */
+export async function linkExistingConsignment(orderId, consignmentId, trackingCode) {
+  const order = await Order.findById(orderId);
+  if (!order) throw ApiError.notFound("Order not found");
+  if (order.courier?.consignmentId) {
+    throw ApiError.conflict(`This order is already linked to consignment ${order.courier.consignmentId}`);
+  }
+
+  let status = null;
+  try {
+    const res = await getDeliveryStatus(consignmentId);
+    status = res?.delivery_status ?? null;
+  } catch (err) {
+    // A 401 carrying no attempts_left means "no such consignment", not "bad
+    // credentials" — see classifySteadfastError. Saying so precisely is the
+    // difference between the merchant fixing a typo and them re-checking keys
+    // that were never wrong.
+    if (err.isAuthFailure) throw ApiError.badRequest(err.message);
+    throw ApiError.badRequest(
+      `Steadfast does not recognise consignment ${consignmentId} — check the number in their panel`
+    );
+  }
+
+  order.courier = {
+    provider: "steadfast",
+    consignmentId: String(consignmentId).trim(),
+    trackingCode: trackingCode?.trim() || null,
+    status,
+    // No sentAt: we did not send this one, and claiming we did would misdate it.
+    sentAt: null,
+    lastSyncedAt: new Date(),
+  };
+  await order.save();
+  return order;
 }

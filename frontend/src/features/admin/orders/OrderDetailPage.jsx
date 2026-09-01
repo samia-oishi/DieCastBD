@@ -14,11 +14,13 @@ import { useSettings } from "@/features/settings/api/useSettings";
 import { SectionPanel } from "@/features/admin/shell/SectionPanel";
 import { AdminButton } from "@/features/admin/shell/AdminButton";
 import { adminToast } from "@/features/admin/shell/adminToast";
-import { useAdminOrder, useUpdateOrderStatusMutation } from "./api/useAdminOrders";
+import { useAdminOrder, useUpdateOrderStatusMutation, useAdjustPaymentMutation } from "./api/useAdminOrders";
 import { InvoiceModal } from "./components/InvoiceModal";
 import { CourierChip } from "./components/CourierChip";
 import { SendToCourierDialog } from "./components/SendToCourierDialog";
-import { useCourierStatus, useSendToCourierMutation, useSyncCourierMutation } from "./api/useCourier";
+import { AdjustPaymentDialog } from "./components/AdjustPaymentDialog";
+import { LinkParcelDialog } from "./components/LinkParcelDialog";
+import { useCourierStatus, useSendToCourierMutation, useSyncCourierMutation, useLinkCourierMutation } from "./api/useCourier";
 import { ROUTES } from "@/constants/routes";
 import { adminSelectCls } from "@/features/admin/shell/adminFieldCls";
 
@@ -55,6 +57,10 @@ export function OrderDetailPage() {
   const [courierName, setCourierName] = useState("");
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [courierOpen, setCourierOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const adjustPayment = useAdjustPaymentMutation();
+  const linkCourier = useLinkCourierMutation();
   const { data: courier } = useCourierStatus();
   const sendToCourier = useSendToCourierMutation();
   const syncCourier = useSyncCourierMutation();
@@ -164,6 +170,9 @@ export function OrderDetailPage() {
               {order.paymentMethod === "banglaqr" && order.banglaQrReference && (
                 <p className="mt-1.5 text-faint">Paid from account ending <span className="font-semibold text-ink">{order.banglaQrReference}</span></p>
               )}
+              <AdminButton variant="outline" size="sm" className="mt-2.5" onClick={() => setPayOpen(true)}>
+                Adjust payment
+              </AdminButton>
               {(order.amountPaid > 0 || order.amountDue > 0) && (
                 <p className="mt-1.5 text-ink-soft">
                   Paid <span className="font-semibold text-ink">{formatTaka(order.amountPaid)}</span>
@@ -284,9 +293,16 @@ export function OrderDetailPage() {
                     <p className="mt-1 text-[12.5px]">
                       Not sent yet — the rider will collect {formatTaka(order.amountDue ?? 0)}.
                     </p>
-                    <AdminButton variant="primary" size="sm" className="mt-2.5" onClick={() => setCourierOpen(true)}>
-                      <Truck size={14} strokeWidth={2.2} /> Send parcel
-                    </AdminButton>
+                    <div className="mt-2.5 flex flex-wrap gap-1.5">
+                      <AdminButton variant="primary" size="sm" onClick={() => setCourierOpen(true)}>
+                        <Truck size={14} strokeWidth={2.2} /> Send parcel
+                      </AdminButton>
+                      {/* For a parcel booked directly in Steadfast's panel —
+                          a Facebook or phone order often starts there. */}
+                      <AdminButton variant="outline" size="sm" onClick={() => setLinkOpen(true)}>
+                        Link existing
+                      </AdminButton>
+                    </div>
                   </>
                 )}
               </div>
@@ -310,6 +326,32 @@ export function OrderDetailPage() {
           </SectionPanel>
         </div>
       </div>
+
+      <AdjustPaymentDialog
+        order={order}
+        open={payOpen}
+        onOpenChange={setPayOpen}
+        isPending={adjustPayment.isPending}
+        onSubmit={(payload) =>
+          adjustPayment.mutate({ id: order._id, ...payload }, {
+            onSuccess: (res) => { adminToast(res?.message ?? "Payment updated"); setPayOpen(false); },
+            onError: (err) => adminToast(err.response?.data?.message ?? "Could not update the payment"),
+          })
+        }
+      />
+
+      <LinkParcelDialog
+        order={order}
+        open={linkOpen}
+        onOpenChange={setLinkOpen}
+        isPending={linkCourier.isPending}
+        onSubmit={(payload) =>
+          linkCourier.mutate({ id: order._id, ...payload }, {
+            onSuccess: (res) => { adminToast(`Linked to consignment ${res.courier.consignmentId}`); setLinkOpen(false); },
+            onError: (err) => adminToast(err.response?.data?.message ?? "Could not link that consignment"),
+          })
+        }
+      />
 
       <SendToCourierDialog
         order={order}

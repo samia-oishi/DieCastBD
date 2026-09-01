@@ -120,3 +120,19 @@ export const deleteOrdersSchema = {
       .max(100, "You can delete at most 100 orders at a time"),
   }),
 };
+
+/** Admin payment adjustment. Both fields optional so the merchant can change
+ * just one; the controller refuses a no-op. Bounds (not exceeding the subtotal
+ * or the total) are checked in orderAdjustment.js, where the arithmetic lives. */
+export const adjustPaymentSchema = {
+  params: z.object({ id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid order id") }),
+  body: z
+    .object({
+      advanceReceived: z.coerce.number().min(0).optional(),
+      discount: z.coerce.number().min(0).optional(),
+      reason: z.string().trim().max(200).optional(),
+    })
+    .refine((b) => b.advanceReceived !== undefined || b.discount !== undefined, {
+      message: "Enter an advance amount or a discount",
+    }),
+};

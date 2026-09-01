@@ -1,4 +1,4 @@
-import { sendOrderToCourier, syncCourierStatuses } from "./courier.service.js";
+import { sendOrderToCourier, syncCourierStatuses, linkExistingConsignment } from "./courier.service.js";
 import { isCourierConfigured, getBalance } from "./steadfast.client.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -6,6 +6,11 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 export const sendToCourier = asyncHandler(async (req, res) => {
   const order = await sendOrderToCourier(req.params.id);
   sendSuccess(res, { data: order, message: `Parcel created — consignment ${order.courier.consignmentId}` });
+});
+
+export const linkCourier = asyncHandler(async (req, res) => {
+  const order = await linkExistingConsignment(req.params.id, req.body.consignmentId, req.body.trackingCode);
+  sendSuccess(res, { data: order, message: `Linked to consignment ${order.courier.consignmentId}` });
 });
 
 export const syncCourier = asyncHandler(async (req, res) => {
