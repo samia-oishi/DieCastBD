@@ -232,3 +232,139 @@ export const adjustOrderPaymentAdmin = asyncHandler(async (req, res) => {
 
   sendSuccess(res, { data: order, message: summary });
 });
+
+/** Looks up a customer by phone so an admin creating an order can reuse the
+ * address they already delivered to.
+ *
+ * The address comes from the customer's most recent ORDER, not the Address
+ * book: guest customers never get an Address document (their address lives only
+ * as a snapshot on the order), and most people who message on Facebook check
+ * out as guests. Reading the last order covers both kinds of customer with one
+ * lookup and always reflects where the parcel actually went last time.
+ *
+ * Admin-only, behind the same auth as every other admin route. This is
+ * deliberately NOT exposed to the storefront: a public phone-to-address lookup
+ * cannot tell a returning customer from a stranger typing numbers, and would
+ * hand anyone the home address behind any phone number they know.
+ */
+export const lookupCustomerAdmin = asyncHandler(async (req, res) => {
+  const digits = String(req.query.phone ?? "").replace(/\D/g, "");
+  if (digits.length < 6) throw ApiError.badRequest("Enter at least 6 digits of the phone number");
+
+  // Search ORDERS, not users. The phone is captured at checkout and stored on
+  // the order (and its address snapshot); the User record often has none at all
+  // — a customer who signed in with Google has an email and no phone, and some
+  // guest records carry an empty string. Matching on orders is also exactly the
+  // question being asked: "has this number bought from us before?"
+  //
+  // Matched on the last 8+ digits so +880 / 880 / local forms all find the same
+  // person, anchored at the end so a partial can't match mid-number.
+  const tail = digits.slice(-10);
+  const rx = new RegExp(`${tail}$`);
+  const order = await Order.findOne({ $or: [{ phone: rx }, { "shippingAddress.phone": rx }] })
+    .sort({ createdAt: -1 })
+    .select("phone shippingAddress user createdAt")
+    .populate("user", "name email phone");
+
+  if (!order) return sendSuccess(res, { data: null, message: "No previous order from that number" });
+
+  const orderCount = await Order.countDocuments({
+    $or: [{ phone: rx }, { "shippingAddress.phone": rx }],
+  });
+
+  sendSuccess(res, {
+    data: {
+      customer: {
+        id: order.user?._id ?? null,
+        // The address snapshot's recipient name is the one that was actually
+        // delivered to, which beats an account display name here.
+        name: order.shippingAddress?.recipientName || order.user?.name || "",
+        email: order.user?.email ?? "",
+        phone: order.shippingAddress?.phone || order.phone,
+      },
+      lastAddress: order.shippingAddress ?? null,
+      lastOrderAt: order.createdAt,
+      orderCount,
+    },
+  });
+});
+
+/** Creates an order on the customer's behalf — for the ones that arrive by
+ * Facebook, Messenger or phone rather than through checkout.
+ *
+ * Reuses createOrderFromItems rather than writing a second creation path, so
+ * stock reservation, price snapshotting, cost snapshotting and the money math
+ * are literally the same code the storefront runs. A parallel implementation
+ * here is exactly how an admin-placed order would quietly stop reserving stock
+ * or stop recording costPrice.
+ *
+ * Sequence matters: create (pending, stock reserved) → apply any advance or
+ * discount → confirm. Confirming goes through transitionOrderStatus so stock
+ * moves reserved → committed through the same state machine as every other
+ * confirmation, and the analytics recompute fires with the FINAL figures.
+ */
+export const createOrderAdmin = asyncHandler(async (req, res) => {
+  const { customer, shippingAddress, items, shippingZone, deliveryNote, advanceReceived, discount, reason } = req.body;
+
+  // Prefer the customer the lookup resolved. findOrCreateGuestUser matches on
+  // email then User.phone, but the lookup finds people through their ORDERS —
+  // and a customer who signed in with Google has no phone on their User record
+  // at all. Without this, creating an order for a returning customer whose
+  // address we just autofilled would silently mint a SECOND customer record,
+  // splitting their order history in two.
+  let user = customer.id ? await User.findById(customer.id) : null;
+  if (user && !user.phone && customer.phone) {
+    // Backfill the number we now know, so the next lookup matches directly.
+    user.phone = customer.phone;
+    await user.save();
+  }
+  if (!user) {
+    user = await findOrCreateGuestUser({
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email || undefined,
+    });
+  }
+
+  let order = await createOrderFromItems({
+    userId: user._id,
+    items,
+    shippingAddress,
+    phone: customer.phone,
+    deliveryNote,
+    paymentMethod: "cod",
+    paymentOption: "cod",
+    shippingZone,
+  });
+
+  // Money agreed in conversation — an advance already sent, a deal struck.
+  if (advanceReceived || discount) {
+    const next = applyOrderAdjustment(order, { advanceReceived, discount });
+    const summary = describeAdjustment(
+      { discount: order.discount, total: order.total, amountPaid: order.amountPaid },
+      next,
+      reason
+    );
+    Object.assign(order, next);
+    if (summary) order.statusHistory.push({ status: order.status, note: summary, changedBy: req.user.id, at: new Date() });
+    await order.save();
+  }
+
+  // Confirmed on creation (merchant's call): an order they entered themselves
+  // is already accepted, so stock commits and it counts as revenue at once.
+  const transitioned = await transitionOrderStatus({
+    orderId: order._id,
+    newStatus: "confirmed",
+    note: "Created from the admin",
+    actorId: req.user.id,
+  });
+  order = transitioned.order;
+
+  if (user.email) {
+    sendOrderConfirmationEmail(order, user).catch((err) =>
+      console.error("Admin order confirmation email failed:", err.message)
+    );
+  }
+
+  sendSuccess(res, { data: order, status: 201, message: `Order ${order.orderNumber} created` });
+});

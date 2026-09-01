@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
-import { Trash2, ChevronRight, Truck, RefreshCw } from "lucide-react";
+import { Trash2, ChevronRight, Truck, RefreshCw, Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
@@ -137,7 +137,13 @@ export function OrdersPage() {
         eyebrow={meta ? `${meta.total} order${meta.total === 1 ? "" : "s"}` : "Orders"}
         title="Orders"
         actions={
-          courier?.configured ? (
+          <>
+            <AdminButton asChild variant="primary">
+              <Link to="new">
+                <Plus size={16} strokeWidth={2.4} /> Create order
+              </Link>
+            </AdminButton>
+            {courier?.configured ? (
             <AdminButton
               variant="outline"
               onClick={() => {
@@ -151,7 +157,8 @@ export function OrdersPage() {
               <RefreshCw size={15} strokeWidth={2.2} className={syncCourier.isPending ? "animate-spin" : undefined} />
               {syncCourier.isPending ? "Checking…" : "Refresh courier"}
             </AdminButton>
-          ) : null
+            ) : null}
+          </>
         }
       />
 

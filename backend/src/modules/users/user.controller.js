@@ -59,7 +59,17 @@ export const listUsersAdmin = asyncHandler(async (req, res) => {
     // Guest-vs-registered is the admin list's headline split (guests are created
     // by guest checkout and have isGuest: true).
     ...(isGuest !== undefined ? { isGuest } : {}),
-    ...(q ? { $or: [{ name: { $regex: q.trim(), $options: "i" } }, { email: { $regex: q.trim(), $options: "i" } }] } : {}),
+    // Phone included because that is how a merchant actually identifies a
+    // customer who messaged them — by the number, not the email.
+    ...(q
+      ? {
+          $or: [
+            { name: { $regex: q.trim(), $options: "i" } },
+            { email: { $regex: q.trim(), $options: "i" } },
+            { phone: { $regex: q.trim().replace(/\D/g, ""), $options: "i" } },
+          ],
+        }
+      : {}),
   };
 
   const skip = (page - 1) * limit;

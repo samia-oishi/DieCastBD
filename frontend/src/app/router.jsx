@@ -54,6 +54,7 @@ const BrandsPage = page(() => import("@/features/admin/brands/BrandsPage"), "Bra
 const CategoriesPage = page(() => import("@/features/admin/categories/CategoriesPage"), "CategoriesPage");
 const AdminOrdersPage = page(() => import("@/features/admin/orders/OrdersPage"), "OrdersPage");
 const AdminOrderDetailPage = page(() => import("@/features/admin/orders/OrderDetailPage"), "OrderDetailPage");
+const AdminCreateOrderPage = page(() => import("@/features/admin/orders/CreateOrderPage"), "CreateOrderPage");
 const CustomersPage = page(() => import("@/features/admin/customers/CustomersPage"), "CustomersPage");
 const CustomerDetailPage = page(() => import("@/features/admin/customers/CustomerDetailPage"), "CustomerDetailPage");
 const CouponsPage = page(() => import("@/features/admin/coupons/CouponsPage"), "CouponsPage");
@@ -142,6 +143,7 @@ export const router = createBrowserRouter([
           { path: "brands", element: <BrandsPage /> },
           { path: "categories", element: <CategoriesPage /> },
           { path: "orders", element: <AdminOrdersPage /> },
+          { path: "orders/new", element: <AdminCreateOrderPage /> },
           { path: "orders/:id", element: <AdminOrderDetailPage /> },
           { path: "customers", element: <CustomersPage /> },
           { path: "customers/:id", element: <CustomerDetailPage /> },

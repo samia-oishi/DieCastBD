@@ -136,3 +136,36 @@ export const adjustPaymentSchema = {
       message: "Enter an advance amount or a discount",
     }),
 };
+
+/** Admin-created order (Facebook/Messenger/phone sources).
+ *
+ * Deliberately narrower than createOrderSchema: no coupon code (the merchant
+ * agrees a taka amount in conversation, plan.md #98), and no payment method
+ * choice — an admin-entered order is COD with whatever advance has already
+ * arrived, recorded as `advanceReceived`.
+ */
+export const createOrderAdminSchema = {
+  body: z.object({
+    customer: z.object({
+      // Set when the admin used the phone lookup: it pins the order to the
+      // customer that lookup actually found, instead of re-deriving them.
+      id: z.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
+      name: z.string().trim().min(1, "Customer name is required").max(100),
+      phone: z.string().trim().min(1, "Phone is required"),
+      email: z.string().email("Enter a valid email").optional().or(z.literal("")),
+    }),
+    shippingAddress: shippingAddressBodySchema,
+    items: z
+      .array(z.object({ productId: z.string().regex(/^[0-9a-fA-F]{24}$/), qty: z.coerce.number().int().min(1) }))
+      .min(1, "Add at least one product"),
+    shippingZone: z.string().min(1, "Choose a delivery zone"),
+    deliveryNote: z.string().trim().max(500).optional(),
+    advanceReceived: z.coerce.number().min(0).optional(),
+    discount: z.coerce.number().min(0).optional(),
+    reason: z.string().trim().max(200).optional(),
+  }),
+};
+
+export const customerLookupSchema = {
+  query: z.object({ phone: z.string().trim().min(1, "Enter a phone number") }),
+};

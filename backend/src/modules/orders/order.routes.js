@@ -11,6 +11,8 @@ import {
   idParamSchema,
   deleteOrdersSchema,
   adjustPaymentSchema,
+  createOrderAdminSchema,
+  customerLookupSchema,
 } from "./order.validation.js";
 import {
   createOrder,
@@ -21,6 +23,8 @@ import {
   updateOrderStatusAdmin,
   deleteOrdersAdmin,
   adjustOrderPaymentAdmin,
+  createOrderAdmin,
+  lookupCustomerAdmin,
 } from "./order.controller.js";
 import { Order } from "./order.model.js";
 
@@ -36,6 +40,15 @@ customerRouter.get("/:orderNumber", authenticate, validate(orderNumberParamSchem
 
 export const adminRouter = Router();
 adminRouter.get("/", validate(listOrdersQuerySchema), listOrdersAdmin);
+
+// Customer lookup for the create-order form. Admin-only by mounting, and
+// deliberately never exposed to the storefront: a public phone-to-address
+// endpoint cannot tell a returning customer from a stranger typing numbers.
+// Declared before "/:id" so "customer-lookup" isn't read as an order id.
+adminRouter.get("/customer-lookup", validate(customerLookupSchema), lookupCustomerAdmin);
+
+// Orders taken by Facebook, Messenger or phone. auditLog records who created it.
+adminRouter.post("/", validate(createOrderAdminSchema), auditLog("Order", Order), createOrderAdmin);
 adminRouter.get("/:id", validate(idParamSchema), getOrderAdmin);
 adminRouter.patch(
   "/:id/status",

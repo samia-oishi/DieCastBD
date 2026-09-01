@@ -28,3 +28,17 @@ export async function adjustOrderPayment(id, payload) {
   const { data } = await api.patch(`/admin/orders/${id}/payment`, payload);
   return data;
 }
+
+/** Finds a past customer by phone so the admin create-order form can reuse the
+ * address that was actually delivered to. Admin-only — never exposed to the
+ * storefront, where it would be an address-harvesting endpoint. */
+export async function lookupCustomer(phone) {
+  const { data } = await api.get("/admin/orders/customer-lookup", { params: { phone } });
+  return data.data;
+}
+
+/** Creates an order taken by Facebook, Messenger or phone. */
+export async function createAdminOrder(payload) {
+  const { data } = await api.post("/admin/orders", payload);
+  return data;
+}
