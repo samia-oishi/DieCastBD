@@ -1376,3 +1376,19 @@ Checkout no longer asks the customer to pick Inside Dhaka or Outside Dhaka. It r
 - `setValue` was used in the Settings shipping card but never destructured from `useForm` — the whole Shipping tab would have thrown on render. Lint, both suites and both builds all passed. Found by auditing that every identifier used in JSX is actually bound.
 - `GuestAddressForm` calls `onChange` only when the *entire* form is valid, so the delivery charge stayed hidden behind "pick your district above" after the district had been picked. The district now reports up on its own. Only the browser showed this.
 - Pre-existing since #99: admin create-order read `zone.charge`, which does not exist — the field is `fee`. Every zone showed ৳0 delivery and "Rider collects" was understated by the shipping fee on every admin-entered order.
+
+---
+
+## 2026-09-05 — What Steadfast is told about a parcel
+
+Merchant screenshot from the Steadfast portal: parcels booked automatically from the admin arrived with an empty Item Description, an empty Note, District/Thana unset, and an address repeating the area — `Southern park 2, Nabinbagh, Rampura, Dhaka 1219, Rampura, Dhaka City`.
+
+Fixed in `backend/src/modules/courier/steadfast.payload.js` (plan.md #101):
+
+- `item_description` — products and quantities from the titles snapshotted on the order.
+- `note` — the merchant's fragile-handling instruction in English and Bangla, always sent; a customer's own delivery note comes first.
+- `recipient_address` — drops customer-typed segments that repeat the thana or district, keeps a postcode found inside them, and ends `<Thana>, <District>-<postcode>` to match Steadfast's documented example format.
+
+**Not fixable: District and Thana.** Verified three ways — the documented parameter list has no location field beyond `recipient_address`; a deliberately-invalid probe carrying 18 candidate field names with impossible values had all 18 silently ignored while the four real fields errored; and `status_by_cid` on real consignment `292486400` returns only `{status, delivery_status}`. The area was therefore **kept** in the address against the merchant's request, because that tail is the parcel's only location information and their portal parses it — stripping it would mean filling two fields by hand rather than one. Open question left with the merchant: ask Steadfast support whether `create_order` accepts a police-station or district ID (`GET /police_stations` hands out those IDs with no documented consumer), or book one nominated test parcel. A guessed field name was deliberately not sent.
+
+Verified: backend 276/276, 50 on this payload including the merchant's exact address. Two existing tests changed deliberately, each annotated in place. Future sends only — booked parcels unchanged.
