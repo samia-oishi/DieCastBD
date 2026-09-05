@@ -1,12 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  buildCreateOrderPayload,
-  buildRecipientAddress,
-  courierBlockReason,
-  isTerminal,
-  normalizeBdPhone,
-} from "../../src/modules/courier/steadfast.payload.js";
+import { buildCreateOrderPayload, buildRecipientAddress, courierBlockReason, isTerminal, normalizeBdPhone, FRAGILE_NOTE, buildItemDescription, buildNote } from "../../src/modules/courier/steadfast.payload.js";
 
 const order = (over = {}) => ({
   orderNumber: "DBD-20260901-5268B3",
@@ -92,8 +86,11 @@ describe("buildRecipientAddress", () => {
   });
 
   it("still produces a line for an order placed before the district/thana dropdowns", () => {
+    // Hyphenated since 2026-09-05: Steadfast's own documented example address
+    // is "Dhanmondi, Dhaka-1209", and their portal parses this string to fill
+    // its District/Thana dropdowns, so we match their format exactly.
     expect(buildRecipientAddress({ addressLine1: "Old House", city: "Dhaka", postalCode: "1207" }))
-      .toBe("Old House, Dhaka 1207");
+      .toBe("Old House, Dhaka-1207");
   });
 });
 
@@ -130,9 +127,13 @@ describe("payload shape", () => {
     expect(p.recipient_phone).toBe("01712345678");
   });
 
-  it("includes the delivery note only when there is one", () => {
-    expect(buildCreateOrderPayload(order())).not.toHaveProperty("note");
-    expect(buildCreateOrderPayload(order({ deliveryNote: "Call first" })).note).toBe("Call first");
+  it("always sends a note, carrying the customer's instruction when there is one", () => {
+    // Changed 2026-09-05 on the merchant's instruction: every diecast parcel
+    // now goes out with the fragile-handling note, whether or not the customer
+    // wrote anything. Previously the field was omitted entirely.
+    expect(buildCreateOrderPayload(order()).note).toBe(FRAGILE_NOTE);
+    expect(buildCreateOrderPayload(order({ deliveryNote: "Call first" })).note)
+      .toBe(`Call first — ${FRAGILE_NOTE}`);
   });
 });
 
@@ -142,4 +143,92 @@ describe("isTerminal — which parcels are worth re-polling", () => {
     "%s is still moving",
     (s) => expect(isTerminal(s)).toBe(false)
   );
+});
+
+/** Merchant's report from the Steadfast portal (2026-09-05): the parcel arrived
+ * with no item description, no note, and an address that read
+ * "Southern park 2, Nabinbagh, Rampura, Dhaka 1219, Rampura, Dhaka City" —
+ * the area typed once by the customer and once by us. */
+describe("the address Steadfast's portal actually parses", () => {
+  const rampura = {
+    recipientName: "Rafsan",
+    phone: "01977002762",
+    addressLine1: "Southern park 2, Nabinbagh, Rampura, Dhaka 1219",
+    thana: "Rampura",
+    district: "Dhaka City",
+  };
+
+  it("stops repeating the thana and district the customer already typed", () => {
+    expect(buildRecipientAddress(rampura)).toBe("Southern park 2, Nabinbagh, Rampura, Dhaka City-1219");
+  });
+
+  it("keeps the postcode out of the dropped segment rather than losing it", () => {
+    expect(buildRecipientAddress(rampura)).toContain("1219");
+  });
+
+  it("still ENDS with the courier's own thana and district spelling", () => {
+    // This is the whole reason the ending is controlled: Steadfast has no
+    // district/thana parameter, so their portal parses this tail.
+    expect(buildRecipientAddress(rampura).endsWith("Rampura, Dhaka City-1219")).toBe(true);
+  });
+
+  it("appends the area when the customer did NOT type it", () => {
+    expect(buildRecipientAddress({ addressLine1: "House 17, Road 3/A", thana: "Dhanmondi", district: "Dhaka City" }))
+      .toBe("House 17, Road 3/A, Dhanmondi, Dhaka City");
+  });
+
+  it("does not eat a real place that merely starts like the thana", () => {
+    const a = { addressLine1: "Rampura Bazar, shop 4", thana: "Rampura", district: "Dhaka City" };
+    expect(buildRecipientAddress(a)).toBe("Rampura Bazar, shop 4, Rampura, Dhaka City");
+  });
+
+  it("handles a legacy order with a free-text city and no thana", () => {
+    expect(buildRecipientAddress({ addressLine1: "House 5, Mirpur 10", city: "Dhaka", postalCode: "1216" }))
+      .toBe("House 5, Mirpur 10, Dhaka-1216");
+  });
+
+  it("still respects the 250-character cap", () => {
+    const long = { addressLine1: "Word ".repeat(80), thana: "Rampura", district: "Dhaka City" };
+    expect(buildRecipientAddress(long).length).toBeLessThanOrEqual(250);
+  });
+});
+
+describe("item_description and note", () => {
+  const order = (over = {}) => ({
+    orderNumber: "DBD-20260904-3118C1",
+    amountDue: 1560,
+    shippingAddress: { recipientName: "Rafsan", phone: "01977002762", addressLine1: "Southern park 2", thana: "Rampura", district: "Dhaka City" },
+    items: [{ title: "Hot Wheels Premium Nissan Skyline", qty: 1 }],
+    ...over,
+  });
+
+  it("describes the items with their quantities, as the merchant asked", () => {
+    expect(buildCreateOrderPayload(order()).item_description).toBe("1x Hot Wheels Premium Nissan Skyline");
+  });
+
+  it("lists every line of a multi-item order", () => {
+    const p = buildCreateOrderPayload(order({ items: [{ title: "Supra MK4", qty: 2 }, { title: "BMW M3", qty: 1 }] }));
+    expect(p.item_description).toBe("2x Supra MK4, 1x BMW M3");
+  });
+
+  it("sends the fragile note in English and Bangla by default", () => {
+    const note = buildCreateOrderPayload(order()).note;
+    expect(note).toContain("Fragile item please handle carefully");
+    expect(note).toContain("ভঙ্গুর পণ্য");
+  });
+
+  it("puts the customer's own instruction FIRST, and keeps the fragile note", () => {
+    const note = buildCreateOrderPayload(order({ deliveryNote: "Call before coming" })).note;
+    expect(note.startsWith("Call before coming")).toBe(true);
+    expect(note).toContain("ভঙ্গুর পণ্য");
+    expect(note.length).toBeLessThanOrEqual(250);
+  });
+
+  it("never sends an empty item_description key", () => {
+    expect(buildCreateOrderPayload(order({ items: [] }))).not.toHaveProperty("item_description");
+  });
+
+  it("leaves cod_amount alone — none of this touches the money", () => {
+    expect(buildCreateOrderPayload(order()).cod_amount).toBe(1560);
+  });
 });
