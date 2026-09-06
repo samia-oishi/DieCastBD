@@ -50,6 +50,18 @@ const shippingZoneSchema = new mongoose.Schema(
     // Default false — dormant until Phase 4 wires it into order creation.
     requiresPrepay: { type: Boolean, default: false },
 
+    // Structured delivery estimate for Google merchant listings, which need
+    // numbers rather than the `eta` prose above (Search Console flagged the
+    // missing `deliveryTime` on 2026-09-06). Handling = days from order to
+    // courier hand-off; transit = days in the courier's hands. Their sum is
+    // what a shopper is shown, so it must equal the promise `eta` states.
+    // All optional and unset by default — a zone without them simply emits no
+    // deliveryTime, never a guessed one.
+    handlingDaysMin: { type: Number, min: 0 },
+    handlingDaysMax: { type: Number, min: 0 },
+    transitDaysMin: { type: Number, min: 0 },
+    transitDaysMax: { type: Number, min: 0 },
+
     // Districts this zone covers, using the courier's own district names (see
     // frontend/src/lib/bdGeo.js). Checkout derives the zone from the address
     // instead of asking the customer to classify their own district — one less

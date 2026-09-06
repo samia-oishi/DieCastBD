@@ -127,6 +127,26 @@ export function buildShop({ settings, siteUrl, filters }) {
 
 /* --------------------------------------------------------------- product -- */
 
+/** ShippingDeliveryTime for one zone, or null when the merchant hasn't recorded
+ * the numbers. handlingTime is order → courier hand-off; transitTime is time in
+ * the courier's hands. Their sum is what a shopper sees, so it must match what
+ * the zone's `eta` text promises. Search Console flagged the missing field on
+ * 2026-09-06 (plan.md #93); never fabricated, hence the null. */
+function deliveryTime(zone) {
+  const num = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
+  const hMin = num(zone.handlingDaysMin);
+  const hMax = num(zone.handlingDaysMax);
+  const tMin = num(zone.transitDaysMin);
+  const tMax = num(zone.transitDaysMax);
+  if ([hMin, hMax, tMin, tMax].some((v) => v === null || Number.isNaN(v))) return null;
+
+  return {
+    "@type": "ShippingDeliveryTime",
+    handlingTime: { "@type": "QuantitativeValue", minValue: hMin, maxValue: hMax, unitCode: "DAY" },
+    transitTime: { "@type": "QuantitativeValue", minValue: tMin, maxValue: tMax, unitCode: "DAY" },
+  };
+}
+
 export function buildProductJsonLd({ product, settings, siteUrl }) {
   const productUrl = absoluteUrl(siteUrl, `/products/${product.slug}`);
   const price = isOnSale(product) ? product.salePrice : product.price;
@@ -142,6 +162,10 @@ export function buildProductJsonLd({ product, settings, siteUrl }) {
       name: z.name,
       shippingRate: { "@type": "MonetaryAmount", value: Number(z.fee) || 0, currency: "BDT" },
       shippingDestination: { "@type": "DefinedRegion", addressCountry: "BD" },
+      // Google asks for numbers, not the `eta` prose — but only emit them when
+      // the merchant has actually recorded them for this zone. A zone with no
+      // handling/transit days emits no deliveryTime rather than a guess.
+      ...(deliveryTime(z) ? { deliveryTime: deliveryTime(z) } : {}),
     }));
 
   const returnDays = Number(settings?.seoDefaults?.returnWindowDays);

@@ -1251,6 +1251,33 @@ export function SettingsPage() {
                           <Input className={adminInputCls} type="number" {...register(`shippingZones.${index}.fee`, { required: true })} />
                         </div>
                       </div>
+                      {/* Numbers for Google merchant listings — the `eta` text
+                          above is prose Google can't parse. Handling = order to
+                          courier hand-off; transit = time with the courier.
+                          Their SUM is what shoppers see, so keep it equal to
+                          what this zone's ETA promises. Leave all four blank to
+                          emit no delivery estimate rather than a wrong one. */}
+                      <div className="mt-3">
+                        <L hint="(all four, or none — shown to Google, not on the site)">Delivery estimate in days</L>
+                        <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-3.5">
+                          <div>
+                            <L>Handling min</L>
+                            <Input className={adminInputCls} type="number" min="0" {...register(`shippingZones.${index}.handlingDaysMin`)} />
+                          </div>
+                          <div>
+                            <L>Handling max</L>
+                            <Input className={adminInputCls} type="number" min="0" {...register(`shippingZones.${index}.handlingDaysMax`)} />
+                          </div>
+                          <div>
+                            <L>Transit min</L>
+                            <Input className={adminInputCls} type="number" min="0" {...register(`shippingZones.${index}.transitDaysMin`)} />
+                          </div>
+                          <div>
+                            <L>Transit max</L>
+                            <Input className={adminInputCls} type="number" min="0" {...register(`shippingZones.${index}.transitDaysMax`)} />
+                          </div>
+                        </div>
+                      </div>
                       <ZoneDistricts control={control} setValue={setValue} index={index} zones={zoneW} />
                       <ToggleRow control={control} name={`shippingZones.${index}.requiresPrepay`}>
                         <span className="text-[12.5px] font-medium text-ink-soft">

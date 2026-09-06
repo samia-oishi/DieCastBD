@@ -44,6 +44,13 @@ const shippingZone = z.object({
   fee: z.coerce.number().min(0),
   eta: z.string().optional(),
   requiresPrepay: z.coerce.boolean().optional(),
+  // Structured delivery estimate (handling + transit days) for merchant
+  // listings; see the schema comment in settings.model.js. Nullable so the
+  // admin form can clear a value back to "unset" rather than being stuck.
+  handlingDaysMin: z.coerce.number().min(0).max(30).nullish(),
+  handlingDaysMax: z.coerce.number().min(0).max(30).nullish(),
+  transitDaysMin: z.coerce.number().min(0).max(60).nullish(),
+  transitDaysMax: z.coerce.number().min(0).max(60).nullish(),
   // Which districts this zone covers, by the courier's own district names.
   // Checkout derives the zone from the address rather than asking the customer
   // to classify their own district; see settings/shippingZone.js.

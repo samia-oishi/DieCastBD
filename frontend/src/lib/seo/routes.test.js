@@ -96,6 +96,34 @@ describe("buildProduct", () => {
   });
 });
 
+describe("merchant listing fields (Search Console 2026-09-06)", () => {
+  const product = { slug: "x", title: "X", sku: "S", price: 100, salePrice: 0, availableStock: 1 };
+  const zone = (extra) => ({
+    seoDefaults: { returnWindowDays: 7 },
+    shippingZones: [{ name: "Inside Dhaka", fee: 70, ...extra }],
+  });
+  const offers = (settings) => buildProduct({ product, settings, siteUrl: SITE }).jsonLd.find((b) => b["@type"] === "Product").offers;
+
+  it("emits deliveryTime when the merchant recorded all four day fields", () => {
+    const d = offers(zone({ handlingDaysMin: 0, handlingDaysMax: 1, transitDaysMin: 1, transitDaysMax: 1 })).shippingDetails[0].deliveryTime;
+    expect(d["@type"]).toBe("ShippingDeliveryTime");
+    expect(d.handlingTime).toMatchObject({ minValue: 0, maxValue: 1, unitCode: "DAY" });
+    expect(d.transitTime).toMatchObject({ minValue: 1, maxValue: 1, unitCode: "DAY" });
+  });
+
+  it("omits deliveryTime entirely rather than guessing a partial estimate", () => {
+    // Prose `eta` is not a substitute — a zone with only some numbers, or none,
+    // must emit no deliveryTime at all.
+    expect(offers(zone({ eta: "24-48 hours" })).shippingDetails[0].deliveryTime).toBeUndefined();
+    expect(offers(zone({ handlingDaysMin: 0, transitDaysMin: 1 })).shippingDetails[0].deliveryTime).toBeUndefined();
+  });
+
+  it("emits hasMerchantReturnPolicy from the recorded window, and omits it when unset", () => {
+    expect(offers(zone({})).hasMerchantReturnPolicy).toMatchObject({ merchantReturnDays: 7, applicableCountry: "BD" });
+    expect(offers({ shippingZones: [{ name: "Z", fee: 0 }] }).hasMerchantReturnPolicy).toBeUndefined();
+  });
+});
+
 describe("shopCanonicalPath", () => {
   it("sends a single-facet view to its collection landing page", () => {
     expect(shopCanonicalPath({ brand: "mini-gt" })).toBe("/brand/mini-gt");
