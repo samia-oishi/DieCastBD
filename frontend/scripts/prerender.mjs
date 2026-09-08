@@ -214,7 +214,15 @@ async function fetchAllProducts() {
 async function discoverRoutes() {
   const paths = new Set(STATIC_FLOOR);
   try {
-    const res = await fetch(`${API_BASE.replace(/\/api\/v1$/, "")}/sitemap.xml`);
+    // Cache-bust: the sitemap is served with Cache-Control max-age=3600, so a
+    // plain fetch can hand the build an hour-old route list — which silently
+    // drops a product, brand or category added since. That happened on
+    // 2026-09-07: a just-created category was missing from the build entirely
+    // while being live in the sitemap Google reads. The build must see the
+    // origin's current truth, not a CDN snapshot.
+    const res = await fetch(`${API_BASE.replace(/\/api\/v1$/, "")}/sitemap.xml?build=${Date.now()}`, {
+      cache: "no-store",
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const xml = await res.text();
     for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
