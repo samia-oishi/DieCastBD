@@ -13,28 +13,17 @@
  * copy — see lib/seo/constants.js for why the two must share code.
  */
 export const SEO_COPY = {
-  "hot-wheels-premium": {
-    title: "Hot Wheels Premium in Bangladesh — Price & Authentic 1:64 Diecast",
-    description:
-      "Buy authentic Hot Wheels Premium diecast in Bangladesh. Real Riders, Car Culture and Boulevard 1:64 castings with collector-grade packaging, cash on delivery and nationwide shipping.",
-  },
-  // The BROAD head term "hot wheels price in bangladesh" belongs to the
-  // /category/hot-wheels page, not to either brand page — that category spans
-  // premium AND mainline, so the searcher sees the full range. Sending that
-  // query to a mainline-only list would undersell a shop whose catalogue is
-  // 43 premium castings against 12 mainline (merchant decision, 2026-09-07:
-  // "we're a premium brand, we just keep some mainline as an option").
-  "hot-wheels": {
+  // ONE Hot Wheels brand owns the head term "hot wheels price in bangladesh".
+  // `brand` is a single ref, so premium and mainline cars could never share a
+  // page while they sat on two brands — they were merged onto this slug on
+  // 2026-09-07 (brand = the marque, category = the tier), and the old
+  // /brand/hot-wheels-premium URL 301s here from vercel.json so the ranking it
+  // earned since August follows. The page leads with premium because that is
+  // most of the catalogue; mainline is the honest entry point, not the pitch.
+  hotwheels: {
     title: "Hot Wheels Price in Bangladesh — Premium & Mainline 1:64 Cars",
     description:
       "Hot Wheels prices in Bangladesh — premium Car Culture, Boulevard and Pop Culture castings plus mainline singles. Authentic Mattel, cash on delivery nationwide.",
-  },
-  // Mainline keeps the narrower, honestly-cheaper cluster and supports the
-  // category page above rather than competing with it for the head term.
-  hotwheels: {
-    title: "Hot Wheels Mainline in Bangladesh — Original 1:64 Cars",
-    description:
-      "Original Hot Wheels mainline cars in Bangladesh — the toy-aisle 1:64 castings, including Treasure Hunt chases. Authentic Mattel, cash on delivery nationwide.",
   },
   "mini-gt": {
     title: "MINI GT in Bangladesh — Price & Authentic 1:64 Scale Models",

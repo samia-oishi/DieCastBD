@@ -2,7 +2,31 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "trailingSlash": false,
   "redirects": [
-    { "source": "/index.html", "destination": "/", "permanent": true }
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    {
+      "comment": "Hot Wheels was split across two brands until 2026-09-07; a product can only hold one brand, so premium and mainline merged onto /brand/hotwheels. This URL was indexed since Aug 5 — a 301 passes that ranking to the surviving page instead of stranding it (brand slugs are immutable, so it cannot be renamed).",
+      "source": "/brand/hot-wheels-premium",
+      "destination": "/brand/hotwheels",
+      "permanent": true
+    },
+    {
+      "comment": "Retired the same day as the brand merge: both listed Hot Wheels cars that now live on /brand/hotwheels. 301'd rather than left to 404 because either may already be indexed — a redirect passes any ranking on instead of stranding it.",
+      "source": "/category/mainlines",
+      "destination": "/brand/hotwheels",
+      "permanent": true
+    },
+    {
+      "source": "/category/hot-wheels",
+      "destination": "/brand/hotwheels",
+      "permanent": true
+    },
+    {
+      "comment": "Google indexed this filtered view on 2026-09-02, and the merge left it querying a brand that no longer exists — it would render an empty grid. Its canonical already points at /brand/hot-wheels-premium, which 301s onward, but redirecting the query form directly avoids showing anyone an empty shop on the way.",
+      "source": "/shop",
+      "has": [{ "type": "query", "key": "brand", "value": "hot-wheels-premium" }],
+      "destination": "/brand/hotwheels",
+      "permanent": true
+    }
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://api.diecastbd.com/sitemap.xml" },

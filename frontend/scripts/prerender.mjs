@@ -145,11 +145,31 @@ async function writeReport() {
 
 /* ------------------------------------------------------------- API access -- */
 
+/** Build-time fetch that always reaches the origin.
+ *
+ * The public API is served with Cache-Control (brands/categories 300s,
+ * products 60s, sitemap 3600s), so a plain fetch can hand the build a snapshot
+ * from BEFORE the content it is supposed to bake. That is not hypothetical: on
+ * 2026-09-07 a brand merge ran and the build seconds later baked the pre-merge
+ * copy — 272 words and no FAQ schema on a page that had 2,121 characters and 5
+ * FAQs waiting in the database. The site then ships stale content until the
+ * NEXT deploy, which may be days away.
+ *
+ * A cache-buster plus no-store makes every build read current truth. Cheap:
+ * this is a couple of dozen requests per build, once.
+ */
+const BUILD_STAMP = Date.now();
+function buildFetch(url, init = {}) {
+  const bust = `${url.includes("?") ? "&" : "?"}_build=${BUILD_STAMP}`;
+  return fetch(`${url}${bust}`, { ...init, cache: "no-store" });
+}
+
+
 /** GET an endpoint and return the full `{ success, data, meta }` envelope, or
  * null once the failure has been recorded. */
 async function apiEnvelope(pathname) {
   try {
-    const res = await fetch(`${API_BASE}${pathname}`, { headers: { accept: "application/json" } });
+    const res = await buildFetch(`${API_BASE}${pathname}`, { headers: { accept: "application/json" } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
@@ -220,9 +240,7 @@ async function discoverRoutes() {
     // 2026-09-07: a just-created category was missing from the build entirely
     // while being live in the sitemap Google reads. The build must see the
     // origin's current truth, not a CDN snapshot.
-    const res = await fetch(`${API_BASE.replace(/\/api\/v1$/, "")}/sitemap.xml?build=${Date.now()}`, {
-      cache: "no-store",
-    });
+    const res = await buildFetch(`${API_BASE.replace(/\/api\/v1$/, "")}/sitemap.xml`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const xml = await res.text();
     for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
@@ -401,7 +419,7 @@ async function main() {
     // a failure here must not hit fail() (which is fatal under STRICT) — an
     // older backend deploy without GET /pages just means the hub omits its
     // Guides section, which is not worth blocking a deploy over.
-    fetch(`${API_BASE}/pages`, { headers: { accept: "application/json" } })
+    buildFetch(`${API_BASE}/pages`, { headers: { accept: "application/json" } })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => j?.data ?? [])
       .catch(() => []),
@@ -441,7 +459,7 @@ async function main() {
       // speed optimization; losing one must degrade to a runtime fetch, never
       // take the deploy down. (A build-time 429 from the rate limiter is a very
       // real way for that to happen — it happened while developing this.)
-      const envelope = await fetch(`${API_BASE}/products?${qs}`, { headers: { accept: "application/json" } })
+      const envelope = await buildFetch(`${API_BASE}/products?${qs}`, { headers: { accept: "application/json" } })
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null);
       if (envelope?.data) {
