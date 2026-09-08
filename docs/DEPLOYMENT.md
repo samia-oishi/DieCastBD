@@ -150,6 +150,25 @@ Search Console flagged in Jul 2026 (plan.md #88).
 - Escape hatch: `PRERENDER=false` writes `app.html` and leaves all routes client-rendered.
 - No browser is involved. `vercel-build` no longer installs Chromium.
 
+### Redirects in `frontend/vercel.json` — what each one is for
+
+JSON has no comments and **Vercel rejects the entire deploy on an unknown key**
+in `vercel.json` (a `"comment"` field on three redirects failed a production
+deploy on 2026-09-07), so the reasoning lives here. `src/lib/seo/vercelConfig.test.js`
+fails the test suite if an unsupported key reappears, or if either
+indexed-URL redirect below is removed.
+
+| Redirect | Why |
+|---|---|
+| `/index.html` → `/` | It was a live 200 duplicate of the home page. |
+| `/brand/hot-wheels-premium` → `/brand/hotwheels` | Hot Wheels sat across two brands until the 2026-09-07 merge; `Product.brand` is a single ref, so one page had to lose its products. This URL was **indexed since Aug 5** — the 301 passes that ranking to the surviving page. Brand slugs are immutable (plan.md #90), so it cannot be renamed instead. |
+| `/shop?brand=hot-wheels-premium` → `/brand/hotwheels` | **Indexed, crawled Sep 2.** After the merge it queried a brand that no longer exists and rendered an empty grid. |
+| `/category/mainlines` → `/brand/hotwheels` | Retired in the merge; duplicated the mainline cars now on the brand page. Defensive — not known to be indexed. |
+| `/category/hot-wheels` → `/brand/hotwheels` | A short-lived combined category, superseded by the brand merge the same day. |
+
+Before removing any of these, check the URL is not in Search Console's indexed
+list. A removed redirect turns an indexed page into a soft 404.
+
 `frontend/vercel.json` now also carries a `redirects` block (`/index.html` → `/`) and route-scoped
 `X-Robots-Tag: noindex` headers for the private/transactional routes. **Promotion gate:** on a
 preview deployment, confirm public pages carry **no** `x-robots-tag`
