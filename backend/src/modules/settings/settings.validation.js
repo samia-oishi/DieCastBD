@@ -210,6 +210,8 @@ export const updateSettingsSchema = {
         description: z.string().optional(),
         shareImage: z.object({ url: z.string().optional(), cloudinaryId: z.string().optional() }).nullable().optional(),
         googleSiteVerification: z.string().trim().max(200).optional(),
+        // schema.org ReturnFeesEnumeration; "" clears it back to unset.
+        returnFees: z.enum(["FreeReturn", "ReturnFeesCustomerResponsibility", ""]).optional(),
         returnWindowDays: optionalNumber(z.coerce.number().min(0, "Return window can't be negative").max(365, "Return window over a year? Set it in days")),
       })
       .optional(),

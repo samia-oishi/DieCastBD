@@ -122,6 +122,23 @@ describe("merchant listing fields (Search Console 2026-09-06)", () => {
     expect(offers(zone({})).hasMerchantReturnPolicy).toMatchObject({ merchantReturnDays: 7, applicableCountry: "BD" });
     expect(offers({ shippingZones: [{ name: "Z", fee: 0 }] }).hasMerchantReturnPolicy).toBeUndefined();
   });
+
+  it("always states returnMethod — an online-only store can only take returns by courier", () => {
+    expect(offers(zone({})).hasMerchantReturnPolicy.returnMethod).toBe("https://schema.org/ReturnByMail");
+  });
+
+  it("emits returnFees only once the merchant has recorded who pays", () => {
+    // The published refund policy is silent on change-of-mind return postage,
+    // so this stays absent until it's set rather than being guessed either way.
+    expect(offers(zone({})).hasMerchantReturnPolicy.returnFees).toBeUndefined();
+
+    const paid = buildProduct({
+      product,
+      settings: { seoDefaults: { returnWindowDays: 7, returnFees: "FreeReturn" }, shippingZones: [] },
+      siteUrl: SITE,
+    }).jsonLd.find((b) => b["@type"] === "Product").offers;
+    expect(paid.hasMerchantReturnPolicy.returnFees).toBe("https://schema.org/FreeReturn");
+  });
 });
 
 describe("shopCanonicalPath", () => {

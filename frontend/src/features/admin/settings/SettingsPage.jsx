@@ -581,7 +581,7 @@ export function SettingsPage() {
         newsletter: { enabled: true },
       },
       navigation: { headerLinks: [], footerLinks: [], footerText: "" },
-      seoDefaults: { title: "", description: "", shareImage: null, googleSiteVerification: "", returnWindowDays: "" },
+      seoDefaults: { title: "", description: "", shareImage: null, googleSiteVerification: "", returnWindowDays: "", returnFees: "" },
       faqs: [],
     },
   });
@@ -1411,6 +1411,14 @@ export function SettingsPage() {
                     <div>
                       <L hint="(blank = returns info left out of Google listings)">Return window (days)</L>
                       <Input className={adminInputCls} type="number" min={0} {...register("seoDefaults.returnWindowDays")} />
+                    </div>
+                    <div>
+                      <L hint="(who pays return postage, shown in Google listings)">Return shipping</L>
+                      <Sel {...register("seoDefaults.returnFees")}>
+                        <option value="">Not stated — leave out of Google listings</option>
+                        <option value="FreeReturn">We pay — returns are free</option>
+                        <option value="ReturnFeesCustomerResponsibility">Customer pays return postage</option>
+                      </Sel>
                     </div>
                   </div>
                   {/* Google-style search preview, live from the fields above. */}

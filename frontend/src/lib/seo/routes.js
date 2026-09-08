@@ -177,6 +177,16 @@ export function buildProductJsonLd({ product, settings, siteUrl }) {
           returnPolicyCountry: "BD",
           returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
           merchantReturnDays: returnDays,
+          // The store ships nationwide and has no walk-in location (it's a
+          // service-area business), so a return can only travel back by
+          // courier — ReturnByMail is the only fitting schema.org value.
+          returnMethod: "https://schema.org/ReturnByMail",
+          // Who pays return postage. Merchant-set: the refund policy covers
+          // damaged/wrong items but is silent on change-of-mind returns, so
+          // this is omitted until the merchant records it rather than guessed.
+          ...(settings?.seoDefaults?.returnFees
+            ? { returnFees: `https://schema.org/${settings.seoDefaults.returnFees}` }
+            : {}),
         }
       : undefined;
 

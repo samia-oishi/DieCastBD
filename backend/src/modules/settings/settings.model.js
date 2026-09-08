@@ -313,6 +313,12 @@ const settingsSchema = new mongoose.Schema(
       shareImage: imageSchema,
       // Google Search Console meta-tag token; rendered site-wide when set.
       googleSiteVerification: String,
+      // Who pays return postage, as a schema.org ReturnFeesEnumeration value —
+      // Google asked for it on 2026-09-06. Merchant-set because the published
+      // refund policy doesn't state it: it covers damaged/wrong items ("full
+      // refund including shipping") but is silent on change-of-mind returns.
+      // Unset = the field is omitted rather than guessed.
+      returnFees: { type: String, enum: ["FreeReturn", "ReturnFeesCustomerResponsibility", ""], default: "" },
       // Return window in days for Google merchant-listing schema
       // (MerchantReturnPolicy). Unset = the schema is simply omitted — we never
       // invent a returns policy the store hasn't committed to.
