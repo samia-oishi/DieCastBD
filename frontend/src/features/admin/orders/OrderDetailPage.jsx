@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router";
-import { ChevronLeft, MapPin, Printer, Truck, RefreshCw } from "lucide-react";
+import { ChevronLeft, MapPin, Plus, Printer, Truck, RefreshCw } from "lucide-react";
 
 import { formatTaka } from "@/lib/currency";
 import { formatAddressLine } from "@/lib/address";
@@ -136,7 +136,8 @@ export function OrderDetailPage() {
             bodyClassName="pt-3"
             action={
               !["cancelled", "refunded"].includes(order.status) && (
-                <AdminButton variant="ghost" size="sm" onClick={() => setAddOpen(true)}>
+                <AdminButton variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+                  <Plus size={14} strokeWidth={2.6} />
                   Add products
                 </AdminButton>
               )

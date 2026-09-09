@@ -54,6 +54,10 @@ export function CreateOrderPage() {
   const [note, setNote] = useState("");
 
   const [advance, setAdvance] = useState("");
+  // Once the merchant types or taps an amount themselves, stop steering it —
+  // otherwise changing the district later would silently overwrite what they
+  // told us they actually received.
+  const [advanceTouched, setAdvanceTouched] = useState(false);
   const [discount, setDiscount] = useState("");
   const [lines, setLines] = useState([]); // [{ product, qty }]
   const [search, setSearch] = useState("");
@@ -109,7 +113,23 @@ export function CreateOrderPage() {
   const total = Math.max(0, subtotal - num(discount)) + shippingFee;
   const due = Math.max(0, total - num(advance));
 
-  const ready = name.trim() && phone.trim() && addressLine1.trim() && district && thana && zone && lines.length > 0;
+  // A prepay zone means the customer was asked for the delivery charge before
+  // the parcel goes out, so that is the sensible starting figure — but it is a
+  // DEFAULT, not an assumption: the merchant confirms or changes it below, and
+  // some customers send a different amount or nothing at all.
+  useEffect(() => {
+    if (advanceTouched) return;
+    setAdvance(zoneData?.requiresPrepay ? String(shippingFee) : "");
+  }, [zoneData, shippingFee, advanceTouched]);
+
+  const setAdvanceTo = (value) => {
+    setAdvanceTouched(true);
+    setAdvance(String(value));
+  };
+  const overAdvance = num(advance) > total;
+
+  const ready =
+    name.trim() && phone.trim() && addressLine1.trim() && district && thana && zone && lines.length > 0 && !overAdvance;
 
   const submit = () => {
     createOrder.mutate(
@@ -237,8 +257,57 @@ export function CreateOrderPage() {
                 </div>
               )}
             </Field>
+            <Field label="Has the customer paid anything yet?">
+              {/* The merchant's orders arrive by Messenger, where an advance may
+                  or may not have landed before the order is written down. These
+                  are the three amounts that actually come up; the field below
+                  takes anything else. */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "Nothing yet", value: 0 },
+                  ...(shippingFee > 0 ? [{ label: `Delivery ${formatTaka(shippingFee)}`, value: shippingFee }] : []),
+                  ...(total > 0 ? [{ label: `Full ${formatTaka(total)}`, value: total }] : []),
+                ].map((opt) => {
+                  const active = num(advance) === opt.value;
+                  return (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onClick={() => setAdvanceTo(opt.value)}
+                      className={cn(
+                        "rounded-full border px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+                        active ? "border-ink bg-ink text-white" : "border-line text-ink-soft hover:border-ink"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {zoneData?.requiresPrepay && !advanceTouched && (
+                <p className="mt-2 text-[11.5px] text-faint">
+                  {zoneData.name} normally prepays the delivery charge, so {formatTaka(shippingFee)} is filled in — change it if
+                  they sent something else, or nothing.
+                </p>
+              )}
+            </Field>
+
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Advance received"><Input type="number" min="0" value={advance} onChange={(e) => setAdvance(e.target.value)} className={adminInputCls} placeholder="0" /></Field>
+              <Field label="Advance received">
+                <Input
+                  type="number"
+                  min="0"
+                  value={advance}
+                  onChange={(e) => { setAdvanceTouched(true); setAdvance(e.target.value); }}
+                  className={cn(adminInputCls, overAdvance && "border-danger")}
+                  placeholder="0"
+                />
+                {overAdvance && (
+                  <p className="mt-1 text-[11.5px] font-semibold text-danger">
+                    More than the {formatTaka(total)} total — the order would not add up.
+                  </p>
+                )}
+              </Field>
               <Field label="Discount"><Input type="number" min="0" value={discount} onChange={(e) => setDiscount(e.target.value)} className={adminInputCls} placeholder="0" /></Field>
             </div>
 

@@ -348,7 +348,17 @@ export const createOrderAdmin = asyncHandler(async (req, res) => {
 
   // Money agreed in conversation — an advance already sent, a deal struck.
   if (advanceReceived || discount) {
-    const next = applyOrderAdjustment(order, { advanceReceived, discount });
+    let next;
+    try {
+      next = applyOrderAdjustment(order, { advanceReceived, discount });
+    } catch (err) {
+      // The order already exists at this point, holding reserved stock. Leaving
+      // it behind on a rejected advance would strand a pending order nobody
+      // asked for and quietly make its items unavailable, so it is rolled back
+      // before the error surfaces.
+      await deleteOrders({ orderIds: [order._id], actorId: req.user.id });
+      throw ApiError.badRequest(err.message);
+    }
     const summary = describeAdjustment(
       { discount: order.discount, total: order.total, amountPaid: order.amountPaid },
       next,
