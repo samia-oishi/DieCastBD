@@ -4,6 +4,7 @@ import { createBrowserRouter } from "react-router";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { NotFoundPage } from "@/components/shared/NotFoundPage";
+import { RouteErrorPage } from "@/components/shared/RouteErrorPage";
 import { UnauthorizedPage } from "@/components/shared/UnauthorizedPage";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { RequireRole } from "@/components/shared/RequireRole";
@@ -22,7 +23,56 @@ import { HomePage } from "@/features/home/HomePage";
 // they're on the critical path for the first paint. React.lazy needs a default
 // export; our pages are named, so this helper maps the named export across.
 // The import() paths stay string literals so Rollup can still statically split them.
-const page = (loader, name) => lazy(() => loader().then((m) => ({ default: m[name] })));
+// Reported from the live site, in the Facebook in-app browser on a 19 KB/s
+// mobile connection: "Failed to fetch dynamically imported module". A route
+// chunk that loses its fetch takes the whole page down permanently, because
+// React.lazy caches the rejected promise and never tries again — one dropped
+// request on a weak signal and that route is dead until the visitor reloads by
+// hand. On the connections this shop's customers actually use, that is often.
+//
+// So: retry with a short backoff before giving up. If every attempt fails, do
+// ONE hard reload — that also covers the other cause, a deploy having replaced
+// the hashed chunks while a browser held the old HTML, where fresh HTML is the
+// only fix. sessionStorage guards it so a genuinely missing chunk can never
+// loop, and success clears the guard so a later stale deploy can still recover.
+const RELOAD_GUARD = "dcbd:chunk-reload";
+
+const safeSession = {
+  get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } },
+  clear(k) { try { sessionStorage.removeItem(k); } catch { /* private mode */ } },
+};
+
+async function loadWithRetry(loader, attempts = 3) {
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const mod = await loader();
+      safeSession.clear(RELOAD_GUARD);
+      return mod;
+    } catch (err) {
+      lastError = err;
+      // 400ms, then 800ms — long enough for a stalled request to clear, short
+      // enough that a visitor doesn't think the site has hung.
+      if (attempt < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 400 * 2 ** attempt));
+      }
+    }
+  }
+
+  if (!safeSession.get(RELOAD_GUARD)) {
+    safeSession.set(RELOAD_GUARD, String(Date.now()));
+    window.location.reload();
+    // The page is being replaced; never resolve, so nothing renders in the gap.
+    return new Promise(() => {});
+  }
+
+  // Already reloaded once and it still fails — this is real. Let the router's
+  // errorElement explain it instead of silently reloading forever.
+  throw lastError;
+}
+
+const page = (loader, name) => lazy(() => loadWithRetry(loader).then((m) => ({ default: m[name] })));
 
 const ShopPage = page(() => import("@/features/products/ShopPage"), "ShopPage");
 const ProductDetailPage = page(() => import("@/features/products/ProductDetailPage"), "ProductDetailPage");
@@ -74,6 +124,7 @@ const AdminLayout = page(() => import("./layouts/AdminLayout"), "AdminLayout");
 export const router = createBrowserRouter([
   {
     element: <PublicLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       { path: "/", element: <HomePage /> },
       { path: "/shop", element: <ShopPage /> },
@@ -119,6 +170,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <AuthLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       { path: "/login", element: <LoginPage /> },
       { path: "/register", element: <RegisterPage /> },
@@ -128,6 +180,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin",
     element: <RequireRole roles={[ROLES.ADMIN, ROLES.STAFF]} />,
+    errorElement: <RouteErrorPage />,
     children: [
       {
         element: (

@@ -30,7 +30,6 @@ export default defineConfig({
               if (!id.includes("node_modules")) return undefined;
               if (/[\\/]node_modules[\\/](react|react-dom|react-router|scheduler)[\\/]/.test(id)) return "vendor-react";
               if (id.includes("firebase") || id.includes("@firebase")) return "vendor-firebase";
-              if (id.includes("@tiptap") || id.includes("prosemirror")) return "vendor-editor";
               if (id.includes("framer-motion")) return "vendor-motion";
               if (id.includes("@tanstack")) return "vendor-query";
               if (id.includes("radix-ui") || id.includes("lucide-react")) return "vendor-ui";

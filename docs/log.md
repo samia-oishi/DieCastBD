@@ -1434,3 +1434,15 @@ Fixed the import, and closed the hole rather than relying on noticing next time:
 Fixed centrally with `min-w-0` on the modal's title and children wrapper, in both the desktop dialog and the mobile sheet — which is also what makes `truncate` inside actually truncate. Then a second, mobile-only fault showed up under test: with products chosen, the sheet grew to 776px on an 844px phone and pushed "Add to order" off the bottom, so items could be picked but not submitted. The pickable area is now one bounded scroll region (`max-h-[52vh]`) with the actions outside it, and the list carries a bottom fade so its always-sliced last row reads as "more below" rather than a rendering fault.
 
 Verified at 1280×900, 390×844 and 360×640, with one and with three products chosen: zero elements overflowing the dialog, no horizontal page scroll, and the submit button on-screen and enabled in every case.
+
+---
+
+## 2026-09-09 — "Failed to fetch dynamically imported module", and why the site got slower
+
+Merchant reported this error repeatedly on the live site, from the Facebook in-app browser on 4G at 18.9 KB/s, plus a general slowdown. Two independent causes; neither was a stale deploy — `ShopPage-CHe9Wy09.js` returned 200 and `index.html` already carried `max-age=0, must-revalidate`.
+
+**1. One dropped request killed a route permanently.** `React.lazy` caches a rejected promise and never retries, so a single failed chunk fetch on a weak signal left that page dead until a manual reload — and react-router then rendered its own default screen, headed "Unexpected Application Error!" with a stack trace addressed to the developer. Real shoppers were seeing that. Route chunks now load through `loadWithRetry` (3 attempts, 400/800ms backoff), then exactly one guarded hard reload to cover the stale-deploy case, and a `RouteErrorPage` errorElement on all three top-level branches explains it in plain language with a Try again button. Verified against the production build by aborting the chunk request: one dropped request now recovers silently; a permanently missing chunk reloads once, does not loop, and lands on the friendly page.
+
+**2. Every shopper downloaded Tiptap.** `manualChunks` forced `@tiptap`/`prosemirror` into `vendor-editor`, and Rollup consequently placed shared dependencies there too — so **77 of 105 chunks imported it**, most for one or two symbols, and `index.html` modulepreloaded all 421KB (130KB gz) of it on the homepage. CLAUDE.md's claim that Tiptap is isolated to the admin page-editor route had quietly stopped being true. Dropping that one manualChunks line lets Rollup split it naturally: homepage payload **446KB → 319KB gzip**, a 127KB cut, roughly 7 seconds on the connection this was reported from — and one less large chunk to fail mid-download, which feeds directly back into cause 1.
+
+Verified: storefront `/`, `/shop`, `/cart` render with zero page errors and no editor chunk fetched; the admin editor still chunks correctly (`PageFormPage` → `RichTextEditor` → tiptap, `SimpleCatalogManager` likewise) and still mounts and accepts typing. Frontend 175/175, lint 0 errors, build and prerender verification clean.
