@@ -1424,3 +1424,7 @@ Two merchant requests (plan.md #102).
 Verified live against production and reversed: an order for a `full`-only product created as COD, 2 units added (subtotal ৳1,350 → ৳6,050, total ৳1,430 → ৳6,130, invariants intact, stock 4 → 2), then deleted — 3 units returned and all baselines restored exactly. Courier guard confirmed against a real parcel: 409 with the order untouched. Backend 287/287, frontend 175/175, lint and build clean.
 
 Also fixed in passing: the order-detail Items list keyed rows by `item.sku`, which stops being unique now that the same product can appear twice at different prices.
+
+**Follow-up the same day — the admin order page white-screened.** `useAddOrderItemsMutation` was called but never imported, so `/admin/orders/:id` threw `ReferenceError: useAddOrderItemsMutation is not defined`. Lint, build and all 462 tests passed anyway — the same class of bug as the earlier `HERO_SIZES` and mis-mounted send-dialog misses, and the third time a browser has been the only thing to catch it.
+
+Fixed the import, and closed the hole rather than relying on noticing next time: `no-undef` is now `"error"` in `.oxlintrc.json`, with `env: { browser, es2024, node }` so real globals aren't flagged. Proved it works in both directions — clean tree reports 0 errors, and deliberately re-removing the import fails lint naming `useAddOrderItemsMutation` at the exact line. Then verified in a logged-in browser that the order page renders, the "Add products" action is present, and the dialog opens with its product search and sold-out items disabled.

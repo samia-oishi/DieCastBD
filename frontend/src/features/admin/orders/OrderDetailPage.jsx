@@ -14,7 +14,7 @@ import { useSettings } from "@/features/settings/api/useSettings";
 import { SectionPanel } from "@/features/admin/shell/SectionPanel";
 import { AdminButton } from "@/features/admin/shell/AdminButton";
 import { adminToast } from "@/features/admin/shell/adminToast";
-import { useAdminOrder, useUpdateOrderStatusMutation, useAdjustPaymentMutation } from "./api/useAdminOrders";
+import { useAdminOrder, useUpdateOrderStatusMutation, useAdjustPaymentMutation, useAddOrderItemsMutation } from "./api/useAdminOrders";
 import { InvoiceModal } from "./components/InvoiceModal";
 import { CourierChip } from "./components/CourierChip";
 import { SendToCourierDialog } from "./components/SendToCourierDialog";
