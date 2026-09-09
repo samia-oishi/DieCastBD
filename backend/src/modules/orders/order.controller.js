@@ -2,7 +2,7 @@ import { Order } from "./order.model.js";
 import { Address } from "../addresses/address.model.js";
 import { User } from "../users/user.model.js";
 import { findOrCreateGuestUser } from "../users/user.service.js";
-import { createOrderFromCart, createOrderFromItems, transitionOrderStatus, deleteOrders } from "./order.service.js";
+import { createOrderFromCart, createOrderFromItems, addItemsToOrder, transitionOrderStatus, deleteOrders } from "./order.service.js";
 import { sendOrderConfirmationEmail } from "../../emails/orderConfirmation.js";
 import { recomputeRollupsForOrders } from "../analytics/analytics.service.js";
 import { applyOrderAdjustment, describeAdjustment } from "./orderAdjustment.js";
@@ -335,6 +335,15 @@ export const createOrderAdmin = asyncHandler(async (req, res) => {
     paymentMethod: "cod",
     paymentOption: "cod",
     shippingZone,
+    // The merchant sells over Messenger and Facebook, where the terms are
+    // agreed in the conversation before this form is ever opened. The
+    // storefront's per-product prepay rules would refuse those orders outright
+    // — a "full payment only" model could not be entered as COD even when the
+    // customer had already paid — so an admin-entered order is exempt. What was
+    // actually received is recorded below as advanceReceived, which is the
+    // honest record; the rules protect customers from unoffered terms, and
+    // there is no customer to protect from the merchant's own agreement.
+    enforcePaymentRules: false,
   });
 
   // Money agreed in conversation — an advance already sent, a deal struck.
@@ -367,4 +376,18 @@ export const createOrderAdmin = asyncHandler(async (req, res) => {
   }
 
   sendSuccess(res, { data: order, status: 201, message: `Order ${order.orderNumber} created` });
+});
+
+/** Admin adds products to an existing order.
+ *
+ * Stock, money and the analytics recompute all happen in addItemsToOrder — the
+ * controller's whole job is to hand it the actor, so the inventory log and the
+ * order's own timeline record who did it. */
+export const addOrderItemsAdmin = asyncHandler(async (req, res) => {
+  const { order, summary } = await addItemsToOrder({
+    orderId: req.params.id,
+    items: req.body.items,
+    actorId: req.user.id,
+  });
+  sendSuccess(res, { data: order, message: summary });
 });

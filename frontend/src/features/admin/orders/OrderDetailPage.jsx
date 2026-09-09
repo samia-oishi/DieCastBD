@@ -20,6 +20,7 @@ import { CourierChip } from "./components/CourierChip";
 import { SendToCourierDialog } from "./components/SendToCourierDialog";
 import { AdjustPaymentDialog } from "./components/AdjustPaymentDialog";
 import { LinkParcelDialog } from "./components/LinkParcelDialog";
+import { AddItemsDialog } from "./components/AddItemsDialog";
 import { useCourierStatus, useSendToCourierMutation, useSyncCourierMutation, useLinkCourierMutation } from "./api/useCourier";
 import { ROUTES } from "@/constants/routes";
 import { adminSelectCls } from "@/features/admin/shell/adminFieldCls";
@@ -59,7 +60,9 @@ export function OrderDetailPage() {
   const [courierOpen, setCourierOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const adjustPayment = useAdjustPaymentMutation();
+  const addItems = useAddOrderItemsMutation();
   const linkCourier = useLinkCourierMutation();
   const { data: courier } = useCourierStatus();
   const sendToCourier = useSendToCourierMutation();
@@ -128,10 +131,20 @@ export function OrderDetailPage() {
       <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-2">
         {/* Left: items + update status */}
         <div className="flex flex-col gap-[18px]">
-          <SectionPanel title="Items" bodyClassName="pt-3">
+          <SectionPanel
+            title="Items"
+            bodyClassName="pt-3"
+            action={
+              !["cancelled", "refunded"].includes(order.status) && (
+                <AdminButton variant="ghost" size="sm" onClick={() => setAddOpen(true)}>
+                  Add products
+                </AdminButton>
+              )
+            }
+          >
             <div className="flex flex-col divide-y divide-line-soft">
-              {order.items.map((item) => (
-                <div key={item.sku} className="flex items-start justify-between gap-3 py-2.5 text-[13px]">
+              {order.items.map((item, i) => (
+                <div key={`${item.sku}-${item.price}-${i}`} className="flex items-start justify-between gap-3 py-2.5 text-[13px]">
                   <div className="min-w-0">
                     <div className="text-ink">{item.title}</div>
                     <div className="text-[12px] text-faint">{formatTaka(item.price)} × {item.qty}</div>
@@ -326,6 +339,19 @@ export function OrderDetailPage() {
           </SectionPanel>
         </div>
       </div>
+
+      <AddItemsDialog
+        order={order}
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        isPending={addItems.isPending}
+        onSubmit={(items) =>
+          addItems.mutate({ id: order._id, items }, {
+            onSuccess: (res) => { adminToast(res?.message ?? "Products added"); setAddOpen(false); },
+            onError: (err) => adminToast(err.response?.data?.message ?? "Could not add the products"),
+          })
+        }
+      />
 
       <AdjustPaymentDialog
         order={order}

@@ -69,3 +69,46 @@ export function describeAdjustment(before, after, reason) {
   const summary = `Payment adjusted: ${parts.join(", ")}. Collect ${taka(after.amountDue)} on delivery`;
   return reason ? `${summary}. Reason: ${reason}` : summary;
 }
+
+/** Recalculates an order's money after products are ADDED to it.
+ *
+ * The sibling of applyOrderAdjustment above, and deliberately separate: that
+ * one is explicit that it never touches `subtotal`, because an adjustment is
+ * about money rather than about rewriting the basket. This one is the case
+ * where the basket really did change, so subtotal is the one thing that moves.
+ *
+ * The same two invariants hold on the way out:
+ *   total     === subtotal - discount + shippingFee
+ *   amountDue === total - amountPaid
+ *
+ * `discount` is carried over untouched rather than recomputed. An order's
+ * discount is snapshotted at checkout (order.model.js) and never re-derived
+ * from the coupon — re-running a percentage coupon over a larger basket would
+ * silently hand the customer a bigger discount than the one they were granted.
+ * `amountPaid` is likewise untouched: money already received does not change
+ * because more was ordered. The whole increase lands on amountDue, which is
+ * what the rider collects.
+ */
+export function applyItemsAdded(order, addedSubtotal) {
+  const added = assertMoney(addedSubtotal, "Added subtotal");
+  if (added === 0) throw new Error("Nothing was added to the order");
+
+  const subtotal = (order.subtotal ?? 0) + added;
+  const discount = order.discount ?? 0;
+  const shippingFee = order.shippingFee ?? 0;
+  const amountPaid = order.amountPaid ?? 0;
+  const total = subtotal - discount + shippingFee;
+
+  return { subtotal, total, amountPaid, amountDue: total - amountPaid };
+}
+
+/** Timeline line for an item addition — what was added, and what it did to the
+ * amount being collected at the door, which is the number the merchant acts on. */
+export function describeItemsAdded(before, after, addedLines) {
+  const taka = (n) => `৳${Math.round(n).toLocaleString("en-IN")}`;
+  const what = addedLines.map((l) => `${l.qty}x ${l.title}`).join(", ");
+  return (
+    `Added ${what}. Subtotal ${taka(before.subtotal ?? 0)} → ${taka(after.subtotal)}, ` +
+    `total ${taka(before.total ?? 0)} → ${taka(after.total)}. Collect ${taka(after.amountDue)} on delivery`
+  );
+}

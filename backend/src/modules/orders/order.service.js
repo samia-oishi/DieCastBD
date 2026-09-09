@@ -13,6 +13,8 @@ import { recomputeRollupsForOrders } from "../analytics/analytics.service.js";
 import { countsAsRevenue } from "../../config/constants.js";
 import { resolveZoneForDistrict } from "../settings/shippingZone.js";
 import { generateOrderNumber } from "../../utils/generateOrderNumber.js";
+import { applyItemsAdded, describeItemsAdded } from "./orderAdjustment.js";
+import { isTerminal } from "../courier/steadfast.payload.js";
 import { ApiError } from "../../utils/apiError.js";
 
 // Every order status maps to exactly one of three stock states:
@@ -92,6 +94,14 @@ async function buildAndSaveOrder({
   bkashTransactionId,
   banglaQrReference,
   shippingZone,
+  // Admin-entered orders only. The per-product payment rules (prepay / partial
+  // advance / full payment) exist to stop a CUSTOMER checking out on terms the
+  // merchant never offered. An admin taking an order over Messenger has already
+  // agreed the terms in that conversation and records what was actually
+  // received via advanceReceived — so enforcing the storefront's rules there
+  // just blocks the merchant from selling their own stock. Never set from any
+  // storefront path; see createOrderAdmin, the only caller that passes false.
+  enforcePaymentRules = true,
   session,
 }) {
   const { orderItems, reservations, subtotal } = await reserveStockForItems(normalizedItems, session);
@@ -123,7 +133,9 @@ async function buildAndSaveOrder({
   const total = subtotal - discount + shippingFee;
 
   const resolvedPaymentOption = paymentOption || "cod";
-  assertPaymentMethodAllowed({ normalizedItems, paymentOption: resolvedPaymentOption, zoneRequiresPrepay });
+  if (enforcePaymentRules) {
+    assertPaymentMethodAllowed({ normalizedItems, paymentOption: resolvedPaymentOption, zoneRequiresPrepay });
+  }
   const {
     amountPaid,
     amountDue,
@@ -261,6 +273,7 @@ export async function createOrderFromItems({
   bkashTransactionId,
   banglaQrReference,
   shippingZone,
+  enforcePaymentRules = true,
 }) {
   if (!items || items.length === 0) throw ApiError.badRequest("No items to order");
 
@@ -293,6 +306,7 @@ export async function createOrderFromItems({
         bkashTransactionId,
         banglaQrReference,
         shippingZone,
+        enforcePaymentRules,
         session,
       });
     });
@@ -563,4 +577,137 @@ export async function deleteOrders({ orderIds, actorId }) {
   await recomputeRollupsForOrders(orders);
 
   return { deletedCount: orders.length, unitsReturnedToStock };
+}
+
+/** Adds products to an order that already exists.
+ *
+ * The merchant's case: a customer messages after ordering and wants another
+ * model added rather than placing a second order that ships separately. The
+ * hard parts are stock and money, and both have to move the same way the rest
+ * of this file moves them.
+ *
+ * Stock follows the order's CURRENT bucket, exactly as transitionOrderStatus
+ * defines it — a pending order holds the new item in reservedStock, a confirmed
+ * one decrements stock outright, because that is where the order's existing
+ * items already sit. Getting this wrong would leave one order with its items
+ * split across two buckets, which nothing downstream expects.
+ *
+ * Refuses rather than guesses in three cases: a released order (cancelled or
+ * refunded has no claim on stock at all), an order whose parcel is already with
+ * the courier (Steadfast has no update-order endpoint — plan.md #101 — so the
+ * COD amount is frozen and the rider would collect the old figure), and any
+ * product without enough available stock.
+ */
+export async function addItemsToOrder({ orderId, items, actorId }) {
+  const order = await Order.findById(orderId);
+  if (!order) throw ApiError.notFound("Order not found");
+
+  const bucket = stockBucket(order.status);
+  if (bucket === "released") {
+    throw ApiError.conflict(`This order is ${order.status} — products cannot be added to it`);
+  }
+  const consignment = order.courier?.consignmentId;
+  if (consignment && !isTerminal(order.courier?.status)) {
+    throw ApiError.conflict(
+      `Parcel ${consignment} is already with the courier and its COD amount can no longer be changed — ` +
+        `book the extra item as a separate parcel, or cancel this one in the courier panel first`
+    );
+  }
+
+  const products = await Product.find({
+    _id: { $in: items.map((i) => i.productId) },
+    status: "active",
+    isDeleted: false,
+  }).select("+costPrice");
+  const byId = new Map(products.map((p) => [p._id.toString(), p]));
+
+  const missing = items.filter((i) => !byId.has(i.productId));
+  if (missing.length) throw ApiError.badRequest("Some of those products are no longer available");
+
+  const before = {
+    subtotal: order.subtotal,
+    total: order.total,
+    amountDue: order.amountDue,
+  };
+  const addedLines = [];
+  let addedSubtotal = 0;
+
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      for (const { productId, qty } of items) {
+        const product = byId.get(productId);
+        const price = effectivePrice(product);
+
+        // Atomic compare-and-take, same guard as reserveStockForItems: if the
+        // stock went while the admin was choosing, the whole transaction rolls
+        // back rather than overselling.
+        const filter = { _id: product._id, $expr: { $gte: [{ $subtract: ["$stock", "$reservedStock"] }, qty] } };
+        const update = bucket === "reserved" ? { $inc: { reservedStock: qty } } : { $inc: { stock: -qty } };
+        const taken = await Product.findOneAndUpdate(filter, update, { session, returnDocument: "after" });
+        if (!taken) {
+          throw ApiError.conflict(`"${product.title}" no longer has enough stock (requested ${qty})`);
+        }
+
+        await InventoryLog.create(
+          [
+            {
+              product: product._id,
+              type: bucket === "reserved" ? "reservation" : "sale",
+              quantityChange: -qty,
+              reason: `Added to order ${order.orderNumber} by an admin`,
+              referenceOrder: order._id,
+              performedBy: actorId,
+            },
+          ],
+          { session }
+        );
+
+        // Merge into an existing line only when the price matches too. Same
+        // product at a different price is a genuinely different line — the
+        // first was bought at the price on the order, and collapsing them would
+        // misstate what the customer was charged for either one.
+        const existing = order.items.find((i) => String(i.product) === productId && i.price === price);
+        if (existing) {
+          existing.qty += qty;
+        } else {
+          order.items.push({
+            product: product._id,
+            sku: product.sku,
+            title: product.title,
+            thumbnail: product.thumbnail,
+            price,
+            costPrice: product.costPrice ?? null,
+            qty,
+          });
+        }
+
+        addedLines.push({ title: product.title, qty });
+        addedSubtotal += price * qty;
+      }
+
+      let next;
+      try {
+        next = applyItemsAdded(order, addedSubtotal);
+      } catch (err) {
+        throw ApiError.badRequest(err.message);
+      }
+      Object.assign(order, next);
+      order.statusHistory.push({
+        status: order.status,
+        note: describeItemsAdded(before, next, addedLines),
+        changedBy: actorId,
+        at: new Date(),
+      });
+      await order.save({ session });
+    });
+  } finally {
+    session.endSession();
+  }
+
+  // The basket grew, so this day's sales, revenue, cost and profit all moved —
+  // but only for an order the reports actually count.
+  if (countsAsRevenue(order.status)) await recomputeRollupsForOrders([order]);
+
+  return { order, summary: describeItemsAdded(before, order, addedLines) };
 }

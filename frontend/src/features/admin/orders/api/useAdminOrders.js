@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAdminOrders, getAdminOrder, updateOrderStatus, deleteOrders, adjustOrderPayment, lookupCustomer, createAdminOrder } from "./orderApi";
+import { listAdminOrders, getAdminOrder, updateOrderStatus, deleteOrders, adjustOrderPayment, lookupCustomer, createAdminOrder, addOrderItems } from "./orderApi";
 
 export function useAdminOrders(params) {
   return useQuery({
@@ -45,6 +45,20 @@ export function useAdjustPaymentMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
       // The order total moved, so this day's revenue and profit did too.
+      queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
+    },
+  });
+}
+
+export function useAddOrderItemsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, items }) => addOrderItems(id, items),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      // Stock moved out of the pool, and the order total moved with it.
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "inventory"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
     },
   });

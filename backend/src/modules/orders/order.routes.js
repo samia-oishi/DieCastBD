@@ -12,6 +12,7 @@ import {
   deleteOrdersSchema,
   adjustPaymentSchema,
   createOrderAdminSchema,
+  addOrderItemsSchema,
   customerLookupSchema,
 } from "./order.validation.js";
 import {
@@ -24,6 +25,7 @@ import {
   deleteOrdersAdmin,
   adjustOrderPaymentAdmin,
   createOrderAdmin,
+  addOrderItemsAdmin,
   lookupCustomerAdmin,
 } from "./order.controller.js";
 import { Order } from "./order.model.js";
@@ -70,4 +72,13 @@ adminRouter.patch(
 // single req.params.id, and a bulk delete needs a separate full "before" snapshot
 // per order. deleteOrders() writes those itself, inside the same transaction (and
 // once the rows are gone, those snapshots are the only surviving copy).
+// Changing what is IN an order moves stock and money, so it is audited like
+// every other admin mutation.
+adminRouter.post(
+  "/:id/items",
+  validate(addOrderItemsSchema),
+  auditLog("Order", Order),
+  addOrderItemsAdmin
+);
+
 adminRouter.delete("/", validate(deleteOrdersSchema), deleteOrdersAdmin);

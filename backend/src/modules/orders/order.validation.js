@@ -169,3 +169,21 @@ export const createOrderAdminSchema = {
 export const customerLookupSchema = {
   query: z.object({ phone: z.string().trim().min(1, "Enter a phone number") }),
 };
+
+/** Admin adding products to an order that already exists. Capped at 20 lines
+ * per call for the same reason deleteOrdersSchema is capped: the whole batch
+ * runs inside one MongoDB transaction. */
+export const addOrderItemsSchema = {
+  params: z.object({ id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid order id") }),
+  body: z.object({
+    items: z
+      .array(
+        z.object({
+          productId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid product id"),
+          qty: z.coerce.number().int().min(1),
+        })
+      )
+      .min(1, "Add at least one product")
+      .max(20, "Add at most 20 products at a time"),
+  }),
+};

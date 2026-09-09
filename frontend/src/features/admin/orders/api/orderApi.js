@@ -42,3 +42,12 @@ export async function createAdminOrder(payload) {
   const { data } = await api.post("/admin/orders", payload);
   return data;
 }
+
+/** Adds products to an order that already exists — the customer who messages
+ * after ordering and wants another model on the same parcel. The backend moves
+ * stock into the same bucket the order's existing items sit in and keeps
+ * amountPaid + amountDue === total. */
+export async function addOrderItems(id, items) {
+  const { data } = await api.post(`/admin/orders/${id}/items`, { items });
+  return data;
+}
