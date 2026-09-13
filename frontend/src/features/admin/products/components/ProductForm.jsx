@@ -145,6 +145,18 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
   const effective = effectivePrice({ price, salePrice });
   const profit = effective - costPrice;
   const margin = effective > 0 ? Math.round((profit / effective) * 100) : 0;
+  // Markup is the SAME profit measured against cost instead of against the sale
+  // price, and it is the number you price with: cost x (1 + markup). Shown
+  // alongside margin because the two are easy to confuse and the mistake is
+  // expensive — ৳719 + 18% is ৳848, not the ৳880 an 18% margin actually means.
+  // Margin stays the headline: it is what Reports and the products list use, so
+  // the two screens can never tell different stories about one product.
+  const markup = costPrice > 0 ? Math.round((profit / costPrice) * 100) : null;
+  // No cost recorded is NOT "it cost nothing". Showing ৳1,050 profit at 100%
+  // margin on a half-filled form is a number the merchant might believe; this
+  // mirrors analytics/orderMetrics.js, which reports cost as unknown rather
+  // than counting unpriced stock as pure profit.
+  const costKnown = costPrice > 0;
 
   /** Suggest the next SKU: brand initials + the next free number for that prefix.
    * Uses the real product list (search now filters on SKU), so it won't collide
@@ -334,18 +346,33 @@ export function ProductForm({ product, onSubmit, isSubmitting }) {
                 <div>
                   <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-brand-deep">Profit per unit</div>
                   <div className={cn("mt-0.5 font-display text-[18px] font-extrabold", profit < 0 ? "text-danger" : "text-ink")}>
-                    {formatTaka(profit)}
+                    {costKnown ? formatTaka(profit) : "—"}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-brand-deep">Margin</div>
                   <div className={cn("mt-0.5 font-display text-[18px] font-extrabold", profit < 0 ? "text-danger" : "text-ink")}>
-                    {effective > 0 ? `${margin}%` : "—"}
+                    {costKnown && effective > 0 ? `${margin}%` : "—"}
                   </div>
                 </div>
               </div>
+              <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-brand-soft-border pt-2.5">
+                <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-brand-deep">Markup on cost</div>
+                <div className={cn("font-display text-[14px] font-extrabold", profit < 0 ? "text-danger" : "text-ink")}>
+                  {markup == null ? "—" : `${markup}%`}
+                </div>
+              </div>
               <p className="mt-2 text-[11.5px] leading-[1.5] text-faint">
-                Calculated from {effective < price && effective > 0 ? "the sale price" : "the price"} minus cost — updates as you type.
+                {effective > 0 && costKnown ? (
+                  <>
+                    {formatTaka(effective)} {effective < price ? "sale price" : "price"} − {formatTaka(costPrice)} cost.{" "}
+                    <strong className="font-semibold text-ink-soft">Margin</strong> is the share of the sale you keep;{" "}
+                    <strong className="font-semibold text-ink-soft">markup</strong> is how far above cost you priced it. To
+                    hit a target margin: cost ÷ (1 − margin).
+                  </>
+                ) : (
+                  <>Enter a cost price to see profit, margin and markup — they update as you type.</>
+                )}
               </p>
             </div>
           </SectionPanel>

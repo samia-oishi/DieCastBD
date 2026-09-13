@@ -1446,3 +1446,17 @@ Merchant reported this error repeatedly on the live site, from the Facebook in-a
 **2. Every shopper downloaded Tiptap.** `manualChunks` forced `@tiptap`/`prosemirror` into `vendor-editor`, and Rollup consequently placed shared dependencies there too — so **77 of 105 chunks imported it**, most for one or two symbols, and `index.html` modulepreloaded all 421KB (130KB gz) of it on the homepage. CLAUDE.md's claim that Tiptap is isolated to the admin page-editor route had quietly stopped being true. Dropping that one manualChunks line lets Rollup split it naturally: homepage payload **446KB → 319KB gzip**, a 127KB cut, roughly 7 seconds on the connection this was reported from — and one less large chunk to fail mid-download, which feeds directly back into cause 1.
 
 Verified: storefront `/`, `/shop`, `/cart` render with zero page errors and no editor chunk fetched; the admin editor still chunks correctly (`PageFormPage` → `RichTextEditor` → tiptap, `SimpleCatalogManager` likewise) and still mounts and accepts typing. Frontend 175/175, lint 0 errors, build and prerender verification clean.
+
+---
+
+## 2026-09-13 — Markup alongside margin on the product form
+
+The merchant checked the profit box and thought it was wrong: `719 + 18% = 848`, not the ৳880 sale price. The 18% was right — it is **margin** (profit ÷ selling price, 161/880 = 18.3%), while they were reading it as **markup** (profit ÷ cost, 161/719 = 22.4%). Same ৳161, two bases.
+
+Verified against the live record before touching anything: stored `price 1050 / salePrice 880 / costPrice 719`, `effectivePrice()` picks 880 because it is a genuine discount, profit ৳161, margin 18.3% → 18%. The backend's `profitMargin()` returns 18.3% on the same figures, so the card, the products list and Reports already agreed.
+
+Margin stays the headline — it is what Reports and `ProductsPage` use, and putting the card on a different basis would let two screens tell different stories about one product. Markup is added underneath as "Markup on cost", because that is the number you price with (cost × (1 + markup)), and the explainer now names both plus the target-price formula, cost ÷ (1 − margin). Across the 80 costed products margin spans 10–61% (median 29.1%) while markup spans 11–156%, which is also why margin is the better comparison scale.
+
+**Fixed while there:** with no cost price entered the card showed the full price as profit at 100% margin — "no cost recorded" read as "it cost nothing". That is exactly what `analytics/orderMetrics.js` refuses to do (it reports `unitsMissingCost` rather than counting unpriced stock as pure profit). Profit and margin now show "—" until a cost is entered, matching markup. All 80 live products have costs, so this only ever bit on the new-product form.
+
+Verified in the browser: TOM-006 reads ৳161 / 18% / 22%; both figures track live while typing (sale price 880 → 1000 gives ৳281 / 28% / 39%); a new product with no cost shows three dashes and the prompt; selling below cost goes red with negative values. Frontend 175/175, lint clean, build clean.
