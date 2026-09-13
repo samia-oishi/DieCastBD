@@ -95,6 +95,12 @@ export function DashboardPage() {
   const prior = s.prior ?? {};
   const profit = (s.revenue ?? 0) - (s.cogs ?? 0);
   const margin = s.revenue ? Math.round((profit / s.revenue) * 1000) / 10 : null;
+  // The same profit against cost instead of against revenue — what the stock
+  // was marked up by. Shown beside margin for the same reason as on the product
+  // form: the two are easy to read as one another, and pricing from the wrong
+  // one undercharges (cost + 24.4% is not a 24.4% margin). Null when nothing
+  // has a cost recorded, so it can never divide by zero.
+  const markup = s.cogs ? Math.round((profit / s.cogs) * 1000) / 10 : null;
   const rows = dailyRows ?? [];
   const chartRevenue = rows.reduce((sum, r) => sum + r.revenue, 0);
   const chartOrders = rows.reduce((sum, r) => sum + r.ordersCount, 0);
@@ -158,7 +164,7 @@ export function DashboardPage() {
             s.unitsMissingCost > 0
               ? `${s.unitsMissingCost} unit${s.unitsMissingCost === 1 ? "" : "s"} without a cost price`
               : margin != null
-                ? `${margin}% margin · ${formatTaka(s.cogs ?? 0)} cost`
+                ? `${margin}% margin${markup != null ? ` · ${markup}% markup` : ""} · ${formatTaka(s.cogs ?? 0)} cost`
                 : "No sales yet"
           }
         />
