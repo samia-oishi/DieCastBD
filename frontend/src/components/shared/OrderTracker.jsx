@@ -9,6 +9,19 @@ const LABELS = { pending: "Pending", confirmed: "Confirmed", packed: "Packed", s
  * current status are lime + checked; the rest are hollow rings. Terminal states
  * (cancelled / refunded) show a banner instead of the tracker. */
 export function OrderTracker({ status }) {
+  // A booking is not a step along the delivery path — it is the order sitting
+  // on our shelf with the customer's name on it, which may last weeks. Forcing
+  // it into FLOW would either light no steps at all (indexOf → -1) or make
+  // every ordinary order look like it had been booked, so it gets its own
+  // notice, the same way the terminal states do.
+  if (status === "booked") {
+    return (
+      <div className="rounded-[12px] border border-[#0F6B58]/25 bg-[#DCEFEA] px-4 py-3 text-[13px] font-semibold text-[#0F6B58]">
+        Booked — reserved for you, ready whenever you are
+      </div>
+    );
+  }
+
   if (status === "cancelled" || status === "refunded") {
     return (
       <div className="rounded-[12px] border border-danger/30 bg-danger-soft px-4 py-3 text-[13px] font-semibold text-danger">

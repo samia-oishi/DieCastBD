@@ -26,7 +26,12 @@ export const LOW_STOCK_THRESHOLD = 2;
  * did: customer stats excluded refunds while analytics didn't, so a refund
  * inflated Reports but not the customer's totals).
  */
-export const REVENUE_ORDER_STATUSES = ["confirmed", "packed", "shipped", "delivered"];
+// "booked" is in here on the merchant's instruction: a customer who books an
+// item has bought it and is only waiting to collect, so it is earned money, not
+// a pending enquiry. That makes it behave like `confirmed` everywhere money is
+// counted — and, via COMMITTED_STATUSES in order.service.js, it moves the stock
+// out of the held pool into sold rather than merely reserving it.
+export const REVENUE_ORDER_STATUSES = ["booked", "confirmed", "packed", "shipped", "delivered"];
 
 /** True when an order in this status counts toward sales, revenue and profit. */
 export function countsAsRevenue(status) {

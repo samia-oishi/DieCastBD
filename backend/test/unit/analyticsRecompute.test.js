@@ -63,8 +63,19 @@ describe("revenue boundary (the condition guarding the recompute)", () => {
     expect(crosses(from, to)).toBe(expected);
   });
 
-  it("counts confirmed onward and nothing else", () => {
-    expect(REVENUE_ORDER_STATUSES).toEqual(["confirmed", "packed", "shipped", "delivered"]);
+  it("counts booked and confirmed onward, and nothing else", () => {
+    // Listed literally so that adding a status can never silently start or stop
+    // booking revenue — changing this line has to be a decision, not a
+    // side effect. "booked" is in on the merchant's instruction: a customer who
+    // books an item has bought it and is only waiting to collect.
+    expect(REVENUE_ORDER_STATUSES).toEqual(["booked", "confirmed", "packed", "shipped", "delivered"]);
     for (const s of ["pending", "cancelled", "refunded"]) expect(countsAsRevenue(s)).toBe(false);
+  });
+
+  it("books the sale when an order is booked, and takes it back if the booking falls through", () => {
+    expect(crosses("pending", "booked")).toBe(true);
+    expect(crosses("booked", "cancelled")).toBe(true);
+    // Collecting a booked order is not a new sale — it was already counted.
+    expect(crosses("booked", "delivered")).toBe(false);
   });
 });

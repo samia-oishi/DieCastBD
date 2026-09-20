@@ -141,14 +141,9 @@ export const getMyOrderByNumber = asyncHandler(async (req, res) => {
 });
 
 export const listOrdersAdmin = asyncHandler(async (req, res) => {
-  const { page, limit, status, booked, q } = req.query;
+  const { page, limit, status, q } = req.query;
   const filter = {
     ...(status ? { status } : {}),
-    // A consignment id is only ever written when the parcel is actually handed
-    // to the courier, so its presence IS "booked". Checked with $ne: null
-    // rather than $exists because the field is declared with a null default —
-    // $exists would match every order that has a courier subdocument at all.
-    ...(booked ? { "courier.consignmentId": { $ne: null } } : {}),
     ...(q ? { orderNumber: { $regex: q.trim(), $options: "i" } } : {}),
   };
 

@@ -1530,3 +1530,17 @@ The bulk status change loops the real `transitionOrderStatus` instead of an `upd
 Refunded is left out of the bulk menu deliberately; it is a money decision that belongs on the single order.
 
 309 backend tests (8 new), 208 frontend (9 new), lint unchanged, builds clean.
+
+## 2026-09-21 — Booked means a customer reservation, not a courier booking
+
+Correction to the same day's earlier entry. I read "Booked" off the Orders screen, where the word only appears in the Courier column, and built it as a courier-axis filter: does a Steadfast consignment exist. The merchant meant the opposite end of the process — *"customer are currently book for himself will take delivery later on"* — a customer reservation, held with their name on it, collected later.
+
+So it is a real order status now, and the courier-axis filter is gone.
+
+Two decisions inside it. On the merchant's call, a booking is **earned money**, so `booked` joins `REVENUE_ORDER_STATUSES`. And it is **committed**, not reserved: reserved would have held the stock equally well but kept the sale out of every revenue figure, and — the trap — left the order exposed to the hourly stale-reservation cron, which auto-cancels unconfirmed orders after 48h. A booking meant to sit for a fortnight would have cancelled itself. Committed sidesteps both; the cron only ever queries `status: "pending"`.
+
+`analyticsRecompute.test.js` failed on the change, because it asserts the revenue list literally so that adding a status can never silently move money. That is the guard doing its job; updated deliberately.
+
+Booked is not a step in the customer-facing tracker — forcing it into the linear flow would light no steps at all — so it renders its own notice, like cancelled and refunded do. It has its own teal chip and a matching left accent in the admin list.
+
+310 backend tests, 209 frontend, lint unchanged, builds clean.

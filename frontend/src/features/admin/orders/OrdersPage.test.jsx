@@ -24,14 +24,14 @@ vi.mock("./api/useAdminOrders", () => ({
 // The list now shows per-status filter chips fed by their own count hook; stub it
 // so the test stays focused on selection + delete behaviour (no real queries fire).
 vi.mock("./api/useOrderStatusCounts", () => ({
-  useOrderStatusCounts: () => ({ all: 3, pending: 1, confirmed: 1, packed: 0, shipped: 0, delivered: 0, cancelled: 1, refunded: 0, booked: 1 }),
+  useOrderStatusCounts: () => ({ all: 3, pending: 1, booked: 1, confirmed: 0, packed: 0, shipped: 0, delivered: 0, cancelled: 1, refunded: 0 }),
 }));
 
-// pending = reserved (1 unit), confirmed = committed (2 units) → 3 units come back.
+// pending = reserved (1 unit), booked = committed (2 units) → 3 units come back.
 // cancelled = released → holds no stock, contributes 0.
 const ORDERS = [
   { _id: "a1", orderNumber: "DBD-1", status: "pending", total: 1000, createdAt: "2026-07-13T00:00:00Z", user: { name: "Guest" }, items: [{ qty: 1 }] },
-  { _id: "b2", orderNumber: "DBD-2", status: "confirmed", total: 2000, createdAt: "2026-07-13T00:00:00Z", user: { name: "Ana", email: "a@b.com" }, items: [{ qty: 2 }], courier: { consignmentId: "298773184", status: "pending" } },
+  { _id: "b2", orderNumber: "DBD-2", status: "booked", total: 2000, createdAt: "2026-07-13T00:00:00Z", user: { name: "Ana", email: "a@b.com" }, items: [{ qty: 2 }] },
   { _id: "c3", orderNumber: "DBD-3", status: "cancelled", total: 3000, createdAt: "2026-07-13T00:00:00Z", user: { name: "Bob", email: "b@c.com" }, items: [{ qty: 5 }] },
 ];
 
@@ -121,42 +121,30 @@ describe("OrdersPage — bulk select & delete", () => {
   });
 });
 
-describe("OrdersPage — Booked filter", () => {
+describe("OrdersPage — Booked status", () => {
   beforeEach(() => {
     listParams = undefined;
     bulkStatusMutate.mockClear();
   });
 
-  it("offers Booked as its own chip", () => {
+  it("offers Booked as a status chip", () => {
     renderPage();
-    expect(screen.getByRole("button", { name: /booked/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^booked/i })).toBeInTheDocument();
   });
 
-  it("asks the API for booked, NOT for a status called booked", async () => {
+  it("filters by it as an ordinary status", async () => {
     renderPage();
-    await userEvent.click(screen.getByRole("button", { name: /booked/i }));
-    await waitFor(() => expect(listParams.booked).toBe(true));
-    // The two live on different axes — a booked order can be confirmed, packed
-    // or delivered, so sending it as a status would return nothing.
-    expect(listParams.status).toBeUndefined();
-  });
-
-  it("clears the booked filter again when another status is picked", async () => {
-    renderPage();
-    await userEvent.click(screen.getByRole("button", { name: /booked/i }));
-    await waitFor(() => expect(listParams.booked).toBe(true));
-
-    await userEvent.click(screen.getByRole("button", { name: /^pending/i }));
-    await waitFor(() => expect(listParams.status).toBe("pending"));
-    expect(listParams.booked).toBeUndefined();
+    await userEvent.click(screen.getByRole("button", { name: /^booked/i }));
+    // Booked is a real workflow state — the customer has taken the item and is
+    // collecting later — so it filters through `status`, like every other chip.
+    await waitFor(() => expect(listParams.status).toBe("booked"));
   });
 
   it("marks a booked order apart from the rest of the list", () => {
     const { container } = renderPage();
     // Every row carries the accent border so the columns stay aligned; only a
     // booked one has it coloured.
-    const accented = container.querySelectorAll(".border-l-brand");
-    expect(accented).toHaveLength(1);
+    expect(container.querySelectorAll(".border-l-\\[\\#0F6B58\\]")).toHaveLength(1);
   });
 });
 
@@ -201,6 +189,13 @@ describe("OrdersPage — bulk status change", () => {
     // pending 1 + confirmed 2 hold stock; the already-cancelled one holds none.
     expect(within(dialog()).getByText(/3 items will be returned to stock/i)).toBeInTheDocument();
     expect(within(dialog()).getByText(/1 is already cancelled and will be skipped/i)).toBeInTheDocument();
+  });
+
+  it("offers Booked in the bulk menu", async () => {
+    renderPage();
+    await userEvent.click(screen.getByLabelText("Select order DBD-1"));
+    await userEvent.click(screen.getByRole("button", { name: /change status/i }));
+    expect(await screen.findByRole("menuitem", { name: "Booked" })).toBeInTheDocument();
   });
 
   it("does not offer refunded in bulk — that is a money decision per order", async () => {

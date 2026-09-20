@@ -25,7 +25,7 @@ import { useCourierStatus, useSendToCourierMutation, useSyncCourierMutation, use
 import { ROUTES } from "@/constants/routes";
 import { adminSelectCls } from "@/features/admin/shell/adminFieldCls";
 
-const STATUS_OPTIONS = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
+const STATUS_OPTIONS = ["pending", "booked", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
 const PAYMENT_METHOD_LABELS = { cod: "Cash on Delivery", bkash: "bKash", banglaqr: "BanglaQR" };
 const PAYMENT_OPTION_LABELS = {
   cod: "Cash on Delivery",

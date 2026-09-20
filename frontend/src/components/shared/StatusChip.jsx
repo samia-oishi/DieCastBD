@@ -5,6 +5,10 @@ import { cn } from "@/lib/utils";
 // only defines amber/lime/red for pending/delivered/cancelled+refunded.
 const STATUS_STYLES = {
   pending: { bg: "#F7EAD6", color: "#B45309", label: "Pending" },
+  // Booked gets its own teal rather than joining the neutral middle states.
+  // It is the one status that means "sold but still on our shelf", so it has to
+  // be distinguishable at a glance from an order that is on its way out.
+  booked: { bg: "#DCEFEA", color: "#0F6B58", label: "Booked" },
   confirmed: { bg: "#EFEFE9", color: "#3A3D33", label: "Confirmed" },
   packed: { bg: "#EFEFE9", color: "#3A3D33", label: "Packed" },
   shipped: { bg: "#EFEFE9", color: "#3A3D33", label: "Shipped" },

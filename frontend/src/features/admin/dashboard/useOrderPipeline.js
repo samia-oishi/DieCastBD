@@ -9,7 +9,7 @@ import { listAdminOrders } from "@/features/admin/orders/api/orderApi";
 // but it was the one order state the dashboard never showed at all. On a shop
 // that is ~76% cash-on-delivery, the cancel count is the number that says
 // whether COD is worth running, so it belongs on this strip rather than nowhere.
-const PIPELINE = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"];
+const PIPELINE = ["pending", "booked", "confirmed", "packed", "shipped", "delivered", "cancelled"];
 
 export function useOrderPipeline() {
   const results = useQueries({

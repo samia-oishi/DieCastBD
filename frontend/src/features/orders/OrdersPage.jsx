@@ -18,7 +18,7 @@ const FILTERS = [
   { key: "cancelled", label: "Cancelled" },
 ];
 
-const ACTIVE_STATUSES = ["pending", "confirmed", "packed", "shipped"];
+const ACTIVE_STATUSES = ["pending", "booked", "confirmed", "packed", "shipped"];
 
 function matchesFilter(order, filter) {
   if (filter === "all") return true;

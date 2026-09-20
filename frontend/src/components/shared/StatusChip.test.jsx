@@ -6,6 +6,7 @@ describe("StatusChip", () => {
   it("renders the humanized label for each order status", () => {
     const cases = {
       pending: "Pending",
+      booked: "Booked",
       confirmed: "Confirmed",
       packed: "Packed",
       shipped: "Shipped",
@@ -32,6 +33,16 @@ describe("StatusChip", () => {
 
     rerender(<StatusChip status="refunded" />);
     expect(screen.getByText("Refunded")).toHaveStyle({ backgroundColor: "#F9E3E1", color: "#B3261E" });
+  });
+
+  it("gives booked its own colour, not the neutral one the middle states share", () => {
+    // Booked is the only status meaning "sold but still on our shelf", so it
+    // has to be tellable at a glance from an order already on its way out.
+    const { rerender } = render(<StatusChip status="booked" />);
+    expect(screen.getByText("Booked")).toHaveStyle({ backgroundColor: "#DCEFEA", color: "#0F6B58" });
+
+    rerender(<StatusChip status="confirmed" />);
+    expect(screen.getByText("Confirmed")).not.toHaveStyle({ backgroundColor: "#DCEFEA" });
   });
 
   it("falls back to the raw status when unknown", () => {

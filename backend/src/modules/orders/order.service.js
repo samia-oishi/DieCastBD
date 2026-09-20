@@ -23,7 +23,12 @@ import { ApiError } from "../../utils/apiError.js";
 //   released  (cancelled/refunded)                  — no claim on stock at all (fully back in the public pool)
 // transitionOrderStatus below is a small state machine over these three buckets —
 // see the six cross-bucket branches for the exact stock delta each direction needs.
-const COMMITTED_STATUSES = ["confirmed", "packed", "shipped", "delivered"];
+// "booked" is committed, not reserved: the customer has taken the item, they are
+// simply collecting later. Reserved would have held the stock too, but would
+// have kept the sale out of every revenue figure and left the order exposed to
+// the 48h auto-cancel cron — a booking meant to sit for a fortnight would have
+// quietly cancelled itself.
+const COMMITTED_STATUSES = ["booked", "confirmed", "packed", "shipped", "delivered"];
 const RELEASED_STATUSES = ["cancelled", "refunded"];
 
 export function stockBucket(status) {

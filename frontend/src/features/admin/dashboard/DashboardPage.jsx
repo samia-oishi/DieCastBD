@@ -46,6 +46,7 @@ const PRIOR_LABEL = { today: "vs yesterday", 7: "vs prior week", 30: "vs prior m
 
 const PIPELINE_LABELS = {
   pending: "Pending",
+  booked: "Booked",
   confirmed: "Confirmed",
   packed: "Packed",
   shipped: "Shipped",

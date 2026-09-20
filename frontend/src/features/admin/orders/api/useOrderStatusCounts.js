@@ -5,7 +5,7 @@ import { listAdminOrders } from "./orderApi";
 // so each count is meta.total from a `limit:1` query against the existing list
 // (indexed countDocuments — cheap, cached, parallel). Independent of the active
 // search so the badges show the full catalogue counts.
-const STATUSES = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
+const STATUSES = ["pending", "booked", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
 
 export function useOrderStatusCounts() {
   const results = useQueries({
@@ -17,15 +17,6 @@ export function useOrderStatusCounts() {
         select: (r) => r.meta?.total ?? 0,
         staleTime: 60_000,
       })),
-      // Booked is a different axis from status — it asks whether the parcel has
-      // a courier consignment — so it is counted with its own filter rather
-      // than by passing "booked" as a status.
-      {
-        queryKey: ["admin", "orders", "count", "booked"],
-        queryFn: () => listAdminOrders({ booked: true, limit: 1 }),
-        select: (r) => r.meta?.total ?? 0,
-        staleTime: 60_000,
-      },
     ],
   });
 
@@ -33,6 +24,5 @@ export function useOrderStatusCounts() {
   STATUSES.forEach((status, i) => {
     counts[status] = results[i + 1].data ?? 0;
   });
-  counts.booked = results[results.length - 1].data ?? 0;
   return counts;
 }

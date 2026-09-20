@@ -42,20 +42,15 @@ import { SendToCourierDialog } from "./components/SendToCourierDialog";
 // only to preview how many units a delete hands back; the backend recomputes the
 // authoritative number and we report it from the response.
 const RELEASED_STATUSES = ["cancelled", "refunded"];
-const STATUSES = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
-
-// "Booked" is not one of them. It asks whether the parcel has a courier
-// consignment, which is a different question from where the order is in our own
-// workflow — a booked order can be confirmed, packed or already delivered. It
-// rides in the same chip row because that row is a view picker, but it maps to
-// its own query param, and picking it clears the status filter rather than
-// stacking with it.
-const BOOKED = "booked";
+// "booked" sits right after pending: a customer has taken the item and is
+// collecting later. It counts as a sale and holds no reservation — see
+// COMMITTED_STATUSES and REVENUE_ORDER_STATUSES on the backend.
+const STATUSES = ["pending", "booked", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
 
 // Statuses offered for a bulk change. Refunded is left out on purpose: it is a
 // money decision that belongs on the single order, beside its payment history,
 // not something to apply to twenty rows at once.
-const BULK_STATUSES = ["confirmed", "packed", "shipped", "delivered", "cancelled"];
+const BULK_STATUSES = ["booked", "confirmed", "packed", "shipped", "delivered", "cancelled"];
 
 // Moving INTO one of these releases every held unit back to sellable stock, so
 // a bulk move there is worth spelling out before it runs.
@@ -79,12 +74,11 @@ export function OrdersPage() {
   const [courierTarget, setCourierTarget] = useState(null);
   const debouncedSearch = useDebounce(search, 400);
 
-  const showingBooked = status === BOOKED;
+  const showingBooked = status === "booked";
   const { data, isLoading } = useAdminOrders({
     page,
     limit: 20,
-    status: status === "all" || showingBooked ? undefined : status,
-    booked: showingBooked ? true : undefined,
+    status: status === "all" ? undefined : status,
     q: debouncedSearch || undefined,
   });
   const counts = useOrderStatusCounts();
@@ -180,7 +174,6 @@ export function OrdersPage() {
   const chips = [
     { value: "all", label: "All", count: counts.all },
     ...STATUSES.map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1), count: counts[s] })),
-    { value: BOOKED, label: "Booked", count: counts.booked },
   ];
 
   return (
@@ -247,25 +240,25 @@ export function OrdersPage() {
           {isLoading && <p className="px-5 py-10 text-center text-[13.5px] text-faint">Loading…</p>}
           {!isLoading && orders.length === 0 && (
             <p className="px-5 py-10 text-center text-[13.5px] text-faint">
-              {showingBooked ? "No parcels have been booked with the courier yet." : "No orders match — try a different search or status."}
+              {showingBooked ? "Nothing is booked for collection right now." : "No orders match — try a different search or status."}
             </p>
           )}
 
           {orders.map((o) => {
             const isSel = selectedIds.includes(o._id);
-            const isBooked = Boolean(o.courier?.consignmentId);
+            const isBooked = o.status === "booked";
             return (
               <div
                 key={o._id}
                 className={cn(
                   "grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-t border-line-soft py-3 pr-4 transition-colors first:border-t-0 hover:bg-[#FCFCF9] md:gap-4 md:pr-5",
                   // The accent lives on a left border that EVERY row carries,
-                  // transparent unless the parcel is booked. Adding the border
+                  // transparent unless the order is booked. Adding the border
                   // only to booked rows would shift their contents 3px and make
                   // the column edges ragged down the table.
                   "border-l-[3px] border-l-transparent pl-[13px] md:pl-[17px]",
                   GRID,
-                  isBooked && "border-l-brand",
+                  isBooked && "border-l-[#0F6B58]",
                   isSel && "bg-[#FBFDF3]"
                 )}
               >
@@ -327,16 +320,7 @@ export function OrdersPage() {
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <span className="text-[13px] font-bold text-ink">{formatTaka(o.total)}</span>
-                    <span className="flex items-center gap-1.5">
-                      {/* The mobile card has no courier column, so the accent
-                          stripe would be the only hint — say it in words. */}
-                      {isBooked && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-brand-tint px-1.5 py-[2px] text-[10px] font-bold text-brand-deep">
-                          <Truck size={10} strokeWidth={2.4} /> Booked
-                        </span>
-                      )}
-                      <StatusChip status={o.status} size="sm" />
-                    </span>
+                    <StatusChip status={o.status} size="sm" />
                   </div>
                 </Link>
               </div>

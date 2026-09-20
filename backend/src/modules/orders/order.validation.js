@@ -89,13 +89,8 @@ export const listOrdersQuerySchema = {
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).max(100).optional().default(20),
     status: z
-      .enum(["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"])
+      .enum(["pending", "booked", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"])
       .optional(),
-    // "Booked" is NOT an order status — it is whether a Steadfast consignment
-    // exists for the parcel. It sits on its own axis (a booked order can be
-    // confirmed, packed or delivered), so it is its own filter rather than a
-    // value smuggled into the status enum.
-    booked: z.coerce.boolean().optional(),
     q: z.string().optional(), // matches orderNumber
   }),
 };
@@ -108,7 +103,7 @@ export const bulkUpdateStatusSchema = {
       .array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid order id"))
       .min(1, "Select at least one order")
       .max(100, "At most 100 orders at a time"),
-    status: z.enum(["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"]),
+    status: z.enum(["pending", "booked", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"]),
     note: z.string().optional(),
   }),
 };
@@ -116,7 +111,7 @@ export const bulkUpdateStatusSchema = {
 export const updateStatusSchema = {
   params: z.object({ id: z.string().min(1) }),
   body: z.object({
-    status: z.enum(["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"]),
+    status: z.enum(["pending", "booked", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"]),
     note: z.string().optional(),
     trackingNumber: z.string().optional(),
     courierName: z.string().optional(),
