@@ -28,13 +28,23 @@ export const EMAIL_REPLY_TO = "diecastbd.official@gmail.com";
  * CID attachments; served from this API (see app.js) so a storefront rebuild
  * can't content-hash the filename out from under a sent email.
  *
- * Sourced at 288x42 and displayed at 144x21 — 2x for retina, and the exact 48:7
- * aspect of the master so nothing is stretched. Width/height are set as HTML
- * ATTRIBUTES at the call site, not CSS: Outlook ignores CSS sizing and would
- * otherwise render this at full size. */
+ * Sourced at 336x90 and displayed at 168x45 — 2x for retina. The wordmark inside
+ * it is 144x21, the exact 48:7 aspect of the master so nothing is stretched
+ * (48:7 has no integer height at 120px wide, which is why it is not ~120px).
+ * Width/height are set as HTML ATTRIBUTES at the call site, not CSS: Outlook
+ * ignores CSS sizing and would otherwise render this at full size.
+ *
+ * WHY the #0a0a0a plate is baked INTO the png rather than left to the header
+ * cell's background: Gmail's mobile dark mode recolours an email's inline
+ * styles, and it inverts this template — the white card renders dark and the
+ * dark header cell renders WHITE. The wordmark is white-on-dark, so against a
+ * flipped-to-white cell it would be invisible. Gmail does not recolour image
+ * pixels, so a logo carrying its own background survives either way. Templates
+ * here are bare fragments with no <head>, so the usual
+ * <meta name="color-scheme"> opt-out is not available to us. */
 export const EMAIL_LOGO_URL = "https://api.diecastbd.com/email-logo.png";
-export const EMAIL_LOGO_WIDTH = 144;
-export const EMAIL_LOGO_HEIGHT = 21;
+export const EMAIL_LOGO_WIDTH = 168;
+export const EMAIL_LOGO_HEIGHT = 45;
 
 /** The header logo row, table-based to match the surrounding templates —
  * flexbox and grid are unsupported in Outlook. Alt text matters: most clients

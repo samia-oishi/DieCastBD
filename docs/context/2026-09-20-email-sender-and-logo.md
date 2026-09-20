@@ -15,8 +15,10 @@ Commit `eec40d3`. Two changes to how the backend sends mail through Resend.
 
 - Working tree clean, committed on `main`, **not pushed** (user always pushes).
 - Backend suite green: 289 tests, 25 files.
-- `backend/public/email-logo.png` — 288×42, 7035 bytes, downscaled from
-  `frontend/src/assets/logo/diecastbdDark.png` (1152×168) with `sips --resampleWidth 288`.
+- `backend/public/email-logo.png` — 336×90 opaque RGB, from
+  `frontend/src/assets/logo/diecastbdDark.png` (1152×168): the wordmark resized to
+  144×21 and composited onto a `#0a0a0a` plate with 12px display padding (PIL).
+  Displayed at 168×45.
 
 ## Gotchas worth keeping
 
@@ -38,8 +40,14 @@ Commit `eec40d3`. Two changes to how the backend sends mail through Resend.
   as `/health`: the logo must render when Mongo is unreachable.
 - **Sizing is arithmetic, not taste.** Master wordmark is 48:7, so "~120px wide" needs
   17.5px height; `width="120" height="18"` is a ~3% vertical stretch on a wordmark.
-  Shipped 144×21 displayed from a 288×42 source. Width/height are HTML **attributes** —
-  Outlook ignores CSS sizing and would draw the source at full 288px.
+  The wordmark is 144×21. Width/height are HTML **attributes** — Outlook ignores CSS
+  sizing and would draw the source at full size.
+- **Gmail mobile dark mode inverts this template** — verified on a real phone: the
+  white card renders dark and the `#0a0a0a` header cell renders WHITE. The wordmark is
+  white-on-dark, so it would vanish. Fix: the plate is baked into the PNG, because Gmail
+  recolours inline styles but NOT image pixels. `<meta name="color-scheme">` is not
+  available — every template here is a bare fragment with no `<head>`. If someone later
+  wraps these in a full HTML document, add that meta and the plate could be dropped.
 - The **SPA-fallback trap applies to the storefront host, not this one**: any path on
   `diecastbd.com` returns the index.html shell with HTTP 200, so a 200 there proves
   nothing. `api.diecastbd.com` 404s unknown paths properly (verified locally).
@@ -53,8 +61,9 @@ Commit `eec40d3`. Two changes to how the backend sends mail through Resend.
 - Then open the test mail in Gmail and confirm the logo draws, is not stretched, and
   Reply addresses `diecastbd.official@gmail.com`.
 - Test sends already made to `diecastbd.official@gmail.com` via the real code path
-  (`sendOrderConfirmationEmail`): two of them, the successful one is Resend id
-  `01a0bff2-f14e-777c-ae25-09c514877d3a`. Both predate the deploy, so both show alt text.
+  (`sendOrderConfirmationEmail`): two, Resend id `01a0bff2-f14e-777c-ae25-09c514877d3a`.
+  Both predate the deploy and predate the plate, so both show a broken-image
+  placeholder. Re-send after deploying to confirm the logo actually draws.
 - Optional cleanup: delete the now-ignored `EMAIL_FROM` from the Vercel dashboard.
 
 ## Notes
