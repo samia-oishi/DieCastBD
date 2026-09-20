@@ -1500,3 +1500,19 @@ The real trap was the daily endpoint: `Math.min(Number(days) || 30, 90)` means n
 Dropped the prior-period delta for this range on purpose. Nothing precedes all of history, so comparing against an empty window would print `+100%` on every card. The service returns a zeroed prior and skips the query; `DeltaPill` renders nothing without a period label.
 
 Verified against production: `all` gives 46 orders / ৳1,29,820, identical to `90` — right, because the shop is 56 days old; they separate once history passes 90 days. 297 backend tests (8 new), 180 frontend, lint and build clean.
+
+## 2026-09-21 — Dashboard audit: bars instead of a line, and alerts that mean something
+
+Merchant asked for a data-visualisation audit of the admin dashboard. Ran it against production numbers rather than the layout, which is where every finding came from.
+
+The chart was drawing a line through days with no trade — 31 of 55 days had zero orders, so 56% of the "trend" was interpolation. Now one bar per day, rolled into calendar weeks above 31 points (90-day and All time would otherwise be 55+ bars in a 720px box).
+
+Profit is plotted for the first time, and the data had been in the payload all along: the daily rows already carry `cogs` and a `profit` virtual. It matters because per-day margin ranges 17.4%–43.2% here, so revenue height alone was actively misleading. Bars are stacked cost-then-profit, which also makes margin readable as the lime share.
+
+"Low stock: 72" was firing on 72 of 78 active products — 92%, because ≤2 units is the normal state for single-unit collectibles. Replaced with Out of stock (27, 35%), which is both actionable and exactly the set the homepage now hides.
+
+Cancellations had no home on the dashboard at all, since REVENUE_ORDER_STATUSES excludes them. On a 76% cash-on-delivery shop that is the number that decides whether COD pays. Added the cancel rate, a payment-mix panel, and `cancelled` to the pipeline strip.
+
+Also: y-axis labels (in lakh), and `inventory.productsMissingCost` — computed, returned, never rendered — surfaced on the Stock at cost card while it still reads 0.
+
+301 backend tests (4 new), 194 frontend (14 new), lint at its existing 5 warnings, builds clean.

@@ -50,7 +50,14 @@ const PIPELINE_LABELS = {
   packed: "Packed",
   shipped: "Shipped",
   delivered: "Delivered",
+  cancelled: "Cancelled",
 };
+
+// How customers paid. bKash money is already collected; a COD order is still a
+// promise until the rider hands it over, which is why the two are coloured
+// differently rather than as neutral slices of the same pie.
+const PAYMENT_LABELS = { cod: "Cash on delivery", bkash: "bKash", unknown: "Other" };
+const PAYMENT_COLORS = { cod: "#DEDFD6", bkash: "#A8CD2F", unknown: "#EFEFE9" };
 
 function initials(name, email) {
   const src = (name || email || "?").trim();
@@ -117,6 +124,12 @@ export function DashboardPage() {
   const orders = recentOrders?.data ?? [];
   const lowItems = lowStock?.data ?? [];
   const lowTotal = lowStock?.meta?.total ?? 0;
+  const paymentMix = s.paymentMix ?? [];
+  const paidOrders = paymentMix.reduce((n, m) => n + m.count, 0);
+  const cancelledCount = s.cancelled?.count ?? 0;
+  // Share of everything PLACED in the window, not of what survived — dividing
+  // by the surviving orders alone would flatter the rate.
+  const cancelRate = cancelledCount > 0 ? Math.round((cancelledCount / (cancelledCount + (s.ordersCount ?? 0))) * 1000) / 10 : 0;
   const topProducts = s.topProducts ?? [];
   const topMax = Math.max(1, ...topProducts.map((p) => Math.abs(p.profit ?? 0)));
 
@@ -209,7 +222,15 @@ export function DashboardPage() {
           icon={Boxes}
           label="Stock at cost"
           value={formatTaka(s.inventory?.atCost ?? 0)}
-          sub={`${s.inventory?.unitsInStock ?? 0} units · ${formatTaka(s.inventory?.atRetail ?? 0)} at retail`}
+          // productsMissingCost was computed and returned by the API but never
+          // rendered — a data-quality watchdog nobody could see. It is 0 today,
+          // which is exactly when it should start being visible, because the
+          // day it isn't, every profit figure above is quietly overstated.
+          sub={
+            s.inventory?.productsMissingCost > 0
+              ? `${s.inventory.productsMissingCost} product${s.inventory.productsMissingCost === 1 ? "" : "s"} have no cost price — profit is understated`
+              : `${s.inventory?.unitsInStock ?? 0} units · ${formatTaka(s.inventory?.atRetail ?? 0)} at retail`
+          }
         />
         <KpiCard
           icon={UserPlus}
@@ -218,17 +239,32 @@ export function DashboardPage() {
           value={s.newCustomers ?? 0}
           sub={RANGE_NOUN[range]}
         />
+        {/* Out of stock, NOT "low stock". The catalogue is mostly single-unit
+            collectibles, so "≤2 units left" described 72 of 78 active products
+            — an alert that is on 92% of the time is one you learn to ignore.
+            Zero available is the genuinely actionable state: the storefront is
+            already hiding those products from the homepage carousels. The old
+            low-stock count is kept as context on the sub-line. */}
         <KpiCard
           icon={TriangleAlert}
-          tone="amber"
-          label="Low stock products"
-          value={s.lowStockCount ?? 0}
+          tone={s.outOfStockCount > 0 ? "amber" : undefined}
+          label="Out of stock"
+          value={s.outOfStockCount ?? 0}
           delta={
-            s.lowStockCount > 0 ? (
-              <span className="inline-block rounded-full bg-[#FDF3E7] px-2 py-[3px] text-[11px] font-bold text-[#B45309]">Needs restock</span>
+            s.outOfStockCount > 0 ? (
+              <Link
+                to="/admin/inventory"
+                className="inline-block rounded-full bg-[#FDF3E7] px-2 py-[3px] text-[11px] font-bold text-[#B45309] hover:bg-[#FBE8D0]"
+              >
+                Restock
+              </Link>
             ) : null
           }
-          sub={s.lowStockCount > 0 ? "≤ 2 units left" : "All healthy"}
+          sub={
+            s.outOfStockCount > 0
+              ? `Hidden from the homepage · ${Math.max(0, (s.lowStockCount ?? 0) - (s.outOfStockCount ?? 0))} more at ≤ 2 left`
+              : "Everything is buyable"
+          }
         />
       </div>
 
@@ -345,21 +381,83 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Order pipeline */}
-      <SectionPanel title="Order pipeline" bodyClassName="pt-3">
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-          {pipeline.map(({ status, count }) => (
-            <Link
-              key={status}
-              to={`/admin/orders?status=${status}`}
-              className="rounded-[12px] border border-line bg-[#FCFCF9] px-4 py-3 transition-colors hover:border-ink"
-            >
-              <div className="font-display text-[22px] font-extrabold text-ink">{count}</div>
-              <div className="mt-0.5 text-[11.5px] font-semibold text-faint">{PIPELINE_LABELS[status]}</div>
-            </Link>
-          ))}
-        </div>
-      </SectionPanel>
+      {/* Order pipeline + payment mix. The strip counts EVERY order by its
+          current status and is deliberately not range-scoped — it answers
+          "what is in flight right now", which a date filter would break. The
+          payment mix beside it follows the range chip like everything else,
+          so both say which they are. */}
+      <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.5fr_1fr]">
+        <SectionPanel title="Order pipeline" description="Every order by current status" bodyClassName="pt-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            {pipeline.map(({ status, count }) => (
+              <Link
+                key={status}
+                to={`/admin/orders?status=${status}`}
+                className={cn(
+                  "rounded-[12px] border px-4 py-3 transition-colors",
+                  status === "cancelled" && count > 0
+                    ? "border-[#F0D9C4] bg-[#FDF9F5] hover:border-[#B45309]"
+                    : "border-line bg-[#FCFCF9] hover:border-ink"
+                )}
+              >
+                <div
+                  className={cn(
+                    "font-display text-[22px] font-extrabold",
+                    status === "cancelled" && count > 0 ? "text-[#B45309]" : "text-ink"
+                  )}
+                >
+                  {count}
+                </div>
+                <div className="mt-0.5 text-[11.5px] font-semibold text-faint">{PIPELINE_LABELS[status]}</div>
+              </Link>
+            ))}
+          </div>
+        </SectionPanel>
+
+        <SectionPanel title="How customers pay" description={RANGE_NOUN[range]} bodyClassName="pt-3">
+          {paidOrders === 0 ? (
+            <p className="py-2 text-[13px] text-faint">No orders in this period.</p>
+          ) : (
+            <>
+              {/* One stacked bar rather than a pie: two or three shares read
+                  faster as widths than as angles, and it lines up with the
+                  rows beneath it. */}
+              <div className="flex h-2.5 overflow-hidden rounded-full bg-tile">
+                {paymentMix.map((m) => (
+                  <div
+                    key={m.method}
+                    style={{ width: `${(m.count / paidOrders) * 100}%`, background: PAYMENT_COLORS[m.method] ?? PAYMENT_COLORS.unknown }}
+                    title={`${PAYMENT_LABELS[m.method] ?? m.method}: ${m.count}`}
+                  />
+                ))}
+              </div>
+              <ul className="mt-3 flex flex-col gap-2">
+                {paymentMix.map((m) => (
+                  <li key={m.method} className="flex items-center gap-2 text-[12.5px]">
+                    <span
+                      className="size-2.5 shrink-0 rounded-[3px]"
+                      style={{ background: PAYMENT_COLORS[m.method] ?? PAYMENT_COLORS.unknown }}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-ink">{PAYMENT_LABELS[m.method] ?? m.method}</span>
+                    <span className="shrink-0 font-bold text-ink">{Math.round((m.count / paidOrders) * 100)}%</span>
+                    <span className="shrink-0 text-[11.5px] text-faint">{formatTaka(m.value)}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 border-t border-line-soft pt-2.5 text-[11.5px] text-faint">
+                {cancelledCount > 0 ? (
+                  <>
+                    <span className="font-bold text-[#B45309]">{cancelRate}% cancelled</span> · {cancelledCount} order
+                    {cancelledCount === 1 ? "" : "s"} worth {formatTaka(s.cancelled?.value ?? 0)}
+                  </>
+                ) : (
+                  <>No cancellations {RANGE_NOUN[range]}</>
+                )}
+              </div>
+            </>
+          )}
+        </SectionPanel>
+      </div>
     </div>
   );
 }

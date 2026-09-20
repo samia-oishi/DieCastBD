@@ -109,6 +109,37 @@ export async function getPendingPipeline() {
 
 const RANGE_DAYS = { today: 0, "7": 6, "30": 29, "90": 89 };
 
+// availableStock is a virtual (stock − reservedStock), so every availability
+// test has to be an $expr. Same definition the storefront filters on.
+const AVAILABLE = { $subtract: ["$stock", { $ifNull: ["$reservedStock", 0] }] };
+const ACTIVE_PRODUCT = { status: "active", isDeleted: false };
+
+/** Orders cancelled in the window — count and the money they represent.
+ *
+ * Deliberately NOT part of sumOrderMetrics: cancelled orders are excluded from
+ * REVENUE_ORDER_STATUSES, which is correct for revenue but means the dashboard
+ * had no way to see them at all. On a mostly cash-on-delivery shop the cancel
+ * rate is the number that decides whether COD is worth running, so it is its
+ * own figure rather than a silent omission. */
+export async function getCancelledInWindow(start) {
+  const orders = await Order.find({ createdAt: { $gte: start }, status: "cancelled" }).select("total").lean();
+  return { count: orders.length, value: orders.reduce((sum, o) => sum + (o.total ?? 0), 0) };
+}
+
+/** How customers paid, over the counted orders in the window.
+ *
+ * Grouped over REVENUE_ORDER_STATUSES so the counts add up to the same
+ * ordersCount shown beside it — mixing in cancelled orders here would make the
+ * mix disagree with the Orders KPI for no stated reason. */
+export async function getPaymentMix(start) {
+  const rows = await Order.aggregate([
+    { $match: { createdAt: { $gte: start }, status: { $in: REVENUE_ORDER_STATUSES } } },
+    { $group: { _id: "$paymentMethod", count: { $sum: 1 }, value: { $sum: "$total" } } },
+    { $sort: { count: -1 } },
+  ]);
+  return rows.map((r) => ({ method: r._id ?? "unknown", count: r.count, value: r.value ?? 0 }));
+}
+
 /** Dashboard summary for one of the preset ranges.
  *
  * Computed from the orders collection rather than summed from the daily rows,
@@ -126,17 +157,21 @@ export async function getSummary(range = "today") {
   const startKey = isAllTime ? "1970-01-01" : dateKeyDaysAgo(days);
   const start = new Date(`${startKey}T00:00:00.000Z`);
 
-  const [orders, newCustomers, lowStockCount, valuation, pending] = await Promise.all([
-    Order.find({ createdAt: { $gte: start }, status: { $in: REVENUE_ORDER_STATUSES } }),
-    User.countDocuments({ createdAt: { $gte: start } }),
-    Product.countDocuments({
-      status: "active",
-      isDeleted: false,
-      $expr: { $lte: [{ $subtract: ["$stock", "$reservedStock"] }, LOW_STOCK_THRESHOLD] },
-    }),
-    getInventoryValuation(),
-    getPendingPipeline(),
-  ]);
+  const [orders, newCustomers, lowStockCount, outOfStockCount, valuation, pending, cancelled, paymentMix] =
+    await Promise.all([
+      Order.find({ createdAt: { $gte: start }, status: { $in: REVENUE_ORDER_STATUSES } }),
+      User.countDocuments({ createdAt: { $gte: start } }),
+      Product.countDocuments({ ...ACTIVE_PRODUCT, $expr: { $lte: [AVAILABLE, LOW_STOCK_THRESHOLD] } }),
+      // Counted separately from "low" because they are different jobs: low
+      // stock is a reorder hint, zero stock is a product the storefront is
+      // actively hiding. On a catalogue of mostly single-unit collectibles
+      // nearly everything is "low", so that number alone cannot be an alert.
+      Product.countDocuments({ ...ACTIVE_PRODUCT, $expr: { $lte: [AVAILABLE, 0] } }),
+      getInventoryValuation(),
+      getPendingPipeline(),
+      getCancelledInWindow(start),
+      getPaymentMix(start),
+    ]);
 
   // The immediately-preceding window of equal length, for the delta pills.
   const priorStart = new Date(`${dateKeyDaysAgo(days * 2 + 1)}T00:00:00.000Z`);
@@ -155,8 +190,11 @@ export async function getSummary(range = "today") {
     topProducts: topProductsByProfit(orders),
     newCustomers,
     lowStockCount,
+    outOfStockCount,
     inventory: valuation,
     pending,
+    cancelled,
+    paymentMix,
     prior: { totalSales: prior.totalSales, revenue: prior.revenue, profit: prior.profit, ordersCount: prior.ordersCount },
   };
 }

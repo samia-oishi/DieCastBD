@@ -6,6 +6,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // pinned here.
 
 const orderFinds = [];
+let orderAggregates = [];
+let aggregateResult = [];
 let dailyQuery;
 
 const thenableList = (items = []) => {
@@ -20,6 +22,10 @@ vi.mock("../../src/modules/orders/order.model.js", () => ({
     find: (filter) => {
       orderFinds.push(filter);
       return thenableList([]);
+    },
+    aggregate: async (pipeline) => {
+      orderAggregates.push(pipeline);
+      return aggregateResult;
     },
   },
 }));
@@ -55,6 +61,8 @@ const makeDailyQuery = (rows) => {
 
 beforeEach(() => {
   orderFinds.length = 0;
+  orderAggregates = [];
+  aggregateResult = [];
   dailyQuery = makeDailyQuery([{ date: "2026-09-20" }, { date: "2026-09-19" }]);
 });
 
@@ -90,8 +98,8 @@ describe('getSummary("all")', () => {
 
   it("does not run a prior-window query at all", async () => {
     await getSummary("all");
-    // Two finds: the in-window orders, and the pending pipeline. A third would
-    // mean a prior window was queried for a range that has none.
+    // A find carrying $lt would mean a prior window was queried for a range
+    // that has none.
     const windowed = orderFinds.filter((f) => f.createdAt?.$lt);
     expect(windowed).toHaveLength(0);
   });
@@ -104,5 +112,43 @@ describe('getSummary("all")', () => {
   it("falls back to today for an unrecognised range rather than all of history", async () => {
     const summary = await getSummary("nonsense");
     expect(summary.startDate).not.toBe("1970-01-01");
+  });
+});
+
+describe("cancellations and payment mix", () => {
+  it("counts cancelled orders, which the revenue statuses deliberately exclude", async () => {
+    const summary = await getSummary("30");
+    // Cancelled is queried on its own: summing it into the revenue figures
+    // would book money from orders that never happened.
+    const cancelledFind = orderFinds.find((f) => f.status === "cancelled");
+    expect(cancelledFind).toBeDefined();
+    expect(summary.cancelled).toEqual({ count: 0, value: 0 });
+  });
+
+  it("reports the payment split over the same orders the KPIs count", async () => {
+    aggregateResult = [
+      { _id: "cod", count: 35, value: 105160 },
+      { _id: "bkash", count: 11, value: 24660 },
+    ];
+    const summary = await getSummary("all");
+    expect(summary.paymentMix).toEqual([
+      { method: "cod", count: 35, value: 105160 },
+      { method: "bkash", count: 11, value: 24660 },
+    ]);
+  });
+
+  it("labels an order with no payment method rather than dropping it from the mix", async () => {
+    aggregateResult = [{ _id: null, count: 2, value: 500 }];
+    const summary = await getSummary("30");
+    // Dropping it would make the percentages silently not add to 100.
+    expect(summary.paymentMix).toEqual([{ method: "unknown", count: 2, value: 500 }]);
+  });
+
+  it("counts out-of-stock separately from low-stock", async () => {
+    // Two different jobs: low stock is a reorder hint, zero is a product the
+    // storefront is actively hiding. They must not collapse into one number.
+    const summary = await getSummary("all");
+    expect(summary).toHaveProperty("outOfStockCount");
+    expect(summary).toHaveProperty("lowStockCount");
   });
 });
