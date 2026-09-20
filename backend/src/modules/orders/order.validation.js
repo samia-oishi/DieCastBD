@@ -91,7 +91,25 @@ export const listOrdersQuerySchema = {
     status: z
       .enum(["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"])
       .optional(),
+    // "Booked" is NOT an order status — it is whether a Steadfast consignment
+    // exists for the parcel. It sits on its own axis (a booked order can be
+    // confirmed, packed or delivered), so it is its own filter rather than a
+    // value smuggled into the status enum.
+    booked: z.coerce.boolean().optional(),
     q: z.string().optional(), // matches orderNumber
+  }),
+};
+
+// Bulk status change from the orders list. ids capped at 100 per call, matching
+// the products bulk actions.
+export const bulkUpdateStatusSchema = {
+  body: z.object({
+    ids: z
+      .array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid order id"))
+      .min(1, "Select at least one order")
+      .max(100, "At most 100 orders at a time"),
+    status: z.enum(["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"]),
+    note: z.string().optional(),
   }),
 };
 

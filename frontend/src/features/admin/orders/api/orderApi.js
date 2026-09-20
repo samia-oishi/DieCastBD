@@ -15,6 +15,14 @@ export async function updateOrderStatus(id, payload) {
   return data.data;
 }
 
+/** Bulk status change from the list. The backend runs the real status
+ * transition per order (stock buckets move with it) and reports partial
+ * results: { updatedCount, skipped[], failed[] }. */
+export async function bulkUpdateOrderStatus({ ids, status, note }) {
+  const { data } = await api.patch("/admin/orders/status", { ids, status, note });
+  return data;
+}
+
 /** Permanent bulk delete. The backend releases/restores each order's stock in the
  * same transaction and returns { deletedCount, unitsReturnedToStock }. */
 export async function deleteOrders(ids) {

@@ -2,7 +2,14 @@ import { Order } from "./order.model.js";
 import { Address } from "../addresses/address.model.js";
 import { User } from "../users/user.model.js";
 import { findOrCreateGuestUser } from "../users/user.service.js";
-import { createOrderFromCart, createOrderFromItems, addItemsToOrder, transitionOrderStatus, deleteOrders } from "./order.service.js";
+import {
+  createOrderFromCart,
+  createOrderFromItems,
+  addItemsToOrder,
+  transitionOrderStatus,
+  bulkTransitionOrderStatus,
+  deleteOrders,
+} from "./order.service.js";
 import { sendOrderConfirmationEmail } from "../../emails/orderConfirmation.js";
 import { recomputeRollupsForOrders } from "../analytics/analytics.service.js";
 import { applyOrderAdjustment, describeAdjustment } from "./orderAdjustment.js";
@@ -134,9 +141,14 @@ export const getMyOrderByNumber = asyncHandler(async (req, res) => {
 });
 
 export const listOrdersAdmin = asyncHandler(async (req, res) => {
-  const { page, limit, status, q } = req.query;
+  const { page, limit, status, booked, q } = req.query;
   const filter = {
     ...(status ? { status } : {}),
+    // A consignment id is only ever written when the parcel is actually handed
+    // to the courier, so its presence IS "booked". Checked with $ne: null
+    // rather than $exists because the field is declared with a null default —
+    // $exists would match every order that has a courier subdocument at all.
+    ...(booked ? { "courier.consignmentId": { $ne: null } } : {}),
     ...(q ? { orderNumber: { $regex: q.trim(), $options: "i" } } : {}),
   };
 
@@ -177,6 +189,52 @@ export const updateOrderStatusAdmin = asyncHandler(async (req, res) => {
   }
 
   sendSuccess(res, { data: order, message: "Order status updated" });
+});
+
+/** Bulk status change from the orders list.
+ *
+ * Runs the SAME transitionOrderStatus the single-order route uses, once per
+ * order, rather than an updateMany: status drives the reserved/committed/
+ * released stock buckets, and a bulk write that skipped it would move labels
+ * while leaving inventory behind. Sequential, not Promise.all — each
+ * transition opens its own MongoDB transaction against product documents, and
+ * two orders sharing a product would race for the same write.
+ *
+ * Partial success is deliberate. One order that cannot move (not enough stock
+ * to re-commit, say) must not silently abandon the other ninety-nine, so each
+ * failure is collected and named in the response instead of thrown.
+ */
+export const bulkUpdateOrderStatusAdmin = asyncHandler(async (req, res) => {
+  const { ids, status, note } = req.body;
+  const { updated, skipped, failed } = await bulkTransitionOrderStatus({
+    orderIds: ids,
+    newStatus: status,
+    note,
+    actorId: req.user.id,
+  });
+
+  // Same rule as the single route: the customer hears "confirmed" only on the
+  // real move out of pending, never on a relabel or a restore.
+  for (const { order, previousStatus } of updated) {
+    if (!shouldSendOrderConfirmedEmail({ previousStatus, newStatus: status })) continue;
+    (async () => {
+      const user = await User.findById(order.user).select("name email");
+      if (user?.email) await sendOrderConfirmedEmail(order, user);
+    })().catch((err) => console.error("Order confirmed email failed:", err.message));
+  }
+
+  const parts = [`${updated.length} order(s) moved to ${status}`];
+  if (skipped.length) parts.push(`${skipped.length} already ${status}`);
+  if (failed.length) parts.push(`${failed.length} failed`);
+
+  sendSuccess(res, {
+    data: {
+      updatedCount: updated.length,
+      skipped: skipped.map((o) => o.orderNumber),
+      failed: failed.map(({ orderNumber, message }) => ({ orderNumber, message })),
+    },
+    message: parts.join(" · "),
+  });
 });
 
 export const deleteOrdersAdmin = asyncHandler(async (req, res) => {

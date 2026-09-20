@@ -17,6 +17,15 @@ export function useOrderStatusCounts() {
         select: (r) => r.meta?.total ?? 0,
         staleTime: 60_000,
       })),
+      // Booked is a different axis from status — it asks whether the parcel has
+      // a courier consignment — so it is counted with its own filter rather
+      // than by passing "booked" as a status.
+      {
+        queryKey: ["admin", "orders", "count", "booked"],
+        queryFn: () => listAdminOrders({ booked: true, limit: 1 }),
+        select: (r) => r.meta?.total ?? 0,
+        staleTime: 60_000,
+      },
     ],
   });
 
@@ -24,5 +33,6 @@ export function useOrderStatusCounts() {
   STATUSES.forEach((status, i) => {
     counts[status] = results[i + 1].data ?? 0;
   });
+  counts.booked = results[results.length - 1].data ?? 0;
   return counts;
 }

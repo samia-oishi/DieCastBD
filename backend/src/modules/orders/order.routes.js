@@ -10,6 +10,7 @@ import {
   updateStatusSchema,
   idParamSchema,
   deleteOrdersSchema,
+  bulkUpdateStatusSchema,
   adjustPaymentSchema,
   createOrderAdminSchema,
   addOrderItemsSchema,
@@ -23,6 +24,7 @@ import {
   getOrderAdmin,
   updateOrderStatusAdmin,
   deleteOrdersAdmin,
+  bulkUpdateOrderStatusAdmin,
   adjustOrderPaymentAdmin,
   createOrderAdmin,
   addOrderItemsAdmin,
@@ -82,3 +84,10 @@ adminRouter.post(
 );
 
 adminRouter.delete("/", validate(deleteOrdersSchema), deleteOrdersAdmin);
+
+// Bulk status change. Declared as a literal "/status" path, which cannot
+// collide with "/:id/status" (one segment vs two). No auditLog() middleware,
+// for the same reason as the bulk delete: that helper keys off a single
+// req.params.id. Each order's own statusHistory still records the move and who
+// made it, written inside transitionOrderStatus.
+adminRouter.patch("/status", validate(bulkUpdateStatusSchema), bulkUpdateOrderStatusAdmin);

@@ -317,6 +317,45 @@ export async function createOrderFromItems({
   return order;
 }
 
+/** Moves several orders to one status, one real transition at a time.
+ *
+ * Deliberately NOT an updateMany. Order status drives the reserved/committed/
+ * released stock buckets (see transitionOrderStatus below), so a bulk write
+ * that set the field directly would relabel orders while leaving inventory
+ * exactly where it was — the single worst class of bug this module can have.
+ *
+ * Sequential rather than Promise.all: every transition opens its own
+ * multi-document transaction against the same Product collection, and two
+ * selected orders containing the same car would race for that write.
+ *
+ * Three outcomes, not two. An order already AT the target status is "skipped",
+ * not "failed" — selecting ten orders and moving them to packed when three are
+ * already packed is a success, and transitionOrderStatus throws on a no-op
+ * move. Anything else is a real failure, collected with its reason so the
+ * caller can name it rather than reporting a silent partial write.
+ */
+export async function bulkTransitionOrderStatus({ orderIds, newStatus, note, actorId }) {
+  const updated = [];
+  const skipped = [];
+  const failed = [];
+
+  for (const orderId of orderIds) {
+    try {
+      const { order, previousStatus } = await transitionOrderStatus({ orderId, newStatus, note, actorId });
+      updated.push({ order, previousStatus });
+    } catch (err) {
+      // Read the order only to name it in the report; if even that fails the
+      // id is all we can offer.
+      const known = await Order.findById(orderId).select("orderNumber status").lean().catch(() => null);
+      const label = known?.orderNumber ?? orderId;
+      if (known?.status === newStatus) skipped.push({ orderNumber: label });
+      else failed.push({ orderNumber: label, message: err.message });
+    }
+  }
+
+  return { updated, skipped, failed };
+}
+
 export async function transitionOrderStatus({
   orderId,
   newStatus,

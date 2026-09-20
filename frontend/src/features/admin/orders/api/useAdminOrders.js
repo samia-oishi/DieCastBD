@@ -1,5 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAdminOrders, getAdminOrder, updateOrderStatus, deleteOrders, adjustOrderPayment, lookupCustomer, createAdminOrder, addOrderItems } from "./orderApi";
+import {
+  listAdminOrders,
+  getAdminOrder,
+  updateOrderStatus,
+  bulkUpdateOrderStatus,
+  deleteOrders,
+  adjustOrderPayment,
+  lookupCustomer,
+  createAdminOrder,
+  addOrderItems,
+} from "./orderApi";
 
 export function useAdminOrders(params) {
   return useQuery({
@@ -22,6 +32,22 @@ export function useUpdateOrderStatusMutation() {
   return useMutation({
     mutationFn: ({ id, payload }) => updateOrderStatus(id, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "orders"] }),
+  });
+}
+
+export function useBulkUpdateOrderStatusMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bulkUpdateOrderStatus,
+    onSuccess: () => {
+      // A status change moves stock between the reserved/committed/released
+      // buckets, so inventory and the revenue figures move with it — the same
+      // invalidations the single-order update would need, times N.
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
+    },
   });
 }
 

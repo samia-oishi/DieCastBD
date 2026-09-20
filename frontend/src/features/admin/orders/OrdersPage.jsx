@@ -1,10 +1,18 @@
 import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
-import { Trash2, ChevronRight, Truck, RefreshCw, Plus } from "lucide-react";
+import { Trash2, ChevronRight, Truck, RefreshCw, Plus, PackageCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +32,7 @@ import { FilterChips } from "@/features/admin/shell/FilterChips";
 import { BulkBar } from "@/features/admin/shell/BulkBar";
 import { AdminButton } from "@/features/admin/shell/AdminButton";
 import { adminToast } from "@/features/admin/shell/adminToast";
-import { useAdminOrders, useDeleteOrdersMutation } from "./api/useAdminOrders";
+import { useAdminOrders, useDeleteOrdersMutation, useBulkUpdateOrderStatusMutation } from "./api/useAdminOrders";
 import { useOrderStatusCounts } from "./api/useOrderStatusCounts";
 import { useCourierStatus, useSendToCourierMutation, useSyncCourierMutation } from "./api/useCourier";
 import { CourierChip } from "./components/CourierChip";
@@ -35,6 +43,23 @@ import { SendToCourierDialog } from "./components/SendToCourierDialog";
 // authoritative number and we report it from the response.
 const RELEASED_STATUSES = ["cancelled", "refunded"];
 const STATUSES = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"];
+
+// "Booked" is not one of them. It asks whether the parcel has a courier
+// consignment, which is a different question from where the order is in our own
+// workflow — a booked order can be confirmed, packed or already delivered. It
+// rides in the same chip row because that row is a view picker, but it maps to
+// its own query param, and picking it clears the status filter rather than
+// stacking with it.
+const BOOKED = "booked";
+
+// Statuses offered for a bulk change. Refunded is left out on purpose: it is a
+// money decision that belongs on the single order, beside its payment history,
+// not something to apply to twenty rows at once.
+const BULK_STATUSES = ["confirmed", "packed", "shipped", "delivered", "cancelled"];
+
+// Moving INTO one of these releases every held unit back to sellable stock, so
+// a bulk move there is worth spelling out before it runs.
+const RELEASING_STATUSES = ["cancelled", "refunded"];
 
 const GRID = "md:grid-cols-[auto_1.2fr_1.5fr_0.9fr_0.8fr_112px_132px_28px]";
 
@@ -50,17 +75,21 @@ export function OrdersPage() {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState(null);
   const [courierTarget, setCourierTarget] = useState(null);
   const debouncedSearch = useDebounce(search, 400);
 
+  const showingBooked = status === BOOKED;
   const { data, isLoading } = useAdminOrders({
     page,
     limit: 20,
-    status: status === "all" ? undefined : status,
+    status: status === "all" || showingBooked ? undefined : status,
+    booked: showingBooked ? true : undefined,
     q: debouncedSearch || undefined,
   });
   const counts = useOrderStatusCounts();
   const deleteMutation = useDeleteOrdersMutation();
+  const bulkStatusMutation = useBulkUpdateOrderStatusMutation();
   const { data: courier } = useCourierStatus();
   const sendToCourier = useSendToCourierMutation();
   const syncCourier = useSyncCourierMutation();
@@ -91,6 +120,8 @@ export function OrdersPage() {
     .filter((o) => !RELEASED_STATUSES.includes(o.status))
     .reduce((sum, o) => sum + o.items.reduce((n, i) => n + i.qty, 0), 0);
 
+  const alreadyAtTarget = pendingStatus ? selected.filter((o) => o.status === pendingStatus).length : 0;
+
   // Selection is per-page and resets when the visible set changes — you can never
   // delete a row you've scrolled away from.
   const resetTo = (fn) => (value) => {
@@ -116,6 +147,26 @@ export function OrdersPage() {
     });
   };
 
+  const onBulkStatus = () => {
+    bulkStatusMutation.mutate(
+      { ids: selectedIds, status: pendingStatus },
+      {
+        onSuccess: (res) => {
+          adminToast(res?.message ?? "Orders updated");
+          // Failures are per-order and named, so they get their own line rather
+          // than being folded into a count nobody can act on.
+          const failed = res?.data?.failed ?? [];
+          if (failed.length) {
+            adminToast(`${failed[0].orderNumber}: ${failed[0].message}${failed.length > 1 ? ` (+${failed.length - 1} more)` : ""}`);
+          }
+          setSelectedIds([]);
+          setPendingStatus(null);
+        },
+        onError: (err) => adminToast(err.response?.data?.message ?? "Could not update the orders"),
+      }
+    );
+  };
+
   const onSendToCourier = () => {
     sendToCourier.mutate(courierTarget._id, {
       onSuccess: (res) => {
@@ -129,6 +180,7 @@ export function OrdersPage() {
   const chips = [
     { value: "all", label: "All", count: counts.all },
     ...STATUSES.map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1), count: counts[s] })),
+    { value: BOOKED, label: "Booked", count: counts.booked },
   ];
 
   return (
@@ -175,7 +227,7 @@ export function OrdersPage() {
       <section className="overflow-x-auto rounded-[18px] border border-line bg-white">
         <div className="md:min-w-[720px]">
           {/* header (desktop) */}
-          <div className={cn("hidden items-center gap-4 border-b border-line-soft px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.07em] text-faint md:grid", GRID)}>
+          <div className={cn("hidden items-center gap-4 border-b border-line-soft py-2.5 pr-5 text-[10px] font-bold uppercase tracking-[0.07em] text-faint md:grid", "border-l-[3px] border-l-transparent pl-[17px]", GRID)}>
             <Checkbox
               className={CHECKBOX_CLS}
               checked={allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false}
@@ -194,17 +246,26 @@ export function OrdersPage() {
 
           {isLoading && <p className="px-5 py-10 text-center text-[13.5px] text-faint">Loading…</p>}
           {!isLoading && orders.length === 0 && (
-            <p className="px-5 py-10 text-center text-[13.5px] text-faint">No orders match — try a different search or status.</p>
+            <p className="px-5 py-10 text-center text-[13.5px] text-faint">
+              {showingBooked ? "No parcels have been booked with the courier yet." : "No orders match — try a different search or status."}
+            </p>
           )}
 
           {orders.map((o) => {
             const isSel = selectedIds.includes(o._id);
+            const isBooked = Boolean(o.courier?.consignmentId);
             return (
               <div
                 key={o._id}
                 className={cn(
-                  "grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-t border-line-soft px-4 py-3 transition-colors first:border-t-0 hover:bg-[#FCFCF9] md:gap-4 md:px-5",
+                  "grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-t border-line-soft py-3 pr-4 transition-colors first:border-t-0 hover:bg-[#FCFCF9] md:gap-4 md:pr-5",
+                  // The accent lives on a left border that EVERY row carries,
+                  // transparent unless the parcel is booked. Adding the border
+                  // only to booked rows would shift their contents 3px and make
+                  // the column edges ragged down the table.
+                  "border-l-[3px] border-l-transparent pl-[13px] md:pl-[17px]",
                   GRID,
+                  isBooked && "border-l-brand",
                   isSel && "bg-[#FBFDF3]"
                 )}
               >
@@ -266,7 +327,16 @@ export function OrdersPage() {
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <span className="text-[13px] font-bold text-ink">{formatTaka(o.total)}</span>
-                    <StatusChip status={o.status} size="sm" />
+                    <span className="flex items-center gap-1.5">
+                      {/* The mobile card has no courier column, so the accent
+                          stripe would be the only hint — say it in words. */}
+                      {isBooked && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-brand-tint px-1.5 py-[2px] text-[10px] font-bold text-brand-deep">
+                          <Truck size={10} strokeWidth={2.4} /> Booked
+                        </span>
+                      )}
+                      <StatusChip status={o.status} size="sm" />
+                    </span>
                   </div>
                 </Link>
               </div>
@@ -300,10 +370,76 @@ export function OrdersPage() {
       )}
 
       <BulkBar count={selectedIds.length}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <AdminButton variant="outline" size="sm" disabled={bulkStatusMutation.isPending}>
+              <PackageCheck size={15} strokeWidth={2.2} />
+              {bulkStatusMutation.isPending ? "Updating…" : "Change status"}
+            </AdminButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel>Move {selectedIds.length} order{selectedIds.length === 1 ? "" : "s"} to</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {BULK_STATUSES.map((value) => (
+              <DropdownMenuItem
+                key={value}
+                onSelect={() => setPendingStatus(value)}
+                className={value === "cancelled" ? "text-destructive focus:text-destructive" : undefined}
+              >
+                {value[0].toUpperCase() + value.slice(1)}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <AdminButton variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>
           <Trash2 size={15} strokeWidth={2.2} /> Delete
         </AdminButton>
       </BulkBar>
+
+      {/* Status change is reversible, so this confirms rather than warns — but
+          it still names the orders, because moving into cancelled hands every
+          held unit back to stock and that is not obvious from a menu item. */}
+      <AlertDialog open={Boolean(pendingStatus)} onOpenChange={(o) => !o && setPendingStatus(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Move {selectedIds.length} order{selectedIds.length === 1 ? "" : "s"} to {pendingStatus}?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="max-h-48 overflow-y-auto rounded-md border border-border">
+                  {selected.map((o) => (
+                    <div key={o._id} className="flex items-center justify-between gap-3 border-b border-border px-3 py-2 text-xs last:border-b-0">
+                      <span className="font-mono">{o.orderNumber}</span>
+                      <StatusChip status={o.status} size="sm" />
+                    </div>
+                  ))}
+                </div>
+                {alreadyAtTarget > 0 && (
+                  <p>
+                    {alreadyAtTarget} {alreadyAtTarget === 1 ? "is" : "are"} already {pendingStatus} and will be skipped.
+                  </p>
+                )}
+                {pendingStatus && RELEASING_STATUSES.includes(pendingStatus) && unitsReturning > 0 && (
+                  <p className="text-foreground">{unitsReturning} item{unitsReturning === 1 ? "" : "s"} will be returned to stock.</p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkStatusMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                onBulkStatus();
+              }}
+              disabled={bulkStatusMutation.isPending}
+            >
+              {bulkStatusMutation.isPending ? "Updating…" : `Move to ${pendingStatus}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>

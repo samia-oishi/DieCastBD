@@ -1516,3 +1516,17 @@ Cancellations had no home on the dashboard at all, since REVENUE_ORDER_STATUSES 
 Also: y-axis labels (in lakh), and `inventory.productsMissingCost` — computed, returned, never rendered — surfaced on the Stock at cost card while it still reads 0.
 
 301 backend tests (4 new), 194 frontend (14 new), lint at its existing 5 warnings, builds clean.
+
+## 2026-09-21 — Booked orders, and changing status without opening each one
+
+Merchant asked for a Booked filter on the orders list, for booked rows to look different, and to be able to select rows and change their status from the list.
+
+Booked turned out not to be a status. It means a Steadfast consignment exists, which is a different question from where the order sits in our workflow — production has 21 booked orders spread across `confirmed`, `packed` and `delivered`. Putting it in the status enum would have made those mutually exclusive and returned nothing, so it is its own query param and picking the chip clears the status filter. Matched with `$ne: null`, not `$exists`, because the field has a null default.
+
+Booked rows get a lime left accent. The border sits on every row and is transparent when not booked, otherwise booked rows would shift 3px and the columns would go ragged. The mobile card has no courier column, so it gets a "Booked" pill in words.
+
+The bulk status change loops the real `transitionOrderStatus` instead of an `updateMany`: status drives the stock buckets, and a direct write would move labels while leaving inventory behind. Sequential, because each transition opens its own transaction against Product and two orders sharing a car would race. Partial success is reported in three parts — moved, already-at-target (skipped, not failed), and named failures — so one stuck order cannot abandon the rest.
+
+Refunded is left out of the bulk menu deliberately; it is a money decision that belongs on the single order.
+
+309 backend tests (8 new), 208 frontend (9 new), lint unchanged, builds clean.
