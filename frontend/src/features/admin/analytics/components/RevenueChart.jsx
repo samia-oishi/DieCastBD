@@ -24,9 +24,30 @@ function formatPrice(amount) {
  * lakh, not millions. A full "৳1,25,830" on every gridline would need more
  * horizontal room than the plot itself. */
 function formatAxis(amount) {
-  if (amount >= 100000) return `৳${(amount / 100000).toFixed(amount >= 1000000 ? 0 : 1)}L`;
-  if (amount >= 1000) return `৳${Math.round(amount / 1000)}k`;
+  if (amount >= 100000) return `৳${trimZero((amount / 100000).toFixed(amount >= 1000000 ? 0 : 1))}L`;
+  // One decimal below 10k, because a 4-step axis can land on 1,600 and 2,400 —
+  // rounded to whole thousands both would print "৳2k" on different gridlines.
+  if (amount >= 10000) return `৳${Math.round(amount / 1000)}k`;
+  if (amount >= 1000) return `৳${trimZero((amount / 1000).toFixed(1))}k`;
   return `৳${Math.round(amount)}`;
+}
+
+function trimZero(text) {
+  return text.replace(/\.0$/, "");
+}
+
+/** Rounds the axis maximum up to a value that divides into four readable steps.
+ *
+ * Scaling straight off the tallest bar put the gridlines at raw fractions of it
+ * — for a ৳13,230 peak that read ৳0 · ৳3k · ৳7k · ৳10k · ৳13k, which looks
+ * unevenly spaced because it is: the labels are rounded but the lines are not. */
+function niceAxisMax(value) {
+  if (value <= 0) return 1;
+  const step = value / 4;
+  const magnitude = 10 ** Math.floor(Math.log10(step));
+  const normalized = step / magnitude;
+  const nice = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find((n) => normalized <= n) ?? 10;
+  return nice * magnitude * 4;
 }
 
 function formatDateShort(dateKey) {
@@ -70,7 +91,10 @@ export function RevenueChart({ data }) {
   const plotWidth = WIDTH - PAD_LEFT - PAD_RIGHT;
   const plotHeight = HEIGHT - PAD_TOP - PAD_BOTTOM;
 
-  const maxRevenue = useMemo(() => Math.max(1, ...rows.map((d) => d.revenue ?? 0)), [rows]);
+  const peakRevenue = useMemo(() => Math.max(1, ...rows.map((d) => d.revenue ?? 0)), [rows]);
+  // Bars are scaled against the rounded-up axis top, not the tallest bar, so
+  // every gridline label is a round number and the spacing is honest.
+  const maxRevenue = useMemo(() => niceAxisMax(peakRevenue), [peakRevenue]);
 
   const bars = useMemo(() => {
     const slot = plotWidth / Math.max(1, rows.length);
@@ -160,7 +184,21 @@ export function RevenueChart({ data }) {
             <rect x={b.x} y={PAD_TOP} width={b.width} height={plotHeight} fill="transparent" />
             {b.totalH > 0 && (
               <>
-                <rect x={b.x} y={b.top} width={b.width} height={b.costH} fill={b.loss ? LOSS : COST} rx="2" />
+                {/* Cost sits at the BOTTOM, starting below the profit segment,
+                    so the two together span the bar's full height and land on
+                    the ৳0 baseline. Drawing both from b.top made every bar
+                    float: it reached down only as far as its cost, so a day
+                    with ৳13,230 revenue and ৳3,594 profit ended at ৳3.6k. */}
+                <rect
+                  x={b.x}
+                  y={b.top + b.profitH}
+                  width={b.width}
+                  height={b.costH}
+                  fill={b.loss ? LOSS : COST}
+                  // Only the topmost segment is rounded, or the corners meet
+                  // mid-bar and leave a notch where the two colours join.
+                  rx={b.profitH > 0 ? 0 : 2}
+                />
                 {!b.loss && b.profitH > 0 && (
                   <rect
                     x={b.x}
