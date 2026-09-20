@@ -104,12 +104,12 @@ export function DashboardPage() {
   const prior = s.prior ?? {};
   const profit = (s.revenue ?? 0) - (s.cogs ?? 0);
   const margin = s.revenue ? Math.round((profit / s.revenue) * 1000) / 10 : null;
-  // The same profit against cost instead of against revenue — what the stock
-  // was marked up by. Shown beside margin for the same reason as on the product
-  // form: the two are easy to read as one another, and pricing from the wrong
-  // one undercharges (cost + 24.4% is not a 24.4% margin). Null when nothing
-  // has a cost recorded, so it can never divide by zero.
-  const markup = s.cogs ? Math.round((profit / s.cogs) * 1000) / 10 : null;
+  // Markup (profit against COST rather than against revenue) is deliberately
+  // NOT on this card. It is a pricing tool — you reach for it when setting a
+  // product's price, which is the product form, where it sits beside an
+  // explainer. Here it was a bare percentage next to a similar-looking one,
+  // and the two are genuinely easy to read as each other: on this data, 27.6%
+  // margin and 38.1% markup describe the same ৳34,730.
   const rows = dailyRows ?? [];
   const chartRevenue = rows.reduce((sum, r) => sum + r.revenue, 0);
   const chartOrders = rows.reduce((sum, r) => sum + r.ordersCount, 0);
@@ -173,7 +173,7 @@ export function DashboardPage() {
             s.unitsMissingCost > 0
               ? `${s.unitsMissingCost} unit${s.unitsMissingCost === 1 ? "" : "s"} without a cost price`
               : margin != null
-                ? `${margin}% margin${markup != null ? ` · ${markup}% markup` : ""} · ${formatTaka(s.cogs ?? 0)} cost`
+                ? `${margin}% margin · ${formatTaka(s.cogs ?? 0)} cost`
                 : "No sales yet"
           }
         />
