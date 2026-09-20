@@ -1544,3 +1544,21 @@ Two decisions inside it. On the merchant's call, a booking is **earned money**, 
 Booked is not a step in the customer-facing tracker — forcing it into the linear flow would light no steps at all — so it renders its own notice, like cancelled and refunded do. It has its own teal chip and a matching left accent in the admin list.
 
 310 backend tests, 209 frontend, lint unchanged, builds clean.
+
+## 2026-09-21 — Newsletter became Audience: every email, grouped by where it came from
+
+Merchant asked for account holders, restock waiters and checkout emails to appear alongside the newsletter signups, filterable by group.
+
+Counted first. The page was showing 7 addresses; the shop holds 32. newsletter 7 · customer 14 · order 9 · notify 6, union 32 against a naive sum of 36 — four people came through more than one door, so `all` is the union, never the sum.
+
+The decision worth recording is that the source is kept per address instead of flattened. Only the newsletter signups asked to be marketed to; the rest gave an address to get a receipt, a restock alert or an account. Merging them would erase the only record of which is which, so each row carries origin badges, the CSV ships a Source column, and nothing here adds anyone to the newsletter list — it is a view, not a migration. The footnote says so rather than leaving it to be discovered from a complaint.
+
+Nine of the fifteen restock contacts are phone numbers. They are excluded, because this feeds a CSV meant for an email tool where a phone number in the email column corrupts the import.
+
+Dedup is case-insensitive and keeps the earliest date. Removal is offered only on real newsletter subscriptions — there is nothing to remove about a customer's address short of deleting the account. Export covers the whole filtered set, not the page on screen.
+
+Built in memory rather than a $unionWith: a few dozen rows, four tiny indexed queries, and the multi-source logic stays in one readable place. Past a few thousand addresses it should become a real aggregation.
+
+Sidebar label is now Audience; the route stays /admin/newsletter so bookmarks keep working.
+
+324 backend tests (14 new), 211 frontend, lint unchanged, builds clean.

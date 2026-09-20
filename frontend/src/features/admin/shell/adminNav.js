@@ -24,7 +24,10 @@ export const ADMIN_NAV = [
   { to: "categories", label: "Categories", icon: Tag },
   { to: "customers", label: "Customers", icon: Users },
   { to: "coupons", label: "Coupons", icon: Ticket },
-  { to: "newsletter", label: "Newsletter", icon: Mail },
+  // Route stays /admin/newsletter (bookmarks, and the module is still the
+  // newsletter module) — only the label moved, because the page now lists every
+  // address the shop holds, not just the signup form.
+  { to: "newsletter", label: "Audience", icon: Mail },
   { to: "reports", label: "Reports", icon: BarChart3 },
   { to: "pages", label: "Pages", icon: FileText },
   { to: "settings", label: "Settings", icon: SlidersHorizontal },

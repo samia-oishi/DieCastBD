@@ -1,4 +1,5 @@
 import { NewsletterSubscriber } from "./newsletter.model.js";
+import { listAudience, getAudienceCounts } from "./audience.service.js";
 import { ApiError } from "../../utils/apiError.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -29,6 +30,23 @@ export const listSubscribersAdmin = asyncHandler(async (req, res) => {
   ]);
 
   sendSuccess(res, { data: items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+});
+
+/** Every address the shop holds, grouped by where it came from.
+ *
+ * Separate from listSubscribersAdmin rather than replacing it: that endpoint
+ * backs the actual marketing list, and the two answer different questions —
+ * "who opted in" versus "whose email do we have". Counts ride along in `meta`
+ * so the filter chips can show them without four more round trips.
+ */
+export const listAudienceAdmin = asyncHandler(async (req, res) => {
+  const { page, limit, source, q } = req.query;
+  const [{ items, meta }, counts] = await Promise.all([
+    listAudience({ source, q, page, limit }),
+    getAudienceCounts(),
+  ]);
+
+  sendSuccess(res, { data: items, meta: { ...meta, counts } });
 });
 
 export const deleteSubscriberAdmin = asyncHandler(async (req, res) => {
