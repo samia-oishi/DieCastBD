@@ -58,7 +58,10 @@ const envSchema = z.object({
 
   // Resend is not wired until Phase 8 (order emails) — optional for now so earlier phases aren't blocked on it.
   RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.union([z.string().email("EMAIL_FROM must be a valid email"), z.literal("")]).optional(),
+  // NOTE: there is deliberately no EMAIL_FROM here. The sender must carry a
+  // display name ("DiecastBD <orders@diecastbd.com>"), which Zod's .email()
+  // rejects — so an env var would have made the correct value unsettable and
+  // crashed the boot. It lives in src/emails/sender.js instead.
 
   // bKash is not wired until Phase 8 (checkout) — optional for now so earlier phases aren't blocked on it.
   BKASH_USERNAME: z.string().optional(),

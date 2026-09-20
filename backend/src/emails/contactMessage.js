@@ -1,5 +1,5 @@
 import { getResendClient } from "./resendClient.js";
-import { env } from "../config/env.js";
+import { EMAIL_FROM } from "./sender.js";
 import { isEmail } from "../modules/restockAlerts/contactType.js";
 
 // Plain and minimal — this is an internal notification to the store owner, not
@@ -24,7 +24,7 @@ export async function sendContactMessageEmail({ name, contact, orderId, message 
 
   const resend = getResendClient();
   const { error } = await resend.emails.send({
-    from: env.EMAIL_FROM,
+    from: EMAIL_FROM,
     to: recipient,
     // Only email-shaped contacts can be a valid replyTo (no SMS provider).
     ...(isEmail(contact) ? { replyTo: contact } : {}),

@@ -1,4 +1,5 @@
 import { getResendClient } from "./resendClient.js";
+import { EMAIL_FROM, EMAIL_REPLY_TO } from "./sender.js";
 import { env } from "../config/env.js";
 import { formatAddressArea } from "../utils/address.js";
 
@@ -128,7 +129,8 @@ export async function sendAdminNewOrderEmail(order, recipient) {
 
   const resend = getResendClient();
   const { error } = await resend.emails.send({
-    from: env.EMAIL_FROM,
+    from: EMAIL_FROM,
+    replyTo: EMAIL_REPLY_TO,
     to: recipient,
     subject: `New order ${order.orderNumber} — ${formatPrice(order.total)}`,
     html: renderAdminNewOrderHtml(order),

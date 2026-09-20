@@ -1462,3 +1462,15 @@ Margin stays the headline — it is what Reports and `ProductsPage` use, and put
 Verified in the browser: TOM-006 reads ৳161 / 18% / 22%; both figures track live while typing (sale price 880 → 1000 gives ৳281 / 28% / 39%); a new product with no cost shows three dashes and the prompt; selling below cost goes red with negative values. Frontend 175/175, lint clean, build clean.
 
 **Same treatment on the Dashboard Profit card.** `24.4% margin · ৳1,051 cost` became `24.4% margin · 32.3% markup · ৳1,051 cost`, computed as `profit / cogs` to one decimal, matching the margin's precision. Null-guarded on `cogs` so it cannot divide by zero, and the existing `unitsMissingCost` branch still takes priority — when nothing has a cost recorded the card says so rather than showing any percentage. Verified live at 1440px and 390px: the line fits without wrapping (cards 273px and 358px wide), no overflow, no page errors.
+
+## 2026-09-20 — Emails that can be replied to, and a logo that survives a storefront rebuild
+
+Two problems in the same place. Every order email came from `noreply@diecastbd.com`, so a customer replying to ask about their parcel got a bounce and Resend's Insights flagged the suppressed engagement signal. And the templates had no logo — just a text wordmark.
+
+Sender identity collapsed into one file, `backend/src/emails/sender.js`, used by all **five** Resend call sites (the task assumed three — `restockAlert.js` and `contactMessage.js` were also sending): `from: "DiecastBD <orders@diecastbd.com>"`, `replyTo: "diecastbd.official@gmail.com"`. `From` stays on the verified root domain on purpose — moving it to the Gmail address would break DKIM/DMARC alignment. `contactMessage.js` keeps its own dynamic `replyTo` so replies reach the customer who wrote in.
+
+It had to be a constant rather than an env var: `EMAIL_FROM` was Zod-validated with `.email()`, which rejects `Name <addr>`, so the correct value would have crashed the boot. That variable is now removed from `env.js`, `.env.example` and `DEPLOYMENT.md`.
+
+The logo ships from the backend's own `public/` at `api.diecastbd.com/email-logo.png` — Gmail strips CID, and the storefront copy is content-hashed by Vite, which would have broken the image in already-sent mail on the next frontend deploy. `vercel.json` gained `includeFiles: ["public/**"]`; without it `@vercel/node` would not have bundled the file at all. Sized 144×21 from a 288×42 source rather than the requested ~120px, because 48:7 does not give an integer height at 120 and the rounding would have stretched the wordmark ~3%.
+
+Verified: 289 tests green; `/email-logo.png` serves `image/png` locally and unknown paths 404 (no SPA fallback on this host); one real send through the existing code path, Resend id `01a0bff2-f14e-777c-ae25-09c514877d3a`. **Not yet verifiable:** the production logo URL 200s only once this is deployed.

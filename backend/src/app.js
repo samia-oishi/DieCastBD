@@ -1,3 +1,6 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -71,6 +74,29 @@ app.get("/health", (req, res) => sendSuccess(res, { data: { uptime: process.upti
 app.get("/robots.txt", (req, res) => {
   res.type("text/plain").send("User-agent: *\nAllow: /sitemap.xml\nDisallow: /\n");
 });
+
+// Assets referenced by transactional email, served from THIS host on purpose.
+// Email HTML needs an absolute, permanently stable https URL: Gmail strips CID
+// attachments, and the storefront's copy of the logo lives in frontend/src/assets
+// where Vite content-hashes the filename on every build — an emailed <img> would
+// break the next time the storefront deploys. Hosting it beside the code that
+// sends the mail keeps the two in one deploy.
+//
+// Above the connectDB gate deliberately (same reasoning as /health): a logo must
+// still render when Mongo is unreachable. `includeFiles` in vercel.json is what
+// actually ships public/ into the lambda — @vercel/node bundles by static
+// analysis and cannot see a runtime express.static path.
+const EMAIL_ASSET_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "../public");
+app.use(
+  express.static(EMAIL_ASSET_DIR, {
+    // Long cache: the filename is stable, and mailbox providers proxy and cache
+    // the image anyway. Bump the filename, not this header, to change the logo.
+    maxAge: "30d",
+    immutable: true,
+    index: false,
+    dotfiles: "ignore",
+  })
+);
 
 // On Vercel the Express app itself is the serverless handler (Vercel's runtime
 // auto-detects the exported Express server), so requests never pass through

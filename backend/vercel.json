@@ -1,10 +1,31 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "builds": [{ "src": "api/index.js", "use": "@vercel/node" }],
-  "routes": [{ "src": "/(.*)", "dest": "api/index.js" }],
+  "builds": [
+    {
+      "src": "api/index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "public/**"
+        ]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/index.js"
+    }
+  ],
   "crons": [
-    { "path": "/api/v1/cron/release-stale-reservations", "schedule": "30 0 * * *" },
-    { "path": "/api/v1/cron/analytics-rollup", "schedule": "5 0 * * *" }
+    {
+      "path": "/api/v1/cron/release-stale-reservations",
+      "schedule": "30 0 * * *"
+    },
+    {
+      "path": "/api/v1/cron/analytics-rollup",
+      "schedule": "5 0 * * *"
+    }
   ]
 }

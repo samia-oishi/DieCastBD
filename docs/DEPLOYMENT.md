@@ -104,7 +104,7 @@ missing (Zod-validated in `src/config/env.js`).
 | `JWT_ACCESS_EXPIRES_IN` / `JWT_REFRESH_EXPIRES_IN` | `15m` / `30d` (defaults) |
 | `CRON_SECRET` | random; Vercel Cron sends it as `Authorization: Bearer …` |
 | `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY` | service account (keep `\n` escapes in the key) |
-| `CLOUDINARY_*` · `RESEND_API_KEY` · `EMAIL_FROM` (`noreply@diecastbd.com`) | as provisioned |
+| `CLOUDINARY_*` · `RESEND_API_KEY` | as provisioned. There is deliberately **no `EMAIL_FROM`** — the sender needs a display name (`DiecastBD <orders@diecastbd.com>`), which the Zod `.email()` check rejects, so setting it here would fail the boot. It lives in `src/emails/sender.js`. A leftover `EMAIL_FROM` in the dashboard is now ignored and can be deleted. |
 | `ADMIN_EMAILS` | comma-separated; auto-promoted to `admin` on first **verified** sign-in |
 | `STEADFAST_API_KEY` | Steadfast courier — Settings → API in their merchant panel. **Optional**: unset hides the courier controls in the admin instead of showing buttons that can only fail. |
 | `STEADFAST_SECRET_KEY` | The **second, different** value on that screen — the key and secret are not the same string. Steadfast locks the account after repeated auth failures, so a wrong pair is not harmless. |

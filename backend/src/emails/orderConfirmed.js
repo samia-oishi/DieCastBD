@@ -1,4 +1,5 @@
 import { getResendClient } from "./resendClient.js";
+import { EMAIL_FROM, EMAIL_REPLY_TO, renderEmailLogo } from "./sender.js";
 import { env } from "../config/env.js";
 import { formatAddressArea } from "../utils/address.js";
 
@@ -65,7 +66,7 @@ function renderOrderConfirmedHtml(order, user) {
     <table role="presentation" width="100%" style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden;">
       <tr>
         <td style="background: #0a0a0a; padding: 24px 32px;">
-          <span style="color: #a3e635; font-size: 20px; font-weight: 700; letter-spacing: 0.5px;">DIECAST<span style="color: #ffffff;">BD</span></span>
+          ${renderEmailLogo()}
         </td>
       </tr>
       <tr>
@@ -137,7 +138,8 @@ export async function sendOrderConfirmedEmail(order, user) {
 
   const resend = getResendClient();
   const { error } = await resend.emails.send({
-    from: env.EMAIL_FROM,
+    from: EMAIL_FROM,
+    replyTo: EMAIL_REPLY_TO,
     to: user.email,
     subject: `${order.orderNumber} is confirmed — we're getting it ready`,
     html: renderOrderConfirmedHtml(order, user),

@@ -9,12 +9,15 @@ vi.mock("../../src/emails/resendClient.js", () => ({
 vi.mock("../../src/config/env.js", () => ({
   env: {
     RESEND_API_KEY: "test-key",
-    EMAIL_FROM: "DiecastBD <noreply@diecastbd.com>",
     CLIENT_URL: "https://diecastbd.com",
     ADMIN_EMAILS: ["diecastbd.official@gmail.com"],
   },
 }));
 
+// Deliberately NOT mocked: the sender identity is the thing under test. Asserting
+// against the real constants catches a regression to a no-reply address, which
+// bounces customer replies and costs us inbox placement.
+const { EMAIL_FROM, EMAIL_REPLY_TO } = await import("../../src/emails/sender.js");
 const { sendAdminNewOrderEmail } = await import("../../src/emails/adminNewOrder.js");
 const { sendOrderConfirmedEmail, shouldSendOrderConfirmedEmail } = await import("../../src/emails/orderConfirmed.js");
 
@@ -70,12 +73,13 @@ describe("shouldSendOrderConfirmedEmail", () => {
 });
 
 describe("sendAdminNewOrderEmail", () => {
-  it("sends to the given recipient from EMAIL_FROM with the order essentials", async () => {
+  it("sends to the given recipient from the shared sender with the order essentials", async () => {
     await sendAdminNewOrderEmail(order, "diecastbd.official@gmail.com");
     expect(sendMock).toHaveBeenCalledTimes(1);
     const msg = sendMock.mock.calls[0][0];
     expect(msg.to).toBe("diecastbd.official@gmail.com");
-    expect(msg.from).toBe("DiecastBD <noreply@diecastbd.com>");
+    expect(msg.from).toBe(EMAIL_FROM);
+    expect(msg.replyTo).toBe(EMAIL_REPLY_TO);
     expect(msg.subject).toContain("DBD-2501");
     expect(msg.html).toContain("MINI GT #1094 Toyota Supra");
     expect(msg.html).toContain("https://diecastbd.com/admin/orders/68b000000000000000000001");
@@ -109,6 +113,21 @@ describe("sendAdminNewOrderEmail", () => {
   it("throws when Resend reports an error so the caller's catch can log it", async () => {
     sendMock.mockResolvedValueOnce({ data: null, error: { message: "domain not verified" } });
     await expect(sendAdminNewOrderEmail(order, "x@y.z")).rejects.toThrow("domain not verified");
+  });
+});
+
+describe("sender identity", () => {
+  it("sends From the verified domain — never the Gmail address, which would break DKIM/DMARC alignment", () => {
+    expect(EMAIL_FROM).toBe("DiecastBD <orders@diecastbd.com>");
+    expect(EMAIL_FROM).not.toMatch(/noreply/i);
+  });
+
+  it("points replies at a mailbox that actually receives them", async () => {
+    await sendOrderConfirmedEmail(order, { name: "T", email: "t@e.com" });
+    const msg = sendMock.mock.calls[0][0];
+    expect(msg.from).toBe(EMAIL_FROM);
+    // A customer hitting Reply must reach a human, not a black hole.
+    expect(msg.replyTo).toBe(EMAIL_REPLY_TO);
   });
 });
 

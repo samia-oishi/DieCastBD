@@ -1,4 +1,5 @@
 import { getResendClient } from "./resendClient.js";
+import { EMAIL_FROM, EMAIL_REPLY_TO, renderEmailLogo } from "./sender.js";
 import { env } from "../config/env.js";
 import { formatAddressArea } from "../utils/address.js";
 
@@ -41,7 +42,7 @@ function renderOrderConfirmationHtml(order, user) {
     <table role="presentation" width="100%" style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden;">
       <tr>
         <td style="background: #0a0a0a; padding: 24px 32px;">
-          <span style="color: #a3e635; font-size: 20px; font-weight: 700; letter-spacing: 0.5px;">DIECAST<span style="color: #ffffff;">BD</span></span>
+          ${renderEmailLogo()}
         </td>
       </tr>
       <tr>
@@ -115,7 +116,8 @@ export async function sendOrderConfirmationEmail(order, user) {
   // The SDK resolves to {data, error} on API-level failures rather than throwing —
   // without this check a failed send would never reach the caller's catch block.
   const { error } = await resend.emails.send({
-    from: env.EMAIL_FROM,
+    from: EMAIL_FROM,
+    replyTo: EMAIL_REPLY_TO,
     to: user.email,
     // "Order received", not "confirmed" — confirmation is a separate email the
     // admin triggers from the dashboard (orderConfirmed.js). Two emails both
