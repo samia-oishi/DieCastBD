@@ -26,6 +26,9 @@ const RANGE_CHIPS = [
   { value: "7", label: "7 days", days: 7 },
   { value: "30", label: "30 days", days: 30 },
   { value: "90", label: "90 days", days: 90 },
+  // `days: "all"` is passed through to the API as-is; the daily endpoint
+  // special-cases it and returns the entire rollup history uncapped.
+  { value: "all", label: "All time", days: "all" },
 ];
 
 const RANGE_NOUN = {
@@ -33,8 +36,12 @@ const RANGE_NOUN = {
   7: "in the last 7 days",
   30: "in the last 30 days",
   90: "in the last 90 days",
+  all: "all time",
 };
 
+// No entry for "all" on purpose: there is no period before all of history to
+// compare against, so the delta pills are omitted rather than shown against an
+// empty window, which would read as a meaningless +100% on every card.
 const PRIOR_LABEL = { today: "vs yesterday", 7: "vs prior week", 30: "vs prior month", 90: "vs prior quarter" };
 
 const PIPELINE_LABELS = {
@@ -61,6 +68,8 @@ function todayEyebrow() {
  * prior period had zero revenue a percentage is undefined, so it shows a plain
  * "▲ vs …" growth marker instead of a fabricated number; nothing when both are 0. */
 function DeltaPill({ current, prior, period }) {
+  // No period label means the range has no comparison window (All time).
+  if (!period) return null;
   if (prior > 0) {
     const pct = Math.round(((current - prior) / prior) * 100);
     const up = pct >= 0;
@@ -226,7 +235,9 @@ export function DashboardPage() {
       {/* Revenue chart — follows the same range chip as the KPIs above */}
       <SectionPanel
         title="Revenue & orders"
-        description={`${formatTaka(chartRevenue)} · ${chartOrders} order${chartOrders === 1 ? "" : "s"} over the last ${chip.days} days`}
+        description={`${formatTaka(chartRevenue)} · ${chartOrders} order${chartOrders === 1 ? "" : "s"} ${
+          chip.days === "all" ? "across all time" : `over the last ${chip.days} days`
+        }`}
       >
         {chartLoading ? (
           <div className="flex h-60 items-center justify-center text-sm text-faint">Loading…</div>

@@ -15,6 +15,9 @@ const RANGES = [
   { value: "7", label: "7 days" },
   { value: "30", label: "30 days" },
   { value: "90", label: "90 days" },
+  // Sent to the API as the string "all" rather than a number — the daily
+  // endpoint caps numeric days at 90, so no integer can mean "everything".
+  { value: "all", label: "All time" },
 ];
 
 function formatDate(dateKey) {
@@ -37,7 +40,7 @@ function downloadCsv(rows, days) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `diecastbd-daily-report-last-${days}-days.csv`;
+  link.download = days === "all" ? "diecastbd-daily-report-all-time.csv" : `diecastbd-daily-report-last-${days}-days.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -56,7 +59,10 @@ function Kpi({ label, value, sub, tone }) {
 
 export function ReportsPage() {
   const [days, setDays] = useState("30");
-  const { data, isLoading } = useAnalyticsDaily(Number(days));
+  // "all" must stay a string; Number("all") is NaN, which the API would fall
+  // back to its 30-day default for — silently showing a month under a chip
+  // that says All time.
+  const { data, isLoading } = useAnalyticsDaily(days === "all" ? "all" : Number(days));
 
   const rows = data ?? [];
   const sum = (pick) => rows.reduce((n, r) => n + (pick(r) ?? 0), 0);

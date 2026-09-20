@@ -1488,3 +1488,15 @@ Changing `homeQueries.js` and not `HomePage.jsx` is the whole trick: `scripts/pr
 Left alone on purpose: the shop page still lists sold-out items (sunk via `soldOutLast`) so indexed product URLs aren't stranded, and the admin-pinned Featured spotlight still shows whatever was pinned.
 
 Verified: live API returns only `availableStock > 0` for all three queries; 180 frontend tests green (4 new); build clean.
+
+## 2026-09-21 — All time on the Dashboard and Reports
+
+Merchant asked for an "All time" option alongside 7/30/90 on both admin pages — the lifetime total was not visible anywhere in the admin.
+
+Checked coverage before building, since an All time chip that silently shows 90 days would be worse than none: the rollup runs 2026-07-28 → 2026-09-20, 55 rows, against a first order on 2026-07-28. Complete, nothing to backfill.
+
+The real trap was the daily endpoint: `Math.min(Number(days) || 30, 90)` means no integer can mean "everything", and `Number("all")` is NaN, which falls straight through to the 30-day default. So "all" is a string sentinel end to end, and `getDailyHistory(null)` skips `.limit()`. Uncapped is safe — one small document per day.
+
+Dropped the prior-period delta for this range on purpose. Nothing precedes all of history, so comparing against an empty window would print `+100%` on every card. The service returns a zeroed prior and skips the query; `DeltaPill` renders nothing without a period label.
+
+Verified against production: `all` gives 46 orders / ৳1,29,820, identical to `90` — right, because the shop is 56 days old; they separate once history passes 90 days. 297 backend tests (8 new), 180 frontend, lint and build clean.

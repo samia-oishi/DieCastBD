@@ -116,8 +116,14 @@ const RANGE_DAYS = { today: 0, "7": 6, "30": 29, "90": 89 };
  * history, but the dashboard must never lag behind a confirmation the merchant
  * just made. */
 export async function getSummary(range = "today") {
-  const days = RANGE_DAYS[String(range)] ?? RANGE_DAYS.today;
-  const startKey = dateKeyDaysAgo(days);
+  const key = String(range);
+  // "all" has no window: start at the epoch so every order ever placed counts.
+  // It also has no PRIOR window — there is no period before all of history, and
+  // comparing against an empty one would put a meaningless "+100%" on the
+  // dashboard — so the delta is reported as zeros and the UI omits the pill.
+  const isAllTime = key === "all";
+  const days = RANGE_DAYS[key] ?? RANGE_DAYS.today;
+  const startKey = isAllTime ? "1970-01-01" : dateKeyDaysAgo(days);
   const start = new Date(`${startKey}T00:00:00.000Z`);
 
   const [orders, newCustomers, lowStockCount, valuation, pending] = await Promise.all([
@@ -134,10 +140,12 @@ export async function getSummary(range = "today") {
 
   // The immediately-preceding window of equal length, for the delta pills.
   const priorStart = new Date(`${dateKeyDaysAgo(days * 2 + 1)}T00:00:00.000Z`);
-  const priorOrders = await Order.find({
-    createdAt: { $gte: priorStart, $lt: start },
-    status: { $in: REVENUE_ORDER_STATUSES },
-  });
+  const priorOrders = isAllTime
+    ? []
+    : await Order.find({
+        createdAt: { $gte: priorStart, $lt: start },
+        status: { $in: REVENUE_ORDER_STATUSES },
+      });
   const prior = sumOrderMetrics(priorOrders);
 
   return {
@@ -153,8 +161,12 @@ export async function getSummary(range = "today") {
   };
 }
 
+/** The last `days` rollup rows, oldest-first. `days: null` means all of them —
+ * one document per day, so the whole history is small enough to send at once. */
 export async function getDailyHistory(days = 30) {
-  return AnalyticsDaily.find().sort({ date: -1 }).limit(days).then((rows) => rows.reverse());
+  const query = AnalyticsDaily.find().sort({ date: -1 });
+  if (days != null) query.limit(days);
+  return query.then((rows) => rows.reverse());
 }
 
 // `date` is a YYYY-MM-DD string, so lexicographic comparison sorts/ranges
