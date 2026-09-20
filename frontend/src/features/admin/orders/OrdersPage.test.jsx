@@ -198,6 +198,33 @@ describe("OrdersPage — bulk status change", () => {
     expect(await screen.findByRole("menuitem", { name: "Booked" })).toBeInTheDocument();
   });
 
+  it("renders its menu ABOVE the bulk bar, not behind it", async () => {
+    renderPage();
+    await userEvent.click(screen.getByLabelText("Select order DBD-1"));
+    await userEvent.click(screen.getByRole("button", { name: /change status/i }));
+    const menu = await screen.findByRole("menu");
+
+    // The bar is fixed and z-indexed; a menu below it gets painted over and its
+    // last item clipped. Compared numerically rather than pinned to a literal
+    // so moving either one can't silently re-bury the menu.
+    const zOf = (el) => Number(/z-\[(\d+)\]/.exec(el.className ?? "")?.[1] ?? 0);
+    const bar = screen.getByText("selected").closest(".pointer-events-auto")?.parentElement;
+    const barZ = zOf(bar);
+    // Guard against the comparison passing because neither side was found.
+    expect(barZ).toBeGreaterThan(0);
+    expect(zOf(menu.parentElement) || zOf(menu)).toBeGreaterThan(barZ);
+  });
+
+  it("styles the trigger for a dark bar, not a light one", async () => {
+    renderPage();
+    await userEvent.click(screen.getByLabelText("Select order DBD-1"));
+    const trigger = screen.getByRole("button", { name: /change status/i });
+    // "outline" is border-ink/text-ink — dark on dark, effectively invisible on
+    // the bulk bar. "glass" is the variant meant for it.
+    expect(trigger.className).not.toContain("text-ink");
+    expect(trigger.className).toContain("border-white/25");
+  });
+
   it("does not offer refunded in bulk — that is a money decision per order", async () => {
     renderPage();
     await userEvent.click(screen.getByLabelText("Select order DBD-1"));

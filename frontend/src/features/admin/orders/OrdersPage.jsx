@@ -356,12 +356,18 @@ export function OrdersPage() {
       <BulkBar count={selectedIds.length}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <AdminButton variant="outline" size="sm" disabled={bulkStatusMutation.isPending}>
+            {/* "glass" is the variant built for these dark bars — "outline" is
+                border-ink/text-ink, which renders dark-on-dark and all but
+                disappears here. Matches the Products bulk bar. */}
+            <AdminButton variant="glass" size="sm" disabled={bulkStatusMutation.isPending}>
               <PackageCheck size={15} strokeWidth={2.2} />
               {bulkStatusMutation.isPending ? "Updating…" : "Change status"}
             </AdminButton>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          {/* The bulk bar is z-[60] and DropdownMenuContent defaults to z-50, so
+              without this the bar paints over its own menu and clips the last
+              item. sideOffset lifts it clear of the bar's edge. */}
+          <DropdownMenuContent align="end" side="top" sideOffset={10} className="z-[70] w-52">
             <DropdownMenuLabel>Move {selectedIds.length} order{selectedIds.length === 1 ? "" : "s"} to</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {BULK_STATUSES.map((value) => (
