@@ -13,6 +13,11 @@ function SkeletonSlide() {
  * with its own 16px padding, then re-aligns to the Container on desktop. */
 export function ProductCarousel({ title, subtitle, products, isLoading, viewAllHref, viewAllLabel, className }) {
   const { ref, dragProps } = useDragScroll();
+  // Nothing to show: render nothing, rather than a heading and "View all" over
+  // an empty row. Reachable on the homepage now that the carousels ask for
+  // in-stock products only — a section whose every item is sold out comes back
+  // empty. Guarded on !isLoading so the skeletons still get their first pass.
+  if (!isLoading && !products?.length) return null;
   return (
     <section className={className}>
       <Container>

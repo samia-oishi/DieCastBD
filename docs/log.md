@@ -1474,3 +1474,17 @@ It had to be a constant rather than an env var: `EMAIL_FROM` was Zod-validated w
 The logo ships from the backend's own `public/` at `api.diecastbd.com/email-logo.png` — Gmail strips CID, and the storefront copy is content-hashed by Vite, which would have broken the image in already-sent mail on the next frontend deploy. `vercel.json` gained `includeFiles: ["public/**"]`; without it `@vercel/node` would not have bundled the file at all. Sized 144×21 rather than the requested ~120px, because 48:7 does not give an integer height at 120 and the rounding would have stretched the wordmark ~3%. Opening the first test send on a phone then showed Gmail's mobile dark mode **inverting** the template — the white card rendered dark and the dark header cell rendered white, which would have made the white-on-dark wordmark invisible. Gmail does not recolour image pixels, so the `#0a0a0a` plate is now baked into the PNG: final asset 168×45 from a 336×90 source. These templates are bare fragments with no `<head>`, so the `<meta name="color-scheme">` opt-out was not an option.
 
 Verified: 289 tests green; `/email-logo.png` serves `image/png` locally and unknown paths 404 (no SPA fallback on this host); one real send through the existing code path, Resend id `01a0bff2-f14e-777c-ae25-09c514877d3a`. **Not yet verifiable:** the production logo URL 200s only once this is deployed.
+
+## 2026-09-21 — Sold-out cars are out of the homepage shop window
+
+Merchant asked that Collector Picks, Featured products and New arrivals stop listing items that are already out of stock. Checked production first: **New arrivals was 7 of 8 sold out**, so the section meant to show what just landed was almost entirely unbuyable.
+
+One filter, `inStock: true`, on all three queries in `frontend/src/features/home/homeQueries.js`. No backend work — the filter already existed and already tests **available** stock (`stock − reservedStock`), the same rule `ProductCard` uses for its "Out of stock" label, so a fully-reserved item drops out of the carousel exactly when the card would have called it sold out.
+
+Changing `homeQueries.js` and not `HomePage.jsx` is the whole trick: `scripts/prerender.mjs` imports that same object, so the baked payload keys follow the page. `paramsKey.test.js` failed on the change, which is exactly what it exists for — updated, and it now also asserts all three queries carry `inStock`.
+
+`ProductCarousel` gained an early return. A filtered section can come back empty, and the old code would have rendered a heading and "View all" above an empty row.
+
+Left alone on purpose: the shop page still lists sold-out items (sunk via `soldOutLast`) so indexed product URLs aren't stranded, and the admin-pinned Featured spotlight still shows whatever was pinned.
+
+Verified: live API returns only `availableStock > 0` for all three queries; 180 frontend tests green (4 new); build clean.

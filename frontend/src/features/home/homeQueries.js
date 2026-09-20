@@ -10,8 +10,19 @@
  * Params must be plain and serialisable: they become the payload key via
  * `paramsKey()`.
  */
+/** `inStock: true` on all three: the homepage is a shop window, and a sold-out
+ * car in it wastes the best slots on the site — a visitor taps through, finds
+ * they cannot buy, and that is the first impression. The backend resolves this
+ * against AVAILABLE stock (stock − reservedStock), the same rule ProductCard
+ * uses to print "Out of stock", so a fully-reserved item drops out too.
+ *
+ * Note this can legitimately return FEWER than `limit` items, and an empty list
+ * when everything in a section is sold out — ProductCarousel and
+ * FeaturedSpotlight both render nothing at all in that case rather than a
+ * heading over an empty row. The shop page is unaffected; it still lists
+ * sold-out items, sunk to the bottom via `soldOutLast`. */
 export const HOME_PRODUCT_QUERIES = {
-  collectorPicks: { hero: true, limit: 8 },
-  newArrivals: { newArrival: true, limit: 8, sort: "newest" },
-  featured: { featured: true, limit: 4 },
+  collectorPicks: { hero: true, inStock: true, limit: 8 },
+  newArrivals: { newArrival: true, inStock: true, limit: 8, sort: "newest" },
+  featured: { featured: true, inStock: true, limit: 4 },
 };

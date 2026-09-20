@@ -32,9 +32,15 @@ describe("paramsKey", () => {
 
   it("produces the exact keys the prerender writes for the homepage", () => {
     // Guards against a rename on either side of the bake.
-    expect(paramsKey(HOME_PRODUCT_QUERIES.collectorPicks)).toBe("hero=true&limit=8");
-    expect(paramsKey(HOME_PRODUCT_QUERIES.newArrivals)).toBe("limit=8&newArrival=true&sort=newest");
-    expect(paramsKey(HOME_PRODUCT_QUERIES.featured)).toBe("featured=true&limit=4");
+    expect(paramsKey(HOME_PRODUCT_QUERIES.collectorPicks)).toBe("hero=true&inStock=true&limit=8");
+    expect(paramsKey(HOME_PRODUCT_QUERIES.newArrivals)).toBe("inStock=true&limit=8&newArrival=true&sort=newest");
+    expect(paramsKey(HOME_PRODUCT_QUERIES.featured)).toBe("featured=true&inStock=true&limit=4");
+  });
+
+  it("every homepage query asks for in-stock only — the shop window never shows a car you can't buy", () => {
+    for (const [name, params] of Object.entries(HOME_PRODUCT_QUERIES)) {
+      expect(params.inStock, `${name} must filter out sold-out products`).toBe(true);
+    }
   });
 });
 
