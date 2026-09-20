@@ -74,3 +74,4 @@ Commit `eec40d3`. Two changes to how the backend sends mail through Resend.
   `docs/log.md` (rewriting it would falsify the chronological log), and a regression
   guard in `orderEmails.test.js` asserting the string is *absent*.
 - Recorded as decision #103 in `docs/plan.md` §7 and an entry in `docs/log.md`.
+hello
