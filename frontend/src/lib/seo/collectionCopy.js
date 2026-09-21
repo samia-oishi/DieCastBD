@@ -30,6 +30,17 @@ export const SEO_COPY = {
     description:
       "Buy authentic MINI GT 1:64 diecast in Bangladesh — JDM legends, supercars and race liveries. Verified castings, collector-grade packaging, cash on delivery nationwide.",
   },
+  // The long-tail half of the Hot Wheels cluster. /brand/hotwheels owns the head
+  // term and leads with premium because that is most of the catalogue; this page
+  // owns "hot wheels mainline price in bangladesh", which the brand page only
+  // mentions in passing. They are not competing: this is a 12-product SUBSET of
+  // the 55 on the brand page, which is also why it kept its URL when
+  // /category/hot-wheels (52 of those 55 — the same page twice) did not.
+  mainlines: {
+    title: "Hot Wheels Mainline Price in Bangladesh — 1:64 Singles",
+    description:
+      "Hot Wheels mainline singles in Bangladesh — the everyday 1:64 range, authentic Mattel castings. Cash on delivery and nationwide shipping.",
+  },
   "premium-singles": {
     title: "Premium 1:64 Diecast Singles in Bangladesh",
     description:
