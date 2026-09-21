@@ -147,6 +147,29 @@ nothing to redirect and nothing to break. What still needs a redirect is a brand
 **deleted outright**. A collection that is live but has no products in it marks itself
 `noindex, follow` and drops out of the sitemap on its own — it does not need one either.
 
+### Catalogue changes and Google — what to do after each kind of edit
+
+Nothing in admin reaches Google by itself. The **sitemap** is generated live from the
+database (cached one hour), but the **page's title, description and canonical are baked at
+build time**, so a URL added since the last build serves the neutral shell: generic title,
+**no canonical**. Verified 2026-09-21 against production — a prerendered product returns its
+real `<title>` and canonical; an unbuilt path returns `DiecastBD — Premium Diecast
+Collectibles` and no canonical at all.
+
+| You did this in admin | What it does to SEO | What to do |
+|---|---|---|
+| **Added** a product, brand, category or guide | In the sitemap within the hour; page has no real title/description/canonical until a build | **Redeploy the frontend on Vercel** after a batch of additions |
+| A product **sold out** | Nothing — the page keeps ranking and its schema already says `OutOfStock` | Nothing. Leave it active |
+| **Drafted** a product | Its URL keeps returning 200 with "Page not found" — a Soft 404 | Only draft something you are dropping for good, and add its 301 in the same change |
+| **Deactivated** a brand or category | Removes it from the shop filters only; the page stays live (plan.md #109) | Nothing |
+| A collection has **no products** in it | It marks itself `noindex, follow` and leaves the sitemap on its own | Nothing |
+| **Renamed** anything | Safe — display names are free, the URL is frozen (plan.md #90) | Nothing |
+| **Deleted** a brand, category or page outright | The URL becomes a Soft 404 | Add its 301 to `vercel.json` in the same change |
+| **Unpublished** a CMS page/guide | Same as deleting it | Add its 301 |
+
+The rule underneath all of it: **a URL that has ever been indexed must always answer with
+either real content or a 301 — never a 200 that says "Page not found".**
+
 ### Prerendering (`scripts/prerender.mjs`) — read this before touching the build
 
 `npm run build` = `vite build` → `prerender.mjs` → `verify-prerender.mjs`. The prerender fetches
