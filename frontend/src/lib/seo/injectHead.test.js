@@ -143,3 +143,28 @@ describe("buildHeadTags", () => {
     expect(tags.filter((t) => t.key === null)).toHaveLength(2);
   });
 });
+
+describe("buildHeadTags — robots", () => {
+  it("bakes a robots meta when the model excludes itself from the index", () => {
+    const html = buildHeadTags({ noindex: true })
+      .map((t) => t.html)
+      .join("");
+    expect(html).toContain('name="robots"');
+    // `follow`: the page is out of the index, but the links on it still count.
+    expect(html).toContain('content="noindex, follow"');
+  });
+
+  it("emits no robots meta for an ordinary page, so nothing accidentally suppresses one", () => {
+    const html = buildHeadTags({ title: "T", canonical: "https://x/y" })
+      .map((t) => t.html)
+      .join("");
+    expect(html).not.toContain('name="robots"');
+  });
+
+  it("replaces a shell robots tag rather than adding a second one", () => {
+    const shell = '<html><head><meta name="robots" content="index, follow"></head><body><div id="root"></div></body></html>';
+    const out = injectHead(shell, { noindex: true });
+    expect(out.match(/name="robots"/g)).toHaveLength(1);
+    expect(out).toContain('content="noindex, follow"');
+  });
+});

@@ -6,10 +6,25 @@ import { sendSuccess } from "../../utils/apiResponse.js";
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { uploadBufferToCloudinary, deleteFromCloudinary } from "../../utils/cloudinaryUpload.js";
+import { reorderByIds } from "../../utils/reorderByIds.js";
 
-export const listActiveCategories = asyncHandler(async (req, res) => {
-  const categories = await Category.find({ isActive: true }).sort({ sortOrder: 1, name: 1 });
-  sendSuccess(res, { data: categories });
+/** Every category, in merchant-chosen order. Same split as listPublicBrands:
+ * `isActive` controls whether it is offered as a filter, not whether its page
+ * exists (plan.md #109). `activeProductCount` lets the storefront noindex an
+ * empty listing rather than serve a Soft 404. */
+export const listPublicCategories = asyncHandler(async (req, res) => {
+  const categories = await Category.find().sort({ sortOrder: 1, name: 1 }).lean();
+
+  const counts = await Product.aggregate([
+    { $match: { status: "active", isDeleted: false } },
+    { $unwind: "$category" }, // category is an ARRAY on Product, unlike brand
+    { $group: { _id: "$category", count: { $sum: 1 } } },
+  ]);
+  const byId = new Map(counts.map((c) => [String(c._id), c.count]));
+
+  sendSuccess(res, {
+    data: categories.map((c) => ({ ...c, activeProductCount: byId.get(String(c._id)) ?? 0 })),
+  });
 });
 
 export const listAllCategories = asyncHandler(async (req, res) => {
@@ -29,6 +44,12 @@ export const listAllCategories = asyncHandler(async (req, res) => {
   });
 });
 
+/** Same as reorderBrands — the merchant's running order, densely stored. */
+export const reorderCategories = asyncHandler(async (req, res) => {
+  const moved = await reorderByIds(Category, req.body.ids);
+  sendSuccess(res, { message: `Order saved (${moved} updated)` });
+});
+
 export const createCategory = asyncHandler(async (req, res) => {
   const { name, description, parentCategory, sortOrder, content, faqs } = req.body;
   const slug = slugify(name);
@@ -37,7 +58,10 @@ export const createCategory = asyncHandler(async (req, res) => {
     throw ApiError.conflict("A category with this name already exists");
   }
 
-  const category = await Category.create({ name, slug, description, parentCategory, sortOrder, content: sanitizeRichContent(content), faqs });
+  // Appended to the merchant's order, same reasoning as createBrand.
+  const position = sortOrder ?? ((await Category.findOne().sort({ sortOrder: -1 }).select("sortOrder").lean())?.sortOrder ?? -1) + 1;
+
+  const category = await Category.create({ name, slug, description, parentCategory, sortOrder: position, content: sanitizeRichContent(content), faqs });
   sendSuccess(res, { data: category, status: 201, message: "Category created" });
 });
 

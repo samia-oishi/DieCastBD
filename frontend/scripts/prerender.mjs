@@ -315,9 +315,9 @@ async function modelFor(route, ctx) {
     // links. The body gives them both.
     return {
       model: buildProduct({ product: doc, settings, siteUrl }),
-      // activeBrandSlugs: /brands returns ACTIVE brands only, so this stops a
-      // product linking to a deactivated brand whose page is a Soft 404.
-      body: renderProductBody({ product: doc, activeBrandSlugs: new Set(brands.map((b) => b.slug)) }),
+      // Guards against linking a brand that no longer exists at all; a merely
+      // deactivated one still has a live page and is still worth linking.
+      body: renderProductBody({ product: doc, knownBrandSlugs: new Set(brands.map((b) => b.slug)) }),
       // Full document, not trimForCard — the detail page renders description,
       // gallery and specs, and this payload is what keeps it renderable when
       // the API is unreachable in Google's renderer (plan.md #92).
@@ -412,7 +412,7 @@ async function main() {
 
   log(`origin ${PROD_ORIGIN} · api ${API_BASE}${STRICT ? " · STRICT" : ""}`);
 
-  const [settings, products, brands, categories, guides, routes] = await Promise.all([
+  let [settings, products, brands, categories, guides, routes] = await Promise.all([
     api("/settings"),
     fetchAllProducts(),
     api("/brands"),
@@ -438,7 +438,20 @@ async function main() {
     guides: guides ?? [],
   };
 
-  log(`discovered ${routes.length} routes · ${productsBySlug.size} products`);
+  // The sitemap deliberately omits a collection with no products in it — an
+  // empty listing is a Soft 404 risk, so it is not advertised (plan.md #109).
+  // But the PAGE is still live at its URL, and anything Google already knows
+  // about it will be fetched anyway. Bake those routes too, so what comes back
+  // is the real page carrying its own `noindex` rather than the generic shell
+  // head: excluded on purpose, not thin by accident.
+  const bakedRoutes = new Set(routes);
+  for (const [kind, list] of [["brand", ctx.brands], ["category", ctx.categories]]) {
+    for (const c of list) bakedRoutes.add(`/${kind}/${c.slug}`);
+  }
+  const extra = bakedRoutes.size - routes.length;
+  routes = [...bakedRoutes];
+
+  log(`discovered ${routes.length} routes · ${productsBySlug.size} products${extra ? ` · ${extra} unlisted collection page(s)` : ""}`);
 
   // Everything the homepage needs on first paint, fetched from the SAME
   // endpoints the browser would call. Settings alone left the carousels showing

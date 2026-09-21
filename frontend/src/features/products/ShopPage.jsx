@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { useDragScroll } from "@/hooks/useDragScroll";
+import { asFilterOptions } from "@/lib/collectionVisibility";
 import { useBrands } from "@/features/brands/api/useBrands";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { useInfiniteProducts } from "./api/useProducts";
@@ -65,7 +66,11 @@ export function ShopPage() {
   const [searchInput, setSearchInput] = useState(filters.q ?? "");
   const [sheetOpen, setSheetOpen] = useState(false);
   const { ref: toolbarRef, dragProps } = useDragScroll();
-  const { data: brands } = useBrands();
+  // The mobile quick-filter chips are shop filters, so they follow the same
+  // switch as the sidebar pills — a deactivated brand leaves the menus while
+  // its page stays live (plan.md #109).
+  const { data: allBrands } = useBrands();
+  const brands = asFilterOptions(allBrands);
   const { data: settings } = useSettings();
   // Short debounce so results filter live as you type (not only after a long
   // pause) while still coalescing rapid keystrokes into one request.
@@ -193,7 +198,7 @@ export function ShopPage() {
             Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
           </Chip>
           <SortDropdown value={filters.sort} onChange={(sort) => updateFilters({ sort })} className="shrink-0 px-4 py-2.5 text-[12.5px]" />
-          {brands?.map((b) => (
+          {brands.map((b) => (
             <Chip key={b.slug} active={filters.brand === b.slug} onClick={() => updateFilters({ brand: filters.brand === b.slug ? undefined : b.slug })}>
               {b.name}
             </Chip>

@@ -85,6 +85,10 @@ export function buildHeadTags(model) {
       html: `<link rel="canonical" href="${escapeAttr(model.canonical)}" ${MARKER}="1">`,
     });
   }
+  // An empty collection listing is a Soft 404 in Google's eyes, so the page
+  // stays live for visitors but declares itself unindexable (plan.md #109).
+  // Baked as well as rendered: the pre-render pass must see it too.
+  if (model.noindex) tags.push(meta("name", "robots", "noindex, follow"));
   if (model.ogUrl) tags.push(meta("property", "og:url", model.ogUrl));
   if (model.ogType) tags.push(meta("property", "og:type", model.ogType));
   // Only override the shell's static share image when this route has a real one

@@ -5,6 +5,10 @@ export async function listAdminBrands() {
   return data.data;
 }
 
+export async function reorderBrands(ids) {
+  await api.patch("/admin/brands/reorder", { ids });
+}
+
 export async function createBrand(payload) {
   const { data } = await api.post("/admin/brands", payload);
   return data.data;

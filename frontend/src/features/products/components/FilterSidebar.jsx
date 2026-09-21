@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { formatTaka } from "@/lib/currency";
+import { asFilterOptions } from "@/lib/collectionVisibility";
 import { useBrands } from "@/features/brands/api/useBrands";
 import { useCategories } from "@/features/categories/api/useCategories";
 import { useFilterOptions } from "../api/useProducts";
@@ -47,8 +48,12 @@ function PillGroup({ label, options, value, onChange }) {
 /** Filter controls (no card wrapper — the desktop sidebar and the mobile sheet
  * supply their own container). Matches DiecastBD Shop.dc.html. */
 export function FilterSidebar({ filters, updateFilters, clearFilters, activeFilterCount }) {
-  const { data: brands } = useBrands();
-  const { data: categories } = useCategories();
+  // Deactivating a brand removes it from THIS menu and nothing else — its
+  // landing page stays live at the same URL (plan.md #109).
+  const { data: allBrands } = useBrands();
+  const { data: allCategories } = useCategories();
+  const brands = allBrands && asFilterOptions(allBrands);
+  const categories = allCategories && asFilterOptions(allCategories);
   const { data: filterOptions } = useFilterOptions();
 
   const bounds = [filterOptions?.minPrice ?? 0, filterOptions?.maxPrice ?? 5000];

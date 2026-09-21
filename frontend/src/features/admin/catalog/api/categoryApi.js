@@ -5,6 +5,10 @@ export async function listAdminCategories() {
   return data.data;
 }
 
+export async function reorderCategories(ids) {
+  await api.patch("/admin/categories/reorder", { ids });
+}
+
 export async function createCategory(payload) {
   const { data } = await api.post("/admin/categories", payload);
   return data.data;

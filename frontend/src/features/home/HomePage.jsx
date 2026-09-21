@@ -5,6 +5,7 @@ import { SeoHead } from "@/components/shared/Seo";
 import { ProductCarousel } from "@/components/shared/ProductCarousel";
 import { useSettings } from "@/features/settings/api/useSettings";
 import { useProducts, useProduct } from "@/features/products/api/useProducts";
+import { asShelfTiles } from "@/lib/collectionVisibility";
 import { useBrands } from "@/features/brands/api/useBrands";
 import { useCategories } from "@/features/categories/api/useCategories";
 import { HOME_PRODUCT_QUERIES } from "./homeQueries";
@@ -24,8 +25,12 @@ const HERO_CONTENT_KEY = {
 
 export function HomePage() {
   const { data: settings, isLoading: settingsLoading } = useSettings();
-  const { data: brands } = useBrands();
-  const { data: categories } = useCategories();
+  // The shelf is merchandising: switched on by the merchant and actually
+  // stocked. The full lists stay available to anything resolving a URL.
+  const { data: allBrands } = useBrands();
+  const { data: allCategories } = useCategories();
+  const brands = asShelfTiles(allBrands);
+  const categories = asShelfTiles(allCategories);
 
   // Params come from homeQueries.js because scripts/prerender.mjs fetches
   // exactly these at build time and bakes the responses into the HTML — a

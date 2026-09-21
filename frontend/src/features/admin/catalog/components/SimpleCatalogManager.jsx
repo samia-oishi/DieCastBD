@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router";
-import { Pencil, Trash2, ImageUp, Plus } from "lucide-react";
+import { Pencil, Trash2, ImageUp, Plus, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { slugify } from "@/lib/slug";
@@ -28,7 +28,7 @@ import { adminInputCls, adminTextareaCls } from "@/features/admin/shell/adminFie
 import { RichTextEditor } from "@/features/admin/pages/components/RichTextEditor";
 import { catalogItemSchema } from "../schemas/catalogSchemas";
 
-const GRID = "md:grid-cols-[52px_minmax(160px,1fr)_minmax(140px,1fr)_90px_90px_110px]";
+const GRID = "md:grid-cols-[34px_52px_minmax(150px,1fr)_minmax(130px,1fr)_80px_80px_140px]";
 
 function initials(name) {
   return (name ?? "?")
@@ -53,16 +53,21 @@ function LogoTile({ item, imageField }) {
   );
 }
 
-function IconAction({ label, icon: Icon, onClick, danger }) {
+function IconAction({ label, icon: Icon, onClick, danger, disabled }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label={label}
       title={label}
       className={cn(
         "flex size-[30px] items-center justify-center rounded-[9px] border border-line bg-white text-[#6B6E60] transition-colors",
-        danger ? "hover:border-[#F0C9C5] hover:bg-[#FDF6F5] hover:text-danger" : "hover:border-ink hover:text-ink"
+        disabled
+          ? "cursor-not-allowed opacity-35"
+          : danger
+            ? "hover:border-[#F0C9C5] hover:bg-[#FDF6F5] hover:text-danger"
+            : "hover:border-ink hover:text-ink"
       )}
     >
       <Icon size={14} strokeWidth={2} />
@@ -79,6 +84,8 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
 
   const {
     register,
@@ -89,7 +96,9 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
     formState: { errors },
   } = useForm({
     resolver: zodResolver(catalogItemSchema),
-    defaultValues: { name: "", description: "", sortOrder: 0, content: "", faqs: [] },
+    // No sortOrder here on purpose: order is set by dragging the list, and a
+    // second control that silently overwrote it on every save was a trap.
+    defaultValues: { name: "", description: "", content: "", faqs: [] },
   });
   const faqArray = useFieldArray({ control, name: "faqs" });
 
@@ -97,7 +106,7 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
 
   const openCreate = () => {
     setEditingItem(null);
-    reset({ name: "", description: "", sortOrder: 0, content: "", faqs: [] });
+    reset({ name: "", description: "", content: "", faqs: [] });
     setModalOpen(true);
   };
 
@@ -106,7 +115,6 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
     reset({
       name: item.name,
       description: item.description ?? "",
-      sortOrder: item.sortOrder ?? 0,
       content: item.content ?? "",
       faqs: item.faqs ?? [],
     });
@@ -153,6 +161,31 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
 
   const items = resource.list.data ?? [];
 
+  /** Row order IS the storefront order — the whole list goes back with each
+   * move, positions becoming sortOrder (see backend utils/reorderByIds.js).
+   *
+   * Native HTML5 drag & drop, matching BlockCanvas: no drag library is
+   * installed and none is being added. The arrow buttons aren't decoration —
+   * they are the keyboard and touch path, where HTML5 DnD does not work at all.
+   */
+  const move = (from, to) => {
+    if (to < 0 || to >= items.length || from === to) return;
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    resource.reorder.mutate(
+      next.map((item) => item._id),
+      { onError: (err) => adminToast(err.response?.data?.message ?? "Could not save the new order") }
+    );
+  };
+
+  const dropOn = (i) => (e) => {
+    e.preventDefault();
+    if (dragIndex !== null && dragIndex !== i) move(dragIndex, i);
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
   return (
     <div className="flex flex-col gap-[18px]">
       <AdminPageHeader
@@ -169,10 +202,11 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
         <div className="md:min-w-[780px]">
           <div className={cn("hidden items-center gap-3 border-b border-line-soft px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.07em] text-faint md:grid", GRID)}>
             <span />
+            <span />
             <span>Name</span>
             <span>Slug</span>
             <span className="text-right">Products</span>
-            <span>Active</span>
+            <span>Filter</span>
             <span className="text-right">Actions</span>
           </div>
 
@@ -183,14 +217,34 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
             </p>
           )}
 
-          {items.map((item) => (
+          {items.map((item, i) => (
             <div
               key={item._id}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setOverIndex(i);
+              }}
+              onDragLeave={() => setOverIndex((current) => (current === i ? null : current))}
+              onDrop={dropOn(i)}
               className={cn(
-                "grid grid-cols-[52px_1fr] items-center gap-3 border-b border-line-soft px-4 py-3 last:border-b-0 md:px-5 md:py-2.5",
-                GRID
+                "grid grid-cols-[34px_52px_1fr] items-center gap-3 border-b border-line-soft px-4 py-3 last:border-b-0 md:px-5 md:py-2.5",
+                GRID,
+                overIndex === i && dragIndex !== null && dragIndex !== i && "bg-brand-tint"
               )}
             >
+              <span
+                draggable
+                onDragStart={() => setDragIndex(i)}
+                onDragEnd={() => {
+                  setDragIndex(null);
+                  setOverIndex(null);
+                }}
+                title="Drag to reorder"
+                className="flex size-[30px] shrink-0 cursor-grab items-center justify-center rounded-[9px] text-[#B7BAAD] hover:bg-tile hover:text-ink-soft active:cursor-grabbing"
+              >
+                <GripVertical size={14} strokeWidth={2} />
+              </span>
+
               <label className="cursor-pointer" title="Replace image">
                 <LogoTile item={item} imageField={imageField} />
                 <input
@@ -224,6 +278,18 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
                   <Switch checked={item.isActive} onCheckedChange={() => onToggleActive(item)} aria-label={`${item.name} active`} />
                 </span>
                 <span className="flex justify-end gap-1.5">
+                  <IconAction
+                    label={`Move ${item.name} up`}
+                    icon={ChevronUp}
+                    onClick={() => move(i, i - 1)}
+                    disabled={i === 0}
+                  />
+                  <IconAction
+                    label={`Move ${item.name} down`}
+                    icon={ChevronDown}
+                    onClick={() => move(i, i + 1)}
+                    disabled={i === items.length - 1}
+                  />
                   <IconAction label={`Edit ${item.name}`} icon={Pencil} onClick={() => openEdit(item)} />
                   <IconAction label={`Delete ${item.name}`} icon={Trash2} danger onClick={() => setDeletingItem(item)} />
                 </span>
@@ -238,6 +304,18 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
                   </div>
                 </div>
                 <Switch checked={item.isActive} onCheckedChange={() => onToggleActive(item)} aria-label={`${item.name} active`} />
+                <IconAction
+                  label={`Move ${item.name} up`}
+                  icon={ChevronUp}
+                  onClick={() => move(i, i - 1)}
+                  disabled={i === 0}
+                />
+                <IconAction
+                  label={`Move ${item.name} down`}
+                  icon={ChevronDown}
+                  onClick={() => move(i, i + 1)}
+                  disabled={i === items.length - 1}
+                />
                 <IconAction label={`Edit ${item.name}`} icon={Pencil} onClick={() => openEdit(item)} />
               </div>
             </div>
@@ -246,8 +324,10 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
       </section>
 
       <p className="text-[12px] leading-[1.6] text-faint">
-        Turning one off hides it from the storefront menus but keeps its products. Deleting one doesn&apos;t delete
-        products — they simply lose this {singular.toLowerCase()}.
+        Drag a row by its handle — or use the arrows — to set the order customers see in the shop filters, the
+        homepage shelf and the {singular.toLowerCase()} lists. Turning one off removes it from the shop filter only:
+        its page stays live at the same link, so nothing you&apos;ve shared or that Google has indexed breaks.
+        Deleting one doesn&apos;t delete products — they simply lose this {singular.toLowerCase()}.
       </p>
 
       {modalOpen && (
@@ -313,11 +393,6 @@ export function SimpleCatalogManager({ title, singular, resource, imageField = "
                 Shown as the intro paragraph on the {singular.toLowerCase()}&apos;s landing page — good place for the
                 words customers actually search. Left out entirely when blank.
               </span>
-            </label>
-
-            <label className="flex w-40 flex-col gap-1.5">
-              <span className="text-[12.5px] font-semibold text-ink">Sort order</span>
-              <Input type="number" className={adminInputCls} {...register("sortOrder")} />
             </label>
 
             {/* Landing page content — the depth that lets /brand/<slug> and

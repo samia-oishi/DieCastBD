@@ -18,6 +18,7 @@
  * Node imports this file — no JSX, no @/ aliases, no import.meta.env.
  */
 import { escapeAttr, escapeText } from "./injectHead.js";
+import { asLinkableCollections } from "../collectionVisibility.js";
 import { formatTaka } from "../currency.js";
 import { isOnSale } from "../pricing.js";
 import { SITE_NAME, absoluteUrl, resolveDescription, resolveImage, resolveTitle } from "./constants.js";
@@ -100,17 +101,19 @@ export function renderCollectionBody({ copy, collection, products = [], total = 
  * plan.md #91 (rebuilds are manual by merchant decision), and Google renders JS
  * so it sees the live figures — the baked numbers serve the pre-render pass.
  */
-export function renderProductBody({ product, activeBrandSlugs }) {
+export function renderProductBody({ product, knownBrandSlugs }) {
   const onSale = isOnSale(product);
   const price = onSale ? product.salePrice : product.price;
   const inStock = (product.availableStock ?? 0) > 0;
-  // Only link a brand that still EXISTS as a page. A deactivated brand's
-  // /brand/<slug> renders "Page not found" behind an HTTP 200 — a Soft 404 —
-  // and these baked links were feeding live product pages straight into one
-  // (plan.md #93). `activeBrandSlugs` comes from /brands, which returns active
-  // brands only; when it isn't supplied (tests) the old behaviour stands.
+  // Only link a brand that still EXISTS as a page, or the link is a Soft 404:
+  // a missing /brand/<slug> renders "Page not found" behind an HTTP 200, and
+  // these baked links were feeding live product pages straight into one
+  // (plan.md #93). `knownBrandSlugs` is every brand the API knows about —
+  // DEACTIVATED ONES INCLUDED, since their pages stay live (plan.md #109); the
+  // only brand worth suppressing now is one that was deleted outright and is
+  // still stamped on this product's cached copy. Unsupplied (tests) = no guard.
   const rawBrand = product.brand;
-  const brand = !rawBrand?.slug || !activeBrandSlugs || activeBrandSlugs.has(rawBrand.slug) ? rawBrand : null;
+  const brand = !rawBrand?.slug || !knownBrandSlugs || knownBrandSlugs.has(rawBrand.slug) ? rawBrand : null;
 
   const crumbs = [
     link("/", "Home"),
@@ -184,8 +187,11 @@ export function renderCollectionsIndexBody({ brands = [], categories = [], produ
     `<main style="max-width:760px;margin:0 auto;padding:32px 16px;font-family:system-ui,sans-serif">`,
     `<h1>${escapeText(COLLECTIONS_TITLE)}</h1>`,
     `<p>${escapeText(COLLECTIONS_DESCRIPTION)}</p>`,
-    section("Brands", brands.map((b) => link(`/brand/${b.slug}`, `${b.name} in Bangladesh`))),
-    section("Categories", categories.map((c) => link(`/category/${c.slug}`, `${c.name} in Bangladesh`))),
+    // Empty collections are filtered HERE rather than by the caller, so the
+    // baked body and CollectionsIndexPage (its React twin) cannot list
+    // different sets — the two are supposed to be the same page.
+    section("Brands", asLinkableCollections(brands).map((b) => link(`/brand/${b.slug}`, `${b.name} in Bangladesh`))),
+    section("Categories", asLinkableCollections(categories).map((c) => link(`/category/${c.slug}`, `${c.name} in Bangladesh`))),
     section("All products", products.map((p) => link(`/products/${p.slug}`, p.title))),
     section("Guides", pages.map((g) => link(`/${g.slug}`, g.title))),
     `<p>${link("/shop", `Shop the full ${SITE_NAME} catalogue`)}</p>`,

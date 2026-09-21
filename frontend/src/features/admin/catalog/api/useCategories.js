@@ -1,6 +1,7 @@
 import { useCatalogResource } from "./useCatalogResource";
 import {
   listAdminCategories,
+  reorderCategories,
   createCategory,
   updateCategory,
   deleteCategory,
@@ -10,6 +11,7 @@ import {
 export function useCategories() {
   return useCatalogResource("categories", {
     list: listAdminCategories,
+    reorder: reorderCategories,
     create: createCategory,
     update: updateCategory,
     delete: deleteCategory,

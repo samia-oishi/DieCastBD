@@ -55,10 +55,29 @@ export const getSitemap = asyncHandler(async (req, res) => {
   // Brand/category landing pages rank for "<collection> bangladesh" searches,
   // so they belong in the sitemap alongside products. Priority sits above
   // products because they're the entry points a search lands on first.
-  const [brands, categories] = await Promise.all([
-    Brand.find({ isActive: true }).select("slug updatedAt").lean(),
-    Category.find({ isActive: true }).select("slug updatedAt").lean(),
+  // Brand/category pages are listed when they have something to show. NOT
+  // gated on isActive any more: that flag now means "offer as a shop filter",
+  // and the page lives on regardless (plan.md #109). An EMPTY listing is
+  // deliberately left out — advertising a page with no products is how a Soft
+  // 404 gets invited in; the storefront also marks those noindex.
+  const [allBrands, allCategories, brandCounts, categoryCounts] = await Promise.all([
+    Brand.find().select("slug updatedAt").lean(),
+    Category.find().select("slug updatedAt").lean(),
+    Product.aggregate([
+      { $match: { status: "active", isDeleted: false } },
+      { $group: { _id: "$brand", count: { $sum: 1 } } },
+    ]),
+    Product.aggregate([
+      { $match: { status: "active", isDeleted: false } },
+      { $unwind: "$category" }, // category is an ARRAY on Product
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+    ]),
   ]);
+  const stocked = (rows) => new Set(rows.filter((r) => r.count > 0).map((r) => String(r._id)));
+  const brandsWithStock = stocked(brandCounts);
+  const categoriesWithStock = stocked(categoryCounts);
+  const brands = allBrands.filter((b) => brandsWithStock.has(String(b._id)));
+  const categories = allCategories.filter((c) => categoriesWithStock.has(String(c._id)));
 
   const entries = [
     ...STATIC_PATHS.map((s) => urlEntry(`${base}${s.path}`, s)),

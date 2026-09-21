@@ -193,6 +193,45 @@ describe("buildCollection", () => {
     expect(m.title).toBe("New Thing in Bangladesh");
     expect(m.description).toContain("New Thing");
   });
+
+  // A collection page stays live at its URL for as long as the record exists —
+  // deactivating one must never break a link (plan.md #109). An EMPTY listing is
+  // still thin enough that Google calls it a Soft 404, so it excludes itself
+  // from the index instead of being deleted.
+  it("marks an empty listing noindex", () => {
+    const m = buildCollection({
+      kind: "brand",
+      slug: "mini-gt",
+      collection,
+      products: [],
+      total: 0,
+      settings,
+      siteUrl: SITE,
+    });
+    expect(m.noindex).toBe(true);
+  });
+
+  it("does not noindex a listing with products in it", () => {
+    const m = buildCollection({
+      kind: "brand",
+      slug: "mini-gt",
+      collection,
+      products: [{ slug: "a", title: "A" }],
+      total: 1,
+      settings,
+      siteUrl: SITE,
+    });
+    expect(m.noindex).toBe(false);
+  });
+
+  // The count query is still in flight on first render. Reading "not yet known"
+  // as "empty" would noindex a fully stocked page for as long as it took the
+  // request to land.
+  it("does not noindex when the total is unknown", () => {
+    const m = buildCollection({ kind: "brand", slug: "mini-gt", collection, products: [], settings, siteUrl: SITE });
+    expect(m.noindex).toBe(false);
+    expect(m.jsonLd.find((b) => b["@type"] === "CollectionPage").mainEntity.numberOfItems).toBe(0);
+  });
 });
 
 describe("buildCmsPage", () => {

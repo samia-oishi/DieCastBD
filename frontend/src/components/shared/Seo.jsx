@@ -37,7 +37,9 @@ export function SeoHead({ model, noindex = false, children }) {
             <meta key={m.property} property={m.property} content={m.content} />
           )
         )}
-        {noindex && <meta name="robots" content="noindex" />}
+        {(noindex || model.noindex) && (
+          <meta name="robots" content={noindex ? "noindex" : "noindex, follow"} />
+        )}
         {verification && <meta name="google-site-verification" content={verification} />}
         {children}
       </Helmet>

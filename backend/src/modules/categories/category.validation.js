@@ -31,3 +31,9 @@ export const updateCategorySchema = {
 export const idParamSchema = {
   params: z.object({ id: z.string().min(1) }),
 };
+
+/** The full list in its new order. Capped well above any realistic catalogue so
+ * a malformed client can't ask for an unbounded bulkWrite. */
+export const reorderSchema = {
+  body: z.object({ ids: z.array(z.string().min(1)).min(1).max(500) }),
+};

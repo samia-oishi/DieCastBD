@@ -2,6 +2,7 @@ import { Link } from "react-router";
 
 import { SITE_URL } from "@/lib/siteUrl";
 import { buildCollectionsIndex, COLLECTIONS_TITLE, COLLECTIONS_DESCRIPTION } from "@/lib/seo/collectionsIndex";
+import { asLinkableCollections } from "@/lib/collectionVisibility";
 import { SeoHead } from "@/components/shared/Seo";
 import { useBrands } from "@/features/brands/api/useBrands";
 import { useCategories } from "@/features/categories/api/useCategories";
@@ -39,8 +40,13 @@ const Item = ({ to, label }) => (
 
 export function CollectionsIndexPage() {
   const { data: settings } = useSettings();
-  const { data: brands } = useBrands();
-  const { data: categories } = useCategories();
+  // Only collections with something in them: this hub is the crawl surface, and
+  // it must list the same set the sitemap does — an empty listing is noindex,
+  // so linking one from here would advertise a page we've asked Google to skip.
+  const { data: allBrands } = useBrands();
+  const { data: allCategories } = useCategories();
+  const brands = asLinkableCollections(allBrands);
+  const categories = asLinkableCollections(allCategories);
   const { data: productsData } = useProducts({ limit: 100, page: 1 }); // backend caps limit at 100; paginate here if the catalogue ever outgrows it
   const { data: pages } = usePublishedPages();
 
@@ -56,13 +62,13 @@ export function CollectionsIndexPage() {
         <p className="mt-2.5 text-[15px] leading-[1.6] text-muted-foreground">{COLLECTIONS_DESCRIPTION}</p>
 
         <LinkSection title="Brands">
-          {(brands ?? []).map((b) => (
+          {brands.map((b) => (
             <Item key={b.slug} to={`/brand/${b.slug}`} label={`${b.name} in Bangladesh`} />
           ))}
         </LinkSection>
 
         <LinkSection title="Categories">
-          {(categories ?? []).map((c) => (
+          {categories.map((c) => (
             <Item key={c.slug} to={`/category/${c.slug}`} label={`${c.name} in Bangladesh`} />
           ))}
         </LinkSection>

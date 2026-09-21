@@ -41,7 +41,7 @@ export function CollectionPage({ kind }) {
   const collection = list.find((c) => c.slug === slug);
   const listLoading = isBrand ? brandsLoading : catsLoading;
 
-  const { data, isLoading } = useProducts({
+  const { data, isLoading: productsLoading } = useProducts({
     [isBrand ? "brand" : "category"]: slug,
     limit: PAGE_SIZE,
     page: 1,
@@ -59,7 +59,11 @@ export function CollectionPage({ kind }) {
   }
 
   const products = data?.data ?? [];
-  const total = data?.meta?.total ?? 0;
+  // Deliberately undefined until the count is actually known — buildCollection
+  // reads `total === 0` as "nothing to index", and a still-loading page must
+  // not claim that about itself.
+  const total = data?.meta?.total;
+  const isEmpty = total === 0;
 
   // Cheapest live price, for the "from ৳X" line that answers price-intent
   // searches honestly — it's the real catalogue minimum, not a claim.
@@ -106,7 +110,7 @@ export function CollectionPage({ kind }) {
 
           <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px] text-faint">
             <span>
-              {total} {total === 1 ? "product" : "products"}
+              {total ?? 0} {total === 1 ? "product" : "products"}
             </span>
             {lowest !== null && (
               <>
@@ -126,7 +130,28 @@ export function CollectionPage({ kind }) {
         </div>
 
         <div className="mt-8">
-          <ProductGrid products={products} isLoading={isLoading} />
+          {/* A collection can be live and empty — stock sells out, and the page
+              stays put so the URL and its ranking survive. Say so plainly and
+              point somewhere useful, instead of the filter-flavoured empty
+              state (there are no filters on this page to clear). */}
+          {isEmpty ? (
+            <div className="flex flex-col items-center gap-3 rounded-[18px] border border-line bg-[#FCFCF9] px-6 py-16 text-center">
+              <p className="font-display text-[17px] font-bold text-ink">
+                Nothing in {collection.name} right now
+              </p>
+              <p className="max-w-[420px] text-[14px] leading-[1.7] text-ink-soft">
+                This collection is between restocks. The rest of the catalogue is still here.
+              </p>
+              <Link
+                to={ROUTES.SHOP}
+                className="mt-1 inline-flex h-11 items-center rounded-full bg-ink px-6 font-display text-[13.5px] font-bold text-white transition-colors hover:bg-[#26301A]"
+              >
+                Browse the full shop
+              </Link>
+            </div>
+          ) : (
+            <ProductGrid products={products} isLoading={productsLoading} />
+          )}
         </div>
 
         {total > PAGE_SIZE && (

@@ -311,8 +311,17 @@ export function buildCollection({ kind, slug, collection, products, total, setti
     canonical: url,
     ogUrl: url,
     ogType: "website",
+    // Live for visitors either way — links must never break — but a listing
+    // with nothing in it is thin enough that Google calls it a Soft 404, so it
+    // stays out of the index until stock returns (plan.md #109). `follow` so the
+    // links on it still pass through.
+    //
+    // `=== 0` and not falsy: an UNKNOWN total (the count query still in flight,
+    // or failed) must not noindex a stocked page. Callers pass undefined until
+    // they actually know.
+    noindex: total === 0,
     image: resolveImage({ image: collection.logo?.url ?? collection.image?.url, settings }),
-    jsonLd: [...buildCollectionJsonLd({ kind, slug, collection, products, total, siteUrl }), ...(faqLd ? [faqLd] : [])],
+    jsonLd: [...buildCollectionJsonLd({ kind, slug, collection, products, total: total ?? 0, siteUrl }), ...(faqLd ? [faqLd] : [])],
   };
 }
 
