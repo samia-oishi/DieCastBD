@@ -32,8 +32,16 @@ export function asShelfTiles(list) {
  * collection is still a page worth linking. Matches exactly what the backend
  * sitemap lists, so the hub never links to a URL the sitemap omits. */
 export function asLinkableCollections(list) {
-  return (list ?? []).filter(hasStock);
+  return (list ?? []).filter((c) => hasStock(c) && !REDIRECTED_SLUGS.has(c.slug));
 }
+
+/** Collections that `vercel.json` 301s at the edge. The record exists and has
+ * products, so it passes every other test here — but its URL never serves its
+ * own content, and the hub's whole job is handing crawlers links worth
+ * following. Must match `REDIRECTED_COLLECTION_SLUGS` in the backend's
+ * sitemap.controller.js; `seo/vercelConfig.test.js` asserts this list against
+ * the redirects themselves so the two cannot drift apart. */
+export const REDIRECTED_SLUGS = new Set(["hot-wheels"]);
 
 /** MISSING is not the same as zero. `activeProductCount` is sent by a backend
  * newer than this file; the two apps deploy separately, so during a window

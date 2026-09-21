@@ -28,6 +28,20 @@ const RESERVED_SLUGS = new Set([
   "forgot-password", "account", "wishlist", "orders", "admin", "unauthorized",
 ]);
 
+// Collection slugs that `frontend/vercel.json` 301s at the edge. They still
+// exist as records with live products — so #109's "has products" gate puts them
+// straight back in here — but the URL never serves its own content, and a
+// sitemap that advertises a redirect is asking Google to crawl a page we then
+// send somewhere else. Same class of problem as RESERVED_SLUGS above: a URL
+// that cannot answer for itself does not belong in the sitemap.
+//
+// `hot-wheels` is the 2026-09-07 brand merge: 52 of the 55 products on
+// /brand/hotwheels, i.e. the same page twice. Keep this in step with the
+// redirects block in vercel.json — frontend `collectionVisibility.js` carries
+// the matching list for the /collections hub, and `vercelConfig.test.js`
+// asserts the two agree.
+const REDIRECTED_COLLECTION_SLUGS = new Set(["hot-wheels"]);
+
 function urlEntry(loc, { lastmod, changefreq, priority } = {}) {
   return [
     "  <url>",
@@ -76,8 +90,10 @@ export const getSitemap = asyncHandler(async (req, res) => {
   const stocked = (rows) => new Set(rows.filter((r) => r.count > 0).map((r) => String(r._id)));
   const brandsWithStock = stocked(brandCounts);
   const categoriesWithStock = stocked(categoryCounts);
-  const brands = allBrands.filter((b) => brandsWithStock.has(String(b._id)));
-  const categories = allCategories.filter((c) => categoriesWithStock.has(String(c._id)));
+  const listable = (rows, stocked) =>
+    rows.filter((r) => stocked.has(String(r._id)) && !REDIRECTED_COLLECTION_SLUGS.has(r.slug));
+  const brands = listable(allBrands, brandsWithStock);
+  const categories = listable(allCategories, categoriesWithStock);
 
   const entries = [
     ...STATIC_PATHS.map((s) => urlEntry(`${base}${s.path}`, s)),

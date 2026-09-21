@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { asFilterOptions, asShelfTiles, asLinkableCollections } from "./collectionVisibility";
 
-const hotWheels = { slug: "hot-wheels", isActive: true, activeProductCount: 12 };
+// Not a real redirected slug — "premium-singles" is in REDIRECTED_SLUGS and would
+// be excluded for a different reason than the one under test.
+const stocked = { slug: "premium-singles", isActive: true, activeProductCount: 12 };
 const paused = { slug: "paused", isActive: false, activeProductCount: 4 };
 const soldOut = { slug: "sold-out", isActive: true, activeProductCount: 0 };
 const legacy = { slug: "legacy", isActive: true }; // older backend: no count field
@@ -9,7 +11,7 @@ const legacy = { slug: "legacy", isActive: true }; // older backend: no count fi
 describe("collection visibility", () => {
   describe("asFilterOptions", () => {
     it("drops what the merchant switched off", () => {
-      expect(asFilterOptions([hotWheels, paused]).map((c) => c.slug)).toEqual(["hot-wheels"]);
+      expect(asFilterOptions([stocked, paused]).map((c) => c.slug)).toEqual(["premium-singles"]);
     });
 
     it("keeps a switched-on collection that is temporarily out of stock — the switch is the merchant's, and nothing else overrides it", () => {
@@ -19,14 +21,14 @@ describe("collection visibility", () => {
 
   describe("asShelfTiles", () => {
     it("shows only collections that are switched on AND have something to buy", () => {
-      expect(asShelfTiles([hotWheels, paused, soldOut]).map((c) => c.slug)).toEqual(["hot-wheels"]);
+      expect(asShelfTiles([stocked, paused, soldOut]).map((c) => c.slug)).toEqual(["premium-singles"]);
     });
   });
 
   describe("asLinkableCollections", () => {
     it("links stocked collections even when they are hidden from the shop filter", () => {
-      expect(asLinkableCollections([hotWheels, paused, soldOut]).map((c) => c.slug)).toEqual([
-        "hot-wheels",
+      expect(asLinkableCollections([stocked, paused, soldOut]).map((c) => c.slug)).toEqual([
+        "premium-singles",
         "paused",
       ]);
     });

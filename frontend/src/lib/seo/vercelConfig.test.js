@@ -3,6 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import { REDIRECTED_SLUGS, asLinkableCollections } from "../collectionVisibility";
+
 const config = JSON.parse(
   readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../vercel.json"), "utf8")
 );
@@ -67,6 +69,31 @@ describe("vercel.json", () => {
     for (const src of ["/brand/generic", "/category/mainlines"]) {
       expect(sources.has(src), `${src} is live and in the sitemap — it must not redirect`).toBe(false);
     }
+  });
+
+  // The hub must not hand crawlers a link the edge immediately redirects. Most
+  // redirected collections are excluded for free because they have no products
+  // left; `REDIRECTED_SLUGS` is for the one that still does (`hot-wheels`: 52 of
+  // the 55 products on /brand/hotwheels, merged 2026-09-07).
+  //
+  // Only the stale-entry direction is checkable here — "is an entry still
+  // backed by a real redirect" is static, while "does a redirected collection
+  // still have products" depends on live data. A stale entry is the dangerous
+  // one: it silently hides a page that has started serving content again.
+  it("keeps REDIRECTED_SLUGS backed by an actual redirect", () => {
+    const sources = new Set((config.redirects ?? []).map((r) => r.source));
+    for (const slug of REDIRECTED_SLUGS) {
+      const hasRedirect = sources.has(`/category/${slug}`) || sources.has(`/brand/${slug}`);
+      expect(hasRedirect, `"${slug}" is hidden from the hub and sitemap but nothing redirects it — it is just missing`).toBe(true);
+    }
+  });
+
+  it("hides a redirected collection from the hub even when it still has products", () => {
+    const linked = asLinkableCollections([
+      { slug: "hot-wheels", activeProductCount: 52 },
+      { slug: "mainlines", activeProductCount: 12 },
+    ]).map((c) => c.slug);
+    expect(linked).toEqual(["mainlines"]);
   });
 
   it("still serves the SPA fallback and the sitemap proxy", () => {
