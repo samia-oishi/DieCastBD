@@ -13,11 +13,6 @@
       "permanent": true
     },
     {
-      "source": "/category/mainlines",
-      "destination": "/brand/hotwheels",
-      "permanent": true
-    },
-    {
       "source": "/category/hot-wheels",
       "destination": "/brand/hotwheels",
       "permanent": true
@@ -61,11 +56,6 @@
     },
     {
       "source": "/brand/cca",
-      "destination": "/collections",
-      "permanent": true
-    },
-    {
-      "source": "/brand/generic",
       "destination": "/collections",
       "permanent": true
     },

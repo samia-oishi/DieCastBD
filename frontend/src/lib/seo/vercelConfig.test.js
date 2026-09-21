@@ -47,13 +47,25 @@ describe("vercel.json", () => {
       "/products/cca-1-64-audi-rs5-dtm-black",
       "/brand/star-race",
       "/brand/cca",
-      "/brand/generic",
       "/demo",
       "/qa-blocks",
     ];
     for (const src of gone) {
       expect(dests[src], `${src} lost its redirect — it becomes a Soft 404 again`).toBeTruthy();
       expect(dests[src].permanent, `${src} must be a 301`).toBe(true);
+    }
+  });
+
+  // The opposite failure, and the one that put these here: a redirect that
+  // OUTLIVED its reason. `/brand/generic` and `/category/mainlines` were
+  // redirected on 2026-09-21 because a deactivated collection had no page; now
+  // it does (plan.md #109), and both still hold live products, so the sitemap
+  // listed them while the edge redirected them away. A redirect must not
+  // shadow a collection the sitemap advertises.
+  it("does not redirect a collection that still has live products", () => {
+    const sources = new Set((config.redirects ?? []).map((r) => r.source));
+    for (const src of ["/brand/generic", "/category/mainlines"]) {
+      expect(sources.has(src), `${src} is live and in the sitemap — it must not redirect`).toBe(false);
     }
   });
 

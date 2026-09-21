@@ -211,8 +211,15 @@ indexed-URL redirect below is removed.
 | `/index.html` → `/` | It was a live 200 duplicate of the home page. |
 | `/brand/hot-wheels-premium` → `/brand/hotwheels` | Hot Wheels sat across two brands until the 2026-09-07 merge; `Product.brand` is a single ref, so one page had to lose its products. This URL was **indexed since Aug 5** — the 301 passes that ranking to the surviving page. Brand slugs are immutable (plan.md #90), so it cannot be renamed instead. |
 | `/shop?brand=hot-wheels-premium` → `/brand/hotwheels` | **Indexed, crawled Sep 2.** After the merge it queried a brand that no longer exists and rendered an empty grid. |
-| `/category/mainlines` → `/brand/hotwheels` | Retired in the merge; duplicated the mainline cars now on the brand page. Defensive — not known to be indexed. |
-| `/category/hot-wheels` → `/brand/hotwheels` | A short-lived combined category, superseded by the brand merge the same day. |
+| `/category/hot-wheels` → `/brand/hotwheels` | A short-lived combined category, superseded by the brand merge the same day. **Kept deliberately:** measured 2026-09-21, it holds 52 products against `/brand/hotwheels`'s 55 — the same page twice, competing for the same query. |
+
+**Removed 2026-09-21, and why removing them was the fix:** `/category/mainlines` and
+`/brand/generic` were redirected while a deactivated collection had no page of its own.
+Since #109 it does, and both still hold live products — so the sitemap advertised them
+while the edge redirected them away. A redirect that outlives its reason shadows a real
+page; `vercelConfig.test.js` now asserts neither comes back. `/category/mainlines` is a
+12-product subset of the Hot Wheels brand page, not a duplicate of it, and is the page
+"hot wheels mainline price in bangladesh" should land on.
 
 Before removing any of these, check the URL is not in Search Console's indexed
 list. A removed redirect turns an indexed page into a soft 404.
