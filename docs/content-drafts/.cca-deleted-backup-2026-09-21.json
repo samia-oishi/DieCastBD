@@ -1,0 +1,143 @@
+{
+  "brand": {
+    "_id": "6a95da6270d2b78e6d7f2866",
+    "name": "CCA",
+    "slug": "cca",
+    "isActive": false,
+    "sortOrder": 0,
+    "content": "",
+    "faqs": [],
+    "createdAt": "2026-08-31T19:47:46.201Z",
+    "updatedAt": "2026-09-01T14:35:37.971Z"
+  },
+  "products": [
+    {
+      "_id": "6a95da6870d2b78e6d7f2888",
+      "title": "CCA 1:64 — BMW M4 GT3, White",
+      "manufacturer": "Caipo / CCA",
+      "series": "CCA Alloy Series",
+      "modelNumber": "",
+      "scale": "1:64 (approx. 7 cm)",
+      "material": "Diecast metal body, plastic base, plastic wheels",
+      "color": "White",
+      "description": "A licensed BMW M4 GT3 at an entry price — roughly 7 cm long, with four-wheel suspension and free-rolling wheels, on a blister card. The right first diecast for someone who is not ready to spend premium money.",
+      "features": [
+        "Officially licensed casting",
+        "Four-wheel suspension",
+        "Free-rolling wheels",
+        "Blister card"
+      ],
+      "specifications": {
+        "Length": "approx. 7 cm",
+        "Weight": "70 g (to be confirmed on arrival)"
+      },
+      "tags": [
+        "164",
+        "bmw",
+        "budget diecast",
+        "cca",
+        "cca alloy series",
+        "gt3",
+        "white"
+      ],
+      "brand": "6a95da6270d2b78e6d7f2866",
+      "category": [
+        "6a9161f5deb413d438bc83e3"
+      ],
+      "sku": "CCA-001",
+      "slug": "cca-1-64-bmw-m4-gt3-white",
+      "price": 320,
+      "salePrice": null,
+      "costPrice": 277,
+      "stock": 0,
+      "reservedStock": 0,
+      "status": "draft",
+      "isFeatured": false,
+      "isHeroProduct": false,
+      "isNewArrival": true,
+      "isPreOrder": false,
+      "preOrderStartDate": null,
+      "preOrderEndDate": null,
+      "paymentOptions": [
+        "cod",
+        "full"
+      ],
+      "advancePaymentPercent": null,
+      "thumbnail": {
+        "url": "https://res.cloudinary.com/lx6anpd6/image/upload/v1788206902/diecastbd/products/cca-001-mtho7vgt.jpg",
+        "cloudinaryId": "diecastbd/products/cca-001-mtho7vgt"
+      },
+      "gallery": [
+        {
+          "url": "https://res.cloudinary.com/lx6anpd6/image/upload/v1788206902/diecastbd/products/cca-001-mtho7vgt.jpg",
+          "cloudinaryId": "diecastbd/products/cca-001-mtho7vgt"
+        }
+      ],
+      "seo": {},
+      "isDeleted": false,
+      "createdAt": "2026-08-31T19:47:52.305Z",
+      "updatedAt": "2026-09-15T17:12:12.388Z"
+    },
+    {
+      "_id": "6a95da6870d2b78e6d7f2889",
+      "title": "CCA 1:64 — Audi RS5 DTM, Black",
+      "manufacturer": "Caipo / CCA",
+      "series": "CCA Alloy Series",
+      "modelNumber": "B2022",
+      "scale": "1:64 (approx. 7 cm)",
+      "material": "Diecast metal body, plastic base, plastic wheels",
+      "color": "Black",
+      "description": "The Audi RS5 DTM in black — licensed, roughly 7 cm long, four-wheel suspension, on a blister card. Entry-price collecting that still looks right on a shelf.",
+      "features": [
+        "Officially licensed casting",
+        "Four-wheel suspension",
+        "Free-rolling wheels",
+        "Blister card"
+      ],
+      "specifications": {
+        "Product code": "B2022",
+        "Length": "approx. 7 cm",
+        "Weight": "70 g (to be confirmed on arrival)"
+      },
+      "tags": [
+        "164",
+        "audi",
+        "black",
+        "budget diecast",
+        "cca",
+        "cca alloy series",
+        "dtm",
+        "rs5"
+      ],
+      "brand": "6a95da6270d2b78e6d7f2866",
+      "category": [
+        "6a9161f5deb413d438bc83e3"
+      ],
+      "sku": "CCA-002",
+      "slug": "cca-1-64-audi-rs5-dtm-black",
+      "price": 320,
+      "salePrice": null,
+      "costPrice": 240,
+      "stock": 0,
+      "reservedStock": 0,
+      "status": "draft",
+      "isFeatured": false,
+      "isHeroProduct": false,
+      "isNewArrival": true,
+      "isPreOrder": false,
+      "preOrderStartDate": null,
+      "preOrderEndDate": null,
+      "paymentOptions": [
+        "cod",
+        "full"
+      ],
+      "advancePaymentPercent": null,
+      "thumbnail": null,
+      "gallery": [],
+      "seo": {},
+      "isDeleted": false,
+      "createdAt": "2026-08-31T19:47:52.479Z",
+      "updatedAt": "2026-09-17T18:24:33.359Z"
+    }
+  ]
+}

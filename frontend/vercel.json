@@ -33,6 +33,51 @@
       ],
       "destination": "/brand/hotwheels",
       "permanent": true
+    },
+    {
+      "source": "/products/star-race-1-64-porsche-911-gt3-r-roxy-80-pink",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/products/star-race-1-64-porsche-911-gt3-r-rexy-77-green",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/products/cca-1-64-bmw-m4-gt3-white",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/products/cca-1-64-audi-rs5-dtm-black",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/brand/star-race",
+      "destination": "/collections",
+      "permanent": true
+    },
+    {
+      "source": "/brand/cca",
+      "destination": "/collections",
+      "permanent": true
+    },
+    {
+      "source": "/brand/generic",
+      "destination": "/collections",
+      "permanent": true
+    },
+    {
+      "source": "/demo",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/qa-blocks",
+      "destination": "/",
+      "permanent": true
     }
   ],
   "rewrites": [

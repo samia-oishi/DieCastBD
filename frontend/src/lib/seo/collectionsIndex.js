@@ -100,11 +100,17 @@ export function renderCollectionBody({ copy, collection, products = [], total = 
  * plan.md #91 (rebuilds are manual by merchant decision), and Google renders JS
  * so it sees the live figures — the baked numbers serve the pre-render pass.
  */
-export function renderProductBody({ product }) {
+export function renderProductBody({ product, activeBrandSlugs }) {
   const onSale = isOnSale(product);
   const price = onSale ? product.salePrice : product.price;
   const inStock = (product.availableStock ?? 0) > 0;
-  const brand = product.brand;
+  // Only link a brand that still EXISTS as a page. A deactivated brand's
+  // /brand/<slug> renders "Page not found" behind an HTTP 200 — a Soft 404 —
+  // and these baked links were feeding live product pages straight into one
+  // (plan.md #93). `activeBrandSlugs` comes from /brands, which returns active
+  // brands only; when it isn't supplied (tests) the old behaviour stands.
+  const rawBrand = product.brand;
+  const brand = !rawBrand?.slug || !activeBrandSlugs || activeBrandSlugs.has(rawBrand.slug) ? rawBrand : null;
 
   const crumbs = [
     link("/", "Home"),

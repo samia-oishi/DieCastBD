@@ -315,7 +315,9 @@ async function modelFor(route, ctx) {
     // links. The body gives them both.
     return {
       model: buildProduct({ product: doc, settings, siteUrl }),
-      body: renderProductBody({ product: doc }),
+      // activeBrandSlugs: /brands returns ACTIVE brands only, so this stops a
+      // product linking to a deactivated brand whose page is a Soft 404.
+      body: renderProductBody({ product: doc, activeBrandSlugs: new Set(brands.map((b) => b.slug)) }),
       // Full document, not trimForCard — the detail page renders description,
       // gallery and specs, and this payload is what keeps it renderable when
       // the API is unreachable in Google's renderer (plan.md #92).

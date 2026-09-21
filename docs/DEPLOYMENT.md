@@ -122,6 +122,25 @@ missing (Zod-validated in `src/config/env.js`).
 > **rebuilds** — Redeploy the frontend project (or push a commit). A backend env change needs
 > a backend **redeploy**; adding a *domain* does **not** need a rebuild (it just re-aliases).
 
+### Redirects for removed URLs (Soft 404 defence)
+
+`vercel.json` has no comment syntax — Vercel rejects the whole deploy on an unknown key
+(`frontend/src/lib/seo/vercelConfig.test.js` is the tripwire). So the reasoning lives here.
+
+The SPA catch-all serves `app.html` with **HTTP 200** for any unmatched path. When a page is
+removed — a CMS page unpublished, a product set to draft, a brand deactivated — its URL keeps
+returning 200 while React renders "Page not found". A success code on a not-found page is the
+textbook definition of a **Soft 404**, and Search Console flagged exactly that on 2026-09-21.
+
+Every removed URL therefore needs an explicit 301 in `vercel.json`, pointing somewhere
+*relevant* (a removed product → `/shop`, a retired brand → `/collections`). Redirecting them
+all to the homepage would be read as Soft 404 again.
+
+**When you unpublish a page, draft a product, or deactivate a brand, add its redirect here in
+the same change.** The alternative — narrowing the catch-all so unknown URLs 404 for real —
+was considered and rejected: it would hard-404 any product added between deploys, because
+rebuilds are manual (plan.md #91).
+
 ### Prerendering (`scripts/prerender.mjs`) — read this before touching the build
 
 `npm run build` = `vite build` → `prerender.mjs` → `verify-prerender.mjs`. The prerender fetches
