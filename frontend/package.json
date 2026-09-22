@@ -15,7 +15,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify:mobile": "node scripts/verify-address-mobile.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.2.8",

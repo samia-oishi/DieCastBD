@@ -45,16 +45,17 @@ export function SearchableSelect({
   id,
   invalid = false,
   name,
+  maxVisible = 100,
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [dropUp, setDropUp] = useState(false);
 
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
   const inputRef = useRef(null);
   const listRef = useRef(null);
+  const panelRef = useRef(null);
 
   const reactId = useId();
   const listId = `${id ?? reactId}-listbox`;
@@ -80,18 +81,39 @@ export function SearchableSelect({
     return scored.sort((a, b) => a.best - b.best).map((s) => s.o);
   }, [options, query]);
 
+  /** What actually reaches the DOM.
+   *
+   * The delivery-area list is 721 entries (plan.md #110), and rendering all of
+   * them put 721 <li> nodes on a phone every time the field was opened — the
+   * list before it was 64. Nothing else here changes: `filtered` stays the full
+   * match set, so the count shown at the bottom is honest, and typing narrows
+   * into the cap within a letter or two. Lists shorter than the cap are
+   * untouched, which is every other use of this component. */
+  const visible = useMemo(() => filtered.slice(0, maxVisible), [filtered, maxVisible]);
+  const hiddenCount = filtered.length - visible.length;
+
   // Reopening should start from the current selection, not the top of the list.
   useEffect(() => {
     if (!open) return;
     setQuery("");
-    const at = options.findIndex((o) => o.value === value);
+    // Only meaningful if the selection is inside the rendered window; beyond
+    // it, start at the top rather than pointing at a row that isn't there.
+    const at = options.slice(0, maxVisible).findIndex((o) => o.value === value);
     setActiveIndex(at === -1 ? 0 : at);
     inputRef.current?.focus();
-  }, [open, options, value]);
+  }, [open, options, value, maxVisible]);
 
   useEffect(() => {
     setActiveIndex(0);
   }, [query]);
+
+  // The panel opens in flow, so it can land under a docked bar or below the
+  // fold. Bring it into view once, on open, at every size. (jsdom has no
+  // layout, hence the optional call — the same guard used elsewhere here.)
+  useEffect(() => {
+    if (!open) return;
+    panelRef.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+  }, [open]);
 
   // Keep the active option visible while arrowing through a long list. The
   // optional call matches the matchMedia/IntersectionObserver guards elsewhere:
@@ -100,23 +122,7 @@ export function SearchableSelect({
     if (!open) return;
     const active = listRef.current?.querySelector('[data-active="true"]');
     active?.scrollIntoView?.({ block: "nearest" });
-  }, [open, activeIndex, filtered]);
-
-  // Desktop only: a floating panel near the bottom of the window would hang off
-  // the edge, so flip it above the trigger when there isn't room below and
-  // there is room above. The mobile panel is in flow and can't overflow, and
-  // matchMedia is absent in jsdom — both fall through to the default.
-  useEffect(() => {
-    if (!open) return;
-    if (!window.matchMedia?.("(min-width: 768px)").matches) {
-      setDropUp(false);
-      return;
-    }
-    const rect = triggerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const PANEL_HEIGHT = 290; // search row + the list's max-h, plus borders
-    setDropUp(rect.bottom + PANEL_HEIGHT > window.innerHeight && rect.top > PANEL_HEIGHT);
-  }, [open]);
+  }, [open, activeIndex, visible]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -137,9 +143,9 @@ export function SearchableSelect({
   const onSearchKeyDown = (e) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
-      if (!filtered.length) return;
+      if (!visible.length) return;
       const step = e.key === "ArrowDown" ? 1 : -1;
-      setActiveIndex((i) => (i + step + filtered.length) % filtered.length);
+      setActiveIndex((i) => (i + step + visible.length) % visible.length);
       return;
     }
     if (e.key === "Enter") {
@@ -149,7 +155,7 @@ export function SearchableSelect({
       // moment someone pressed Enter to pick their district.
       e.preventDefault();
       e.stopPropagation();
-      commit(filtered[activeIndex]);
+      commit(visible[activeIndex]);
       return;
     }
     if (e.key === "Escape") {
@@ -203,13 +209,25 @@ export function SearchableSelect({
 
       {open && (
         <div
+          ref={panelRef}
           className={cn(
+            // scroll-mb keeps the panel clear of the checkout's docked order
+            // bar. On a phone the panel opens IN FLOW, and measured on an
+            // iPhone 13 the bar covered its last 42px — about one row, and the
+            // bar swallows the tap, so the final option was unreachable. The
+            // margin is what scrollIntoView below leaves free underneath.
+            "scroll-mb-[120px] md:scroll-mb-0",
             "mt-1.5 overflow-hidden rounded-[12px] border border-line bg-white shadow-[0_12px_32px_rgba(16,18,8,0.10)]",
-            // From md up the panel leaves the flow and overlays what follows.
-            // z-30 sits above sibling fields but below the storefront's docked
-            // bars (z-40) and any dialog (z-50).
-            "md:absolute md:inset-x-0 md:z-30 md:shadow-[0_16px_40px_rgba(16,18,8,0.18)]",
-            dropUp ? "md:bottom-full md:mb-1.5 md:mt-0" : "md:top-full"
+            // IN FLOW AT EVERY SIZE, deliberately. It used to float and, when
+            // short of room below, flip above the trigger — measured against
+            // `window`, which is the wrong box inside a modal: the panel then
+            // opened upwards over the address cards it had nothing to do with.
+            // A floating panel also gets clipped by the modal's own
+            // `overflow-y-auto`, which is what the flip existed to dodge.
+            // In flow there is nothing to measure and nothing to clip: the
+            // panel is always directly under its field, and the modal or page
+            // scrolls to reveal it — the same behaviour on a phone and a
+            // desktop, which is the point.
           )}
         >
           <div className="relative border-b border-line-soft">
@@ -221,7 +239,7 @@ export function SearchableSelect({
               aria-expanded="true"
               aria-controls={listId}
               aria-autocomplete="list"
-              aria-activedescendant={filtered.length ? optionId(activeIndex) : undefined}
+              aria-activedescendant={visible.length ? optionId(activeIndex) : undefined}
               aria-label={searchPlaceholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -233,7 +251,7 @@ export function SearchableSelect({
           </div>
 
           <ul ref={listRef} id={listId} role="listbox" className="max-h-[228px] overflow-y-auto overscroll-contain py-1">
-            {filtered.map((o, i) => {
+            {visible.map((o, i) => {
               const isSelected = o.value === value;
               return (
                 // The option itself is the click target — an interactive
@@ -269,7 +287,15 @@ export function SearchableSelect({
               );
             })}
 
-            {!filtered.length && <li className="px-3.5 py-3 text-[13.5px] text-faint">{emptyMessage}</li>}
+            {!visible.length && <li className="px-3.5 py-3 text-[13.5px] text-faint">{emptyMessage}</li>}
+
+            {/* Say what is being held back, rather than letting someone scroll
+                to the bottom and conclude their area isn't covered. */}
+            {hiddenCount > 0 && (
+              <li className="px-3.5 py-2 text-[12px] text-faint" aria-live="polite">
+                +{hiddenCount} more — keep typing to narrow
+              </li>
+            )}
           </ul>
         </div>
       )}
