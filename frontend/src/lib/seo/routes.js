@@ -44,7 +44,13 @@ export const STATIC_PAGE_COPY = {
 export function buildOrgJsonLd({ settings, siteUrl }) {
   const social = settings?.socialLinks ?? {};
   const contact = settings?.contactInfo ?? {};
-  const sameAs = [social.facebook, social.instagram, social.whatsapp].filter(Boolean);
+  // Every profile the merchant has actually filled in. `sameAs` is how a search
+  // engine or an AI assistant confirms that this site, the Facebook page and
+  // the YouTube channel are one business rather than three — the entity link
+  // that lets it answer "is DiecastBD legit" with something other than a guess.
+  // YouTube was missing here while being set in Settings, so a real signal was
+  // being thrown away.
+  const sameAs = [social.facebook, social.instagram, social.youtube, social.whatsapp].filter(Boolean);
 
   return {
     "@context": "https://schema.org",
@@ -55,6 +61,22 @@ export function buildOrgJsonLd({ settings, siteUrl }) {
     description: "Premium 1:64 diecast collectibles in Bangladesh — authentic Hot Wheels Premium and MINI GT.",
     areaServed: { "@type": "Country", name: "Bangladesh" },
     ...(sameAs.length ? { sameAs } : {}),
+    // Phone and address at the top level, not only inside contactPoint: this is
+    // what an assistant reads to answer "where are they based" and "how do I
+    // reach them". The address is the merchant's own free-text string, passed
+    // through as streetAddress rather than parsed into locality/postcode —
+    // guessing at those would be inventing detail (#11).
+    ...(contact.phone ? { telephone: contact.phone } : {}),
+    ...(contact.email ? { email: contact.email } : {}),
+    ...(contact.address
+      ? {
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: contact.address,
+            addressCountry: "BD",
+          },
+        }
+      : {}),
     ...(contact.email || contact.phone
       ? {
           contactPoint: {

@@ -58,6 +58,7 @@ import {
   renderProductBody,
 } from "../src/lib/seo/collectionsIndex.js";
 import { collectionCopy } from "../src/lib/seo/collectionCopy.js";
+import { renderLlmsTxt } from "../src/lib/seo/llmsTxt.js";
 import {
   buildCmsPage,
   buildCollection,
@@ -552,6 +553,23 @@ async function main() {
       fail(`${route} — ${err.message}`);
     }
   });
+
+  // /llms.txt — the shop stated plainly for assistants that extract facts
+  // rather than rank pages. Written from the SAME live data the routes were
+  // baked from, so it can never describe a catalogue that no longer exists.
+  // A static file, so it costs nothing to serve.
+  try {
+    await writeFile(
+      path.join(DIST, "llms.txt"),
+      renderLlmsTxt({ settings, brands: ctx.brands, categories: ctx.categories, products: ctx.products, guides: ctx.guides, siteUrl: PROD_ORIGIN }),
+      "utf8"
+    );
+    log(`wrote llms.txt (${ctx.products.length} products, ${ctx.brands.length + ctx.categories.length} collections)`);
+  } catch (err) {
+    // warn(), not fail(): a missing llms.txt costs some AI-assistant visibility.
+    // Blocking a production deploy over it would cost the whole storefront.
+    warn(`llms.txt — ${err.message}`);
+  }
 
   baked.sort((a, b) => a.route.localeCompare(b.route));
   log(`prerendered ${baked.length}/${routes.length} routes.`);
