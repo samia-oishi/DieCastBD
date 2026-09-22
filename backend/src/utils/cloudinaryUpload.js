@@ -1,7 +1,9 @@
-import { cloudinary } from "../config/cloudinary.js";
+import { getCloudinary } from "../config/cloudinary.js";
 
 /** Streams a Multer memory-storage buffer to Cloudinary and returns {url, cloudinaryId}. */
-export function uploadBufferToCloudinary(buffer, folder) {
+export async function uploadBufferToCloudinary(buffer, folder) {
+  const cloudinary = await getCloudinary();
+
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder: `diecastbd/${folder}`, resource_type: "image" },
@@ -16,5 +18,6 @@ export function uploadBufferToCloudinary(buffer, folder) {
 
 export async function deleteFromCloudinary(cloudinaryId) {
   if (!cloudinaryId) return;
+  const cloudinary = await getCloudinary();
   await cloudinary.uploader.destroy(cloudinaryId);
 }

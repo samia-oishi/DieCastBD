@@ -1,4 +1,4 @@
-import { firebaseAuth } from "../../config/firebaseAdmin.js";
+import { getFirebaseAuth } from "../../config/firebaseAdmin.js";
 import { env } from "../../config/env.js";
 import { User } from "../users/user.model.js";
 import { signAccessToken, signRefreshToken } from "../../utils/jwt.js";
@@ -8,7 +8,7 @@ export { serializeUser } from "../users/user.service.js";
 
 export async function verifyFirebaseIdToken(idToken) {
   try {
-    return await firebaseAuth.verifyIdToken(idToken);
+    return await (await getFirebaseAuth()).verifyIdToken(idToken);
   } catch {
     throw ApiError.unauthorized("Invalid or expired Firebase token");
   }
