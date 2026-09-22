@@ -1,68 +1,59 @@
 import { useMemo } from "react";
 
-import { BD_DISTRICTS, isThanaInDistrict, thanaOptionsForDistrict } from "@/lib/bdGeo";
+import { BD_AREAS, areaValue, splitAreaValue } from "@/lib/bdGeo";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
 
-const DISTRICT_OPTIONS = BD_DISTRICTS.map((d) => ({
-  value: d.name,
-  label: d.name,
-  // Old spellings match while searching but never show: someone typing
-  // "Chittagong" or "Jessore" still lands on Chattogram / Jashore.
-  keywords: d.aka,
-}));
-
-/** The district → thana pair, shared by guest checkout and the saved-address
- * form so the dependency between them is implemented exactly once.
+/** The delivery area: ONE search over every thana, with its district alongside.
  *
- * Controlled on purpose: both callers drive react-hook-form state, and the
- * "changing district invalidates the thana" rule has to run on the same tick as
- * the district write, or the form can submit a thana from the previous district.
+ * Steadfast's own parcel form works this way, and matching it is the point —
+ * every address typed here is re-entered there, so the two should ask the same
+ * question. Asking it once is also simply better: "which district is my thana
+ * in?" is a question plenty of customers can't answer, and the courier splitting
+ * the capital into Dhaka City / Dhaka Sub-Urban made it unanswerable for Dhaka.
+ * Searching one list removes it — type "Dhanmondi" or "Savar" and the right
+ * district comes attached.
+ *
+ * WHAT IS STORED IS UNCHANGED: district and thana, as two separate fields.
+ * Shipping is priced per district and the courier payload needs both, so this
+ * is a change to the question, not to the data. The props are unchanged too, so
+ * guest checkout, the saved-address form and admin order creation keep working
+ * without edits.
  *
  * @param FieldWrapper the caller's own label+error wrapper — the checkout and
  *   account forms use visually different ones with the same
  *   ({ label, error, children }) signature.
  */
 export function DistrictThanaFields({ district, thana, onDistrictChange, onThanaChange, districtError, thanaError, FieldWrapper }) {
-  // Options carry the courier's own name as the label, plus the official
-  // spellings as hidden search keywords — so someone who types "Jatrabari" or
-  // "Uttara East" still lands on Steadfast's "Jattrabari" / "Uttara".
-  const thanaOptions = useMemo(() => thanaOptionsForDistrict(district), [district]);
+  const selected = areaValue(district, thana);
 
-  const handleDistrict = (next) => {
-    onDistrictChange(next);
-    // A thana only means anything inside its district. Keep it when the same
-    // name exists in the new one (it generally won't), clear it otherwise —
-    // silently shipping "Dhanmondi, Khulna" would be worse than re-asking.
-    if (thana && !isThanaInDistrict(next, thana)) onThanaChange("");
+  // An address saved before this list existed — or from coverage Steadfast has
+  // since dropped — must still show what it says rather than appear blank and
+  // invite someone to "fix" a delivery address that was always correct.
+  const options = useMemo(() => {
+    if (!selected || BD_AREAS.some((a) => a.value === selected)) return BD_AREAS;
+    return [{ value: selected, label: thana, hint: district, keywords: [district] }, ...BD_AREAS];
+  }, [selected, district, thana]);
+
+  const handleChange = (next) => {
+    const picked = splitAreaValue(next);
+    // Both writes happen on the same tick: the two fields are one answer, and a
+    // form that saw the district change before the thana could submit a pairing
+    // that never existed.
+    onDistrictChange(picked.district);
+    onThanaChange(picked.thana);
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <FieldWrapper label="District" error={districtError}>
-        <SearchableSelect
-          options={DISTRICT_OPTIONS}
-          value={district ?? ""}
-          onChange={handleDistrict}
-          placeholder="Select district"
-          searchPlaceholder="Search district…"
-          emptyMessage="No district matches"
-          invalid={Boolean(districtError)}
-        />
-      </FieldWrapper>
-
-      <FieldWrapper label="Thana / Upazila" error={thanaError}>
-        <SearchableSelect
-          options={thanaOptions}
-          value={thana ?? ""}
-          onChange={onThanaChange}
-          placeholder="Select thana"
-          searchPlaceholder="Search thana…"
-          emptyMessage="No thana matches"
-          disabled={!thanaOptions.length}
-          disabledHint="Select a district first"
-          invalid={Boolean(thanaError)}
-        />
-      </FieldWrapper>
-    </div>
+    <FieldWrapper label="Area (thana, district)" error={districtError || thanaError}>
+      <SearchableSelect
+        options={options}
+        value={selected}
+        onChange={handleChange}
+        placeholder="Select your area"
+        searchPlaceholder="Search thana or district…"
+        emptyMessage="No area matches — try the district name"
+        invalid={Boolean(districtError || thanaError)}
+      />
+    </FieldWrapper>
   );
 }

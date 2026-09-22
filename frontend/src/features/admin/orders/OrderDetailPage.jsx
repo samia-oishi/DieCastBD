@@ -17,11 +17,12 @@ import { adminToast } from "@/features/admin/shell/adminToast";
 import { useAdminOrder, useUpdateOrderStatusMutation, useAdjustPaymentMutation, useAddOrderItemsMutation } from "./api/useAdminOrders";
 import { InvoiceModal } from "./components/InvoiceModal";
 import { CourierChip } from "./components/CourierChip";
+import { TrustScoreChip } from "./components/TrustScoreChip";
 import { SendToCourierDialog } from "./components/SendToCourierDialog";
 import { AdjustPaymentDialog } from "./components/AdjustPaymentDialog";
 import { LinkParcelDialog } from "./components/LinkParcelDialog";
 import { AddItemsDialog } from "./components/AddItemsDialog";
-import { useCourierStatus, useSendToCourierMutation, useSyncCourierMutation, useLinkCourierMutation } from "./api/useCourier";
+import { useCourierStatus, useSendToCourierMutation, useSyncCourierMutation, useLinkCourierMutation, useFraudCheckMutation } from "./api/useCourier";
 import { ROUTES } from "@/constants/routes";
 import { adminSelectCls } from "@/features/admin/shell/adminFieldCls";
 
@@ -65,6 +66,7 @@ export function OrderDetailPage() {
   const addItems = useAddOrderItemsMutation();
   const linkCourier = useLinkCourierMutation();
   const { data: courier } = useCourierStatus();
+  const fraudCheckMutation = useFraudCheckMutation();
   const sendToCourier = useSendToCourierMutation();
   const syncCourier = useSyncCourierMutation();
 
@@ -244,6 +246,65 @@ export function OrderDetailPage() {
             <p>{formatAddressLine(addr)}</p>
             <p>{addr.phone}</p>
             <p>Email: <Provided value={order.user?.email} /></p>
+
+            {/* Steadfast's own risk score for this phone. Asked for on demand,
+                never on render: every check is a real call to the courier, and
+                the answer only matters when someone is deciding whether to ship
+                on credit. Advisory — it never blocks anything. */}
+            {courier?.configured && (
+              <div className="mt-3 rounded-[10px] border border-line bg-[#FCFCF9] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.07em] text-faint">
+                    Customer trust score
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      fraudCheckMutation.mutate(
+                        { id: order._id, force: Boolean(order.fraudCheck) },
+                        {
+                          onSuccess: (d) => adminToast(`Trust score ${d.score ?? "unavailable"}`),
+                          onError: (err) => adminToast(err.response?.data?.message ?? "Could not reach Steadfast"),
+                        }
+                      )
+                    }
+                    disabled={fraudCheckMutation.isPending}
+                    className="text-[11.5px] font-semibold text-brand-deep hover:underline disabled:opacity-50"
+                  >
+                    {fraudCheckMutation.isPending ? "Checking…" : order.fraudCheck ? "Re-check" : "Check"}
+                  </button>
+                </div>
+
+                {order.fraudCheck ? (
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <TrustScoreChip fraudCheck={order.fraudCheck} size="md" />
+                      <span className="text-[12px] text-faint">
+                        {order.fraudCheck.totalReports > 0
+                          ? `${order.fraudCheck.totalReports} fraud report${order.fraudCheck.totalReports === 1 ? "" : "s"}`
+                          : "No fraud reports"}
+                      </span>
+                    </div>
+                    {/* Steadfast's own reason codes, shown as they send them —
+                        their meaning isn't published, and a guessed translation
+                        in front of a shipping decision would be worse than none. */}
+                    {order.fraudCheck.reasons?.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {order.fraudCheck.reasons.map((r) => (
+                          <span key={r} className="rounded-[6px] bg-white px-2 py-[2px] text-[11px] text-ink-soft ring-1 ring-line">
+                            {r.replace(/_/g, " ")}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-1.5 text-[12px] leading-[1.6] text-faint">
+                    Ask Steadfast how safe this customer is to send to — useful before booking a cash-on-delivery parcel.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Only for pre-parity orders: the address itself is now already in
                 Steadfast's own wording, so this stays hidden unless the stored

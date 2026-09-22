@@ -36,6 +36,7 @@ import { useAdminOrders, useDeleteOrdersMutation, useBulkUpdateOrderStatusMutati
 import { useOrderStatusCounts } from "./api/useOrderStatusCounts";
 import { useCourierStatus, useSendToCourierMutation, useSyncCourierMutation } from "./api/useCourier";
 import { CourierChip } from "./components/CourierChip";
+import { TrustScoreChip } from "./components/TrustScoreChip";
 import { SendToCourierDialog } from "./components/SendToCourierDialog";
 
 // Mirrors the backend's stockBucket() "released" set (order.service.js) — used
@@ -275,7 +276,14 @@ export function OrdersPage() {
                     {o.orderNumber}
                   </Link>
                   <div className="min-w-0">
-                    <div className="truncate text-[13px] text-ink">{o.user?.name || "Guest"}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-[13px] text-ink">{o.user?.name || "Guest"}</span>
+                      {/* Only ever what was already checked from the order page.
+                          This list must never trigger a lookup: one call per row
+                          per open is exactly the pattern that put the API's CPU
+                          allowance at its ceiling. */}
+                      <TrustScoreChip fraudCheck={o.fraudCheck} />
+                    </div>
                     <div className="truncate text-[11.5px] text-faint">{o.phone || o.user?.email || "—"}</div>
                   </div>
                   <div className="text-[12.5px] text-ink-soft">{formatDate(o.createdAt)}</div>

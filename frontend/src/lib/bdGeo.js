@@ -142,6 +142,65 @@ export function thanaOptionsForDistrict(name) {
 
 /** True when `thana` belongs to `district` — by its own name or any alias, so
  * an address saved under an older spelling still validates. */
+/** Rows Steadfast's own coverage list carries that are not places.
+ *
+ * Their /police_stations feed contains a few obvious test artefacts. They were
+ * tolerable while thanas were only ever shown inside their own district, but a
+ * single combined search surfaces them against any typed letter — "Null" should
+ * not be an option a customer can pick as their delivery area. Matched exactly
+ * and case-insensitively, never as a substring, so a real place never
+ * disappears because its name contains one of these. */
+const NOT_A_PLACE = new Set(["nul", "null", "n/a", "na", "test", "test thana"]);
+
+/** Every deliverable area as ONE flat list: thana as the label, its district as
+ * the hint — the shape Steadfast's own parcel form moved to.
+ *
+ * Two dependent dropdowns asked the customer a question they often can't answer
+ * ("which district is my thana in?"), and the courier splitting the capital
+ * into Dhaka City / Dhaka Sub-Urban made it worse: that is an internal boundary
+ * nobody knows about their own address. Searching one list removes the question
+ * — type "Dhanmondi" and the right pairing comes back with the district
+ * attached. What gets STORED is unchanged: district and thana, separately,
+ * because shipping is priced per district and the courier payload needs both.
+ *
+ * `value` joins them with a "|" purely as a key; nothing outside this file
+ * should parse it — use splitAreaValue().
+ */
+export const BD_AREAS = BD_DISTRICTS.flatMap((d) => {
+  // A district's `aka` serves two purposes in the two-dropdown world: old
+  // spellings ("Chittagong" -> Chattogram), and — for the two halves of the
+  // capital — the names of the zones inside it, so that typing "Savar" finds
+  // Dhaka Sub-Urban. The second kind must NOT ride along here: every zone is
+  // its own row now, so keeping them would make typing "Banani" match all 59
+  // Dhaka areas at once. Dropping any alias that is itself a thana of the same
+  // district removes exactly those and leaves the spellings.
+  const ownThanas = new Set((d.thanas ?? []).map((t) => t.n.trim().toLowerCase()));
+  const spellings = (d.aka ?? []).filter((a) => !ownThanas.has(a.trim().toLowerCase()));
+
+  return (d.thanas ?? [])
+    .filter((t) => !NOT_A_PLACE.has(t.n.trim().toLowerCase()))
+    .map((t) => ({
+      value: `${d.name}|${t.n}`,
+      label: t.n,
+      hint: d.name,
+      // Typing the district, an old district spelling, or an official thana
+      // spelling all have to find this row.
+      keywords: [d.name, ...spellings, ...(t.a ?? [])],
+    }));
+});
+
+export const AREA_SEPARATOR = "|";
+
+export function areaValue(district, thana) {
+  return district && thana ? `${district}${AREA_SEPARATOR}${thana}` : "";
+}
+
+export function splitAreaValue(value) {
+  const at = String(value ?? "").indexOf(AREA_SEPARATOR);
+  if (at < 0) return { district: "", thana: "" };
+  return { district: value.slice(0, at), thana: value.slice(at + 1) };
+}
+
 export function isThanaInDistrict(district, thana) {
   const k = key(thana);
   return (findDistrict(district)?.thanas ?? []).some((t) => key(t.n) === k || (t.a ?? []).some((a) => key(a) === k));

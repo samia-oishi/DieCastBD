@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getCourierStatus, sendOrderToCourier, syncCourier, linkCourier } from "./courierApi";
+import { getCourierStatus, sendOrderToCourier, syncCourier, linkCourier, checkFraud } from "./courierApi";
 
 export function useCourierStatus() {
   return useQuery({
@@ -27,6 +27,16 @@ export function useSyncCourierMutation() {
     onSuccess: (updated) => {
       if (updated?.length) queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
     },
+  });
+}
+
+export function useFraudCheckMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, force }) => checkFraud(id, force),
+    // The score is stored on the order, so both the detail page and the list
+    // pick it up from the refetch rather than holding their own copy.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "orders"] }),
   });
 }
 

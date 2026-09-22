@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { useState } from "react";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { DistrictThanaFields } from "./DistrictThanaFields";
@@ -13,8 +13,8 @@ const FieldWrapper = ({ label, error, children }) => (
   </div>
 );
 
-/** Drives the pair the way the real forms do, so the district→thana dependency
- * is exercised through actual state updates rather than mocked callbacks. */
+/** Drives the field the way the real forms do, so one selection writing BOTH
+ * district and thana is exercised through actual state updates. */
 function Harness({ onSubmit = () => {}, initial = { district: "", thana: "" } }) {
   const [v, setV] = useState(initial);
   return (
@@ -37,150 +37,99 @@ function Harness({ onSubmit = () => {}, initial = { district: "", thana: "" } })
   );
 }
 
-const districtTrigger = () => screen.getAllByRole("button", { expanded: false })[0];
-const triggers = () => screen.getAllByRole("button").filter((b) => b.hasAttribute("aria-haspopup"));
+const trigger = () => screen.getByRole("button", { expanded: false });
+const search = () => screen.getByPlaceholderText(/Search thana or district/i);
+const value = () => screen.getByTestId("value").textContent;
 
-describe("DistrictThanaFields", () => {
-  it("filters districts as you type and selects the one you click", async () => {
+async function open(user) {
+  await user.click(trigger());
+}
+
+describe("DistrictThanaFields — one combined area search", () => {
+  // The whole point: the customer answers once, and the district comes with it.
+  it("sets BOTH district and thana from a single choice", async () => {
     const user = userEvent.setup();
     render(<Harness />);
-
-    await user.click(districtTrigger());
-    await user.type(screen.getByRole("combobox"), "chittagong");
-
-    const options = screen.getAllByRole("option");
-    expect(options).toHaveLength(1);
-    await user.click(options[0]);
-
-    // The courier's spelling is what gets stored, so the merchant never translates.
-    expect(screen.getByTestId("value")).toHaveTextContent("Chittagong|");
+    await open(user);
+    await user.type(search(), "Dhanmondi");
+    await user.click(await screen.findByRole("option", { name: /Dhanmondi/ }));
+    expect(value()).toBe("Dhaka City|Dhanmondi");
   });
 
-  it("finds a district under the modern spelling customers know", async () => {
+  // Steadfast splits the capital into Dhaka City and Dhaka Sub-Urban. That is
+  // their internal boundary; nobody knows which half they live in, and now
+  // nobody has to.
+  it("resolves the Dhaka City / Sub-Urban split without asking the customer", async () => {
     const user = userEvent.setup();
     render(<Harness />);
-
-    await user.click(districtTrigger());
-    await user.type(screen.getByRole("combobox"), "chattogram");
-
-    // Typing the name they know surfaces the courier's, which is what we store.
-    expect(screen.getByRole("option")).toHaveTextContent("Chittagong");
+    await open(user);
+    await user.type(search(), "Savar");
+    await user.click(await screen.findByRole("option", { name: /Savar/ }));
+    expect(value()).toBe("Dhaka Sub-Urban|Savar");
   });
 
-  it("lets a Dhaka customer type Dhaka, or just their own area", async () => {
-    // Steadfast splits the capital; nobody knows which half they live in, so
-    // both halves answer to "Dhaka" and to their own zone names.
+  // A district's aliases must not leak onto every thana inside it, or typing
+  // one Dhaka area would match all 59 of them.
+  it("matches the area typed, not every area in its district", async () => {
     const user = userEvent.setup();
     render(<Harness />);
-
-    await user.click(districtTrigger());
-    await user.type(screen.getByRole("combobox"), "dhaka");
-    const names = await Promise.all((await screen.findAllByRole("option")).map((o) => o.textContent));
-    expect(names).toEqual(expect.arrayContaining(["Dhaka City", "Dhaka Sub-Urban"]));
-
-    await user.clear(screen.getByRole("combobox"));
-    await user.type(screen.getByRole("combobox"), "savar");
-    expect(screen.getByRole("option")).toHaveTextContent("Dhaka Sub-Urban");
+    await open(user);
+    await user.type(search(), "Banani");
+    expect(await screen.findAllByRole("option")).toHaveLength(1);
   });
 
-  it("keeps the thana dropdown disabled until a district is chosen", async () => {
+  it("finds a thana under the official spelling when the courier uses another", async () => {
     const user = userEvent.setup();
     render(<Harness />);
-
-    const [, thana] = triggers();
-    expect(thana).toBeDisabled();
-    expect(thana).toHaveTextContent("Select a district first");
-
-    await user.click(districtTrigger());
-    await user.type(screen.getByRole("combobox"), "dhaka");
-    await user.click(screen.getAllByRole("option")[0]);
-
-    expect(triggers()[1]).toBeEnabled();
+    await open(user);
+    await user.type(search(), "Jatrabari");
+    await user.click(await screen.findByRole("option", { name: /Jattrabari/ }));
+    expect(value()).toBe("Dhaka City|Jattrabari");
   });
 
-  it("offers Dhaka's metro thanas, which no official upazila list contains", async () => {
-    const user = userEvent.setup();
-    render(<Harness initial={{ district: "Dhaka City", thana: "" }} />);
-
-    await user.click(triggers()[1]);
-    await user.type(screen.getByRole("combobox"), "dhanmondi");
-    await user.click(screen.getByRole("option"));
-
-    expect(screen.getByTestId("value")).toHaveTextContent("Dhaka City|Dhanmondi");
-  });
-
-  it("clears a thana that does not exist in the newly chosen district", async () => {
-    const user = userEvent.setup();
-    render(<Harness initial={{ district: "Dhaka City", thana: "Dhanmondi" }} />);
-
-    await user.click(districtTrigger());
-    await user.type(screen.getByRole("combobox"), "khulna");
-    await user.click(screen.getAllByRole("option")[0]);
-
-    // Shipping "Dhanmondi, Khulna" would be worse than asking again.
-    expect(screen.getByTestId("value")).toHaveTextContent("Khulna|");
-    expect(triggers()[1]).toHaveTextContent("Select thana");
-  });
-
-  it("does not submit the surrounding form when Enter picks an option", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-    render(<Harness onSubmit={onSubmit} />);
-
-    await user.click(districtTrigger());
-    await user.type(screen.getByRole("combobox"), "khulna");
-    await user.keyboard("{Enter}");
-
-    expect(screen.getByTestId("value")).toHaveTextContent("Khulna|");
-    // The Enter that chose a district must not also save a half-filled address.
-    expect(onSubmit).not.toHaveBeenCalled();
-  });
-
-  it("moves through the list with the arrow keys", async () => {
+  it("lets someone search by district to browse its areas", async () => {
     const user = userEvent.setup();
     render(<Harness />);
+    await open(user);
+    await user.type(search(), "Bagerhat");
+    const options = await screen.findAllByRole("option");
+    expect(options.length).toBeGreaterThan(1);
+  });
 
-    await user.click(districtTrigger());
-    await user.type(screen.getByRole("combobox"), "ba"); // Bagerhat, Bandarban, Barguna, …
-    const before = screen.getAllByRole("option")[0].textContent;
-
-    await user.keyboard("{ArrowDown}{Enter}");
-    // ArrowDown moved off the first match before Enter committed it.
-    const chosen = screen.getByTestId("value").textContent.split("|")[0];
-    expect(chosen).not.toBe(before);
-    expect(chosen).toMatch(/^Ba/);
+  // Steadfast's coverage feed carries a few test rows. They were survivable
+  // inside a district dropdown; in one combined list they are options a real
+  // customer could pick as their delivery area.
+  it("never offers the courier's test rows as a delivery area", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await open(user);
+    await user.type(search(), "Null");
+    expect(screen.queryByRole("option", { name: /^Null$/ })).not.toBeInTheDocument();
   });
 
   it("reports no matches instead of an empty list", async () => {
     const user = userEvent.setup();
     render(<Harness />);
-
-    await user.click(districtTrigger());
-    await user.type(screen.getByRole("combobox"), "atlantis");
-
-    expect(screen.queryAllByRole("option")).toHaveLength(0);
-    expect(screen.getByText("No district matches")).toBeInTheDocument();
+    await open(user);
+    await user.type(search(), "zzzznowhere");
+    expect(await screen.findByText(/No area matches/i)).toBeInTheDocument();
   });
 
-  it("closes on Escape without clearing the current selection", async () => {
-    const user = userEvent.setup();
-    render(<Harness initial={{ district: "Dhaka City", thana: "Gulshan" }} />);
-
-    await user.click(districtTrigger());
-    expect(screen.getByRole("combobox")).toBeInTheDocument();
-
-    await user.keyboard("{Escape}");
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.getByTestId("value")).toHaveTextContent("Dhaka City|Gulshan");
+  // An address saved before this list existed must not appear blank and invite
+  // someone to "fix" a delivery address that was always correct.
+  it("still shows a stored area that is no longer in the courier's list", () => {
+    render(<Harness initial={{ district: "Old District", thana: "Retired Thana" }} />);
+    expect(trigger()).toHaveTextContent("Retired Thana");
   });
 
-  it("marks the current selection so reopening shows what is chosen", async () => {
+  it("does not submit the surrounding form when choosing with the keyboard", async () => {
     const user = userEvent.setup();
-    render(<Harness initial={{ district: "Dhaka City", thana: "" }} />);
-
-    await user.click(districtTrigger());
-    const selected = screen.getAllByRole("option", { selected: true });
-    expect(selected).toHaveLength(1);
-    expect(within(selected[0]).getByText("Dhaka City")).toBeInTheDocument();
+    const onSubmit = vi.fn();
+    render(<Harness onSubmit={onSubmit} />);
+    await open(user);
+    await user.type(search(), "Dhanmondi");
+    await user.keyboard("{Enter}");
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(value()).toBe("Dhaka City|Dhanmondi");
   });
 });

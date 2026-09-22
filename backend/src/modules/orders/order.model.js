@@ -58,6 +58,26 @@ const courierSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Steadfast's risk score for the customer's phone, cached at the moment it was
+// checked. Stored rather than fetched per view for two reasons: an external
+// call per order row would cost a serverless invocation each (the API is one
+// Vercel function, and its CPU allowance has a ceiling), and a score recorded
+// against the order answers "what did we know when we decided to ship this?"
+// later, which a live lookup never can.
+//
+// `level` and `reasons` are the courier's own strings, stored verbatim.
+const fraudCheckSchema = new mongoose.Schema(
+  {
+    score: { type: Number, default: null },
+    level: { type: String, default: null },
+    reasons: { type: [String], default: [] },
+    totalReports: { type: Number, default: 0 },
+    doubtfulReports: { type: Boolean, default: false },
+    checkedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
 const statusHistoryEntrySchema = new mongoose.Schema(
   {
     status: { type: String, required: true },
@@ -137,6 +157,7 @@ const orderSchema = new mongoose.Schema(
     // parcel from the admin. Default null (not a subdocument) so every existing
     // order reads as "not sent" without a migration.
     courier: { type: courierSchema, default: null },
+    fraudCheck: { type: fraudCheckSchema, default: null },
   },
   { timestamps: true }
 );

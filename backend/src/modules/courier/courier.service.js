@@ -1,5 +1,5 @@
 import { Order } from "../orders/order.model.js";
-import { createConsignment, getDeliveryStatus, isCourierConfigured } from "./steadfast.client.js";
+import { createConsignment, getDeliveryStatus, getFraudScore, isCourierConfigured } from "./steadfast.client.js";
 import { buildCreateOrderPayload, courierBlockReason, isTerminal } from "./steadfast.payload.js";
 import { ApiError } from "../../utils/apiError.js";
 
@@ -11,6 +11,55 @@ const SYNC_THROTTLE_MS = 5 * 60 * 1000;
 
 /** How many status lookups to have in flight at once. */
 const SYNC_CONCURRENCY = 5;
+
+/** A score older than this is refetched; anything newer is reused.
+ *
+ * A phone's risk changes over days, not minutes, and every check is an external
+ * call that costs a serverless invocation. An hour keeps a merchant clicking
+ * around an order from spending a call each time, while still refreshing before
+ * the decision that matters (booking the parcel) on any normal working day. */
+const FRAUD_CACHE_MS = 60 * 60 * 1000;
+
+/** Steadfast's risk score for the phone on this order, cached onto the order.
+ *
+ * Deliberately on demand and never on list render: the admin orders list shows
+ * whatever was checked before, and asking the courier is always something the
+ * merchant chose to do. N rows must never mean N external calls.
+ *
+ * `force` re-asks even within the cache window, for the merchant who wants a
+ * fresh answer before dispatching.
+ */
+export async function fetchFraudScore(orderId, { force = false } = {}) {
+  if (!isCourierConfigured()) {
+    throw ApiError.badRequest("Steadfast is not configured — add the API credentials first");
+  }
+
+  const order = await Order.findById(orderId);
+  if (!order) throw ApiError.notFound("Order not found");
+
+  const phone = order.shippingAddress?.phone || order.phone;
+  if (!phone) throw ApiError.badRequest("This order has no phone number to check");
+
+  const cached = order.fraudCheck;
+  const fresh = cached?.checkedAt && Date.now() - new Date(cached.checkedAt).getTime() < FRAUD_CACHE_MS;
+  if (fresh && !force) return order;
+
+  const result = await getFraudScore(phone);
+
+  // Stored as the courier reported it. `score` is the only field we interpret
+  // (numerically, for a colour); `level` and `reasons` are undocumented strings
+  // that get shown verbatim rather than translated into a guess.
+  order.fraudCheck = {
+    score: typeof result?.score === "number" ? result.score : null,
+    level: result?.level ?? null,
+    reasons: Array.isArray(result?.reasons) ? result.reasons : [],
+    totalReports: Number(result?.total_reports) || 0,
+    doubtfulReports: Boolean(result?.doubtful_reports),
+    checkedAt: new Date(),
+  };
+  await order.save();
+  return order;
+}
 
 /** Creates the Steadfast consignment for one order.
  *

@@ -26,8 +26,11 @@ import { cn } from "@/lib/utils";
  * `useMediaQuery("(min-width: 768px)")`. At 640–767px it still renders the
  * clipping bottom sheet, so floating from `sm` would break in that band.
  *
- * @param options  [{ value, label?, keywords? }] — `keywords` also match while
- *                 filtering but are never displayed (old district spellings).
+ * @param options  [{ value, label?, keywords?, hint? }] — `keywords` also match
+ *                 while filtering but are never displayed (old district
+ *                 spellings); `hint` shows right-aligned and muted, for the
+ *                 context that tells two same-named options apart (the district
+ *                 a thana belongs to).
  * @param value    currently selected `value`, or "" for none
  */
 export function SearchableSelect({
@@ -258,7 +261,10 @@ export function SearchableSelect({
                   )}
                 >
                   <span className="truncate">{o.label ?? o.value}</span>
-                  {isSelected && <Check size={14} strokeWidth={2.4} aria-hidden className="shrink-0 text-brand-deep" />}
+                  <span className="flex shrink-0 items-center gap-2">
+                    {o.hint && <span className="text-[12.5px] text-faint">{o.hint}</span>}
+                    {isSelected && <Check size={14} strokeWidth={2.4} aria-hidden className="shrink-0 text-brand-deep" />}
+                  </span>
                 </li>
               );
             })}

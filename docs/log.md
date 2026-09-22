@@ -1657,3 +1657,13 @@ Two real gaps found:
 The generator shipped with a bug I caught in its own output before committing: a **local** "is it stocked" filter listed `/category/hot-wheels`, the collection the edge 301s away — exactly the drift `asLinkableCollections` exists to prevent. Now uses the shared rule, with a test asserting a redirected collection is never advertised there.
 
 Still the merchant's to do, and worth more than any of the above: `/faq` carries 6 real answers, but the highest-value AI-SEO asset is more of them in the customer's own words — authenticity, delivery times to specific districts, what happens if a car arrives damaged. Frontend 243/243 (4 new), 103/103 strict prerender.
+
+**2026-09-22 — one question for the delivery area, and Steadfast's risk score in admin.** Steadfast changed their own parcel form to a single "Area (thana, district)" search; the merchant asked to match it, and to surface the `fraud_check/score/{phone}` endpoint they spotted in the API docs. Both confirmed feasible first, then built.
+
+The address field is now one search over 721 areas instead of two dependent dropdowns, with the district shown alongside each thana. Props unchanged, so all three callers were untouched, and the stored shape is unchanged — district and thana separately, since shipping is priced per district and the courier payload needs both. A Dhaka customer is no longer asked which half of the capital they live in.
+
+Two things only a combined list exposes. A district's `aka` carries its own zone names so "Savar" can find Dhaka Sub-Urban; flattened naively that gave every Dhaka thana all 59, and "Banani" matched the lot — fixed by dropping aliases that are themselves a thana of the same district. And the courier's coverage feed has test rows (`Null`, `test thana`) which were survivable in a district dropdown but became pickable delivery areas in one list.
+
+The fraud score was verified against the live API before writing any code — `{score, level, reasons[], total_reports, doubtful_reports}` — then cached onto the order for an hour and fetched **on demand only**. The orders list displays what was already checked and triggers nothing; one call per row per open is exactly what put Active CPU at its ceiling days earlier. `level` and the reason codes are rendered verbatim because their meaning is not published, and guessing at `ratio_high` in front of a ship-on-credit decision would be worse than staying quiet.
+
+Verified against a real production order: 393ms live, 39ms cached, and the probe write reversed with a re-count showing zero orders left modified. Backend 333/333, frontend 247/247.

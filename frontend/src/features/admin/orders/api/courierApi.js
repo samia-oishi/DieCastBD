@@ -23,6 +23,16 @@ export async function syncCourier(ids) {
   return data.data;
 }
 
+/** Steadfast's risk score for this order's customer, out of 100.
+ *
+ * On demand only — never on list render. Each call is a real request to the
+ * courier from a serverless function, so N rows must never mean N calls. The
+ * backend caches the answer on the order for an hour; `force` re-asks. */
+export async function checkFraud(id, force = false) {
+  const { data } = await api.post(`/admin/courier/orders/${id}/fraud-check`, { force });
+  return data.data;
+}
+
 /** Attaches a consignment the merchant booked directly in Steadfast's panel.
  * The backend validates the id against Steadfast before saving it. */
 export async function linkCourier(id, payload) {

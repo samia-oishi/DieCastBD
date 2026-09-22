@@ -4,7 +4,7 @@ import { validate } from "../../middlewares/validate.js";
 import { auditLog } from "../../middlewares/auditLog.js";
 import { Order } from "../orders/order.model.js";
 import { orderIdParamSchema, syncSchema, linkSchema } from "./courier.validation.js";
-import { sendToCourier, syncCourier, courierStatus, linkCourier } from "./courier.controller.js";
+import { sendToCourier, syncCourier, courierStatus, linkCourier, fraudCheck } from "./courier.controller.js";
 
 const router = Router();
 
@@ -17,6 +17,10 @@ router.post("/orders/:id", validate(orderIdParamSchema), auditLog("Order", Order
 // Attaching a parcel the merchant booked in Steadfast themselves. Audited: it
 // changes what this order claims to be tracking.
 router.post("/orders/:id/link", validate(linkSchema), auditLog("Order", Order), linkCourier);
+
+// Asking the courier how risky a customer is. No auditLog: it records nothing
+// about the order that a merchant decided, only what Steadfast answered.
+router.post("/orders/:id/fraud-check", validate(orderIdParamSchema), fraudCheck);
 
 // Read-through refresh: no auditLog, it mutates only our cached copy of the
 // courier's own status and runs on every orders-list open.

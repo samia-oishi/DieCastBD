@@ -89,6 +89,22 @@ export function getDeliveryStatus(consignmentId) {
   return request("GET", `/status_by_cid/${encodeURIComponent(consignmentId)}`);
 }
 
+/** Steadfast's own risk score for a phone number, out of 100.
+ *
+ * Verified against the live API 2026-09-22; the shape is:
+ *   { status: 200, phone, score: 55, level: "caution",
+ *     reasons: ["history_little", "ratio_high", "reports_none"],
+ *     doubtful_reports: false, total_reports: 0 }
+ *
+ * `level` and the `reasons` codes are NOT documented anywhere we can see, so
+ * nothing here interprets them — they are passed through and rendered as the
+ * courier wrote them. Inventing a translation ("ratio_high" = ?) would put a
+ * guess in front of a merchant deciding whether to ship goods on credit.
+ */
+export function getFraudScore(phone) {
+  return request("GET", `/fraud_check/score/${encodeURIComponent(phone)}`);
+}
+
 /** Account balance — the cheapest read-only call, used to verify credentials. */
 export function getBalance() {
   return request("GET", "/get_balance");

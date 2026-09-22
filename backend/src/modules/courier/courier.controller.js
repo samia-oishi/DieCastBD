@@ -1,4 +1,4 @@
-import { sendOrderToCourier, syncCourierStatuses, linkExistingConsignment } from "./courier.service.js";
+import { sendOrderToCourier, syncCourierStatuses, linkExistingConsignment, fetchFraudScore } from "./courier.service.js";
 import { isCourierConfigured, getBalance } from "./steadfast.client.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -11,6 +11,14 @@ export const sendToCourier = asyncHandler(async (req, res) => {
 export const linkCourier = asyncHandler(async (req, res) => {
   const order = await linkExistingConsignment(req.params.id, req.body.consignmentId, req.body.trackingCode);
   sendSuccess(res, { data: order, message: `Linked to consignment ${order.courier.consignmentId}` });
+});
+
+/** Steadfast's risk score for this order's phone. A read, but POST because it
+ * calls an external API and writes the result onto the order — it is not the
+ * kind of thing a browser should be free to prefetch or retry. */
+export const fraudCheck = asyncHandler(async (req, res) => {
+  const order = await fetchFraudScore(req.params.id, { force: req.body?.force === true });
+  sendSuccess(res, { data: order.fraudCheck, message: `Trust score ${order.fraudCheck.score ?? "unavailable"}` });
 });
 
 export const syncCourier = asyncHandler(async (req, res) => {
