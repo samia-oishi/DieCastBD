@@ -19,4 +19,35 @@ Allow: /
 # Crawl budget is not a reason to reinstate them: every one of those paths
 # returns the same cached app.html shell.
 
+# ---------------------------------------------------------------------------
+# Commercial crawlers, blocked on 2026-09-22 for COST, not for SEO.
+#
+# This site's API is a single Vercel serverless function, and a crawler that
+# RENDERS a page fires the same API calls a shopper does. Vercel Fluid Active
+# CPU reached its monthly ceiling, and these crawlers send no customers: SEO
+# tool suites index the web to sell competitor reports, and the AI scrapers
+# train on it. Blocking them is the only lever that reduces rendered page loads
+# without touching anything a buyer or a search engine sees.
+#
+# Deliberately NOT here, and must never be added: Googlebot, Bingbot,
+# DuckDuckBot, and the social preview bots (facebookexternalhit, Twitterbot,
+# WhatsApp) — they are the traffic. The `User-agent: *` rule above still has no
+# Disallow, for the reason written there.
+#
+# Remove any of these freely if the CPU pressure goes away; nothing depends on
+# them being blocked.
+User-agent: AhrefsBot
+User-agent: SemrushBot
+User-agent: MJ12bot
+User-agent: DotBot
+User-agent: DataForSeoBot
+User-agent: BLEXBot
+User-agent: PetalBot
+User-agent: Bytespider
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: CCBot
+User-agent: PerplexityBot
+Disallow: /
+
 Sitemap: https://diecastbd.com/sitemap.xml
