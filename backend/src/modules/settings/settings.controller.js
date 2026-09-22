@@ -58,5 +58,11 @@ export const uploadSettingsImage = asyncHandler(async (req, res) => {
 export const getShareImage = asyncHandler(async (req, res) => {
   const settings = await Settings.findOne().select("seoDefaults.shareImage").lean();
   const fallback = `${env.CLIENT_URL.replace(/\/$/, "")}/android-chrome-512x512.png`;
+  // Referenced as og:image and twitter:image on every page, so every link
+  // preview a customer generates — WhatsApp, Messenger, Facebook — was a cold
+  // function boot plus a Mongo read to produce one redirect. The target only
+  // changes when the merchant uploads a new share image, so an hour at the edge
+  // costs nothing and takes this off the per-share path entirely.
+  res.set("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400");
   res.redirect(302, settings?.seoDefaults?.shareImage?.url || fallback);
 });

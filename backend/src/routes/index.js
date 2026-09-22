@@ -20,7 +20,7 @@ import * as restockAlertRoutes from "../modules/restockAlerts/restockAlert.route
 import cronRoutes from "../modules/cron/cron.routes.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
-import { cacheControl } from "../middlewares/cacheControl.js";
+import { cacheControl, edgeCacheControl } from "../middlewares/cacheControl.js";
 
 const router = Router();
 const requireAdmin = [authenticate, authorize("admin", "staff")];
@@ -35,12 +35,30 @@ router.use("/brands", cacheControl(300), brandRoutes.publicRouter);
 router.use("/categories", cacheControl(300), categoryRoutes.publicRouter);
 router.use("/products", cacheControl(60), productRoutes.publicRouter);
 router.use("/products", restockAlertRoutes.publicRouter);
-// Settings is the one "catalog" doc the merchant edits and immediately checks:
-// a blind 5-minute max-age meant a saved hero style visibly reverted in the
-// admin (the refetch after PATCH was served from the browser's HTTP cache) and
-// the storefront showed the old hero for up to 5 minutes. no-cache keeps the
-// ETag revalidation (304s are cheap) but always confirms freshness.
-router.use("/settings", (req, res, next) => { res.set("Cache-Control", "no-cache"); next(); }, settingsRoutes.publicRouter);
+// Settings is read by EVERY storefront page (header, footer, announcement bar,
+// WhatsApp widget and every <SeoHead>), so on serverless it was the single
+// biggest source of function invocations: a flat `no-cache` meant one cold
+// Express boot + Mongo read per page view, for every visitor and every
+// JS-rendering crawler. Vercel Fluid Active CPU hit 98% of the monthly
+// allowance on 2026-09-22 with this as the top confirmed cause.
+//
+// The `no-cache` was guarding a real bug — a saved hero style visibly reverted
+// in the admin because the refetch after PATCH came from the BROWSER's HTTP
+// cache — but the admin no longer reads this route at all: it reads and writes
+// the authenticated /admin/settings (see useAdminSettings.js), which is never
+// cached. So the guard is now split by cache layer instead of switched off:
+//
+//   max-age=0, must-revalidate → browsers still never reuse a stale copy,
+//                                which is exactly what fixed the admin bug
+//   s-maxage=60                → Vercel's edge answers for a minute, so N page
+//                                views cost ONE invocation instead of N
+//   stale-while-revalidate=120 → the refresh happens in the background; no
+//                                visitor ever waits for a cold start
+//
+// Worst case a storefront change is visible in 60s. The merchant already
+// tolerates more than that: baked settings in the prerendered HTML are only as
+// fresh as the last deploy.
+router.use("/settings", edgeCacheControl(60, 120), settingsRoutes.publicRouter);
 router.use("/newsletter", newsletterRoutes.publicRouter);
 router.use("/contact", contactRoutes);
 router.use("/wishlist", wishlistRoutes);
@@ -48,7 +66,10 @@ router.use("/cart", cartRoutes);
 router.use("/addresses", addressRoutes);
 router.use("/coupons", couponRoutes.publicRouter);
 router.use("/orders", orderRoutes.customerRouter);
-router.use("/pages", pageRoutes.publicRouter);
+// Published guides/policies change on the order of weeks, and /collections
+// requests the whole list. It carried no Cache-Control at all, so every request
+// was a function invocation.
+router.use("/pages", cacheControl(300), pageRoutes.publicRouter);
 
 // Invoked by Vercel Cron over HTTP (self-guarded by CRON_SECRET) since node-cron
 // has no persistent process on serverless. See src/jobs/scheduler.js for the

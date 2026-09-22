@@ -1600,3 +1600,17 @@ The guard caught two things while being written: an over-strict first version th
 Deliberately not competing with `/brand/hotwheels`, which owns the head term and leads with premium: this is a 12-product **subset** of the 55 there, which is also why it kept its URL while `/category/hot-wheels` (52 of the same 55) did not.
 
 Note for whoever picks this up: the **baked** body's H1 is `copy.title`, while `CollectionPage.jsx` renders `{collection.name} in Bangladesh`. Google reads the rendered DOM, so the visible H1 on this page is still "Mainlines in Bangladesh" until the merchant renames the category in admin (the slug is frozen, so the URL is unaffected). That divergence predates this change and applies to every collection page.
+
+**2026-09-22 — Vercel Fluid Active CPU at 98%: the storefront was paying a serverless invocation per page view.** Vercel warned that the free Active CPU allowance (4 hours) was 98% used, with project pausing as the stated consequence.
+
+Audit first, no speculative changes. Architecture, confirmed from the repo rather than assumed: the frontend is a **static** Vite SPA (no functions — `vercel.json` is redirects, headers, and a `/(.*)` rewrite to `app.html`), and the **Express backend is itself a single Vercel serverless function** (`backend/api/index.js`, `@vercel/node`). All Active CPU therefore comes from API traffic, not from React.
+
+Ruled out by inspection, and worth recording as negatives: no `setInterval`, no `refetchInterval`, no polling anywhere in `frontend/src`; `refetchOnWindowFocus` already `false`; no runaway `useEffect`; no edge middleware; the DB connection is cached across invocations; `api/index.js` deliberately registers no `node-cron` timers; Vercel Cron is two jobs a day.
+
+**Confirmed cause:** `/api/v1/settings` is read by every storefront page — header, footer, announcement bar, WhatsApp widget and every `<SeoHead>` — and was served `Cache-Control: no-cache`, verified live as `x-vercel-cache: MISS` on every request. One page view meant one Express cold boot and one Mongo read, for every visitor and every JS-rendering crawler, on a site we spent the last month making maximally crawlable. `/pages` carried no cache header at all, and `/share-image` (og:image on every page, so every WhatsApp/Messenger link preview) did a Mongo read to produce one redirect.
+
+The `no-cache` was guarding a real bug — a saved hero style appeared to revert in the admin because the refetch after PATCH came from the **browser's** cache — but the admin no longer reads that route: it reads and writes the authenticated `/admin/settings`. So the guard is now split by cache layer instead of switched off, via a new `edgeCacheControl()`: `max-age=0, must-revalidate` for browsers, `s-maxage=60` for the edge.
+
+A hypothesis that was **wrong and checked before acting on it**: that Vercel ignores `max-age` and needs `s-maxage` to cache at all. Measured live, `/products` and `/brands` return `x-vercel-cache: HIT` on repeat requests, including with a browser `Origin` header (`Vary: Origin` gives browser traffic its own cache key). The existing catalogue caching works and was left alone.
+
+Not done, and deliberately: `/auth/me` fires for every visitor including guests and returns 401, but skipping it needs a client-readable session hint and would log existing sessions out once — proposed to the merchant rather than shipped mid-emergency. Backend 333/333.
