@@ -53,6 +53,35 @@ describe("robots.txt", () => {
     }
   });
 
+  // Merchant decision, 2026-09-22: AI assistants are a real way customers find
+  // the shop now, so they are treated as a search channel, not as scrapers.
+  // The user-initiated agents are the ones that answer "where can I buy Hot
+  // Wheels in Bangladesh"; the broad crawlers are what put the shop in those
+  // answers at all. Blocking either removes the store from AI results.
+  it("lets AI assistants read the shop", () => {
+    const blocked = blockedAgents();
+    for (const agent of [
+      "gptbot",
+      "oai-searchbot",
+      "chatgpt-user",
+      "claudebot",
+      "claude-user",
+      "claude-searchbot",
+      "perplexitybot",
+    ]) {
+      expect(blocked.has(agent), `"${agent}" must stay allowed — AI search is a discovery channel`).toBe(false);
+    }
+  });
+
+  // Common Crawl is a full-site scrape into a public dataset with no path from
+  // it to a customer, which is why it is the one AI-adjacent agent still blocked.
+  it("still blocks the crawlers that cost CPU and send nobody", () => {
+    const blocked = blockedAgents();
+    for (const agent of ["ahrefsbot", "semrushbot", "ccbot"]) {
+      expect(blocked.has(agent)).toBe(true);
+    }
+  });
+
   it("still lets everything else crawl the whole site", () => {
     // The `User-agent: *` group deliberately carries no Disallow (plan.md #89):
     // a URL Google may not crawl is a URL where it can never see a noindex.

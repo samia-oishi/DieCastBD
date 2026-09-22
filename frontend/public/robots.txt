@@ -24,10 +24,25 @@ Allow: /
 #
 # This site's API is a single Vercel serverless function, and a crawler that
 # RENDERS a page fires the same API calls a shopper does. Vercel Fluid Active
-# CPU reached its monthly ceiling, and these crawlers send no customers: SEO
-# tool suites index the web to sell competitor reports, and the AI scrapers
-# train on it. Blocking them is the only lever that reduces rendered page loads
-# without touching anything a buyer or a search engine sees.
+# CPU reached its monthly ceiling, and what is blocked below sends no customers:
+# SEO tool suites index the web to sell competitor reports, and Common Crawl
+# builds a dataset. Blocking them reduces rendered page loads without touching
+# anything a buyer or a search engine sees.
+#
+# AI ASSISTANTS ARE DELIBERATELY ALLOWED (merchant decision, 2026-09-22:
+# "people are searching in ai most of the things"). That is a real and growing
+# way customers find a shop, so it is treated like any other search channel.
+# The distinction that matters:
+#
+#   ChatGPT-User, OAI-SearchBot, Claude-User, Claude-SearchBot, PerplexityBot
+#     — fetch a page BECAUSE someone asked a question. Rare, targeted, and the
+#       direct route to "where can I buy Hot Wheels in Bangladesh". Cheap.
+#   GPTBot, ClaudeBot
+#     — the broad crawlers behind those answers. Allowed too, since blocking
+#       them is what removes the shop from the answers in the first place.
+#   CCBot
+#     — Common Crawl: a full-site scrape into a public dataset, with no path
+#       from it to a customer. Stays blocked.
 #
 # Deliberately NOT here, and must never be added: Googlebot, Bingbot,
 # DuckDuckBot, and the social preview bots (facebookexternalhit, Twitterbot,
@@ -44,10 +59,7 @@ User-agent: DataForSeoBot
 User-agent: BLEXBot
 User-agent: PetalBot
 User-agent: Bytespider
-User-agent: GPTBot
-User-agent: ClaudeBot
 User-agent: CCBot
-User-agent: PerplexityBot
 Disallow: /
 
 Sitemap: https://diecastbd.com/sitemap.xml
